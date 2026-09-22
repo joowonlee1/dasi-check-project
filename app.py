@@ -10,7 +10,7 @@ st.set_page_config(
 
 
 def apply_design():
-    """모든 페이지에서 사용하는 공통 디자인입니다."""
+    """모든 페이지에 밝고 읽기 쉬운 디자인을 적용합니다."""
     st.markdown(
         """
         <style>
@@ -18,7 +18,6 @@ def apply_design():
             'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap'
         );
 
-        /* 한글 본문과 입력 요소에 공통 폰트를 적용합니다. */
         html, body,
         [data-testid="stAppViewContainer"],
         [data-testid="stSidebar"],
@@ -27,34 +26,18 @@ def apply_design():
             font-family: 'Noto Sans KR', sans-serif;
         }
 
-        /* 은은한 빛과 격자로 디지털 공간의 분위기를 만듭니다. */
+        /* 밝은 아이보리 배경 */
         .stApp {
-            background-color: #0B1220;
-            background-image:
-                radial-gradient(
-                    ellipse at 90% 5%,
-                    rgba(94, 234, 212, 0.10),
-                    transparent 45%
-                ),
-                linear-gradient(
-                    rgba(148, 163, 184, 0.035) 1px,
-                    transparent 1px
-                ),
-                linear-gradient(
-                    90deg,
-                    rgba(148, 163, 184, 0.035) 1px,
-                    transparent 1px
-                );
-            background-size: auto, 40px 40px, 40px 40px;
+            background: #FFFEF8;
         }
 
         [data-testid="stHeader"] {
-            background: rgba(11, 18, 32, 0.95);
+            background: #FFFEF8;
         }
 
         [data-testid="stSidebar"] {
-            background-color: #101B2D;
-            border-right: 1px solid #28364B;
+            background: #F0F5F4;
+            border-right: 1px solid #CDDAD6;
         }
 
         .block-container {
@@ -63,113 +46,130 @@ def apply_design():
             padding-bottom: 4rem;
         }
 
-        h1, h2, h3 {
-            letter-spacing: -0.04em;
+        /* 읽기 편한 글자와 줄 간격 */
+        h1, h2, h3, h4 {
+            color: #172B3A;
+            letter-spacing: -0.035em;
         }
 
-        p {
-            line-height: 1.8;
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stWidgetLabel"] p {
+            font-size: 1.05rem;
+            line-height: 1.85;
         }
 
-        /* 첫 화면의 대표 영역 */
+        [data-testid="stCaptionContainer"] p {
+            color: #52636B;
+            font-size: 0.92rem;
+        }
+
+        /* 첫 화면의 연노란 소개 영역 */
         .hero {
             padding: 42px 34px;
             margin-bottom: 24px;
-            border: 1px solid #34445B;
-            border-radius: 26px;
-            background: linear-gradient(
-                135deg,
-                #192C43 0%,
-                #111D30 65%,
-                #173534 100%
-            );
+            border: 1px solid #E7D89E;
+            border-radius: 24px;
+            background: #FFF4C7;
         }
 
         .eyebrow {
-            color: #5EEAD4;
-            font-size: 0.85rem;
+            color: #375C52;
+            font-size: 0.95rem;
             font-weight: 700;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.04em;
         }
 
         .hero h1 {
-            margin: 10px 0 16px;
+            margin: 12px 0 18px;
             padding: 0;
-            color: #FDE68A;
+            color: #172B3A;
             font-size: clamp(3.5rem, 9vw, 5.5rem);
             font-weight: 900;
             line-height: 1.15;
         }
 
         .hero .lead {
-            color: #F1F5F9;
-            font-size: 1.25rem;
+            color: #172B3A;
+            font-size: 1.3rem;
             font-weight: 700;
         }
 
         .hero .description {
-            color: #C3CFDF;
+            color: #40545E;
+            font-size: 1.05rem;
+            line-height: 1.85;
             margin-bottom: 0;
         }
 
-        /* 첫 화면에서만 사용하는 기능 카드 */
+        /* 흰색 기능 카드 */
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
+            gap: 16px;
             margin: 18px 0 28px;
         }
 
         .feature-card {
-            padding: 24px;
-            border: 1px solid #34445B;
-            border-radius: 18px;
-            background: #142136;
+            padding: 26px;
+            border: 1px solid #CDDAD6;
+            border-top: 4px solid #0F766E;
+            border-radius: 16px;
+            background: #FFFFFF;
         }
 
         .feature-number {
-            color: #5EEAD4;
-            font-size: 0.8rem;
+            color: #0F766E;
+            font-size: 0.85rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.04em;
         }
 
         .feature-card h3 {
-            color: #F1F5F9;
-            font-size: 1.12rem;
-            margin: 10px 0;
+            color: #172B3A;
+            font-size: 1.2rem;
+            margin: 12px 0;
             padding: 0;
         }
 
         .feature-card p {
-            color: #C3CFDF;
-            font-size: 0.95rem;
+            color: #40545E;
+            font-size: 1rem;
+            line-height: 1.8;
             margin: 0;
         }
 
         .brand {
-            color: #FDE68A;
+            color: #0F766E;
             font-size: 2rem;
             font-weight: 900;
-            letter-spacing: -0.06em;
+            letter-spacing: -0.05em;
         }
 
         .footer-note {
             margin-top: 30px;
             padding-top: 18px;
-            border-top: 1px solid #34445B;
-            color: #B8C5D6;
-            font-size: 0.82rem;
+            border-top: 1px solid #CDDAD6;
+            color: #52636B;
+            font-size: 0.9rem;
             line-height: 1.8;
         }
 
-        /* 키보드로 조작할 때도 현재 위치가 보이게 합니다. */
+        /* 누르기 편한 버튼 */
+        [data-testid="stButton"] button,
+        [data-testid="stFormSubmitButton"] button {
+            min-height: 48px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
         button:focus-visible,
         a:focus-visible {
-            outline: 3px solid #FDE68A !important;
+            outline: 3px solid #0F766E !important;
             outline-offset: 3px;
         }
 
+        /* 휴대전화에서는 카드를 한 줄에 하나씩 표시 */
         @media (max-width: 640px) {
             .hero {
                 padding: 28px 22px;
@@ -186,7 +186,7 @@ def apply_design():
 
 
 def show_home():
-    """구현 상태를 매번 수정할 필요가 없는 첫 화면입니다."""
+    """잠깐! 프로젝트의 첫 화면입니다."""
     st.markdown(
         """
         <section class="hero">
@@ -210,7 +210,7 @@ def show_home():
         icon="📞",
     )
 
-    st.subheader("하나의 연락, 여러 갈래의 선택")
+    st.subheader("처음이라면 모의체험부터")
     st.write(
         "엄마로 표시된 전화가 왔습니다. "
         "곧이어 문자를 확인해 달라는 요구가 이어집니다. "
@@ -219,41 +219,41 @@ def show_home():
 
     features = [
         (
-            "01 · EXPERIENCE",
+            "01 · 체험하기",
             "신종피싱 모의체험",
-            "내 선택에 따라 달라지는 전화와 문자 상황.",
+            "내 선택에 따라 달라지는 전화와 문자 상황을 체험해요.",
         ),
         (
-            "02 · PRACTICE",
+            "02 · 연습하기",
             "모의대화 연습",
-            "의심스러운 요구에 대응하는 말을 연습하는 공간.",
+            "의심스러운 요구에 대응하는 말을 연습하는 공간이에요.",
         ),
         (
-            "03 · QUIZ",
+            "03 · 풀어보기",
             "문자 대응 퀴즈",
-            "문자 속 단서를 살펴보고 다음 행동을 선택하는 퀴즈.",
+            "문자 속 단서를 읽고 적절한 다음 행동을 골라요.",
         ),
         (
-            "04 · URL",
+            "04 · 확인하기",
             "의심 URL 확인",
-            "링크 주소에서 살펴봐야 할 특징을 알아보는 공간.",
+            "링크 주소에서 살펴봐야 할 특징을 알아보는 공간이에요.",
         ),
         (
-            "05 · LEARN",
+            "05 · 알아보기",
             "개념과 통계",
-            "피싱의 개념과 공식 자료를 바탕으로 배우는 공간.",
+            "피싱의 개념과 공식 자료를 바탕으로 배우는 공간이에요.",
         ),
     ]
 
-    # 아래 HTML에는 작성자가 정한 고정 문구만 넣습니다.
+    # 작성자가 정한 소개 문구로 기능 카드를 만듭니다.
     cards = "".join(
-        f"""
-        <article class="feature-card">
-            <div class="feature-number">{number}</div>
-            <h3>{title}</h3>
-            <p>{description}</p>
-        </article>
-        """
+        (
+            '<article class="feature-card">'
+            f'<div class="feature-number">{number}</div>'
+            f"<h3>{title}</h3>"
+            f"<p>{description}</p>"
+            "</article>"
+        )
         for number, title, description in features
     )
 
@@ -264,17 +264,16 @@ def show_home():
 
     st.caption("각 기능은 왼쪽 메뉴에서 열 수 있어요.")
 
-    st.subheader("정답보다 중요한 것은 판단의 이유")
+    st.subheader("내가 판단한 이유를 돌아봐요")
     st.write(
         "상대방을 믿게 만든 단서와 직접 확인한 사실은 다를 수 있어요. "
-        "체험을 마친 뒤, 내가 어떤 근거로 행동했는지 돌아보세요."
+        "체험을 마친 뒤, 내가 어떤 근거로 행동했는지 살펴보세요."
     )
 
 
+# 어느 페이지를 열어도 공통 디자인을 먼저 적용합니다.
 apply_design()
 
-# app.py가 모든 페이지의 공통 화면 역할을 합니다.
-# 기존 pages 폴더의 파일을 여기에서 명시적으로 연결합니다.
 navigation = st.navigation(
     {
         "잠깐!": [
@@ -319,9 +318,13 @@ navigation = st.navigation(
 
 with st.sidebar:
     st.divider()
-    st.markdown('<div class="brand">잠깐!</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="brand">잠깐!</div>',
+        unsafe_allow_html=True,
+    )
     st.caption("익숙함을 믿기 전에,\n\n확인하는 습관부터.")
 
+# 선택한 페이지를 실행합니다.
 navigation.run()
 
 st.markdown(
