@@ -3,7 +3,7 @@ import streamlit as st
 
 # 브라우저 탭 제목과 화면 구성을 설정한다.
 st.set_page_config(
-    page_title="다시확인",
+    page_title="보이스피싱 예방 체험",
     page_icon="☎️",
     layout="centered"
 )
