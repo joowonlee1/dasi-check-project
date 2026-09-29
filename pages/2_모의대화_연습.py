@@ -5,6 +5,8 @@ from google import genai
 from google.genai import types, errors
 
 
+# 연결을 확인한 모델을 고정해서 사용합니다.
+MODEL_NAME = "gemini-3.5-flash-lite"
 MAX_TURNS = 10
 
 OPENINGS = {
@@ -56,7 +58,7 @@ REPORT_RULES = """
 
 
 def new_client():
-    """매 요청에 사용할 API 클라이언트를 만듭니다."""
+    """API 요청에 사용할 클라이언트를 만듭니다."""
     return genai.Client(
         api_key=api_key,
         http_options=types.HttpOptions(timeout=45000),
@@ -64,16 +66,16 @@ def new_client():
 
 
 def error_message(error):
-    """API 키나 대화 내용을 노출하지 않고 오류를 안내합니다."""
+    """키나 대화 내용을 노출하지 않고 오류를 안내합니다."""
     if isinstance(error, errors.APIError):
         code = str(getattr(error, "code", ""))
 
         descriptions = {
             "400": "요청 설정 또는 API 키를 확인해 주세요.",
             "401": "API 키 인증을 확인해 주세요.",
-            "403": "이 요청에 필요한 API 접근 권한을 확인해 주세요.",
-            "404": "선택한 모델을 찾지 못했어요. 목록을 새로 조회해 주세요.",
-            "429": "사용량 또는 요청 한도에 도달했어요. 할당량을 확인해 주세요.",
+            "403": "API 접근 권한을 확인해 주세요.",
+            "404": "설정한 AI 모델을 찾지 못했어요.",
+            "429": "사용량 또는 요청 한도에 도달했어요.",
             "500": "API 서버 오류입니다. 잠시 후 다시 시도해 주세요.",
             "503": "API 서버가 일시적으로 응답하지 못했어요.",
         }
@@ -89,32 +91,8 @@ def error_message(error):
     return "연결을 완료하지 못했어요. 잠시 후 다시 시도해 주세요."
 
 
-def load_models():
-    """API에서 조회한 모델 중 일반 대화 후보를 고릅니다."""
-    names = []
-
-    excluded = (
-        "image", "tts", "audio", "live",
-        "embedding", "robotics", "computer-use",
-    )
-
-    with new_client() as client:
-        for model in client.models.list():
-            name = model.name or ""
-            actions = model.supported_actions or []
-
-            if (
-                "generateContent" in actions
-                and "gemini" in name.lower()
-                and not any(word in name.lower() for word in excluded)
-            ):
-                names.append(name.removeprefix("models/"))
-
-    return sorted(set(names))
-
-
 def reset_chat():
-    """현재 선택한 역할로 대화 기록을 초기화합니다."""
+    """현재 선택한 상황으로 대화를 초기화합니다."""
     scenario = st.session_state.get("live_scenario", "가족 사칭")
 
     st.session_state["live_messages"] = [
@@ -126,6 +104,7 @@ def reset_chat():
 
 
 def build_contents(messages):
+    """대화 기록을 API가 받는 형식으로 변환합니다."""
     contents = [
         types.Content(
             role="user",
@@ -144,11 +123,11 @@ def build_contents(messages):
     return contents
 
 
-def stream_answer(messages, scenario, model_name):
-    """응답을 순차적으로 화면에 전달합니다."""
+def stream_answer(messages, scenario):
+    """AI가 생성하는 답변을 순차적으로 전달합니다."""
     with new_client() as client:
         chunks = client.models.generate_content_stream(
-            model=model_name,
+            model=MODEL_NAME,
             contents=build_contents(messages),
             config=types.GenerateContentConfig(
                 system_instruction=ROLE_RULES + "\n현재 역할: " + scenario,
@@ -161,10 +140,11 @@ def stream_answer(messages, scenario, model_name):
                 yield chunk.text
 
 
-def generate_report(messages, model_name):
+def generate_report(messages):
+    """대화 기록을 바탕으로 학습 리포트를 생성합니다."""
     with new_client() as client:
         response = client.models.generate_content(
-            model=model_name,
+            model=MODEL_NAME,
             contents=json.dumps(messages, ensure_ascii=False),
             config=types.GenerateContentConfig(
                 system_instruction=REPORT_RULES,
@@ -179,14 +159,15 @@ def generate_report(messages, model_name):
 
 
 st.title("💬 잠깐! · AI 모의대화")
-st.write("내가 직접 답하면 AI가 대화 흐름에 맞춰 응답해요.")
-st.caption("교육용 가상 역할극 · 첫 인사는 미리 작성된 문장입니다.")
+st.write("직접 답하며 의심스러운 요구에 대응하는 연습을 해보세요.")
+st.caption("교육용 가상 역할극 · 첫 인사 이후의 답변은 AI가 생성합니다.")
 
 st.info(
     "입력한 대화는 답변과 리포트 생성을 위해 Google Gemini API로 전송됩니다. "
     "실제 개인정보나 인증번호 대신 가상의 상황으로 연습해 주세요."
 )
 
+# Secrets에서는 API 키만 읽습니다.
 try:
     api_key = str(st.secrets["GEMINI_API_KEY"]).strip()
 except (KeyError, FileNotFoundError):
@@ -197,54 +178,9 @@ if not api_key:
     st.warning("API 키가 비어 있어요.")
     st.stop()
 
-# 모델 목록은 세션에 보관하고 버튼을 눌렀을 때만 다시 조회합니다.
-st.subheader("1. 연결 모델 선택")
-
-if st.button("모델 목록 조회 / 새로고침"):
-    try:
-        with st.spinner("Google에서 모델 목록을 조회하고 있어요..."):
-            model_names = load_models()
-
-    except Exception as error:
-        st.error(error_message(error))
-
-    else:
-        st.session_state["live_models"] = model_names
-        st.session_state.pop("live_model", None)
-        reset_chat()
-        st.rerun()
-
-model_names = st.session_state.get("live_models", [])
-
-if not model_names:
-    st.info(
-        "위 버튼을 눌러 모델 목록을 조회해 주세요. "
-        "조회 후에도 목록이 없다면 이 앱에 맞는 모델 후보를 찾지 못한 상태입니다."
-    )
-    st.stop()
-
-model_name = st.selectbox(
-    "대화에 사용할 모델",
-    model_names,
-    index=None,
-    placeholder="조회된 목록에서 모델을 선택하세요.",
-    key="live_model",
-    on_change=reset_chat,
-)
-
-st.caption(
-    "목록 조회와 실제 대화 호출은 다릅니다. "
-    "모델별 이용 권한·할당량·요금이 적용될 수 있어요."
-)
-
-if model_name is None:
-    st.stop()
-
-st.subheader("2. 대화 연습")
-
 scenario = st.selectbox(
-    "연습할 상황",
-    list(OPENINGS),
+    "어떤 상황을 연습할까요?",
+    list(OPENINGS.keys()),
     key="live_scenario",
     on_change=reset_chat,
 )
@@ -252,10 +188,10 @@ scenario = st.selectbox(
 if "live_messages" not in st.session_state:
     reset_chat()
 
-st.caption("모델이나 상황을 바꾸면 현재 대화가 초기화됩니다.")
+st.caption("상황을 바꾸거나 처음부터 시작하면 현재 대화가 초기화됩니다.")
 st.button("대화 처음부터 시작", on_click=reset_chat)
 
-with st.expander("💡 힌트 보기"):
+with st.expander("💡 필요할 때 힌트 보기"):
     st.write(
         "상대방이 누구라고 주장하는지와 별개로, "
         "어떤 행동을 요구하는지 살펴보세요. "
@@ -264,6 +200,7 @@ with st.expander("💡 힌트 보기"):
 
 messages = st.session_state["live_messages"]
 
+# 완료된 대화를 표시합니다.
 for message in messages:
     role = "assistant" if message["role"] == "model" else "user"
 
@@ -275,7 +212,10 @@ report = st.session_state["live_report"]
 if report is not None:
     st.subheader("📋 나의 대응 리포트")
     st.markdown(report)
-    st.caption("AI가 만든 학습용 피드백입니다. 실제 대화와 비교해서 읽어 주세요.")
+    st.caption(
+        "AI가 만든 학습용 피드백입니다. "
+        "실제 대화와 비교해서 읽어 주세요."
+    )
 
     st.download_button(
         "리포트 내려받기",
@@ -314,11 +254,7 @@ if pending is not None:
         try:
             with st.chat_message("assistant"):
                 reply = st.write_stream(
-                    stream_answer(
-                        request_messages,
-                        scenario,
-                        model_name,
-                    )
+                    stream_answer(request_messages, scenario)
                 )
 
             if not isinstance(reply, str) or not reply.strip():
@@ -329,6 +265,7 @@ if pending is not None:
             st.rerun()
 
         else:
+            # 응답에 성공했을 때만 대화 기록에 추가합니다.
             st.session_state["live_messages"] = request_messages + [
                 {"role": "model", "text": reply}
             ]
@@ -338,11 +275,10 @@ if pending is not None:
 
 else:
     if turns < MAX_TURNS:
-        # 위치가 분명한 입력창과 전송 버튼을 사용합니다.
         with st.form("live_answer_form", clear_on_submit=True):
             user_text = st.text_area(
                 "✍️ 내 답변",
-                placeholder="예: 무슨 일이야? 먼저 다른 가족에게 확인할게.",
+                placeholder="상대에게 할 말을 직접 입력하세요.",
                 height=110,
                 max_chars=500,
             )
@@ -367,7 +303,7 @@ else:
         if st.button("대화 끝내고 리포트 보기"):
             try:
                 with st.spinner("대화 내용을 돌아보고 있어요..."):
-                    report = generate_report(messages, model_name)
+                    report = generate_report(messages)
 
             except Exception as error:
                 st.error(error_message(error))
