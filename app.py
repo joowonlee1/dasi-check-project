@@ -8,244 +8,218 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 
-def apply_design():
-    """모든 페이지에 밝고 읽기 쉬운 디자인을 적용합니다."""
-    st.markdown(
-        """
-        <style>
-        @import url(
-            'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap'
-        );
+    html, body, h1, h2, h3, h4, p, label,
+    button, input, textarea, select {
+        font-family: 'Noto Sans KR', sans-serif;
+    }
 
-        html, body,
-        [data-testid="stAppViewContainer"],
-        [data-testid="stSidebar"],
-        h1, h2, h3, h4, p, label,
-        button, input, textarea, select {
-            font-family: 'Noto Sans KR', sans-serif;
-        }
+    .stApp {
+        background: #FFFEF8;
+    }
 
-        /* 밝은 아이보리 배경 */
-        .stApp {
-            background: #FFFEF8;
-        }
+    [data-testid="stHeader"] {
+        background: #FFFEF8;
+    }
 
-        [data-testid="stHeader"] {
-            background: #FFFEF8;
-        }
+    [data-testid="stSidebar"] {
+        background: #F0F5F4;
+        border-right: 1px solid #CDDAD6;
+    }
 
-        [data-testid="stSidebar"] {
-            background: #F0F5F4;
-            border-right: 1px solid #CDDAD6;
-        }
+    .block-container {
+        max-width: 1000px;
+        padding-top: 3rem;
+        padding-bottom: 4rem;
+    }
 
-        .block-container {
-            max-width: 960px;
-            padding-top: 3rem;
-            padding-bottom: 4rem;
-        }
+    h1, h2, h3, h4 {
+        color: #172B3A;
+        letter-spacing: -0.035em;
+    }
 
-        /* 읽기 편한 글자와 줄 간격 */
-        h1, h2, h3, h4 {
-            color: #172B3A;
-            letter-spacing: -0.035em;
-        }
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stWidgetLabel"] p {
+        font-size: 1.03rem;
+        line-height: 1.85;
+    }
 
-        [data-testid="stMarkdownContainer"] p,
-        [data-testid="stMarkdownContainer"] li,
-        [data-testid="stWidgetLabel"] p {
-            font-size: 1.05rem;
-            line-height: 1.85;
-        }
+    [data-testid="stCaptionContainer"] p {
+        color: #52636B;
+        font-size: 0.92rem;
+    }
 
-        [data-testid="stCaptionContainer"] p {
-            color: #52636B;
-            font-size: 0.92rem;
-        }
+    .hero {
+        padding: 38px 30px;
+        margin-bottom: 24px;
+        background: #FFF4C7;
+        border: 1px solid #E7D89E;
+        border-radius: 24px;
+    }
 
-        /* 첫 화면의 연노란 소개 영역 */
-        .hero {
-            padding: 42px 34px;
-            margin-bottom: 24px;
-            border: 1px solid #E7D89E;
-            border-radius: 24px;
-            background: #FFF4C7;
-        }
+    .hero h1 {
+        padding: 0;
+        margin: 12px 0;
+        font-size: clamp(3.5rem, 9vw, 5.5rem);
+        font-weight: 900;
+        color: #172B3A;
+    }
 
-        .eyebrow {
-            color: #375C52;
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
+    .hero .tag {
+        color: #375C52;
+        font-weight: 700;
+    }
 
-        .hero h1 {
-            margin: 12px 0 18px;
-            padding: 0;
-            color: #172B3A;
-            font-size: clamp(3.5rem, 9vw, 5.5rem);
-            font-weight: 900;
-            line-height: 1.15;
-        }
+    .hero .lead {
+        color: #172B3A;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
 
-        .hero .lead {
-            color: #172B3A;
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
+    .hero .description {
+        color: #40545E;
+    }
 
-        .hero .description {
-            color: #40545E;
-            font-size: 1.05rem;
-            line-height: 1.85;
-            margin-bottom: 0;
-        }
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+    }
 
-        /* 흰색 기능 카드 */
+    .feature-card {
+        padding: 24px;
+        background: #FFFFFF;
+        border: 1px solid #CDDAD6;
+        border-top: 4px solid #0F766E;
+        border-radius: 16px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.2rem;
+        padding: 0;
+        margin: 10px 0;
+    }
+
+    .feature-card p {
+        color: #40545E;
+        margin: 0;
+    }
+
+    .feature-number {
+        color: #0F766E;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .brand {
+        color: #0F766E;
+        font-size: 2rem;
+        font-weight: 900;
+    }
+
+    .footer-note {
+        border-top: 1px solid #CDDAD6;
+        margin-top: 30px;
+        padding-top: 18px;
+        color: #52636B;
+        font-size: 0.9rem;
+        line-height: 1.8;
+    }
+
+    [data-testid="stButton"] button,
+    [data-testid="stFormSubmitButton"] button {
+        min-height: 48px;
+        border-radius: 12px;
+    }
+
+    button:focus-visible, a:focus-visible {
+        outline: 3px solid #0F766E !important;
+        outline-offset: 3px;
+    }
+
+    @media (max-width: 640px) {
         .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-            margin: 18px 0 28px;
+            grid-template-columns: 1fr;
         }
 
-        .feature-card {
-            padding: 26px;
-            border: 1px solid #CDDAD6;
-            border-top: 4px solid #0F766E;
-            border-radius: 16px;
-            background: #FFFFFF;
+        .hero {
+            padding: 26px 20px;
         }
-
-        .feature-number {
-            color: #0F766E;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
-
-        .feature-card h3 {
-            color: #172B3A;
-            font-size: 1.2rem;
-            margin: 12px 0;
-            padding: 0;
-        }
-
-        .feature-card p {
-            color: #40545E;
-            font-size: 1rem;
-            line-height: 1.8;
-            margin: 0;
-        }
-
-        .brand {
-            color: #0F766E;
-            font-size: 2rem;
-            font-weight: 900;
-            letter-spacing: -0.05em;
-        }
-
-        .footer-note {
-            margin-top: 30px;
-            padding-top: 18px;
-            border-top: 1px solid #CDDAD6;
-            color: #52636B;
-            font-size: 0.9rem;
-            line-height: 1.8;
-        }
-
-        /* 누르기 편한 버튼 */
-        [data-testid="stButton"] button,
-        [data-testid="stFormSubmitButton"] button {
-            min-height: 48px;
-            border-radius: 12px;
-            font-weight: 700;
-        }
-
-        button:focus-visible,
-        a:focus-visible {
-            outline: 3px solid #0F766E !important;
-            outline-offset: 3px;
-        }
-
-        /* 휴대전화에서는 카드를 한 줄에 하나씩 표시 */
-        @media (max-width: 640px) {
-            .hero {
-                padding: 28px 22px;
-            }
-
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def show_home():
-    """잠깐! 프로젝트의 첫 화면입니다."""
     st.markdown(
         """
         <section class="hero">
-            <div class="eyebrow">멈추고 · 확인하고 · 판단하기</div>
+            <div class="tag">멈추고 · 확인하고 · 판단하기</div>
             <h1>잠깐!</h1>
-            <p class="lead">
-                익숙한 목소리에도, 낯선 링크에도 잠깐.
-            </p>
+            <p class="lead">익숙한 목소리에도, 낯선 링크에도 잠깐.</p>
             <p class="description">
-                전화부터 문자까지 이어지는 상황 속에서<br>
-                나의 선택으로 배우는 피싱 대응 체험.
+                상황을 체험하고, 대화를 연습하고,<br>
+                증거를 찾아 사건을 해결하는 피싱 예방 플랫폼.
             </p>
         </section>
         """,
         unsafe_allow_html=True,
     )
 
-    st.page_link(
-        "pages/1_신종피싱_모의체험.py",
-        label="가족 사칭 전화 체험 시작하기",
-        icon="📞",
-    )
+    first, second = st.columns(2)
 
-    st.subheader("처음이라면 모의체험부터")
-    st.write(
-        "엄마로 표시된 전화가 왔습니다. "
-        "곧이어 문자를 확인해 달라는 요구가 이어집니다. "
-        "무엇을 믿고, 무엇을 확인할지 직접 선택해 보세요."
-    )
+    with first:
+        st.page_link(
+            "pages/1_신종피싱_모의체험.py",
+            label="전화 모의체험 시작",
+            icon="📞",
+        )
+
+    with second:
+        st.page_link(
+            "pages/3_문자_퀴즈.py",
+            label="피싱 방탈출 입장",
+            icon="🗝️",
+        )
+
+    st.subheader("어떤 방식으로 연습할까요?")
 
     features = [
         (
-            "01 · 체험하기",
-            "신종피싱 모의체험",
-            "내 선택에 따라 달라지는 전화와 문자 상황을 체험해요.",
+            "01 · 행동하기",
+            "📞 신종피싱 모의체험",
+            "전화와 후속 문자 속에서 행동을 선택하고 결과를 돌아봐요.",
         ),
         (
-            "02 · 연습하기",
-            "모의대화 연습",
-            "의심스러운 요구에 대응하는 말을 연습하는 공간이에요.",
+            "02 · 대화하기",
+            "💬 AI 모의대화",
+            "직접 답변을 작성하며 의심스러운 요구에 대응하는 말을 연습해요.",
         ),
         (
-            "03 · 풀어보기",
-            "문자 대응 퀴즈",
-            "문자 속 단서를 읽고 적절한 다음 행동을 골라요.",
+            "03 · 추리하기",
+            "🗝️ 피싱 방탈출",
+            "방 안의 증거를 모으고 세 개의 잠금을 풀어 사건을 해결해요.",
         ),
         (
             "04 · 확인하기",
-            "의심 URL 확인",
-            "링크 주소에서 살펴봐야 할 특징을 알아보는 공간이에요.",
+            "🔗 의심 URL 확인",
+            "주소에 접속하지 않고 호스트명과 살펴볼 특징을 확인해요.",
         ),
         (
             "05 · 알아보기",
-            "개념과 통계",
-            "피싱의 개념과 공식 자료를 바탕으로 배우는 공간이에요.",
+            "📊 개념과 통계",
+            "피싱 관련 개념과 출처가 표시된 공식 자료를 살펴봐요.",
         ),
     ]
 
-    # 작성자가 정한 소개 문구로 기능 카드를 만듭니다.
     cards = "".join(
         (
             '<article class="feature-card">'
@@ -262,17 +236,12 @@ def show_home():
         unsafe_allow_html=True,
     )
 
-    st.caption("각 기능은 왼쪽 메뉴에서 열 수 있어요.")
-
-    st.subheader("내가 판단한 이유를 돌아봐요")
+    st.subheader("정답보다 중요한 판단의 근거")
     st.write(
         "상대방을 믿게 만든 단서와 직접 확인한 사실은 다를 수 있어요. "
-        "체험을 마친 뒤, 내가 어떤 근거로 행동했는지 살펴보세요."
+        "왜 믿었는지, 무엇을 확인했는지 돌아보는 것이 ‘잠깐!’의 목표예요."
     )
 
-
-# 어느 페이지를 열어도 공통 디자인을 먼저 적용합니다.
-apply_design()
 
 navigation = st.navigation(
     {
@@ -292,13 +261,13 @@ navigation = st.navigation(
             ),
             st.Page(
                 "pages/2_모의대화_연습.py",
-                title="모의대화 연습",
+                title="AI 모의대화",
                 icon="💬",
             ),
             st.Page(
                 "pages/3_문자_퀴즈.py",
-                title="문자 대응 퀴즈",
-                icon="📩",
+                title="피싱 방탈출",
+                icon="🗝️",
             ),
         ],
         "확인과 학습": [
@@ -324,14 +293,13 @@ with st.sidebar:
     )
     st.caption("익숙함을 믿기 전에,\n\n확인하는 습관부터.")
 
-# 선택한 페이지를 실행합니다.
 navigation.run()
 
 st.markdown(
     """
     <div class="footer-note">
         잠깐! · 피싱 대응 교육 프로젝트<br>
-        가상 체험과 학습을 위한 서비스입니다.
+        모든 체험은 가상 상황입니다.
         실제 개인정보나 인증번호를 입력하지 마세요.
     </div>
     """,
