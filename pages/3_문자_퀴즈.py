@@ -16,6 +16,7 @@ SCAM = "01066201184"  # 저장된 이모 번호와 끝 두 자리만 뒤바뀐 �
 # 게임 속 시계: 09:00 기준 분 단위. 행동할 때마다 흐릅니다.
 START_CLOCK = 13
 TRUE_ENDING_LIMIT = 45  # 09:45 안에 탈출하면 트루 엔딩 조건 충족
+TIME_LIMIT_MINUTES = 30  # 실제 제한 시간(분). 이 숫자만 바꾸면 제한 시간이 바뀝니다.
 COST = {"visit": 1, "collect": 1, "wrong": 2, "hint": 3, "dial": 2, "scam": 5, "bad_number": 1}
 
 EVIDENCE = {
@@ -872,6 +873,60 @@ def show_ending():
     )
 
 
+def seconds_left():
+    return TIME_LIMIT_MINUTES * 60 - (time.time() - game["started"])
+
+
+def is_timed_out():
+    return game["unlocked"] < 3 and seconds_left() <= 0
+
+
+@st.fragment(run_every=1)
+def countdown():
+    """남은 실제 시간을 1초마다 갱신하고, 0이 되면 전체 화면을 다시 그려 실패 엔딩으로 넘깁니다."""
+    current = st.session_state.get("escape_game")
+    if not current or current["unlocked"] >= 3:
+        return
+    left = TIME_LIMIT_MINUTES * 60 - (time.time() - current["started"])
+    if left <= 0:
+        st.rerun(scope="app")
+    minutes, seconds = divmod(int(left), 60)
+    color = "#B91C1C" if left <= 300 else "#172B3A"
+    note = " · 서두르세요!" if left <= 300 else ""
+    st.markdown(
+        f'<div style="text-align:right;font-weight:900;font-size:1.25rem;color:{color};'
+        f'font-variant-numeric:tabular-nums;">⏳ 남은 시간 {minutes:02d}:{seconds:02d}{note}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def show_failure():
+    st.error(f"⏰ 제한 시간 {TIME_LIMIT_MINUTES}분이 지났습니다.")
+    st.subheader("🔴 배드 엔딩 · 확인이 끝나기 전에")
+    st.write(
+        "확인을 마치기 전에 시간이 다 됐습니다. 실제 상황이었다면 상대는 그사이 쉬지 않고 재촉했을 거예요. "
+        "사칭범이 ‘10분 안에’, ‘지금 당장’을 외치는 이유가 바로 이것입니다. 생각할 시간을 빼앗으면 확인을 건너뛰게 되니까요."
+    )
+    st.info(
+        "그래도 기억할 것: 실제 상황에는 제한 시간이 없습니다. 상대가 아무리 재촉해도 "
+        "요구를 멈추고, 원래 저장된 번호로 직접 확인하는 데 시간을 써도 괜찮아요."
+    )
+
+    first, second, third = st.columns(3)
+    first.metric("해제한 잠금", f"{game['unlocked']} / 3")
+    second.metric("수집한 증거", f"{len(game['evidence'])}개")
+    third.metric("힌트 사용", f"{sum(game['hints'].values())}회")
+
+    seen = pressure_messages()
+    if seen:
+        st.markdown("#### 그사이 도착한 압박 문자")
+        for at, text, tactic in seen:
+            st.markdown(f"- `{clock_text(at)}` “{text}” → **{tactic}**")
+
+    st.button("다시 도전하기", type="primary", on_click=fresh_game)
+    st.caption("실패한 기록은 공동 랭킹에 저장되지 않습니다.")
+
+
 def show_game_guide():
     with st.expander("📖 처음 오셨나요? 게임 방법 보기", expanded="escape_game" not in st.session_state):
         st.markdown("### 당신은 이 연락의 진실을 확인할 조사자입니다")
@@ -888,9 +943,13 @@ def show_game_guide():
             "4. **다시 조사** — 잠금을 풀면 서랍 안에 새로 조사할 것이 생겨요.\n"
             "5. **탈출 완료** — 엔딩과 상대가 쓴 압박 기술 해설을 확인하고 기록을 내려받아요."
         )
-        st.markdown("### 게임 속 시계")
+        st.markdown("### 제한 시간과 게임 속 시계")
         st.write(
-            "실제 시간 제한은 없어요. 대신 새 장소 조사(+1분), 증거 수집(+1분), 오답(+2분), 힌트(+3분), 전화(+2분)마다 "
+            f"방에 들어간 순간부터 실제 시간 {TIME_LIMIT_MINUTES}분 안에 탈출해야 해요. 시간이 다 되면 실패 엔딩이에요. "
+            "화면을 떠나 있어도 시간은 흐르니 주의하세요."
+        )
+        st.write(
+            "그와 별개로 새 장소 조사(+1분), 증거 수집(+1분), 오답(+2분), 힌트(+3분), 전화(+2분)마다 "
             "게임 속 시각이 흐르고, 시간이 지날수록 상대의 압박 문자가 도착해요. "
             "09:45 전에, 올바른 경로로만 확인해서 탈출하면 트루 엔딩을 볼 수 있어요."
         )
@@ -906,7 +965,7 @@ def show_game_guide():
 
 st.title("🗝️ 잠깐! · 피싱 방탈출")
 st.subheader("사건 01 — 엄마의 번호, 두 개의 진실")
-st.caption("교육용 가상 사건 · 실제 시간 제한 없음 · 실제 전화나 앱 설치는 실행되지 않아요")
+st.caption(f"교육용 가상 사건 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 실제 전화나 앱 설치는 실행되지 않아요")
 
 show_game_guide()
 
@@ -924,12 +983,17 @@ if "escape_game" not in st.session_state:
         "책상 위 휴대전화에 ‘엄마’가 표시됐었습니다. 상대는 다른 가족에게 연락하지 말라고 했고, "
         "2분 뒤 낯선 번호로 문자가 왔습니다. 지금은 09:13입니다."
     )
-    st.write("정답을 추측하기보다 확인 가능한 근거를 모으세요.")
+    st.write(f"‘방에 들어가기’를 누르는 순간 {TIME_LIMIT_MINUTES}분 타이머가 시작됩니다. 정답을 추측하기보다 확인 가능한 근거를 모으세요.")
 
 else:
     game = st.session_state["escape_game"]
 
+    if is_timed_out():
+        show_failure()
+        st.stop()
+
     if game["unlocked"] < 3:
+        countdown()
         show_status_bar()
 
     st.progress(game["unlocked"] / 3)
