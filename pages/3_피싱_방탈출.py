@@ -870,6 +870,103 @@ if "room_next_section" in st.session_state:
         "room_next_section"
     )
 
+def show_section_menu_style(game_running):
+    """방탈출 메뉴(라디오)를 큰 단계 카드처럼 보이게 꾸밉니다. 동작은 그대로입니다."""
+    running_badge = ""
+    if game_running:
+        # 게임이 진행 중이면 ‘게임 진행’ 카드에 깜빡이는 표시를 붙입니다.
+        running_badge = """
+        .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::before {
+            content: "● 진행 중";
+            color: #DC2626;
+            animation: room-pulse 1.4s ease-in-out infinite;
+        }
+        .st-key-room_section [role="radiogroup"] > div:nth-child(2) label[data-selected="true"]::before {
+            color: #FECACA;
+        }
+        """
+
+    st.markdown(
+        f"""
+        <style>
+        .room-nav-title {{
+            font-weight: 800; color: #0F766E; font-size: .95rem;
+            margin: 6px 0 4px; letter-spacing: -0.01em;
+        }}
+        .st-key-room_section {{
+            position: sticky; top: 3.2rem; z-index: 20;
+            background: #FFFEF8; padding: 6px 0 10px;
+        }}
+        .st-key-room_section [role="radiogroup"] {{
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px; width: 100%;
+        }}
+        .st-key-room_section [role="radiogroup"] > div {{ width: 100%; margin: 0; }}
+        .st-key-room_section label[data-testid="stRadioOption"] {{
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; min-height: 112px; justify-content: center;
+            padding: 14px 10px; margin: 0;
+            background: #FFFFFF; border: 2px solid #CDDAD6; border-radius: 18px;
+            box-shadow: 0 2px 0 #CDDAD6; cursor: pointer;
+            transition: transform .15s, box-shadow .15s, border-color .15s, background .15s;
+        }}
+        .st-key-room_section label[data-testid="stRadioOption"]:hover {{
+            border-color: #0F766E; transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(15, 118, 110, .18);
+        }}
+        /* 동그라미 선택 표시는 숨깁니다. */
+        .st-key-room_section label[data-testid="stRadioOption"] > div > div:first-child {{
+            display: none;
+        }}
+        .st-key-room_section label[data-testid="stRadioOption"] p {{
+            font-size: 1.15rem !important; font-weight: 800; text-align: center;
+            line-height: 1.4 !important; color: #172B3A; margin: 0;
+        }}
+        .st-key-room_section label[data-testid="stRadioOption"]::before {{
+            font-size: .72rem; font-weight: 800; letter-spacing: .08em;
+            color: #0F766E; margin-bottom: 4px;
+        }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::before {{ content: "STEP 1"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::before {{ content: "STEP 2"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::before {{ content: "STEP 3"; }}
+        .st-key-room_section label[data-testid="stRadioOption"]::after {{
+            font-size: .82rem; color: #52636B; margin-top: 4px; text-align: center;
+        }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::after {{ content: "규칙 확인하고 입장하기"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::after {{ content: "증거 모아 잠금 풀기"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::after {{ content: "기록 확인하기"; }}
+        /* 지금 보고 있는 메뉴 */
+        .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"] {{
+            background: #0F766E; border-color: #0F766E;
+            box-shadow: 0 8px 18px rgba(15, 118, 110, .35); transform: translateY(-2px);
+        }}
+        .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"] p,
+        .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"]::after {{
+            color: #FFFFFF !important;
+        }}
+        .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"]::before {{
+            color: #A7F3D0;
+        }}
+        @keyframes room-pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: .35; }} }}
+        {running_badge}
+        @media (max-width: 640px) {{
+            .st-key-room_section label[data-testid="stRadioOption"] {{ min-height: 92px; padding: 10px 6px; }}
+            .st-key-room_section label[data-testid="stRadioOption"] p {{ font-size: .98rem !important; }}
+            .st-key-room_section label[data-testid="stRadioOption"]::after {{ display: none; }}
+        }}
+        </style>
+        <div class="room-nav-title">👇 아래 단계를 눌러 이동하세요</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+_running = st.session_state.get("escape_game")
+show_section_menu_style(
+    bool(_running) and _running.get("unlocked", 0) < 3 and not _running.get("failed")
+)
+
 section = st.radio(
     "방탈출 메뉴",
     [
