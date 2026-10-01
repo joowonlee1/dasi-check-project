@@ -1,6 +1,7 @@
 import time
 
 import streamlit as st
+from firebase_support import user, result_panel
 
 
 # 모든 인물, 기록, 연락 결과는 교육용 가상 자료입니다.
@@ -143,6 +144,9 @@ def fresh_game():
         "hints": {1: 0, 2: 0, 3: 0},
         "place": "📱 휴대전화",
         "finished": None,
+        "rank_uid": user()["uid"] if user() else None,
+        "rank_nickname": user()["nickname"] if user() else None,
+        "rank_status": None,
     }
 
 
@@ -470,6 +474,8 @@ def show_ending():
         "교육용 가상 사건의 결과이며 실제 신원 확인을 보장하지 않는다."
     )
 
+    result_panel(game)
+
     st.download_button(
         "탈출 기록 내려받기",
         data=report.encode("utf-8-sig"),
@@ -480,7 +486,12 @@ def show_ending():
 
 st.title("🗝️ 잠깐! · 피싱 방탈출")
 st.subheader("사건 01 — 엄마의 번호, 두 개의 진실")
-st.caption("교육용 가상 방탈출 · API 없이 실행 · 실제 연락이나 설치 없음")
+st.caption("교육용 가상 방탈출 · 게임은 AI 없이 실행 · 랭킹은 Firebase 연결 · 실제 연락이나 설치 없음")
+
+if user():
+    st.caption(f"참여 닉네임: {user()['nickname']} · 새로 시작한 게임의 완료 기록을 공개 저장합니다.")
+else:
+    st.info("로그인 없이 연습할 수 있어요. 공동 랭킹 참여는 왼쪽 ‘닉네임 입장’에서 먼저 진행하세요.")
 
 if "escape_game" not in st.session_state:
     if st.button("방에 들어가기", type="primary"):
@@ -526,7 +537,7 @@ else:
     st.divider()
 
     with st.expander("게임 다시 시작"):
-        st.write("현재 증거와 잠금 기록이 모두 초기화됩니다.")
+        st.write("현재 증거와 잠금 기록이 초기화됩니다. 아직 저장하지 못한 결과는 먼저 다운로드하세요. Firebase에 저장된 공개 기록은 유지됩니다.")
         st.button(
             "기록을 지우고 다시 시작",
             on_click=fresh_game,
