@@ -9,6 +9,7 @@ from google.genai import types, errors
 # 모델 이름은 GitHub 코드에서 직접 지정합니다.
 MODEL_NAME = "gemini-3.5-flash-lite"
 MAX_TURNS = 10
+END_MARK = "[대화 종료]"
 
 OPENINGS = {
     "가족 사칭": (
@@ -39,9 +40,19 @@ ROLE_RULES = """
 - 실제 URL, 전화번호, 계좌번호, 송금·설치 절차를 만들지 않는다.
 - 필요하면 [가상 링크], [가상 앱]으로만 표현한다.
 - 폭력, 납치 위협, 모욕은 사용하지 않는다.
-- 사용자가 중단하거나 별도로 확인하겠다고 하면 존중한다.
-  압박을 강화하지 말고 역할극을 마무리하며
-  '대화 끝내고 리포트 보기' 버튼을 안내한다.
+- 사용자를 부를 때 '딸(아들)'처럼 괄호로 성별을 나누지 말고
+  '우리 애', '너'처럼 성별 없는 표현을 쓴다.
+
+역할극 끝내기 규칙:
+- 사용자가 원래 알던 번호·공식 대표번호로 직접 확인하겠다고 하거나,
+  다른 가족·112 등에 알리겠다고 하면 바로 역할극을 끝낸다.
+- 사용자가 요구를 두 번 분명하게 거절하면(싫어, 안 해 등, 오타 포함)
+  더 압박하지 말고 역할극을 끝낸다.
+- 끝낼 때는 역할에서 벗어나 한두 문장으로 말한다.
+  거절했다면 잘했다고 말하고, 실제 상황이라면
+  원래 저장된 번호로 직접 확인하는 것까지 하면 더 안전하다고 덧붙인다.
+- 끝내는 답변의 맨 마지막 줄에는 반드시 [대화 종료]라고만 쓴다.
+  그 외의 답변에는 [대화 종료]를 쓰지 않는다.
 - 실제 정보로 보이는 내용을 받으면 되풀이하지 않고
   가상의 상황이나 행동만 말해 달라고 안내한다.
 - 체험인지 물으면 교육용 가상 역할극이라고 밝힌다.
@@ -208,6 +219,118 @@ def run_diagnosis():
     return steps, flash[:10]
 
 
+# ── 오프라인 대본 모드 ───────────────────────────────
+# AI 연결이 막혀도 연습을 이어갈 수 있도록, 사용자의 답변 유형에 따라
+# 미리 준비한 대사로 응답합니다. 실제 번호·링크·계좌는 쓰지 않습니다.
+OFFLINE_SCRIPTS = {
+    "가족 사칭": [
+        "엄마 폰이 고장 나서 친구 폰으로 연락하는 거야. 이 번호로만 답장해 줘.",
+        "급하게 확인할 게 있어서 그러는데, 내가 보내는 [가상 앱]만 설치해 줄래?",
+        "아빠한테는 말하지 마. 걱정하실 거야. 너만 믿는다.",
+        "시간이 없어. 10분 안에 해야 돼. 설치했어?",
+        "왜 이렇게 엄마 말을 못 믿어? 엄마 지금 정말 곤란해.",
+    ],
+    "기관 사칭": [
+        "본인 명의 계좌가 범죄에 이용된 정황이 있어 조사 중입니다.",
+        "수사 보안상 이 통화는 다른 사람에게 알리면 안 됩니다.",
+        "본인 확인을 위해 안내하는 [가상 링크]에 접속해 주십시오.",
+        "지금 협조하지 않으면 출석 요구서가 발송될 수 있습니다.",
+        "통화를 끊으면 수사 비협조로 처리됩니다. 계속 진행하시죠.",
+    ],
+    "택배 사칭": [
+        "주소지가 불일치해서 상품이 보관 중입니다.",
+        "아래 [가상 링크]에서 주소를 다시 입력해 주셔야 배송됩니다.",
+        "오늘 안에 수정하지 않으면 상품이 반송됩니다.",
+        "앱 설치가 필요하니 [가상 앱]을 설치해 주세요.",
+        "고객님 때문에 배송이 계속 지연되고 있습니다. 빨리 처리해 주세요.",
+    ],
+}
+
+OFFLINE_EVADE = {
+    "가족 사칭": "지금 통화는 못 해. 아빠한테 전화하면 일만 커져. 그냥 문자로 하자.",
+    "기관 사칭": "대표번호로 전화하시면 담당자 연결이 안 됩니다. 이 번호로만 진행하셔야 합니다.",
+    "택배 사칭": "고객센터는 지금 연결이 안 됩니다. 이 링크로만 처리 가능합니다.",
+}
+
+VERIFY_WORDS = [
+    "확인", "다시 전화", "저장된", "원래 번호", "직접", "끊", "신고", "112", "1332",
+    "아빠", "이모", "가족", "의심", "사기", "피싱", "안 할", "안할", "못 해", "못해",
+    "거절", "싫", "대표번호", "공식", "누구", "증명", "앱으로 확인",
+]
+COMPLY_WORDS = [
+    "알았", "알겠", "응", "네", "어떻게", "뭐 하면", "뭘 하면", "설치", "보낼게",
+    "할게", "눌렀", "들어갔", "입력", "보내 줘", "보내줘",
+]
+
+
+def classify(text):
+    verify = any(word in text for word in VERIFY_WORDS)
+    comply = any(word in text for word in COMPLY_WORDS) and not verify
+    return "verify" if verify else "comply" if comply else "neutral"
+
+
+def offline_reply(messages, user_text, scenario):
+    """사용자 답변 유형에 따라 다음 대본 대사를 고릅니다."""
+    history = [m["text"] for m in messages if m["role"] == "user"] + [user_text]
+    verify_count = sum(classify(text) == "verify" for text in history)
+    step = sum(1 for m in messages if m["role"] == "model") - 1
+    script = OFFLINE_SCRIPTS[scenario]
+
+    if verify_count >= 2:
+        return (
+            "(역할극 종료) 상대의 요구를 멈추고 직접 확인하려 한 대응이 좋았어요. "
+            "실제 상황이라면 원래 저장된 번호로 직접 전화해 확인하는 것까지 해 보세요.\n[대화 종료]"
+        )
+    if classify(user_text) == "verify":
+        return OFFLINE_EVADE[scenario]
+    return script[min(max(step, 0), len(script) - 1)]
+
+
+def offline_report(messages):
+    """오프라인 모드에서 대화 기록만으로 간단한 리포트를 만듭니다."""
+    answers = [m["text"] for m in messages if m["role"] == "user"]
+    kinds = [classify(text) for text in answers]
+    verify = kinds.count("verify")
+    comply = kinds.count("comply")
+
+    good = []
+    improve = []
+    if verify:
+        good.append(f"- 답변 {len(answers)}번 중 {verify}번, 상대의 말을 그대로 믿지 않고 확인하거나 거절했어요.")
+    if kinds and kinds[0] == "verify":
+        good.append("- 첫 답변부터 확인을 시도한 점이 특히 좋아요.")
+    if comply:
+        improve.append(f"- {comply}번은 상대의 요구에 따르려는 답변이었어요. 요구가 나오면 먼저 멈추는 연습을 해 보세요.")
+    if not verify:
+        improve.append("- 원래 저장된 번호나 공식 대표번호로 직접 확인하겠다는 말을 해 보지 않았어요.")
+    if not good:
+        good.append("- 끝까지 대화에 참여하며 상대의 수법을 관찰했어요.")
+    if not improve:
+        improve.append("- 지금처럼 확인 경로를 스스로 정하는 습관을 실제 상황에서도 유지해 보세요.")
+
+    return "\n".join([
+        "**1. 대화 요약**",
+        f"상대는 급한 상황과 비밀 유지를 내세워 요구를 이어갔고, 나는 {len(answers)}번 답했어요.",
+        "",
+        "**2. 잘한 대응**",
+        *good,
+        "",
+        "**3. 보완할 대응**",
+        *improve,
+        "",
+        "**4. 다음에 사용할 문장**",
+        "- “지금은 아무것도 하지 않을게. 내가 원래 알던 번호로 다시 전화할게.”",
+        "- “확인되기 전에는 링크도, 앱 설치도 하지 않을게요.”",
+        "",
+        "_오프라인 대본 모드의 간단 리포트예요. 답변에 쓰인 표현을 기준으로 자동 분류했어요._",
+    ])
+
+
+def go_offline():
+    st.session_state["jamkkan_chat_offline"] = True
+    st.session_state["jamkkan_chat_error"] = None
+
+
 def reset_chat():
     """선택한 상황으로 새 대화를 시작합니다."""
     scenario = st.session_state.get(
@@ -221,6 +344,7 @@ def reset_chat():
     st.session_state["jamkkan_chat_pending"] = None
     st.session_state["jamkkan_chat_error"] = None
     st.session_state["jamkkan_chat_report"] = None
+    st.session_state["jamkkan_chat_ended"] = False
 
 
 def build_contents(messages):
@@ -344,6 +468,13 @@ st.button(
     on_click=reset_chat,
 )
 
+offline = st.toggle(
+    "📴 오프라인 대본 모드 (AI 연결이 안 될 때 미리 준비된 대사로 연습)",
+    key="jamkkan_chat_offline",
+)
+if offline:
+    st.info("오프라인 대본 모드로 진행 중이에요. 답변 내용에 따라 준비된 대사가 이어지고, 리포트도 자동으로 만들어져요.")
+
 with st.expander("🔧 AI 연결 진단 (오류가 날 때 눌러 보세요)"):
     st.caption("키로 모델 목록 조회 → 현재 모델 사용 가능 여부 → 짧은 답변 생성 순서로 확인해요. 키 값은 표시하지 않아요.")
     if st.button("연결 진단 실행", key="jamkkan_chat_diagnose"):
@@ -420,6 +551,13 @@ if pending is not None:
             st.session_state["jamkkan_chat_error"] = None
             st.rerun()
 
+        if not offline:
+            st.button(
+                "📴 오프라인 대본 모드로 이어서 연습하기",
+                type="primary",
+                on_click=go_offline,
+            )
+
         if st.button("이 메시지 취소"):
             st.session_state["jamkkan_chat_pending"] = None
             st.session_state["jamkkan_chat_error"] = None
@@ -432,12 +570,16 @@ if pending is not None:
 
         try:
             with st.chat_message("assistant"):
-                reply = st.write_stream(
-                    stream_answer(
-                        request_messages,
-                        scenario,
+                if offline:
+                    reply = offline_reply(messages, pending, scenario)
+                    st.write(reply)
+                else:
+                    reply = st.write_stream(
+                        stream_answer(
+                            request_messages,
+                            scenario,
+                        )
                     )
-                )
 
             if not isinstance(reply, str) or not reply.strip():
                 raise RuntimeError("empty_reply")
@@ -449,6 +591,11 @@ if pending is not None:
             st.rerun()
 
         else:
+            # 상대가 역할극을 끝냈는지 확인하고, 표시용 문구에서 표식을 지웁니다.
+            ended = END_MARK in reply
+            reply = reply.replace(END_MARK, "").strip()
+            st.session_state["jamkkan_chat_ended"] = ended
+
             # 성공한 대화만 기록에 추가합니다.
             st.session_state["jamkkan_chat_messages"] = (
                 request_messages
@@ -459,7 +606,13 @@ if pending is not None:
             st.rerun()
 
 else:
-    if turns < MAX_TURNS:
+    if st.session_state.get("jamkkan_chat_ended"):
+        st.success(
+            "🎉 역할극이 끝났어요. 상대의 요구에 끌려가지 않았어요! "
+            "아래 버튼으로 나의 대응을 돌아보세요."
+        )
+
+    elif turns < MAX_TURNS:
         with st.form(
             "jamkkan_answer_form",
             clear_on_submit=True,
@@ -500,10 +653,15 @@ else:
                 with st.spinner(
                     "대화 내용을 돌아보고 있어요..."
                 ):
-                    report = generate_report(messages)
+                    report = (
+                        offline_report(messages)
+                        if offline
+                        else generate_report(messages)
+                    )
 
             except Exception as error:
                 st.error(explain_error(error))
+                st.caption("위의 ‘📴 오프라인 대본 모드’를 켜면 간단 리포트를 바로 볼 수 있어요.")
 
             else:
                 st.session_state["jamkkan_chat_report"] = report
