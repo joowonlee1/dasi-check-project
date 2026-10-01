@@ -1,4 +1,5 @@
 import streamlit as st
+from firebase_support import show_login, show_ranking
 
 
 st.set_page_config(
@@ -269,6 +270,10 @@ navigation = st.navigation(
                 title="피싱 방탈출",
                 icon="🗝️",
             ),
+        ],
+        "함께 참여하기": [
+            st.Page(show_login, title="닉네임 입장", icon="👤", url_path="join"),
+            st.Page(show_ranking, title="공동 랭킹", icon="🏆", url_path="ranking"),
         ],
         "확인과 학습": [
             st.Page(
