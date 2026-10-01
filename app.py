@@ -1,5 +1,4 @@
 import streamlit as st
-from firebase_support import show_login, show_ranking
 
 
 st.set_page_config(
@@ -207,7 +206,7 @@ def show_home():
         (
             "03 · 추리하기",
             "🗝️ 피싱 방탈출",
-            "방 안의 증거를 모으고 세 개의 잠금을 풀어 사건을 해결해요.",
+            "증거를 모아 사건을 해결하고, 원하는 경우 닉네임으로 랭킹에 참여해요.",
         ),
         (
             "04 · 확인하기",
@@ -238,6 +237,7 @@ def show_home():
     )
 
     st.subheader("정답보다 중요한 판단의 근거")
+
     st.write(
         "상대방을 믿게 만든 단서와 직접 확인한 사실은 다를 수 있어요. "
         "왜 믿었는지, 무엇을 확인했는지 돌아보는 것이 ‘잠깐!’의 목표예요."
@@ -271,10 +271,6 @@ navigation = st.navigation(
                 icon="🗝️",
             ),
         ],
-        "함께 참여하기": [
-            st.Page(show_login, title="닉네임 입장", icon="👤", url_path="join"),
-            st.Page(show_ranking, title="공동 랭킹", icon="🏆", url_path="ranking"),
-        ],
         "확인과 학습": [
             st.Page(
                 "pages/4_URL_확인.py",
@@ -292,10 +288,12 @@ navigation = st.navigation(
 
 with st.sidebar:
     st.divider()
+
     st.markdown(
         '<div class="brand">잠깐!</div>',
         unsafe_allow_html=True,
     )
+
     st.caption("익숙함을 믿기 전에,\n\n확인하는 습관부터.")
 
 navigation.run()
