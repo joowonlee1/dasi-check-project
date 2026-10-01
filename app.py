@@ -185,7 +185,7 @@ def show_home():
 
     with second:
         st.page_link(
-            "pages/3_문자_퀴즈.py",
+            "pages/3_피싱_방탈출.py",
             label="피싱 방탈출 입장",
             icon="🗝️",
         )
@@ -266,7 +266,7 @@ navigation = st.navigation(
                 icon="💬",
             ),
             st.Page(
-                "pages/3_문자_퀴즈.py",
+                "pages/3_피싱_방탈출.py",
                 title="피싱 방탈출",
                 icon="🗝️",
             ),
