@@ -448,7 +448,7 @@ def show_ranking(embedded=False):
 
     if not embedded:
         st.page_link(
-            "pages/3_문자_퀴즈.py",
+            "pages/3_피싱_방탈출.py",
             label="방탈출 도전",
             icon="🗝️",
         )
