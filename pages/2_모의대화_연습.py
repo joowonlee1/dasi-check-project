@@ -1,4 +1,5 @@
 import json
+import re
 
 import streamlit as st
 from google import genai
@@ -131,6 +132,18 @@ def error_reason(error):
     return next((value for value in candidates if isinstance(value, str) and value in REASONS), None)
 
 
+def safe_message(error):
+    """Google 원문 메시지에서 키·긴 숫자·이메일을 가리고 앞부분만 남깁니다."""
+    data = getattr(error, "details", None)
+    if isinstance(data, dict):
+        data = data.get("error", data)
+    message = str(data.get("message", "")) if isinstance(data, dict) else ""
+    message = re.sub(r"AIza[0-9A-Za-z_\-]+", "[키 가림]", message)
+    message = re.sub(r"\S+@\S+", "[이메일 가림]", message)
+    message = re.sub(r"\d{6,}", "[번호 가림]", message)
+    return message[:180]
+
+
 def explain_error(error):
     """민감한 정보가 포함될 수 있는 원문 대신, 원인 코드와 해결 방법을 표시합니다."""
     if isinstance(error, errors.APIError):
@@ -151,12 +164,48 @@ def explain_error(error):
 
         detail = REASONS.get(reason) if reason else None
         text = detail or descriptions.get(code, "요청을 완료하지 못했어요.")
-        return f"API 오류 {code}: {text} [원인 코드: {reason or status}]"
+        result = f"API 오류 {code}: {text} [원인 코드: {reason or status}]"
+        if not reason:
+            message = safe_message(error)
+            if message:
+                result += f" · Google 메시지: {message}"
+        return result
 
     if isinstance(error, RuntimeError):
         return "표시할 답변이 없거나 응답이 중단됐어요."
 
     return "연결 또는 응답 처리 중 문제가 발생했어요."
+
+
+def run_diagnosis():
+    """키로 할 수 있는 일을 단계별로 확인해 문제 위치를 좁힙니다."""
+    steps = []
+    with new_client() as client:
+        try:
+            names = [model.name for model in client.models.list()]
+            steps.append(("✅", f"키로 모델 목록 조회 성공 ({len(names)}개)"))
+        except Exception as error:
+            steps.append(("❌", "모델 목록 조회 실패 → 키나 프로젝트 문제예요. " + explain_error(error)))
+            return steps, []
+
+        target = "models/" + MODEL_NAME
+        if target in names:
+            steps.append(("✅", f"{MODEL_NAME} 모델이 이 키의 사용 가능 목록에 있어요."))
+        else:
+            steps.append(("❌", f"{MODEL_NAME} 모델이 이 키의 사용 가능 목록에 없어요. 모델 이름을 바꿔야 해요."))
+
+        try:
+            client.models.generate_content(
+                model=MODEL_NAME,
+                contents="연결 확인입니다. '확인'이라고만 답하세요.",
+                config=types.GenerateContentConfig(max_output_tokens=16),
+            )
+            steps.append(("✅", f"{MODEL_NAME}로 짧은 답변 생성 성공 → 지금은 정상이에요."))
+        except Exception as error:
+            steps.append(("❌", f"{MODEL_NAME} 답변 생성 실패 → " + explain_error(error)))
+
+    flash = [name.removeprefix("models/") for name in names if "flash" in name and "gemini" in name]
+    return steps, flash[:10]
 
 
 def reset_chat():
@@ -294,6 +343,17 @@ st.button(
     "대화 처음부터 시작",
     on_click=reset_chat,
 )
+
+with st.expander("🔧 AI 연결 진단 (오류가 날 때 눌러 보세요)"):
+    st.caption("키로 모델 목록 조회 → 현재 모델 사용 가능 여부 → 짧은 답변 생성 순서로 확인해요. 키 값은 표시하지 않아요.")
+    if st.button("연결 진단 실행", key="jamkkan_chat_diagnose"):
+        with st.spinner("Gemini API 연결을 확인하고 있어요…"):
+            steps, flash = run_diagnosis()
+        for mark, text in steps:
+            st.write(f"{mark} {text}")
+        if flash:
+            st.write("이 키로 쓸 수 있는 Flash 계열 모델:")
+            st.code("\n".join(flash))
 
 with st.expander("💡 필요할 때 힌트 보기"):
     st.write(
