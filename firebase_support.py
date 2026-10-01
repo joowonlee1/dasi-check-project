@@ -6,19 +6,22 @@ from urllib.request import Request, urlopen
 from urllib.parse import urlencode, quote
 from urllib.error import HTTPError, URLError
 import streamlit as st
+
 CASE = "case01_v1"
+
 class ConnectionProblem(Exception):
-    def __init__(self, status=0):
     def __init__(self, status=0, reason="UNKNOWN"):
         self.status = status
         self.reason = reason
         super().__init__(f"연결 오류 ({status})")
+
 def config():
     try:
         cfg = st.secrets["firebase"]
         return str(cfg["api_key"]).strip(), str(cfg["project_id"]).strip()
     except (KeyError, FileNotFoundError):
         raise ConnectionProblem(-1) from None
+
 def request(url, method="GET", payload=None, token=None, form=False):
     headers = {}
     data = None
@@ -32,8 +35,6 @@ def request(url, method="GET", payload=None, token=None, form=False):
             raw = response.read()
             return json.loads(raw) if raw else {}
     except HTTPError as exc:
-        # Never show URLs, keys or authentication tokens in the UI.
-        raise ConnectionProblem(exc.code) from None
         # Display only known error codes, never arbitrary server text or credentials.
         reason = "UNKNOWN"
         allowed = {
@@ -62,8 +63,8 @@ def request(url, method="GET", payload=None, token=None, form=False):
         raise ConnectionProblem(exc.code, reason) from None
     except (URLError, TimeoutError, ValueError, OSError):
         raise ConnectionProblem() from None
+
 def explain(exc):
-    return {
     reasons = {
         "OPERATION_NOT_ALLOWED": "이 키가 속한 프로젝트에서 익명 인증을 허용하지 않았어요. 익명 인증을 켠 프로젝트의 웹앱 apiKey인지 확인하세요.",
         "ADMIN_ONLY_OPERATION": "이 프로젝트의 사용자 가입이 관리자에게만 허용되어 있어요. Authentication의 가입 허용 설정을 확인하세요.",
@@ -79,7 +80,6 @@ def explain(exc):
     detail = reasons.get(getattr(exc, "reason", "UNKNOWN"))
     fallback = {
         -1: "Streamlit Secrets의 [firebase] api_key와 project_id를 확인해 주세요.",
-        400: "Firebase 설정을 확인해 주세요. 익명 인증이 켜져 있는지 확인하세요.",
         400: "요청이 거절됐어요. 아래 오류 코드로 원인을 확인해야 해요.",
         401: "로그인 인증을 갱신하지 못했어요. 잠시 후 다시 시도하세요.",
         403: "접근이 거부됐어요. Firebase 프로젝트와 게시한 Firestore 규칙을 확인하세요.",
@@ -87,8 +87,10 @@ def explain(exc):
         429: "요청이 많거나 무료 한도에 도달했어요. 잠시 후 다시 시도하세요.",
     }.get(exc.status, "저장소에 연결하지 못했어요. 게임은 계속 이용할 수 있어요.")
     return f"{detail or fallback} [HTTP {exc.status} / {getattr(exc, 'reason', 'UNKNOWN')}]"
+
 def user():
     return st.session_state.get("firebase_user")
+
 def sign_in(nickname):
     key, _ = config()
     result = request("https://identitytoolkit.googleapis.com/v1/accounts:signUp?" + urlencode({"key": key}),
@@ -98,6 +100,7 @@ def sign_in(nickname):
         "refresh": result["refreshToken"], "expires": time.time() + int(result["expiresIn"]),
         "nickname": nickname,
     }
+
 def access_token():
     account = user()
     if not account:
@@ -109,11 +112,14 @@ def access_token():
         account.update(token=result["id_token"], refresh=result["refresh_token"],
                        expires=time.time() + int(result["expires_in"]))
     return account["token"]
+
 def root():
     _, project = config()
     return f"projects/{project}/databases/(default)/documents"
+
 def entry_path():
     return root() + f"/leaderboards/{CASE}/entries/" + quote(user()["uid"], safe="")
+
 def save_result(game):
     account = user()
     if not account or game.get("rank_uid") != account["uid"] or game.get("unlocked") != 3:
@@ -146,6 +152,7 @@ def save_result(game):
         request("https://firestore.googleapis.com/v1/" + path, token=token)
         return "existing"
     return "saved"
+
 @st.cache_data(ttl=60, show_spinner=False)
 def rankings(project):
     base = f"https://firestore.googleapis.com/v1/projects/{project}/databases/(default)/documents/leaderboards/{CASE}/entries"
@@ -178,6 +185,7 @@ def rankings(project):
         row["순위"] = rank
         previous = score
     return [{"순위": r["순위"], **r} for r in rows]
+
 def show_login():
     st.title("👤 닉네임 입장")
     st.write("방탈출은 로그인 없이도 즐길 수 있어요. 다른 사람과 탈출 기록을 나누고 싶을 때 닉네임으로 입장해 주세요.")
@@ -217,6 +225,7 @@ def show_login():
             except ConnectionProblem as exc:
                 st.error(explain(exc))
     st.page_link("pages/3_문자_퀴즈.py", label="로그인 없이 연습하기", icon="🗝️")
+
 def show_ranking():
     st.title("🏆 함께한 탈출 기록")
     st.caption("사건 01 · 버전 1 / 익명 계정별 첫 저장 기록 / 힌트 적은 순 → 재검토 적은 순, 같으면 공동 순위")
@@ -245,6 +254,7 @@ def show_ranking():
                     st.success("삭제했어요. 다음에 이 페이지를 열면 반영돼요.")
                 except ConnectionProblem as exc:
                     st.error(explain(exc))
+
 def result_panel(game):
     if not game.get("rank_uid"):
         st.info("로그인 없이 시작한 연습 기록이에요. 공동 랭킹에 참여하려면 닉네임 입장 후 새 게임을 시작해 주세요.")
