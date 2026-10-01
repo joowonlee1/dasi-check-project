@@ -80,35 +80,78 @@ def new_client():
     )
 
 
+# Google이 알려 주는 원인 코드 중 화면에 보여 줘도 안전한 것만 골라 설명합니다.
+# 키 값이나 서버 원문 메시지는 표시하지 않습니다.
+REASONS = {
+    "API_KEY_INVALID": "API 키가 올바르지 않아요. Google AI Studio에서 발급한 키를 Secrets의 GEMINI_API_KEY에 다시 붙여 넣어 주세요.",
+    "API_KEY_SERVICE_BLOCKED": (
+        "이 키는 Gemini API를 쓸 수 없도록 제한돼 있어요. Firebase 웹앱 설정의 apiKey를 넣었거나, "
+        "Google Cloud 콘솔에서 키의 ‘API 제한’에 Generative Language API가 빠져 있을 때 생겨요. "
+        "Google AI Studio에서 Gemini 전용 키를 새로 만들어 GEMINI_API_KEY에 넣어 주세요."
+    ),
+    "API_KEY_HTTP_REFERRER_BLOCKED": (
+        "키에 ‘웹사이트 주소 제한’이 걸려 있어요. Streamlit 서버에서 보내는 요청은 웹사이트 주소가 없어서 막혀요. "
+        "Google Cloud 콘솔에서 이 키의 애플리케이션 제한을 ‘없음’으로 바꾸거나 Gemini 전용 키를 새로 만들어 주세요."
+    ),
+    "API_KEY_IP_ADDRESS_BLOCKED": "키에 IP 주소 제한이 걸려 있어 Streamlit 서버의 요청이 막혔어요. 키의 애플리케이션 제한을 확인해 주세요.",
+    "SERVICE_DISABLED": (
+        "키가 속한 Google Cloud 프로젝트에서 Generative Language API가 꺼져 있어요. "
+        "Google Cloud 콘솔 → API 및 서비스에서 이 API를 사용 설정하거나, Google AI Studio에서 키를 새로 만들어 주세요."
+    ),
+    "CONSUMER_SUSPENDED": "키가 속한 프로젝트가 정지됐어요. Google AI Studio에서 다른 프로젝트로 새 키를 만들어 주세요.",
+    "USER_LOCATION_INVALID": "현재 서버 위치에서는 Gemini API를 쓸 수 없다고 응답했어요.",
+    "LEAKED_API_KEY": "Google이 이 키가 외부에 노출됐다고 판단해 차단했어요. 기존 키를 삭제하고 새 키를 만들어 Secrets에만 넣어 주세요.",
+    "BILLING_DISABLED": "프로젝트의 결제 설정이 꺼져 있어 사용할 수 없어요. 결제 설정 또는 무료 등급 사용 가능 여부를 확인해 주세요.",
+    "RESOURCE_EXHAUSTED": "요청량 또는 사용 한도에 도달했어요. 잠시 후 다시 시도하거나 Google AI Studio에서 할당량을 확인해 주세요.",
+}
+
+
+def error_reason(error):
+    """APIError 응답에서 알려진 원인 코드만 꺼냅니다."""
+    data = getattr(error, "details", None)
+    if isinstance(data, dict):
+        data = data.get("error", data)
+    if not isinstance(data, dict):
+        data = {}
+
+    candidates = []
+    for item in data.get("details", []) or []:
+        if isinstance(item, dict):
+            candidates.append(item.get("reason"))
+
+    message = str(data.get("message", ""))
+    if "leaked" in message.lower():
+        candidates.append("LEAKED_API_KEY")
+    if "API key not valid" in message:
+        candidates.append("API_KEY_INVALID")
+    if "location is not supported" in message.lower():
+        candidates.append("USER_LOCATION_INVALID")
+    candidates.append(getattr(error, "status", None))
+
+    return next((value for value in candidates if isinstance(value, str) and value in REASONS), None)
+
+
 def explain_error(error):
-    """민감한 정보가 포함될 수 있는 원문 대신 안내를 표시합니다."""
+    """민감한 정보가 포함될 수 있는 원문 대신, 원인 코드와 해결 방법을 표시합니다."""
     if isinstance(error, errors.APIError):
         code = str(getattr(error, "code", ""))
+        status = str(getattr(error, "status", "") or "UNKNOWN")
+        reason = error_reason(error)
 
         descriptions = {
             "400": "요청 설정 또는 API 키를 확인해 주세요.",
             "401": "API 키 인증에 실패했어요.",
             "402": "API 결제 또는 크레딧 상태를 확인해 주세요.",
-            "403": (
-                "Google이 API 접근을 거부했어요. "
-                "프로젝트의 접근 권한과 상태를 확인해 주세요."
-            ),
-            "404": (
-                "설정한 모델을 찾지 못했어요. "
-                "코드의 MODEL_NAME을 확인해 주세요."
-            ),
-            "429": (
-                "요청량 또는 사용 한도에 도달했어요. "
-                "Google AI Studio에서 할당량을 확인해 주세요."
-            ),
+            "403": "Google이 API 접근을 거부했어요. 뒤의 원인 코드로 이유를 확인해 주세요.",
+            "404": "설정한 모델을 찾지 못했어요. 코드의 MODEL_NAME을 확인해 주세요.",
+            "429": "요청량 또는 사용 한도에 도달했어요. Google AI Studio에서 할당량을 확인해 주세요.",
             "500": "API 서버 오류입니다. 잠시 후 다시 시도해 주세요.",
             "503": "API 서버가 일시적으로 응답하지 못했어요.",
         }
 
-        return (
-            f"API 오류 {code}: "
-            + descriptions.get(code, "요청을 완료하지 못했어요.")
-        )
+        detail = REASONS.get(reason) if reason else None
+        text = detail or descriptions.get(code, "요청을 완료하지 못했어요.")
+        return f"API 오류 {code}: {text} [원인 코드: {reason or status}]"
 
     if isinstance(error, RuntimeError):
         return "표시할 답변이 없거나 응답이 중단됐어요."
