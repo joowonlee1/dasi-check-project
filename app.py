@@ -1,6 +1,7 @@
 import html
 
 import streamlit as st
+from mascot_ui import show_mascot
 
 
 st.set_page_config(
@@ -323,6 +324,7 @@ FEATURES = [
 # ─────────────────────────────────────
 
 def show_home():
+    show_mascot("stop", "잠깐! 익숙한 연락도 한 번 더 확인해요.", width=200)
     st.markdown(
         """
         <section class="hero">
@@ -351,6 +353,8 @@ def show_home():
         "번호는 추천 순서입니다. "
         "원하는 활동부터 자유롭게 이용할 수 있어요."
     )
+
+    show_mascot("welcome", "반가워요! 원하는 활동을 골라 함께 연습해요.", width=110)
 
     for (
         number,
@@ -418,6 +422,7 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
+    show_mascot("stop", "멈추고, 확인하고, 판단하기", width=90)
     st.divider()
 
     st.markdown("### 읽는 순서")
