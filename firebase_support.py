@@ -1,6 +1,7 @@
 """Firebase 익명 인증과 공동 랭킹 연결."""
 
 import json
+import re
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
@@ -122,6 +123,20 @@ def request(url, method="GET", payload=None, token=None, form=False):
 
 def explain(exc):
     """오류 코드에 맞는 안내 문구를 만듭니다."""
+
+    if exc.reason == "NICKNAME_TAKEN":
+        return (
+            "이미 사용 중인 닉네임입니다. "
+            "다른 이름을 입력해 주세요."
+        )
+
+    if exc.reason == "NICKNAME_INVALID":
+        return (
+            "닉네임은 한글·영문·숫자·밑줄을 사용해 "
+            "2~12자로 입력해 주세요."
+        )
+
+
     reasons = {
         "OPERATION_NOT_ALLOWED": (
             "이 키가 속한 프로젝트에서 익명 인증을 허용하지 않았어요. "
@@ -184,28 +199,209 @@ def user():
     return st.session_state.get("firebase_user")
 
 
-def sign_in(nickname):
-    """익명 계정을 만들고 현재 세션에 연결합니다."""
-    key, _ = config()
+def normalize_nickname(nickname):
+    """앞뒤 공백을 제거하고 닉네임 형식을 확인합니다."""
+    name = nickname.strip()
+
+    if not re.fullmatch(r"[가-힣a-zA-Z0-9_]{2,12}", name):
+        raise ConnectionProblem(400, "NICKNAME_INVALID")
+
+    # Test와 test를 같은 이름으로 취급합니다.
+    return name, name.lower()
+
+
+def reserve_nickname(account):
+    """기존 기록을 확인하고, 비어 있는 이름만 예약합니다."""
+    _, canonical = normalize_nickname(account["nickname"])
+
+    token = account["token"]
+    base = "https://firestore.googleapis.com/v1/" + root()
+
+    path = (
+        root()
+        + f"/leaderboards/{CASE}/nicknames/"
+        + canonical
+    )
 
     url = (
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?"
-        + urlencode({"key": key})
+        "https://firestore.googleapis.com/v1/"
+        + quote(path, safe="/")
     )
 
-    result = request(
-        url,
-        "POST",
-        {"returnSecureToken": True},
-    )
+    def existing_owner():
+        try:
+            document = request(url, token=token)
+            return document["fields"]["uid"]["stringValue"]
 
-    st.session_state["firebase_user"] = {
-        "uid": result["localId"],
-        "token": result["idToken"],
-        "refresh": result["refreshToken"],
-        "expires": time.time() + int(result["expiresIn"]),
-        "nickname": nickname,
+        except ConnectionProblem as exc:
+            if exc.status == 404:
+                return None
+            raise
+
+    # 이미 예약된 이름인지 확인합니다.
+    owner = existing_owner()
+
+    if owner is not None:
+        if owner != account["uid"]:
+            raise ConnectionProblem(409, "NICKNAME_TAKEN")
+
+        # 같은 익명 계정의 재도전은 허용합니다.
+        return
+
+    # 기능 도입 전에 저장된 랭킹의 닉네임도 확인합니다.
+    # 캐시를 사용하지 않아 최신 기록을 읽습니다.
+    page = None
+
+    while True:
+        params = {"pageSize": 100}
+
+        if page:
+            params["pageToken"] = page
+
+        result = request(
+            base
+            + f"/leaderboards/{CASE}/entries?"
+            + urlencode(params),
+            token=token,
+        )
+
+        for document in result.get("documents", []):
+            old_name = (
+                document.get("fields", {})
+                .get("nickname", {})
+                .get("stringValue", "")
+            )
+
+            old_uid = document["name"].rsplit("/", 1)[-1]
+
+            if (
+                old_name.strip().lower() == canonical
+                and old_uid != account["uid"]
+            ):
+                raise ConnectionProblem(
+                    409,
+                    "NICKNAME_TAKEN",
+                )
+
+        page = result.get("nextPageToken")
+
+        if not page:
+            break
+
+    # 같은 이름의 문서를 동시에 만들려고 해도
+    # 먼저 생성한 한 계정만 성공합니다.
+    payload = {
+        "writes": [
+            {
+                "update": {
+                    "name": path,
+                    "fields": {
+                        "uid": {
+                            "stringValue": account["uid"],
+                        }
+                    },
+                },
+                "currentDocument": {
+                    "exists": False,
+                },
+                "updateTransforms": [
+                    {
+                        "fieldPath": "created_at",
+                        "setToServerValue": "REQUEST_TIME",
+                    }
+                ],
+            }
+        ]
     }
+
+    try:
+        request(
+            base + ":commit",
+            "POST",
+            payload,
+            token,
+        )
+
+    except ConnectionProblem:
+        # 동시 등록이나 통신 끊김 후 재시도 결과를 확인합니다.
+        owner = existing_owner()
+
+        if owner == account["uid"]:
+            return
+
+        if owner is not None:
+            raise ConnectionProblem(
+                409,
+                "NICKNAME_TAKEN",
+            ) from None
+
+        raise
+
+
+def sign_in(nickname):
+    """닉네임 예약에 성공해야 랭킹 입장을 완료합니다."""
+    name, canonical = normalize_nickname(nickname)
+    account = user()
+
+    if account:
+        current_name = normalize_nickname(
+            account["nickname"]
+        )[1]
+
+        if current_name != canonical:
+            raise ConnectionProblem(
+                409,
+                "NICKNAME_TAKEN",
+            )
+
+        # 기존 계정이면 인증 토큰을 갱신합니다.
+        access_token()
+
+    else:
+        # 중복 이름 때문에 입장에 실패해도
+        # 재시도할 때 익명 계정을 계속 만들지 않습니다.
+        account = st.session_state.get(
+            "nickname_pending_user"
+        )
+
+        if (
+            not account
+            or time.time() >= account["expires"] - 60
+        ):
+            key, _ = config()
+
+            url = (
+                "https://identitytoolkit.googleapis.com/"
+                "v1/accounts:signUp?"
+                + urlencode({"key": key})
+            )
+
+            result = request(
+                url,
+                "POST",
+                {"returnSecureToken": True},
+            )
+
+            account = {
+                "uid": result["localId"],
+                "token": result["idToken"],
+                "refresh": result["refreshToken"],
+                "expires": (
+                    time.time() + int(result["expiresIn"])
+                ),
+            }
+
+            st.session_state[
+                "nickname_pending_user"
+            ] = account
+
+        account["nickname"] = name
+
+    # 실패하면 아래 입장 완료 처리는 실행되지 않습니다.
+    reserve_nickname(account)
+
+    st.session_state["firebase_user"] = account
+    st.session_state.pop("nickname_pending_user", None)
 
 
 def access_token():
@@ -262,6 +458,15 @@ def save_result(game):
         or game.get("unlocked") != 3
     ):
         raise ConnectionProblem(401)
+
+        # 저장 직전에도 예약 소유자를 확인합니다.
+    sign_in(account["nickname"])
+
+    if game.get("rank_nickname") != account["nickname"]:
+        raise ConnectionProblem(
+            400,
+            "NICKNAME_INVALID",
+        )
 
     path = entry_path()
     token = access_token()
