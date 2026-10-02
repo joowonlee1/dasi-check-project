@@ -256,7 +256,7 @@ navigation = st.navigation(
         ],
         "체험과 연습": [
             st.Page(
-                "pages/1_신종피싱_모의체험.py",
+                "pages/1_할머니_폰_지키기.py",
                 title="할머니 폰 지키기",
                 icon="👵",
             ),
