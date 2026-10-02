@@ -179,8 +179,8 @@ def show_home():
     with first:
         st.page_link(
             "pages/1_신종피싱_모의체험.py",
-            label="전화 모의체험 시작",
-            icon="📞",
+            label="할머니 폰 지키기 시작",
+            icon="👵",
         )
 
     with second:
@@ -195,8 +195,8 @@ def show_home():
     features = [
         (
             "01 · 행동하기",
-            "📞 신종피싱 모의체험",
-            "전화와 후속 문자 속에서 행동을 선택하고 결과를 돌아봐요.",
+            "👵 할머니 폰 지키기",
+            "속고 있는 가족을 어떻게 도울지, 언제 끼어들고 어떻게 말할지 연습해요.",
         ),
         (
             "02 · 대화하기",
@@ -257,8 +257,8 @@ navigation = st.navigation(
         "체험과 연습": [
             st.Page(
                 "pages/1_신종피싱_모의체험.py",
-                title="신종피싱 모의체험",
-                icon="📞",
+                title="할머니 폰 지키기",
+                icon="👵",
             ),
             st.Page(
                 "pages/2_모의대화_연습.py",
