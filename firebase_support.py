@@ -8,6 +8,7 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 import streamlit as st
+from mascot_ui import show_mascot
 
 
 CASE = "case01_v1"
@@ -616,6 +617,7 @@ def rankings(project):
 
 def show_ranking(embedded=False):
     st.title("🏆 함께한 탈출 기록")
+    show_mascot("trophy", "함께 연습한 탈출 기록을 살펴봐요.", width=120)
 
     st.caption(
         "사건 01 · 버전 1 / 익명 계정별 첫 저장 기록 / "
