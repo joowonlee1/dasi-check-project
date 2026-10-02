@@ -3,6 +3,7 @@ import re
 import time
 
 import streamlit as st
+from mascot_ui import show_mascot
 
 from firebase_support import (
     ConnectionProblem,
@@ -550,6 +551,7 @@ def show_status_bar():
 
 def hint_panel(stage):
     with st.expander("💡 막혔을 때 힌트 (힌트 하나당 게임 시계 +3분)"):
+        show_mascot("hint", "필요할 때 한 단계씩 확인해요. 힌트 버튼을 누르면 사용 횟수가 늘어요.", width=90)
         used = game["hints"][stage]
 
         if used < len(HINTS[stage]):
@@ -829,6 +831,7 @@ def show_ending():
     hint_count = sum(game["hints"].values())
     title, story = ending()
 
+    show_mascot("escape", "탈출 성공! 근거를 비교하고 직접 확인했어요.", width=160)
     st.success("🚪 잠금 해제! 사건의 확인 경로를 완성했습니다.")
     st.subheader(title)
     st.write(story)
@@ -1089,6 +1092,7 @@ def start_game(ranked):
 
 
 def show_entry():
+    show_mascot("detective", "작은 단서도 놓치지 말고, 함께 사건을 풀어봐요.")
     show_game_guide()
 
     st.subheader("어떻게 참여할까요?")
