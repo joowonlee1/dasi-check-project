@@ -178,7 +178,7 @@ def show_home():
 
     with first:
         st.page_link(
-            "pages/1_신종피싱_모의체험.py",
+            "pages/1_할머니_폰_지키기.py",
             label="할머니 폰 지키기 시작",
             icon="👵",
         )
