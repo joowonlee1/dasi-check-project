@@ -1196,7 +1196,7 @@ def show_entry():
             else:
                 try:
                     
-                        sign_in(nickname)
+                    sign_in(nickname)
 
                     start_game(True)
 
