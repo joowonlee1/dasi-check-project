@@ -1,6 +1,7 @@
 import html
 
 import streamlit as st
+from mascot_ui import show_mascot
 
 
 # 모든 인물·기관명·번호·링크는 교육용 가상 자료입니다.
@@ -383,6 +384,7 @@ def show_last_log():
 
 
 def show_intro():
+    show_mascot("phone", "할머니와 함께, 원래 알고 있던 연락처로 확인해요.")
     st.markdown("### 🎯 미션: 할머니의 돈을 지켜라")
     st.markdown(
         "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어옵니다.\n\n"
@@ -516,6 +518,7 @@ def show_ending():
         file_name="jamkkan_grandma_report.txt",
         mime="text/plain",
     )
+    show_mascot("retry", "다른 선택도 연습해 볼까요?", width=100)
     st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=reset_game)
 
 
