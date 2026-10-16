@@ -324,51 +324,35 @@ FEATURES = [
 # ─────────────────────────────────────
 
 def show_home():
-    show_mascot("stop", "잠깐! 익숙한 연락도 한 번 더 확인해요.", width=200)
-    st.markdown(
-        """
-        <section class="hero">
-            <strong>멈추고 · 확인하고 · 판단하기</strong>
-            <h1>잠깐!</h1>
-            <p>
-                <b>
-                    익숙한 연락도, 낯선 링크도
-                    한 번 더 확인해요.
-                </b>
-            </p>
-            <p>
-                선택하고, 대화하고, 증거를 찾으며 배우는
-                피싱 예방 체험입니다.
-            </p>
-        </section>
-        """,
-        unsafe_allow_html=True,
+    with st.container(border=True):
+        st.title("✋ 잠깐!")
+        st.caption("멈추고 · 확인하고 · 판단하기")
+
+        show_mascot(
+            "stop",
+            "익숙한 연락도, 낯선 링크도 한 번 더 확인해요.",
+            width=120,
+        )
+
+        st.write(
+            "선택하고, 대화하고, 증거를 찾으며 배우는 "
+            "피싱 예방 체험입니다."
+        )
+
+        st.page_link(
+            FEATURES[0][3],
+            label="처음이라면 · 할머니 폰 지키기 시작",
+            icon="📱",
+        )
+
+    st.subheader("어떤 활동을 해볼까요?")
+    st.caption(
+        "번호는 추천 순서예요. 원하는 활동부터 시작해도 괜찮아요."
     )
 
-    st.subheader(
-        "처음이라면 01 할머니 폰 지키기부터 시작해 보세요"
-    )
-
-    st.write(
-        "번호는 추천 순서입니다. "
-        "원하는 활동부터 자유롭게 이용할 수 있어요."
-    )
-
-    show_mascot("welcome", "반가워요! 원하는 활동을 골라 함께 연습해요.", width=110)
-
-    for (
-        number,
-        title,
-        icon,
-        path,
-        steps,
-        description,
-    ) in FEATURES:
+    for number, title, icon, path, steps, description in FEATURES:
         with st.container(border=True):
-            st.markdown(
-                f"### {number} · {icon} {title}"
-            )
-
+            st.markdown(f"### {number} · {icon} {title}")
             st.write(description)
             st.caption(steps)
 
@@ -379,6 +363,12 @@ def show_home():
             )
 
     with st.expander("이용 전에 알아두세요"):
+        show_mascot(
+            "welcome",
+            "반가워요! 아래 내용을 확인하고 함께 연습해요.",
+            width=90,
+        )
+
         st.markdown(
             "- 실제 개인정보나 인증번호는 입력하지 마세요.\n"
             "- 체험은 가상이며 실제 연락이나 송금을 실행하지 않습니다.\n"
@@ -391,6 +381,7 @@ def show_home():
 # ─────────────────────────────────────
 # 페이지 이동
 # ─────────────────────────────────────
+
 
 home = st.Page(
     show_home,
@@ -422,22 +413,18 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
-    show_mascot("stop", "멈추고, 확인하고, 판단하기", width=90)
-    st.divider()
-
-    st.markdown("### 읽는 순서")
-
-    st.write(
-        "**01** 할머니 폰 지키기\n\n"
-        "**02** AI 대화\n\n"
-        "**03** 방탈출\n\n"
-        "**04** URL 확인\n\n"
-        "**05** 개념과 통계"
+    show_mascot(
+        "stop",
+        "멈추고, 확인하고, 판단하기",
+        width=90,
     )
 
     st.caption(
-        "원하는 페이지부터 이용해도 괜찮아요."
+        "처음이라면 ‘할머니 폰 지키기’를 추천해요. "
+        "원하는 활동부터 이용해도 괜찮아요."
     )
+
+
 
 
 # ─────────────────────────────────────
@@ -479,11 +466,12 @@ if current:
 
     if number == "03":
         st.info(
-            "**시작 전 필독** · 안내서의 "
-            "**04번 ‘꼭 알아야 할 7가지’**를 확인하세요.\n\n"
-            "**증거는 읽은 뒤 직접 수집**하고, "
-            "게임 중에는 **새로고침을 피하세요.** "
-            "제한 시간은 게임 화면의 안내를 확인하세요."
+            "📌 시작 전 필독\n\n"
+            "안내서의 04번 ‘꼭 알아야 할 7가지’를 확인하세요.\n\n"
+            "증거는 읽은 뒤 직접 수집해야 해요. "
+            "게임 중에는 새로고침을 피하세요.\n\n"
+            "실제 제한 시간은 30분이며, 게임을 시작하면 "
+            "타이머가 작동합니다."
         )
 
         # 방탈출의 6개 안내 탭 중 네 번째를 강조합니다.
