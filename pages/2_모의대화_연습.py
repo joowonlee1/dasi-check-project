@@ -432,22 +432,35 @@ def generate_report(messages):
 # ─────────────────────────────────────
 
 def explicit_stop(text):
-    compact = re.sub(r"\s+", "", text)
+    compact = re.sub(r"[\s\W_]+", "", text).lower()
 
     return compact in {
         "그만",
         "그만할래",
         "그만할래요",
+        "그만할게",
+        "그만할게요",
         "그만해",
         "그만해주세요",
+        "그만하겠습니다",
         "종료",
         "종료해줘",
+        "종료해주세요",
         "대화종료",
         "연습종료",
         "중단",
         "멈춰",
         "멈춰줘",
+        "더이상대화하지않을게요",
     }
+
+
+def finish_chat():
+    state["ended"] = True
+    state["pending"] = None
+    state["error"] = None
+
+
 
 
 def offline_reply(messages, user_text, scenario):
@@ -668,6 +681,13 @@ turns = sum(
 
 st.caption(f"완료한 대화: {turns} / {MAX_TURNS}회")
 
+if not state["ended"]:
+    st.button(
+        "연습 종료",
+        on_click=finish_chat,
+        key="stop_chat_now",
+    )
+
 pending = state["pending"]
 
 if pending is not None:
@@ -796,7 +816,7 @@ else:
                 "이 대화에는 준비된 오프라인 대본 응답이 포함되어 있어요."
             )
 
-        if st.button("대화 끝내고 리포트 보기"):
+        if st.button("대화 끝내고 리포트 보기", on_click=finish_chat):
             try:
                 with st.spinner("대화를 돌아보고 있어요…"):
                     if offline:
