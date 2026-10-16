@@ -6,235 +6,364 @@ import streamlit as st
 from mascot_ui import show_mascot
 
 
-# 모든 문자·기관명·상황은 교육용 가상 자료입니다.
-# 다른 페이지(할머니·모의대화·방탈출·URL)에서 다루지 않는 피싱 유형을 다룹니다.
-KEY = "river_v2"
-LIVES = 3               # 스테이지마다 목숨
-TIME_LIMIT = 15         # 돌이 가라앉기까지 걸리는 시간(초)
-PAUSES_PER_STAGE = 2    # 스테이지마다 쓸 수 있는 '잠깐!' 횟수
+# 모든 도시·계정·기관·게시물은 교육용 가상 자료입니다. (가상 도시 '도토리시')
+# 케임브리지대 'Bad News' 게임처럼, 속이는 쪽의 수법을 약하게 미리 체험하고(접종 이론)
+# 받는 사람 입장에서 그 수법을 가려내는 연습을 합니다.
+KEY = "river_v3"
+LIVES = 3
+ACCOUNT = "@도토리속보24"
 
 # 스테이지마다 수법 하나를 다룹니다.
-# note: 이미 만들어진 가짜 문자를 뜯어보며 수법을 미리 알아보는 부분
-# pairs: 강의 한 칸마다 나오는 두 갈래 돌 (진짜 하나, 가짜 하나)
-#        clue는 '잠깐!'을 누르면 보이는 단서입니다.
+# mission: 가짜 계정 운영자가 되어 수법 카드를 고르는 부분
+# pairs: 받는 사람이 되어 건너는 두 갈래 돌 (둘 다 가짜일 수도 있어요)
 STAGES = [
     {
-        "title": "중고거래의 함정",
-        "icon": "🛒",
-        "lesson": "중고거래는 앱 안에서만 대화하고 결제해요. 앱 밖 링크와 선입금은 멈춤 신호예요.",
-        "note": {
-            "message": "물건 아직 있죠? 지금 지방이라 직거래는 어렵고, 제가 안전결제로 먼저 보낼게요. 카톡 주시면 결제 링크 드릴게요!",
-            "parts": [
-                ("카톡 주시면", "중고거래 앱 밖 메신저로 옮겨 가요. 앱 밖에서는 거래 기록과 보호를 받기 어려워요."),
-                ("안전결제로 먼저 보낼게요", "‘안전결제’라는 말로 안심시키지만, 링크로 보내는 가짜 결제 페이지일 수 있어요."),
-                ("지방이라 직거래는 어렵고", "직접 만나지 않을 이유를 미리 만들어요."),
+        "tactic": "사칭",
+        "title": "믿을 만한 이름 빌리기",
+        "icon": "🎭",
+        "level": 1,
+        "time": 18,
+        "pauses": 2,
+        "mission": {
+            "prompt": "도토리시 공원에 새 분수가 생긴대요. 팔로워를 가장 많이 모을 방법을 골라 보세요.",
+            "choices": [
+                {"label": "🎭 계정 이름을 ‘도토리시청 공식’으로 바꾸고 시청 로고와 비슷한 프로필 사진을 단다",
+                 "followers": 800, "good": True,
+                 "post": "[도토리시청 공식] 새 분수 개장 기념! 오늘 오후 3시 선착순 100명 무료 아이스크림 🍦 공유하면 2개!"},
+                {"label": "📰 ‘공원 분수 공사가 끝났대요’라고 들은 그대로 쓴다",
+                 "followers": 20, "good": False,
+                 "post": "공원 분수 공사가 끝났대요. 언제 틀어 주는지는 모르겠어요."},
+                {"label": "😂 분수 사진에 웃긴 자막만 달아 올린다",
+                 "followers": 60, "good": False,
+                 "post": "(분수 사진) 드디어 우리 동네에도 바다가… 🌊"},
             ],
-            "defense": "대화와 결제는 중고거래 앱 안의 기능으로만 해요. 앱 밖 링크는 누르지 않아요.",
+            "why": "사람들은 내용보다 ‘누가 말했는지’를 먼저 보고 믿어요. 공식 기관처럼 보이기만 해도 의심이 확 줄어요.",
+            "spot": "인증 표시, 계정 개설일, 이전 게시물을 확인하고, 기관 홈페이지에 같은 공지가 있는지 찾아봐요.",
         },
         "pairs": [
             {
-                "real": {"sender": "중고거래 앱 채팅", "text": "토요일 오후 2시에 ○○역 2번 출구에서 직거래 가능할까요?",
-                         "why": "앱 안에서 직접 만나 확인하는 거래 약속이에요."},
-                "fake": {"sender": "중고거래 앱 채팅", "text": "제가 바빠서요. 카톡 주시면 안전결제 링크 보내 드릴게요.",
-                         "why": "대화를 앱 밖으로 옮기고 링크로 결제하게 해요."},
-                "clue": "한쪽은 대화를 앱 밖으로 옮기려 해요.",
+                "stones": [
+                    {"sender": "도토리시청 · 인증된 계정 · 2015년 개설", "real": True,
+                     "text": "공원 분수 시운전은 이번 주 토요일입니다. 자세한 일정은 시청 홈페이지 공지를 확인해 주세요.",
+                     "why": "오래된 인증 계정이고, 홈페이지에서 다시 확인하라고 해요."},
+                    {"sender": "도토리시청 공식 · 개설 3일 · 게시물 2개", "real": False,
+                     "text": "분수 개장 기념! 오늘 오후 3시 선착순 무료 아이스크림. 공유하면 2개!",
+                     "why": "이름만 공식처럼 지은 새 계정이에요. 공유를 조건으로 걸어요."},
+                ],
+                "clue": "두 계정의 개설일과 게시물 수를 비교해 보세요.",
             },
             {
-                "real": {"sender": "중고거래 앱 알림", "text": "구매자가 앱 안 결제를 완료했어요. 앱에서 거래 상태를 확인하세요.",
-                         "why": "앱 안 결제 기능의 알림이고, 확인도 앱에서 하라고 해요."},
-                "fake": {"sender": "문자 (저장 안 됨)", "text": "[안전결제] 구매자 대금 입금 완료. 판매 확정을 위해 수수료 5,000원을 먼저 결제하세요.",
-                         "why": "문자로 온 가짜 결제 안내예요. 판매자에게 돈을 먼저 내라고 해요."},
-                "clue": "결제 알림이 앱 안에서 왔나요, 문자로 왔나요?",
+                "stones": [
+                    {"sender": "도토리일보 · 언론사 홈페이지 기사", "real": True,
+                     "text": "시립 도서관, 다음 달부터 일요일에도 문 열어… 시의회 예산안 통과",
+                     "why": "언론사 홈페이지에 올라온 기사이고, 근거(예산안 통과)를 밝혀요."},
+                    {"sender": "‘도토리 일보 속보’ 캡처 · 단체 대화방에서 퍼짐", "real": False,
+                     "text": "[속보] 도서관 24시간 무료 개방 확정!! 시장님 직접 발표",
+                     "why": "언론사 이름을 띄어 써서 흉내 냈고, 원문 없이 캡처로만 퍼졌어요."},
+                ],
+                "clue": "언론사 이름이 똑같나요? 원래 기사는 어디 있나요?",
             },
             {
-                "real": {"sender": "중고거래 앱 채팅", "text": "물건 상태 사진 몇 장 더 보내 주실 수 있나요?",
-                         "why": "물건을 확인하려는 평범한 질문이에요."},
-                "fake": {"sender": "중고거래 앱 채팅", "text": "예약금 3만 원 먼저 보내 주시면 다른 분께 안 팔고 기다릴게요.",
-                         "why": "물건을 보기도 전에 돈부터 보내게 해요."},
-                "clue": "물건을 보기도 전에 돈을 요구하는 쪽이 있어요.",
+                "stones": [
+                    {"sender": "도토리소방서 · 인증된 계정", "real": True,
+                     "text": "건조한 날씨가 이어져 이번 주 공원 내 취사를 금지합니다.",
+                     "why": "기관다운 차분한 안내이고, 인증된 계정이에요."},
+                    {"sender": "도토리소방서 · 팔로워 12명", "real": False,
+                     "text": "불꽃 축제 취소래요ㅠㅠ 소방서가 방금 발표했어요!! 다들 빨리 공유해 주세요",
+                     "why": "기관 이름을 썼지만 말투와 팔로워 수가 공식 계정과 달라요."},
+                ],
+                "clue": "공식 기관이 ‘ㅠㅠ’, ‘다들 공유’라고 쓸까요?",
             },
             {
-                "real": {"sender": "중고거래 앱 채팅", "text": "택배 거래면 앱의 안전결제 기능으로 결제해 주세요.",
-                         "why": "앱이 제공하는 보호 기능을 쓰자고 해요."},
-                "fake": {"sender": "중고거래 앱 채팅", "text": "앱 결제는 수수료가 아까워서요. 제 계좌로 바로 입금해 주시면 오늘 발송할게요.",
-                         "why": "앱의 보호 기능을 피하려고 그럴듯한 이유를 대요."},
-                "clue": "앱의 보호 기능을 피하려는 이유를 대는 쪽은?",
+                "stones": [
+                    {"sender": "도토리시 교육청 · 공식 홈페이지 공지", "real": True,
+                     "text": "다음 주 수요일 개교기념일로 쉬는 학교 목록을 안내합니다.",
+                     "why": "공식 홈페이지 공지이고, 구체적인 목록을 줘요."},
+                    {"sender": "‘교육청 관계자’ · 익명 계정", "real": False,
+                     "text": "내일 도토리시 전체 학교 휴교 확정이래요! 관계자한테 직접 들었어요.",
+                     "why": "‘관계자’라는 말로 권위를 빌렸지만 누구인지 알 수 없어요."},
+                ],
+                "clue": "‘관계자’는 누구일까요? 이름도 소속도 없어요.",
             },
         ],
     },
     {
-        "title": "범죄가 되는 고액 알바",
-        "icon": "💼",
-        "lesson": "현금을 받아 옮기거나 통장·체크카드를 빌려주는 일은 내가 범죄에 가담하게 될 수 있어요.",
-        "note": {
-            "message": "[채용] 하루 2시간, 일당 25만 원! 고객님께 받은 서류 봉투를 지정 장소에 전달만 하면 됩니다. 경험·면접 없음, 즉시 출근.",
-            "parts": [
-                ("일당 25만 원", "하는 일에 비해 보수가 지나치게 많아요."),
-                ("봉투를 지정 장소에 전달만", "보이스피싱 피해자의 현금을 받아 옮기는 ‘수거책’ 일일 수 있어요."),
-                ("면접 없음, 즉시 출근", "회사와 사람을 확인할 기회를 주지 않아요."),
+        "tactic": "감정 자극",
+        "title": "화나고 불안하게 만들기",
+        "icon": "😡",
+        "level": 2,
+        "time": 16,
+        "pauses": 2,
+        "mission": {
+            "prompt": "평범한 소식은 잘 안 퍼져요. ‘붕어빵 노점 2곳이 옆 골목으로 옮긴다’는 소식을 어떻게 올릴까요?",
+            "choices": [
+                {"label": "😡 제목에 ‘충격’, ‘분노’를 넣고 누군가를 탓하며 크게 부풀린다",
+                 "followers": 1500, "good": True,
+                 "post": "【충격】 도토리시, 붕어빵 노점 전부 강제 철거?! 이게 맞습니까 😡😡 (실제: 노점 2곳 위치 이동)"},
+                {"label": "📊 ‘노점 2곳이 다음 주부터 시장 옆 골목으로 옮겨요’라고 정리한다",
+                 "followers": 40, "good": False,
+                 "post": "붕어빵 노점 2곳이 다음 주부터 시장 입구 옆 골목으로 옮긴대요."},
+                {"label": "❓ ‘붕어빵 어디로 갔는지 아시는 분?’이라고 묻는다",
+                 "followers": 90, "good": False,
+                 "post": "시장 앞 붕어빵 어디로 갔는지 아시는 분…?"},
             ],
-            "defense": "회사 정보와 근로계약을 확인하고, 현금 전달·계좌 대여·체크카드 전달 일은 거절해요. 몰랐어도 처벌받을 수 있어요.",
+            "why": "화나거나 불안하면 확인하기 전에 먼저 공유하게 돼요. 감정이 큰 글일수록 더 빨리, 더 멀리 퍼져요.",
+            "spot": "마음이 크게 흔들리는 글일수록 한 번 멈추고, 숫자(‘전부’ vs ‘2곳’)와 원문 출처를 확인해요.",
         },
         "pairs": [
             {
-                "real": {"sender": "구인 앱 · ○○카페", "text": "주말 홀 서빙 알바. 시급은 최저임금 이상, 근로계약서 작성, 매장 방문 면접.",
-                         "why": "가게가 공개돼 있고 계약서와 면접이 있는 일반 알바예요."},
-                "fake": {"sender": "구인 문자", "text": "고객에게 현금을 받아 지정 계좌로 입금만 하면 건당 10만 원 지급!",
-                         "why": "피해자의 돈을 옮기는 수거책 일이에요. 하는 순간 범죄에 가담할 수 있어요."},
-                "clue": "한쪽은 남의 돈을 받아 옮기는 일이에요.",
+                "stones": [
+                    {"sender": "도토리일보", "real": True,
+                     "text": "붕어빵 노점 2곳, 다음 주부터 시장 입구 옆 골목으로 이전",
+                     "why": "숫자와 장소가 구체적이고 차분해요."},
+                    {"sender": "@도토리분노", "real": False,
+                     "text": "【충격】 붕어빵 노점 전부 강제 철거… 시장님 이게 맞습니까?? 😡😡",
+                     "why": "‘전부’로 부풀리고 분노를 부추겨요."},
+                ],
+                "clue": "‘전부’와 ‘2곳’, 어느 쪽이 구체적인가요?",
             },
             {
-                "real": {"sender": "구인 앱 · ○○서점", "text": "도서 정리 단기 알바. 근무 장소 ○○서점 본점, 문의는 매장 대표번호로.",
-                         "why": "근무 장소와 연락처가 확인되고, 돈을 다루라는 요구가 없어요."},
-                "fake": {"sender": "메신저 (모르는 사람)", "text": "통장이랑 체크카드 잠깐 빌려주면 한 달에 50만 원 드려요. 세금 처리용이에요.",
-                         "why": "넘긴 통장·카드는 범죄 계좌로 쓰일 수 있고, 빌려준 사람도 처벌받을 수 있어요."},
-                "clue": "내 통장이나 카드를 넘기라는 쪽이 있어요.",
+                "stones": [
+                    {"sender": "@속보는여기", "real": False,
+                     "text": "이 글 보고 울었습니다… 도토리 보호소가 내일 문을 닫는대요ㅠㅠ 지금 바로 공유해 주세요",
+                     "why": "출처 없이 슬픔과 다급함만 내세워요."},
+                    {"sender": "@도토리맘카페", "real": False,
+                     "text": "어린이집 간식에 이상한 게 나왔대요!! 사진은 못 올리지만 진짜예요. 다 퍼뜨려 주세요",
+                     "why": "‘사진은 못 올리지만’이라며 확인을 막고 불안을 퍼뜨려요."},
+                ],
+                "clue": "둘 다 출처 없이 ‘지금 공유’를 재촉하고 있지 않나요?",
             },
             {
-                "real": {"sender": "구인 앱 · ○○학원", "text": "채점 보조 알바. 학원 주소 공개, 첫 출근 날 근로계약서 작성.",
-                         "why": "일하는 곳이 분명하고 계약 절차가 있어요."},
-                "fake": {"sender": "구인 문자", "text": "서류 봉투 전달만 하면 일당 25만 원. 면접 없음, 즉시 출근.",
-                         "why": "하는 일에 비해 보수가 지나치게 많고, 봉투 속은 피해자의 현금일 수 있어요."},
-                "clue": "하는 일에 비해 보수가 지나치게 많은 쪽은?",
+                "stones": [
+                    {"sender": "도토리 동물보호소 · 인증된 계정", "real": True,
+                     "text": "이번 주말 입양 행사를 엽니다. 봉사자 사전 신청은 홈페이지에서 받아요.",
+                     "why": "공식 계정이고, 할 수 있는 일을 차분히 안내해요."},
+                    {"sender": "@동물사랑도토리", "real": False,
+                     "text": "보호소 강아지들이 오늘 밤 모두 다른 곳으로 보내진대요. 막으려면 이 글 1만 공유!!",
+                     "why": "공유 수로 무언가를 막을 수 있다며 감정을 이용해요."},
+                ],
+                "clue": "공유 수로 무언가를 막을 수 있을까요?",
             },
             {
-                "real": {"sender": "구인 앱 · ○○물류", "text": "상하차 단기 알바. 4대 보험 가입, 사업자등록번호 공개.",
-                         "why": "회사를 확인할 수 있는 정보가 공개돼 있어요."},
-                "fake": {"sender": "구인 문자", "text": "구매대행 회사입니다. 회사 대신 고객 돈을 받아 상품권으로 바꿔 보내 주시면 됩니다.",
-                         "why": "남의 돈을 받아 다른 형태로 바꿔 보내는 일은 돈세탁에 이용될 수 있어요."},
-                "clue": "돈을 받아 다른 형태로 바꿔 보내는 일은 무엇에 쓰일까요?",
+                "stones": [
+                    {"sender": "도토리일보", "real": True,
+                     "text": "시내버스 요금 다음 달 100원 인상… 시 ‘연료비 상승분 반영’",
+                     "why": "반갑지 않은 소식이지만 금액과 이유를 정확히 밝혀요."},
+                    {"sender": "@시민의소리", "real": False,
+                     "text": "버스 요금 2배 폭등!!! 서민은 걸어 다니라는 거냐",
+                     "why": "숫자를 부풀려 분노를 키워요."},
+                ],
+                "clue": "숫자를 부풀리고 분노를 키우는 쪽은?",
             },
         ],
     },
     {
-        "title": "수익을 보장하는 투자방",
-        "icon": "📈",
-        "lesson": "‘원금 보장’, ‘확정 수익’을 말하는 투자 권유는 의심해요. 투자는 등록된 금융회사 앱에서만 해요.",
-        "note": {
-            "message": "[VIP 리딩방] 유명 애널리스트 ○○○ 선생님의 비밀 종목! 원금 보장, 한 달 300% 수익 인증 다수. 지금 입장하면 첫 종목 무료!",
-            "parts": [
-                ("원금 보장, 한 달 300% 수익", "진짜 투자에는 손실 위험이 있어요. 보장한다는 말 자체가 신호예요."),
-                ("유명 애널리스트 ○○○", "유명인의 이름이나 사진을 허락 없이 빌려 써요."),
-                ("수익 인증 다수", "인증 캡처는 쉽게 조작할 수 있어요."),
+        "tactic": "가짜 증거",
+        "title": "그럴듯한 증거 만들기",
+        "icon": "📸",
+        "level": 3,
+        "time": 15,
+        "pauses": 1,
+        "mission": {
+            "prompt": "팔로워들이 ‘증거 있어?’라고 물어요. 어떻게 할까요?",
+            "choices": [
+                {"label": "📸 몇 년 전 다른 도시 사진을 가져와 ‘오늘 도토리시’라고 붙인다",
+                 "followers": 2000, "good": True,
+                 "post": "[사진] 오늘 아침 도토리강 완전 범람!! 시내 다 잠김 (사진: 3년 전 다른 도시 태풍 사진)"},
+                {"label": "🙅 ‘증거는 없어요, 들은 이야기예요’라고 솔직히 말한다",
+                 "followers": -100, "good": False,
+                 "post": "사실 증거는 없어요. 들은 이야기라 확실하지 않아요."},
+                {"label": "🔗 시청 공지 원문을 찾아서 붙인다",
+                 "followers": 30, "good": False,
+                 "post": "시청 공지 원문: 도토리강 산책로 일부 통제 (오늘 07:00)"},
             ],
-            "defense": "금융감독원 ‘파인’에서 등록된 금융회사인지 확인하고, 투자는 내가 직접 설치한 증권사 앱에서만 해요.",
+            "why": "사진이나 캡처가 붙으면 사실처럼 느껴져요. 하지만 사진이 ‘언제, 어디서’ 찍혔는지는 잘 보이지 않아요.",
+            "spot": "누가 언제 찍었는지 확인하고, 이미지 검색으로 원본을 찾아봐요. 캡처는 원문이 있는지 확인해요.",
         },
         "pairs": [
             {
-                "real": {"sender": "○○증권 앱 (직접 설치)", "text": "보유 종목의 주주총회 일정이 공시되었어요. 앱에서 확인하세요.",
-                         "why": "직접 설치한 증권사 앱의 공지이고, 입금 요구가 없어요."},
-                "fake": {"sender": "단체 대화방 초대", "text": "하루 1%씩 확정 수익! 전용 앱에 입금하면 매일 수익금이 쌓여요.",
-                         "why": "‘확정 수익’은 투자에서 나올 수 없는 말이에요. 전용 앱은 가짜 거래 화면일 수 있어요."},
-                "clue": "‘확정’이라는 말이 붙은 쪽은?",
+                "stones": [
+                    {"sender": "도토리일보 · 사진: 본사 기자, 오늘 07:30", "real": True,
+                     "text": "밤사이 내린 비로 도토리강 수위 상승… 산책로 일부 통제",
+                     "why": "누가 언제 찍었는지 밝혔고, 내용도 과장 없이 구체적이에요."},
+                    {"sender": "@실시간도토리 · 사진 출처 없음", "real": False,
+                     "text": "[사진] 도토리강 완전 범람, 시내 전부 잠김!!",
+                     "why": "사진 출처와 날짜가 없고, 내용을 부풀렸어요."},
+                ],
+                "clue": "사진에 누가, 언제 찍었는지 적혀 있나요?",
             },
             {
-                "real": {"sender": "○○증권 앱 (직접 설치)", "text": "투자 위험 고지: 이 상품은 원금 손실이 발생할 수 있습니다.",
-                         "why": "진짜 금융회사는 손실 가능성을 꼭 알려 줘요."},
-                "fake": {"sender": "투자 대화방", "text": "원금 보장! 손실이 나면 100% 돌려드립니다. 오늘만 선착순 10명.",
-                         "why": "손실을 보장해 준다는 투자는 없어요. 선착순으로 서두르게도 해요."},
-                "clue": "진짜 투자 상품은 손실 가능성을 어떻게 다룰까요?",
+                "stones": [
+                    {"sender": "도토리시청 · 인증된 계정", "real": True,
+                     "text": "공원 공사 현장 사진을 공개합니다. (촬영일 10월 14일, 시청 홍보팀)",
+                     "why": "촬영일과 찍은 곳을 밝혔어요."},
+                    {"sender": "@도토리팩트", "real": False,
+                     "text": "공원 공사 중 고대 유물 발견! [사진] — 사진 속 표지판 글자가 다른 나라 말이에요",
+                     "why": "다른 곳 사진을 가져온 흔적이 사진 안에 남아 있어요."},
+                ],
+                "clue": "사진 속에 도토리시가 아닌 흔적이 있나요?",
             },
             {
-                "real": {"sender": "○○은행 앱 (직접 설치)", "text": "예금 만기가 다가왔어요. 재예치 여부를 앱에서 선택하세요.",
-                         "why": "직접 설치한 은행 앱 안에서 선택하라고 해요."},
-                "fake": {"sender": "SNS 광고", "text": "유명 경제 유튜버 ○○○도 추천! 지금 상담 신청하면 무료 종목 3개.",
-                         "why": "유명인 이름을 빌린 광고일 수 있어요. 본인의 공식 채널에서 직접 확인해요."},
-                "clue": "유명인 이름을 앞세운 쪽, 본인이 정말 말했을까요?",
+                "stones": [
+                    {"sender": "@뉴스캡처", "real": False,
+                     "text": "뉴스 화면 캡처: ‘도토리시, 내일부터 전 시민 지원금’ (방송사 다시보기에는 그런 뉴스가 없음)",
+                     "why": "방송 화면처럼 꾸민 캡처예요. 원래 방송에 없어요."},
+                    {"sender": "@도토리소식통", "real": False,
+                     "text": "시장님 문자 캡처 입수: ‘내일 깜짝 발표 있음’ (보낸 사람 번호는 가려짐)",
+                     "why": "누가 보냈는지 가린 캡처는 누구나 만들 수 있어요."},
+                ],
+                "clue": "캡처는 누구나 만들 수 있어요. 원본을 확인할 수 있나요?",
             },
             {
-                "real": {"sender": "○○증권 고객센터 (대표번호로 직접 전화)", "text": "상품 가입 전에 투자 성향 진단부터 진행하겠습니다.",
-                         "why": "내가 직접 건 대표번호이고, 정상적인 가입 절차예요."},
-                "fake": {"sender": "투자 대화방 매니저", "text": "수익금을 출금하려면 세금 20%를 먼저 입금하셔야 합니다.",
-                         "why": "돈을 빼려면 돈을 더 내라는 건 전형적인 수법이에요."},
-                "clue": "돈을 빼려면 돈을 더 내라는 쪽은?",
+                "stones": [
+                    {"sender": "도토리일보 · 시의회 생중계 다시보기 연결", "real": True,
+                     "text": "시의회, 공공자전거 확대안 통과",
+                     "why": "원본 영상을 직접 찾아볼 수 있어요."},
+                    {"sender": "@짤방도토리 · 영상 날짜 없음", "real": False,
+                     "text": "시의회 회의 중 의원들 몸싸움 영상!! (알고 보니 다른 나라 의회 영상)",
+                     "why": "날짜도 장소도 없는 영상을 도토리시 일처럼 붙였어요."},
+                ],
+                "clue": "원본 영상을 찾아볼 수 있는 쪽은?",
             },
         ],
     },
     {
-        "title": "QR코드 속 숨은 주소",
-        "icon": "📷",
-        "lesson": "QR코드는 찍기 전에는 어디로 가는지 보이지 않아요. 누가 붙였는지부터 생각해요.",
-        "note": {
-            "message": "(자동차 앞유리에 붙은 스티커) 주차 위반 과태료 안내 · 아래 QR코드를 찍어 즉시 납부하면 20% 감면!",
-            "parts": [
-                ("자동차 앞유리에 붙은 스티커", "누구나 프린트해서 붙일 수 있어요. 공식 고지인지 알 수 없어요."),
-                ("QR코드를 찍어", "찍기 전에는 어떤 주소로 가는지 볼 수 없어요."),
-                ("즉시 납부하면 20% 감면", "할인으로 서두르게 만들어요."),
+        "tactic": "편 가르기",
+        "title": "우리 편 vs 저쪽 편",
+        "icon": "👥",
+        "level": 4,
+        "time": 14,
+        "pauses": 1,
+        "mission": {
+            "prompt": "팔로워들이 계속 머물게 하고 싶어요. 어떤 글을 올릴까요?",
+            "choices": [
+                {"label": "👥 ‘슈크림파가 팥붕파를 공격한다’는 글로 두 편을 싸우게 만든다",
+                 "followers": 2500, "good": True,
+                 "post": "슈크림파들이 팥붕 가게 리뷰 테러 중이랍니다… 팥붕파 여러분, 가만히 있을 건가요? 🔥"},
+                {"label": "🤝 ‘팥도 슈크림도 다 맛있다’는 글을 올린다",
+                 "followers": 30, "good": False,
+                 "post": "팥도 슈크림도 다 맛있어요. 오늘은 반반 사 먹었어요 😋"},
+                {"label": "🗳️ ‘팥 vs 슈크림’ 투표만 올린다",
+                 "followers": 200, "good": False,
+                 "post": "여러분의 붕어빵 취향은? 🗳️ 팥 / 슈크림"},
             ],
-            "defense": "과태료는 공식 앱이나 직접 검색한 정부 사이트에서 조회해요. QR을 찍었다면 열리는 주소부터 확인해요.",
+            "why": "사람들이 ‘우리 편’과 ‘저쪽 편’으로 나뉘면, 우리 편 말은 확인하지 않고 믿고 저쪽 말은 무조건 의심하게 돼요.",
+            "spot": "‘저쪽 사람들은 다 ~래’, ‘우리가 공격받고 있다’ 같은 말이 보이면 멈추고 근거를 찾아요.",
         },
         "pairs": [
             {
-                "real": {"sender": "상황 카드", "text": "식당 테이블에 처음부터 인쇄된 메뉴 주문 QR. 찍으면 가게 이름의 주문 페이지가 열려요.",
-                         "why": "가게가 직접 둔 QR이에요. 그래도 결제 전에 가게 이름과 주소를 확인하면 더 좋아요."},
-                "fake": {"sender": "상황 카드", "text": "전봇대에 붙은 ‘정부 지원금 즉시 지급’ 전단. QR을 찍으면 이름과 주민번호를 입력하래요.",
-                         "why": "누가 붙였는지 모르는 전단이고, 민감한 개인정보를 요구해요."},
-                "clue": "누가 붙였는지 알 수 있는 쪽은?",
+                "stones": [
+                    {"sender": "도토리일보", "real": True,
+                     "text": "붕어빵 축제 설문: 팥 54%, 슈크림 46%… 상인들 ‘둘 다 판매 늘어’",
+                     "why": "숫자를 근거로 양쪽을 고르게 전해요."},
+                    {"sender": "@팥붕수호대", "real": False,
+                     "text": "슈크림파가 팥붕 가게 리뷰 테러 중!! 우리도 가만있으면 안 됩니다",
+                     "why": "근거 없이 ‘저쪽이 공격한다’며 우리 편을 부추겨요."},
+                ],
+                "clue": "‘저쪽이 공격한다’며 우리 편을 부추기는 쪽은?",
             },
             {
-                "real": {"sender": "상황 카드", "text": "학교 가정통신문에 인쇄된 설문 QR. 같은 주소가 글자로도 적혀 있어요.",
-                         "why": "보낸 곳이 확실하고, QR과 같은 주소를 글자로 비교할 수 있어요."},
-                "fake": {"sender": "상황 카드", "text": "택배 상자 송장 옆에 따로 덧붙인 ‘배송 오류 확인’ QR 스티커.",
-                         "why": "송장과 따로 덧붙인 스티커는 누군가 몰래 붙였을 수 있어요."},
-                "clue": "원래 인쇄된 것과 위에 덧붙인 것을 구분해 보세요.",
+                "stones": [
+                    {"sender": "@도토리남부", "real": False,
+                     "text": "북쪽 동네 사람들 때문에 우리 동네 버스가 줄었대요. 다 그쪽 탓이에요",
+                     "why": "근거 없이 다른 동네 사람들을 탓해요."},
+                    {"sender": "@도토리북부", "real": False,
+                     "text": "남쪽 사람들이 축제 예산을 다 가져갔다는 소문 들었어요? 이번엔 참지 맙시다",
+                     "why": "소문을 근거로 편을 갈라 화를 부추겨요."},
+                ],
+                "clue": "둘 다 근거 없이 다른 동네를 탓하고 있지 않나요?",
             },
             {
-                "real": {"sender": "상황 카드", "text": "주차장 정산기 화면에 뜨는 결제 QR.",
-                         "why": "기계가 직접 화면에 보여 주는 QR이에요."},
-                "fake": {"sender": "상황 카드", "text": "주차장 정산기 위에 테이프로 덧붙인 ‘간편 결제 QR’ 스티커.",
-                         "why": "원래 기계 위에 덧붙인 QR은 바꿔치기한 것일 수 있어요."},
-                "clue": "화면에 뜬 것과 테이프로 붙인 것의 차이는?",
+                "stones": [
+                    {"sender": "도토리시청 · 인증된 계정", "real": True,
+                     "text": "버스 노선 개편 설명회를 엽니다. 동네별 변경 내용은 홈페이지 자료에서 확인하세요.",
+                     "why": "모두가 확인할 수 있는 자료를 공개해요."},
+                    {"sender": "@도토리진실", "real": False,
+                     "text": "노선 개편은 특정 동네만 챙기려는 거예요! 우리 동네만 손해 보는 거 아시죠?",
+                     "why": "자료 대신 ‘우리만 손해’라는 감정으로 편을 갈라요."},
+                ],
+                "clue": "자료를 보여 주는 쪽과 ‘우리만 손해’를 강조하는 쪽의 차이는?",
             },
             {
-                "real": {"sender": "상황 카드", "text": "박물관 전시 안내판에 인쇄된 오디오 가이드 QR. 찍으면 박물관 이름의 페이지가 열려요.",
-                         "why": "기관이 직접 만든 안내판이고, 돈이나 정보를 요구하지 않아요."},
-                "fake": {"sender": "상황 카드", "text": "자동차 앞유리에 붙은 ‘주차 위반 과태료 · QR로 즉시 납부하면 20% 감면’ 스티커.",
-                         "why": "누구나 붙일 수 있는 스티커이고, 할인으로 바로 돈을 내게 해요."},
-                "clue": "할인을 내세워 바로 돈을 내게 하는 쪽은?",
+                "stones": [
+                    {"sender": "도토리일보 칼럼 · 필자 이름과 직함 표시", "real": True,
+                     "text": "축제 예산, 동네별 배분 기준부터 공개해야",
+                     "why": "의견이지만 누가 썼는지 밝히고, 확인할 방법(기준 공개)을 말해요."},
+                    {"sender": "@익명의도토리인", "real": False,
+                     "text": "모두가 아는 사실: 그 동네 사람들은 원래 다 이기적이에요",
+                     "why": "‘모두가 아는 사실’이라며 한 집단 전체를 몰아세워요."},
+                ],
+                "clue": "의견을 말할 때 이름과 근거를 밝히는 쪽은?",
             },
         ],
     },
     {
-        "title": "공짜·당첨이라는 미끼",
-        "icon": "🎁",
-        "lesson": "응모한 적 없는 당첨이나 공짜 선물이 정보·인증·결제를 요구하면 멈춰요.",
-        "note": {
-            "message": "축하합니다! ○○마트 10주년 이벤트에 당첨되셨습니다. 경품 무선 이어폰 배송을 위해 배송비 3,000원 결제와 주소 입력 부탁드립니다.",
-            "parts": [
-                ("당첨되셨습니다", "응모한 기억이 없어도 기뻐서 경계를 풀게 해요."),
-                ("배송비 3,000원 결제", "적은 금액이라 부담 없어 보이지만, 결제 정보를 빼내려는 목적일 수 있어요."),
-                ("주소 입력", "개인정보를 모아 다음 사기에 이용할 수 있어요."),
+        "tactic": "음모론",
+        "title": "아무도 말해 주지 않는 ‘진실’",
+        "icon": "🧩",
+        "level": 5,
+        "time": 12,
+        "pauses": 1,
+        "mission": {
+            "prompt": "팔로워들이 의심을 시작했어요. 계정을 지킬 마지막 한 방은?",
+            "choices": [
+                {"label": "🧩 ‘와이파이가 끊기는 건 비둘기 때문이고 시청은 알고도 숨긴다’고 쓰고, 반박하면 ‘그것도 조작’이라고 한다",
+                 "followers": 3000, "good": True,
+                 "post": "도토리시 와이파이가 자꾸 끊기는 진짜 이유: 비둘기 🐦 시청은 알고도 숨기는 중. 이 글 곧 삭제될지도 몰라요."},
+                {"label": "🙇 그동안의 글이 틀렸다고 인정하고 정정한다",
+                 "followers": -500, "good": False,
+                 "post": "그동안 올린 글 중 확인되지 않은 내용이 있었습니다. 정정합니다."},
+                {"label": "🔇 당분간 아무것도 올리지 않는다",
+                 "followers": 0, "good": False,
+                 "post": "(조용…)"},
             ],
-            "defense": "응모한 적 없는 당첨은 의심하고, 그 회사의 공식 앱이나 고객센터에서 이벤트가 있는지 확인해요.",
+            "why": "음모론은 반박까지 ‘숨기려는 증거’로 바꿔 버려서, 어떤 사실을 보여 줘도 믿음이 흔들리지 않게 만들어요.",
+            "spot": "‘곧 삭제될지도’, ‘언론이 말 안 해 주는’, ‘반박도 조작’ 같은 말은 확인을 막는 장치예요. 확인할 수 있는 근거가 있는지부터 봐요.",
         },
         "pairs": [
             {
-                "real": {"sender": "○○편의점 앱 (직접 설치)", "text": "응모하신 이벤트 결과가 나왔어요. 앱의 ‘내 쿠폰함’에서 확인하세요.",
-                         "why": "내가 응모한 이벤트이고, 앱 안에서 확인하라고 해요."},
-                "fake": {"sender": "문자 (저장 안 됨)", "text": "○○마트 10주년 이벤트 당첨! 경품 배송비 3,000원 결제와 주소 입력 부탁드립니다.",
-                         "why": "응모한 적 없는 당첨인데 결제와 주소를 요구해요."},
-                "clue": "응모한 기억이 있는 쪽은?",
+                "stones": [
+                    {"sender": "도토리시청 · 인증된 계정", "real": True,
+                     "text": "공공 와이파이 끊김은 장비가 낡아서 생긴 문제입니다. 11월까지 교체하겠습니다.",
+                     "why": "원인과 해결 계획을 공개해요."},
+                    {"sender": "@깨어있는도토리", "real": False,
+                     "text": "와이파이 끊김의 진짜 이유는 아무도 말해 주지 않아요. 이 글 곧 삭제될 수 있으니 저장하세요.",
+                     "why": "‘곧 삭제될지도’라는 말로 확인 대신 저장과 공유를 재촉해요."},
+                ],
+                "clue": "‘곧 삭제될지도’는 무엇을 막으려는 말일까요?",
             },
             {
-                "real": {"sender": "○○도서관 (저장된 번호)", "text": "독서 퀴즈 상품은 다음 방문 때 안내 데스크에서 받아 가세요.",
-                         "why": "참여한 행사이고, 직접 방문해서 받는 방식이에요."},
-                "fake": {"sender": "SNS 메시지", "text": "팔로워 감사 이벤트 1등 당첨! 상품 발송을 위해 신분증 사진과 계좌번호를 보내 주세요.",
-                         "why": "경품을 받는 데 신분증과 계좌번호는 필요하지 않아요."},
-                "clue": "경품을 받는 데 신분증이 필요할까요?",
+                "stones": [
+                    {"sender": "도토리일보 · 팩트체크", "real": True,
+                     "text": "‘비둘기가 와이파이 끊는다’는 소문, 사실 아냐… 통신 전문가 ‘장비 문제’",
+                     "why": "전문가 확인을 거친 팩트체크예요."},
+                    {"sender": "@진실탐사", "real": False,
+                     "text": "팩트체크 기사도 조작입니다. 기자들도 다 한통속이에요.",
+                     "why": "반박까지 ‘조작’이라고 해서 어떤 증거도 받아들이지 않게 만들어요."},
+                ],
+                "clue": "반박까지 ‘조작’이라고 하면, 어떤 증거가 나와도 생각이 바뀔까요?",
             },
             {
-                "real": {"sender": "○○통신사 앱 (직접 설치)", "text": "이번 달 멤버십 무료 영화 쿠폰이 지급됐어요. 앱에서 확인하세요.",
-                         "why": "내가 쓰는 통신사 앱 안의 혜택 안내예요."},
-                "fake": {"sender": "문자 (저장 안 됨)", "text": "무료 기프티콘이 도착했어요! 받으려면 링크에서 휴대폰 본인인증을 해 주세요.",
-                         "why": "선물을 핑계로 본인인증을 시켜 정보를 빼내려 해요."},
-                "clue": "선물을 받으려면 본인인증부터 하라는 쪽은?",
+                "stones": [
+                    {"sender": "@비밀문서", "real": False,
+                     "text": "시청 내부 문서 유출: ‘비둘기 프로젝트’ (문서 출처 없음)",
+                     "why": "확인할 수 없는 ‘비밀 문서’를 내세워요."},
+                    {"sender": "@도토리각성", "real": False,
+                     "text": "TV는 절대 알려 주지 않는 진실. 알고 싶으면 우리 단체방으로 오세요.",
+                     "why": "‘숨겨진 진실’을 미끼로 확인이 어려운 다른 곳으로 끌어들여요."},
+                ],
+                "clue": "둘 다 확인할 수 없는 ‘비밀’을 내세우고 있지 않나요?",
             },
             {
-                "real": {"sender": "학교 알림 앱", "text": "체육대회 경품 추첨 결과는 내일 학급 게시판에 공지됩니다.",
-                         "why": "보낸 곳이 확실하고, 아무것도 요구하지 않아요."},
-                "fake": {"sender": "메신저", "text": "축하해! 룰렛 이벤트 최신폰 당첨! 친구 5명을 초대하면 바로 발송돼.",
-                         "why": "친구 초대를 조건으로 걸어 같은 사기를 퍼뜨리게 해요."},
-                "clue": "친구 초대를 조건으로 거는 이유는 뭘까요?",
+                "stones": [
+                    {"sender": "도토리 과학관 · 인증된 계정", "real": True,
+                     "text": "주말 특강: 와이파이는 어떻게 작동할까? 직접 실험해 봐요. 누구나 참여 가능",
+                     "why": "누구나 직접 보고 질문할 수 있는 공개 행사예요."},
+                    {"sender": "@숨겨진진실", "real": False,
+                     "text": "과학관 특강은 진실을 감추려는 쇼! 비둘기 이야기 꺼내면 쫓겨난대요.",
+                     "why": "공개된 행사까지 ‘숨기려는 쇼’로 몰아가요."},
+                ],
+                "clue": "누구나 확인할 수 있는 행사를 ‘쇼’라고 몰아가는 쪽은?",
             },
         ],
     },
@@ -258,11 +387,12 @@ st.markdown(
     .rv-msg.real {border-color:#22C55E;}
     .rv-msg.fake {border-color:#EF4444;}
     .rv-msg .from {font-size:.8rem; color:#AAB7C6; margin-bottom:6px;}
-    .rv-msg .body {font-size:1.02rem; line-height:1.6; word-break:break-all;}
+    .rv-msg .body {font-size:1.02rem; line-height:1.6; word-break:keep-all; overflow-wrap:anywhere;}
     .rv-tag {display:inline-block; font-weight:800; font-size:.85rem; margin-bottom:4px;}
-    .rv-note {background:#FFF7ED; border:2px dashed #FDBA74; border-radius:16px; padding:14px 16px; color:#172B3A;}
-    .rv-note .msg {background:#fff; border-radius:12px; padding:10px 12px; margin:6px 0 10px; border:1px solid #FED7AA;}
-    .rv-mark {background:#FEF08A; padding:0 3px; border-radius:4px; font-weight:700;}
+    .rv-post {background:#fff; border:1px solid #CBD5E1; border-radius:16px; padding:12px 14px; margin:6px 0 12px; color:#172B3A;}
+    .rv-post .who {font-weight:800; font-size:.9rem;}
+    .rv-post .who span {font-weight:400; color:#64748B;}
+    .rv-post .txt {margin-top:6px; line-height:1.6;}
     .rv-clock {font-weight:800; color:#B45309;}
     </style>
     """,
@@ -272,6 +402,10 @@ st.markdown(
 
 def esc(text):
     return html.escape(str(text))
+
+
+def stars(level):
+    return "★" * level + "☆" * (5 - level)
 
 
 # ─────────────────────────────────────
@@ -284,14 +418,17 @@ def new_game():
         "timer": True,          # 시간 제한 사용 여부
         "cleared": [],          # 깬 스테이지 번호
         "stage": None,          # 현재 스테이지 번호
-        "phase": "note",        # note(수법 해부) / river(강 건너기) / clear / fail
+        "phase": "mission",     # mission(운영자 미션) / explain(수법 공개) / river / clear / fail
+        "picked": None,         # 이번 미션에서 고른 카드 번호
+        "followers": 0,         # 가짜 계정 팔로워 (게임 속 숫자)
+        "used": [],             # 미션에서 수법 카드를 고른 스테이지
         "order": [],            # 이번 도전의 칸 순서
-        "sides": [],            # 칸마다 진짜 돌이 🅰(왼쪽)인지
-        "pos": 0,               # 건넌 칸 수
+        "flips": [],            # 칸마다 돌 순서를 뒤집었는지
+        "pos": 0,
         "lives": LIVES,
-        "pauses": PAUSES_PER_STAGE,
-        "paused": False,        # 지금 칸에서 '잠깐!'을 눌렀는지
-        "deadline": 0.0,        # 지금 칸의 돌이 가라앉는 시각
+        "pauses": 0,
+        "paused": False,
+        "deadline": 0.0,
         "feedback": None,
         # 잠깐!을 쓰고 고른 판단과 바로 고른 판단의 [맞힌 수, 전체 수]
         "stats": {"paused": [0, 0], "rushed": [0, 0]},
@@ -313,23 +450,38 @@ def start():
 def open_stage(index):
     g = game()
     g["stage"] = index
-    g["phase"] = "note"
+    g["phase"] = "mission"
+    g["picked"] = None
     g["feedback"] = None
+
+
+def pick_card(index):
+    g = game()
+    if g["picked"] is not None:
+        return
+    stage = STAGES[g["stage"]]
+    card = stage["mission"]["choices"][index]
+    g["picked"] = index
+    g["followers"] = max(0, g["followers"] + card["followers"])
+    if card["good"] and g["stage"] not in g["used"]:
+        g["used"].append(g["stage"])
+    g["phase"] = "explain"
 
 
 def begin_step(g):
     g["paused"] = False
-    g["deadline"] = time.time() + TIME_LIMIT
+    g["deadline"] = time.time() + STAGES[g["stage"]]["time"]
 
 
 def go_river():
     g = game()
-    count = len(STAGES[g["stage"]]["pairs"])
+    stage = STAGES[g["stage"]]
+    count = len(stage["pairs"])
     g["order"] = random.sample(range(count), count)
-    g["sides"] = [random.random() < 0.5 for _ in range(count)]
+    g["flips"] = [random.random() < 0.5 for _ in range(count)]
     g["pos"] = 0
     g["lives"] = LIVES
-    g["pauses"] = PAUSES_PER_STAGE
+    g["pauses"] = stage["pauses"]
     g["feedback"] = None
     g["phase"] = "river"
     begin_step(g)
@@ -339,6 +491,11 @@ def current_pair(g):
     return STAGES[g["stage"]]["pairs"][g["order"][g["pos"]]]
 
 
+def shown_stones(g):
+    stones = current_pair(g)["stones"]
+    return list(reversed(stones)) if g["flips"][g["pos"]] else list(stones)
+
+
 def press_pause():
     g = game()
     if g["pauses"] > 0 and not g["paused"] and not g["feedback"]:
@@ -346,30 +503,41 @@ def press_pause():
         g["paused"] = True
 
 
-def record(g, correct, timeout=False):
+def record(g, correct, choice, timeout=False):
     bucket = g["stats"]["paused" if g["paused"] else "rushed"]
     bucket[0] += 1 if correct else 0
     bucket[1] += 1
-    g["feedback"] = {"correct": correct, "timeout": timeout, "pair": current_pair(g)}
+    g["feedback"] = {
+        "correct": correct,
+        "timeout": timeout,
+        "choice": choice,
+        "stones": shown_stones(g),
+    }
     if correct:
         g["pos"] += 1
     else:
         g["lives"] -= 1
 
 
-def choose(side_a):
+def choose(choice):
+    """choice: 0(🅰 돌), 1(🅱 돌), 'none'(둘 다 위험해요)"""
     g = game()
     if g["feedback"] or g["phase"] != "river":
         return
-    real_is_a = g["sides"][g["pos"]]
-    record(g, correct=(side_a == real_is_a))
+    stones = shown_stones(g)
+    any_real = any(stone["real"] for stone in stones)
+    if choice == "none":
+        correct = not any_real
+    else:
+        correct = stones[choice]["real"]
+    record(g, correct, choice)
 
 
 def sink():
     """시간이 다 되면 돌이 가라앉아요. 고르지 않은 것도 틀린 것으로 셉니다."""
     g = game()
     if not g["feedback"] and g["phase"] == "river":
-        record(g, correct=False, timeout=True)
+        record(g, False, None, timeout=True)
 
 
 def next_step():
@@ -428,11 +596,11 @@ def card_html(item, tag="", kind=""):
     )
 
 
-def marked_message(message, parts):
-    text = esc(message)
-    for part, _ in parts:
-        text = text.replace(esc(part), f'<span class="rv-mark">{esc(part)}</span>', 1)
-    return text
+def post_html(text, followers):
+    return (
+        f'<div class="rv-post"><div class="who">{esc(ACCOUNT)} <span>· 가상 계정 · 팔로워 {followers:,}명</span></div>'
+        f'<div class="txt">{esc(text)}</div></div>'
+    )
 
 
 def rate(bucket):
@@ -456,41 +624,38 @@ def show_stats(g):
 
 
 def show_intro():
-    show_mascot("hint", "급할수록 속기 쉬워요. 헷갈리면 잠깐! 멈춰요.")
+    show_mascot("suspicious", "오늘은 속이는 쪽이 되어 봐요. 수법을 알면 속지 않아요!")
     st.markdown(
-        "### 🌊 미션: 강을 건너 안전한 곳으로!\n"
-        f"스테이지는 **{len(STAGES)}개**예요. 중고거래, 고액 알바, 투자방, QR코드, 공짜 미끼처럼 "
-        "일상에서 마주치는 수법을 하나씩 다뤄요.\n\n"
-        "1. **🕵️ 수법 해부 노트** — 완성된 가짜 문자를 뜯어보며 숨은 수법을 미리 알아봐요.\n"
-        "2. **🌊 두 갈래 징검다리** — 한 칸마다 돌이 두 개 나와요. 하나는 진짜, 하나는 가짜예요. "
-        "**안전한 돌**을 골라 밟아요.\n"
-        f"3. **⏳ 가라앉는 돌** — {TIME_LIMIT}초 안에 고르지 않으면 돌이 가라앉아요.\n"
-        f"4. **✋ 잠깐! 버튼** — 스테이지마다 {PAUSES_PER_STAGE}번 쓸 수 있어요. 누르면 시간이 멈추고 단서가 보여요.\n\n"
-        f"틀리거나 돌이 가라앉으면 목숨이 하나 줄어요. (목숨 {LIVES}개)\n\n"
-        "마지막에는 **잠깐!을 쓰고 고른 판단**과 **바로 고른 판단**의 정답률을 비교해 보여 줘요."
+        "### 🕹️ 미션: 가짜 계정을 운영하고, 그 수법을 가려내라!\n"
+        f"가상 도시 **도토리시**에서 당신은 가짜 소식 계정 **{ACCOUNT}**의 운영자예요. "
+        f"스테이지는 **{len(STAGES)}개**, 스테이지마다 속이는 수법 하나를 다뤄요.\n\n"
+        "1. **🕹️ 운영자 미션** — 수법 카드를 골라 팔로워를 모아요. 어떤 수법이 왜 먹히는지 직접 느껴 봐요.\n"
+        "2. **🔍 수법 공개** — 방금 쓴 수법이 왜 통하는지, 받는 사람은 어떻게 알아챌 수 있는지 알려 줘요.\n"
+        "3. **🌊 강 건너기** — 이번엔 **받는 사람**이 되어 두 갈래 돌 중 **진짜 소식**을 골라 밟아요. "
+        "**두 돌이 모두 가짜일 때도 있어요** → 🚫 *둘 다 위험해요*\n"
+        "4. **⏳ 가라앉는 돌 · ✋ 잠깐!** — 시간 안에 못 고르면 돌이 가라앉아요. 잠깐!을 누르면 시간이 멈추고 단서가 보여요.\n\n"
+        "스테이지가 올라갈수록 시간이 짧아지고 잠깐! 횟수가 줄어요. (난이도 ★1~★5)"
     )
-    st.toggle(
-        "⏳ 시간 제한 켜기 (끄면 천천히 할 수 있어요)",
-        value=True,
-        key="rv_timer_toggle",
+    st.info(
+        "📚 케임브리지대 연구진의 게임 ‘Bad News’처럼, 속이는 수법을 약하게 미리 체험하면 "
+        "실제로 덜 속는다는 ‘접종 이론’을 바탕으로 했어요. 피싱도 사칭·감정 자극·가짜 증거 같은 같은 수법을 써요."
     )
-    st.caption(
-        "모든 문자·기관명·상황은 교육용 가상 자료예요. "
-        "게임 속 ‘진짜’도 실제로는 헷갈리면 앱이나 저장된 번호로 다시 확인하는 게 가장 좋아요."
-    )
-    st.button("🌊 강가로 가기", type="primary", on_click=start)
+    st.toggle("⏳ 시간 제한 켜기 (끄면 천천히 할 수 있어요)", value=True, key="rv_timer_toggle")
+    st.caption("모든 도시·계정·게시물은 교육용 가상 자료예요. 실존 인물이나 실제 사건과 관계없어요.")
+    st.button("🕹️ 운영 시작하기", type="primary", on_click=start)
 
 
 def show_map(g):
     done = len(g["cleared"])
     if done == 0:
-        show_mascot("welcome", "첫 번째 강부터 건너 볼까요? 헷갈리면 잠깐!을 아끼지 마세요.", width=90)
+        show_mascot("welcome", "첫 번째 수법부터 써 볼까요? 그다음엔 받는 사람이 되어 가려내요.", width=90)
     elif done < len(STAGES):
-        show_mascot("welcome", f"벌써 {done}개의 강을 건넜어요! 다음 강도 함께 가요.", width=90)
+        show_mascot("welcome", f"벌써 {done}개의 수법을 알아냈어요! 다음 수법도 파헤쳐 봐요.", width=90)
     st.markdown(f"### 🗺️ 스테이지 지도 · {done} / {len(STAGES)} 통과")
     st.progress(done / len(STAGES))
-    left, right = st.columns([3, 1])
-    left.caption(f"⏳ 시간 제한: {'켜짐' if g['timer'] else '꺼짐'}")
+    left, mid, right = st.columns([2, 2, 1.4])
+    left.metric("📈 가짜 계정 팔로워", f"{g['followers']:,}명")
+    mid.caption(f"⏳ 시간 제한: {'켜짐' if g['timer'] else '꺼짐'}")
     right.button(
         "시간 제한 끄기" if g["timer"] else "시간 제한 켜기",
         on_click=toggle_timer,
@@ -505,8 +670,11 @@ def show_map(g):
         with st.container(border=True):
             left, right = st.columns([3, 1])
             with left:
-                st.markdown(f"**{mark} STAGE {index + 1} · {stage['icon']} {stage['title']}**")
-                st.caption(stage["lesson"] if unlocked else "앞 스테이지를 통과하면 열려요.")
+                st.markdown(f"**{mark} STAGE {index + 1} · {stage['icon']} {stage['tactic']} — {stage['title']}**")
+                st.caption(
+                    f"난이도 {stars(stage['level'])} · 돌 {stage['time']}초 · 잠깐! {stage['pauses']}번"
+                    if unlocked else "앞 스테이지를 통과하면 열려요."
+                )
             with right:
                 st.button(
                     "다시 하기" if cleared else "도전",
@@ -518,37 +686,75 @@ def show_map(g):
                 )
 
     if done == len(STAGES):
-        show_mascot("trophy", "모든 강을 건넜어요! 이제 진짜와 가짜를 가려내는 눈이 생겼어요.")
-        st.success("🏅 **피싱 감별사 배지 획득!**")
-        st.markdown("#### ✋ 멈춘 판단 vs 바로 고른 판단")
-        show_stats(g)
-        st.markdown(
-            "**기억해요**\n"
-            "- 중고거래는 앱 안에서만 대화하고 결제해요.\n"
-            "- 현금 전달·통장 대여 알바는 범죄 가담이 될 수 있어요.\n"
-            "- ‘원금 보장’, ‘확정 수익’ 투자는 없어요.\n"
-            "- 누가 붙였는지 모르는 QR코드는 찍기 전에 한 번 더 생각해요.\n"
-            "- 공짜라면서 정보·인증·결제를 요구하면 멈춰요.\n"
-            "- 그리고 무엇보다, 헷갈리면 **잠깐!**"
-        )
-        st.button("🔄 처음부터 다시", on_click=restart_all)
+        show_ending(g)
 
 
-def show_note(stage):
-    note = stage["note"]
-    show_mascot("detective", "먼저 이 가짜 문자에 어떤 수법이 숨어 있는지 뜯어봐요.", width=100)
-    st.markdown(f"### 🕵️ 수법 해부 노트 · {stage['icon']} {stage['title']}")
+def show_ending(g):
+    show_mascot("trophy", "모든 수법을 써 보고, 모두 가려냈어요! 이제 쉽게 속지 않을 거예요.")
+    st.success(f"🏅 **수법 해독가 배지 획득!** · 가짜 계정 최종 팔로워 {g['followers']:,}명")
     st.markdown(
-        f'<div class="rv-note"><b>교육용 가짜 문자</b>'
-        f'<div class="msg">{marked_message(note["message"], note["parts"])}</div></div>',
-        unsafe_allow_html=True,
+        "#### 🔍 정체 공개\n"
+        f"당신이 운영한 {ACCOUNT}처럼, 실제 가짜 계정도 사실이 아니라 **수법**으로 사람을 모아요. "
+        "팔로워가 많다고 믿을 만한 계정은 아니에요."
     )
-    st.write("")
-    for part, why in note["parts"]:
-        st.markdown(f"- **‘{part}’** — {why}")
-    st.info(f"🛡️ **이렇게 막아요** · {note['defense']}")
-    st.button("🌊 강 건너러 가기", type="primary", on_click=go_river)
+    st.markdown("#### ✋ 멈춘 판단 vs 바로 고른 판단")
+    show_stats(g)
+    st.markdown(
+        "#### 🧩 이 수법들, 피싱에서도 똑같이 쓰여요\n"
+        "| 수법 | 가짜 소식에서 | 피싱에서 |\n"
+        "|---|---|---|\n"
+        "| 🎭 사칭 | ‘시청 공식’ 흉내 계정 | 검찰·은행·택배사 사칭 |\n"
+        "| 😡 감정 자극 | 충격·분노 제목 | ‘엄마 급해’, ‘계좌 정지’ |\n"
+        "| 📸 가짜 증거 | 남의 사진, 가짜 캡처 | 가짜 공문, 가짜 사건번호 |\n"
+        "| 👥 편 가르기 | 우리 편 vs 저쪽 편 | ‘가족에게도 말하지 마세요’ |\n"
+        "| 🧩 음모론 | ‘아무도 말 안 해 주는 진실’ | ‘은행 직원도 한패예요’ |\n"
+    )
+    st.button("🔄 처음부터 다시", on_click=restart_all)
+
+
+def show_mission(g, stage):
+    mission = stage["mission"]
+    show_mascot("phone", f"{ACCOUNT} 운영 중… 이번엔 어떤 수법을 써 볼까요?", width=90)
+    st.markdown(f"### 🕹️ 운영자 미션 · STAGE {g['stage'] + 1} {stage['icon']} {stage['tactic']}")
+    st.caption(f"난이도 {stars(stage['level'])} · 현재 팔로워 {g['followers']:,}명")
+    st.write(mission["prompt"])
+    order = list(range(len(mission["choices"])))
+    random.Random(g["stage"]).shuffle(order)
+    for index in order:
+        st.button(
+            mission["choices"][index]["label"],
+            key=f"rv_card_{g['stage']}_{index}",
+            use_container_width=True,
+            on_click=pick_card,
+            args=(index,),
+        )
+    st.caption("게임 속 가상 계정이에요. 실제로 이런 글을 올리면 다른 사람에게 피해를 줄 수 있어요.")
     st.button("🗺️ 지도로 돌아가기", on_click=back_to_map)
+
+
+def show_explain(g, stage):
+    mission = stage["mission"]
+    card = mission["choices"][g["picked"]]
+    best = next(choice for choice in mission["choices"] if choice["good"])
+    change = card["followers"]
+
+    if card["good"]:
+        st.success(f"📈 팔로워 +{change:,}명! 수법이 통했어요.")
+    elif change < 0:
+        st.warning(f"📉 팔로워 {change:,}명. 솔직한 글은 오히려 덜 퍼졌어요.")
+    else:
+        st.info(f"📊 팔로워 +{change:,}명. 사실대로 쓴 글은 조용히 지나갔어요.")
+
+    st.markdown(post_html(card["post"], g["followers"]), unsafe_allow_html=True)
+
+    if not card["good"]:
+        st.markdown("**가짜 계정 운영자라면 이렇게 했을 거예요 👇**")
+        st.markdown(post_html(best["post"], g["followers"] + best["followers"]), unsafe_allow_html=True)
+
+    show_mascot("hint", f"이번 수법은 ‘{stage['tactic']}’이에요.", width=90)
+    st.markdown(f"**🧪 왜 먹혔을까?** {mission['why']}")
+    st.info(f"🛡️ **받는 사람은 이렇게 알아챌 수 있어요** · {mission['spot']}")
+    st.button("🌊 이제 받는 사람이 되어 강 건너기", type="primary", on_click=go_river)
 
 
 @st.fragment(run_every=1)
@@ -557,44 +763,54 @@ def countdown():
     g = game()
     if g["phase"] != "river" or g["feedback"] or g["paused"] or not g["timer"]:
         return
+    limit = STAGES[g["stage"]]["time"]
     left = g["deadline"] - time.time()
     if left <= 0:
         sink()
         st.rerun()
     seconds = max(0, int(left + 0.999))
-    st.progress(max(0.0, min(1.0, left / TIME_LIMIT)))
+    st.progress(max(0.0, min(1.0, left / limit)))
     st.markdown(f'<span class="rv-clock">⏳ {seconds}초 뒤 돌이 가라앉아요</span>', unsafe_allow_html=True)
 
 
 def show_feedback(g):
     feedback = g["feedback"]
-    pair = feedback["pair"]
+    stones = feedback["stones"]
+    both_fake = not any(stone["real"] for stone in stones)
+
     if feedback["timeout"]:
         st.error("🫧 꼬르륵… 시간이 다 되어 돌이 가라앉았어요. 목숨이 하나 줄었어요.")
         show_mascot("suspicious", "급하면 판단이 흐려져요. 다음엔 잠깐!으로 시간을 멈춰 봐요.", width=80)
+    elif feedback["correct"] and both_fake:
+        st.success("🚫 정답! 두 돌 모두 가짜였어요. 밟지 않고 돌아간 게 맞아요.")
     elif feedback["correct"]:
-        st.success("✅ 안전한 돌을 밟았어요! 한 칸 앞으로!")
-        if g["pos"] >= len(STAGES[g["stage"]]["pairs"]):
-            show_mascot("shield", "마지막 돌까지 안전하게 지켜 냈어요!", width=80)
+        st.success("✅ 진짜 소식을 밟았어요! 한 칸 앞으로!")
+    elif feedback["choice"] == "none":
+        st.error("💦 아쉬워요! 한쪽은 진짜 소식이었어요. 모든 걸 의심하는 것도 함정이에요.")
+    elif both_fake:
+        st.error("💦 풍덩! 두 돌 모두 가짜였어요. ‘둘 다 위험해요’를 골라야 했어요.")
     else:
-        st.error("💦 풍덩! 가짜 돌을 밟았어요. 목숨이 하나 줄었어요.")
+        st.error("💦 풍덩! 가짜 소식을 밟았어요. 목숨이 하나 줄었어요.")
+
+    if feedback["correct"] and g["pos"] >= len(STAGES[g["stage"]]["pairs"]):
+        show_mascot("shield", "마지막 돌까지 무사히 건넜어요!", width=80)
 
     left, right = st.columns(2)
-    with left:
-        st.markdown(card_html(pair["real"], "✅ 진짜", "real"), unsafe_allow_html=True)
-        st.caption(pair["real"]["why"])
-    with right:
-        st.markdown(card_html(pair["fake"], "🚨 가짜", "fake"), unsafe_allow_html=True)
-        st.caption(pair["fake"]["why"])
+    for column, stone, name in ((left, stones[0], "🅰"), (right, stones[1], "🅱")):
+        with column:
+            tag = f"{name} · {'✅ 진짜' if stone['real'] else '🚨 가짜'}"
+            st.markdown(card_html(stone, tag, "real" if stone["real"] else "fake"), unsafe_allow_html=True)
+            st.caption(stone["why"])
     st.button("다음 ➡️", type="primary", on_click=next_step)
 
 
 def show_river(g, stage):
     total = len(stage["pairs"])
-    st.markdown(f"### 🌊 STAGE {g['stage'] + 1} · {stage['title']}")
+    st.markdown(f"### 🌊 STAGE {g['stage'] + 1} · {stage['icon']} {stage['tactic']} 가려내기")
     st.markdown(
+        f"**난이도** {stars(stage['level'])}  ·  "
         f"**목숨** {'❤️' * g['lives']}{'🤍' * (LIVES - g['lives'])}  ·  "
-        f"**✋ 잠깐!** {g['pauses']} / {PAUSES_PER_STAGE}  ·  "
+        f"**✋ 잠깐!** {g['pauses']} / {stage['pauses']}  ·  "
         f"**건넌 칸** {g['pos']} / {total}"
     )
     st.markdown(river_html(g["pos"], total), unsafe_allow_html=True)
@@ -604,10 +820,9 @@ def show_river(g, stage):
         return
 
     pair = current_pair(g)
-    real_is_a = g["sides"][g["pos"]]
-    stone_a, stone_b = (pair["real"], pair["fake"]) if real_is_a else (pair["fake"], pair["real"])
+    stone_a, stone_b = shown_stones(g)
 
-    st.markdown(f"#### 칸 {g['pos'] + 1} · 어느 돌이 안전할까요?")
+    st.markdown(f"#### 칸 {g['pos'] + 1} · 진짜 소식은 어느 돌일까요?")
 
     if g["paused"]:
         show_mascot("stop", f"잠깐! 시간이 멈췄어요. 단서 · {pair['clue']}", width=90)
@@ -617,10 +832,18 @@ def show_river(g, stage):
     left, right = st.columns(2)
     with left:
         st.markdown(card_html(stone_a, "🅰 돌"), unsafe_allow_html=True)
-        st.button("🅰 이 돌을 밟는다", use_container_width=True, on_click=choose, args=(True,), key=f"rv_a_{g['pos']}")
+        st.button("🅰 이 돌을 밟는다", use_container_width=True, on_click=choose, args=(0,), key=f"rv_a_{g['pos']}")
     with right:
         st.markdown(card_html(stone_b, "🅱 돌"), unsafe_allow_html=True)
-        st.button("🅱 이 돌을 밟는다", use_container_width=True, on_click=choose, args=(False,), key=f"rv_b_{g['pos']}")
+        st.button("🅱 이 돌을 밟는다", use_container_width=True, on_click=choose, args=(1,), key=f"rv_b_{g['pos']}")
+
+    st.button(
+        "🚫 둘 다 위험해요 (밟지 않고 돌아간다)",
+        use_container_width=True,
+        on_click=choose,
+        args=("none",),
+        key=f"rv_none_{g['pos']}",
+    )
 
     if not g["paused"]:
         st.button(
@@ -629,24 +852,23 @@ def show_river(g, stage):
             disabled=g["pauses"] <= 0,
             key=f"rv_pause_{g['pos']}",
         )
-        st.caption("잠깐!을 누르면 시간이 멈추고 단서가 하나 보여요.")
 
 
 def show_clear(g, stage):
-    show_mascot("escape", "건너편에 도착했어요!", width=100)
+    show_mascot("escape", f"‘{stage['tactic']}’ 수법을 가려내고 건너편에 도착했어요!", width=100)
     st.markdown(river_html(len(stage["pairs"]), len(stage["pairs"])), unsafe_allow_html=True)
     st.success(f"🎉 STAGE {g['stage'] + 1} 통과! 남은 목숨 {'❤️' * g['lives']}")
-    st.write(f"**이번 수법:** {stage['lesson']}")
+    st.write(f"**기억할 점:** {stage['mission']['spot']}")
     with st.expander("✋ 지금까지의 판단 기록 보기"):
         show_stats(g)
     st.button("🗺️ 지도에서 다음 스테이지로", type="primary", on_click=back_to_map)
 
 
 def show_fail(g, stage):
-    show_mascot("retry", "괜찮아요. 수법 노트를 다시 보고, 이번엔 잠깐!도 써 봐요.", width=100)
+    show_mascot("retry", "괜찮아요. 수법을 다시 떠올리고, 이번엔 잠깐!도 써 봐요.", width=100)
     st.error(f"💦 STAGE {g['stage'] + 1}에서 목숨을 모두 잃었어요.")
-    st.write(f"**다시 떠올려 봐요:** {stage['lesson']}")
-    st.button("🕵️ 수법 노트 다시 보기", type="primary", on_click=open_stage, args=(g["stage"],))
+    st.write(f"**다시 떠올려 봐요:** {stage['mission']['spot']}")
+    st.button("🌊 바로 다시 건너기", type="primary", on_click=go_river)
     st.button("🗺️ 지도로 돌아가기", on_click=back_to_map)
 
 
@@ -655,8 +877,8 @@ def show_fail(g, stage):
 # ─────────────────────────────────────
 
 st.title("🌊 잠깐! · 진짜·가짜 강 건너기")
-st.write("두 갈래 징검다리에서 **안전한 돌**을 골라 강을 건너요. 헷갈리면 **✋ 잠깐!**")
-st.caption("교육용 가상 게임입니다. 실제 문자 발송, 링크 접속, 결제는 일어나지 않아요.")
+st.write("가짜 계정 운영자가 되어 **속이는 수법**을 써 보고, 받는 사람이 되어 **그 수법을 가려내요**.")
+st.caption("교육용 가상 게임입니다. 모든 도시·계정·게시물은 가상이며, 실제 게시나 공유는 일어나지 않아요.")
 
 g = game()
 
@@ -666,8 +888,10 @@ elif g["stage"] is None:
     show_map(g)
 else:
     stage = STAGES[g["stage"]]
-    if g["phase"] == "note":
-        show_note(stage)
+    if g["phase"] == "mission":
+        show_mission(g, stage)
+    elif g["phase"] == "explain":
+        show_explain(g, stage)
     elif g["phase"] == "river":
         show_river(g, stage)
     elif g["phase"] == "clear":
