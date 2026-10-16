@@ -229,6 +229,282 @@ OFFLINE_QUESTION_REPLY = {
 # 상태 관리
 # ─────────────────────────────────────
 
+# ─────────────────────────────────────
+# 추가 연습 상황
+# ─────────────────────────────────────
+
+SCENARIOS.update(
+    {
+        "쇼핑몰 환불 사칭": {
+            "guide": (
+                "상대는 쇼핑몰 고객센터를 사칭하며 "
+                "환불 확인이 필요하다고 말합니다."
+            ),
+            "opening": (
+                "[환불 안내] 주문 취소 건의 환불 확인이 필요해 "
+                "연락드렸습니다. 잠시 안내받으실 수 있을까요?"
+            ),
+            "setting": (
+                "쇼핑몰 고객센터를 사칭한다. "
+                "환불 확인이라는 설정을 유지한다. "
+                "실제 주문 상품, 주문번호, 결제 내역을 지어내지 않는다. "
+                "주문한 적 없다는 말을 부정하지 않는다. "
+                "계좌정보, 인증번호, 선입금을 요구하지 않는다."
+            ),
+            "refusal": (
+                "이 메시지를 통한 환불 안내는 "
+                "받지 않겠다는 말씀이시죠?"
+            ),
+            "offline": [
+                (
+                    "주문 취소 건을 확인해 달라는 안내 상황입니다. "
+                    "실제 주문 내역과 어떻게 대조하시겠습니까?"
+                ),
+                (
+                    "메시지로 [가상 환불 안내]를 보낸다는 상황입니다. "
+                    "이 안내를 어떤 경로로 확인하시겠습니까?"
+                ),
+                (
+                    "이 대본에는 실제 주문 정보가 없습니다. "
+                    "평소 사용하던 쇼핑몰 앱에서 확인하는 방법을 "
+                    "생각해 보세요."
+                ),
+            ],
+        },
+        "계정 보안 사칭": {
+            "guide": (
+                "상대는 서비스 보안팀을 사칭하며 "
+                "낯선 로그인 기록이 있다고 주장합니다."
+            ),
+            "opening": (
+                "[계정 보안 안내] 평소와 다른 환경의 로그인 시도가 "
+                "감지되었다는 안내입니다. "
+                "본인 접속 여부를 확인해 주시기 바랍니다."
+            ),
+            "setting": (
+                "온라인 서비스 보안팀을 사칭한다. "
+                "로그인 확인이라는 설정을 유지한다. "
+                "실제 접속 위치, 기기, IP, 계정 정보를 지어내지 않는다. "
+                "비밀번호나 인증번호를 요구하지 않는다. "
+                "계정 삭제나 처벌로 위협하지 않는다."
+            ),
+            "refusal": (
+                "이 메시지에서는 확인을 진행하지 않겠다는 말씀이시죠?"
+            ),
+            "offline": [
+                (
+                    "낯선 로그인 시도가 있었다는 주장입니다. "
+                    "실제 로그인 기록은 어떤 곳에서 확인하시겠습니까?"
+                ),
+                (
+                    "메시지에 [가상 보안 확인 링크]가 있다는 상황입니다. "
+                    "이 링크를 그대로 믿어도 될까요?"
+                ),
+                (
+                    "실제 접속 여부는 이 대본으로 확인할 수 없습니다. "
+                    "직접 실행한 공식 앱의 보안 메뉴를 생각해 보세요."
+                ),
+            ],
+        },
+        "아르바이트 사칭": {
+            "guide": (
+                "상대는 온라인 업무 담당자를 사칭하며 "
+                "간단한 부업을 제안합니다."
+            ),
+            "opening": (
+                "안녕하세요. 온라인 상품 확인 업무 안내를 맡고 있습니다. "
+                "짧게 참여할 수 있는 부업에 관심 있으실까요?"
+            ),
+            "setting": (
+                "온라인 업무 모집 담당자를 사칭한다. "
+                "실제 회사명, 채용 공고, 보수, 계약 조건을 지어내지 않는다. "
+                "지원하지 않았다면 지원했다고 주장하지 않는다. "
+                "선입금, 결제, 실제 가입, 개인정보 제출을 요구하지 않는다."
+            ),
+            "refusal": (
+                "이번 업무 안내에는 관심이 없으시다는 말씀이시죠?"
+            ),
+            "offline": [
+                (
+                    "온라인 업무를 제안받은 상황입니다. "
+                    "회사와 채용 공고를 어떤 방법으로 확인하시겠습니까?"
+                ),
+                (
+                    "대화방의 설명만으로 참여 여부를 "
+                    "결정해 달라는 상황입니다. "
+                    "추가로 확인할 자료는 무엇일까요?"
+                ),
+                (
+                    "이 대본에는 실제 회사나 계약 정보가 없습니다. "
+                    "확인되지 않은 업무 제안에 어떻게 답할지 생각해 보세요."
+                ),
+            ],
+        },
+        "모바일 초대장 사칭": {
+            "guide": (
+                "상대는 아는 사람인 것처럼 모바일 초대장을 보냅니다. "
+                "보낸 사람과 파일을 확인해 보세요."
+            ),
+            "opening": (
+                "오랜만이야. 소식 전하려고 모바일 초대장 보냈어. "
+                "시간 될 때 확인해 줄래?"
+            ),
+            "setting": (
+                "아는 사람처럼 말하며 모바일 초대장을 보냈다는 설정이다. "
+                "실제 이름, 관계, 추억, 행사 날짜나 장소를 지어내지 않는다. "
+                "상대가 누군지 물으면 확인되지 않은 신원을 꾸며내지 않는다. "
+                "실제 파일이나 설치 절차를 제공하지 않는다."
+            ),
+            "refusal": (
+                "알겠어. 이 메시지의 초대장은 확인하지 않겠다는 거지?"
+            ),
+            "offline": [
+                (
+                    "[가상 초대장]을 받은 상황이야. "
+                    "보낸 사람이 누구인지 어떤 방법으로 확인할 거야?"
+                ),
+                (
+                    "아는 사람처럼 말하지만 이 대본에는 "
+                    "확인된 이름이나 관계가 없어. "
+                    "어떤 점을 더 확인할까?"
+                ),
+                (
+                    "실제 파일은 제공되지 않아. "
+                    "원래 저장된 연락처로 따로 확인하는 방법을 생각해 봐."
+                ),
+            ],
+        },
+    }
+)
+
+
+# 이전 버전에서도 추가 상황의 오프라인 대본을 연결합니다.
+if "OFFLINE_SCRIPTS" in globals():
+    for _name, _item in SCENARIOS.items():
+        if "offline" in _item:
+            OFFLINE_SCRIPTS[_name] = _item["offline"]
+
+            if "OFFLINE_QUESTION_REPLY" in globals():
+                OFFLINE_QUESTION_REPLY[_name] = (
+                    _item["guide"]
+                    + " 실제 자료가 아닌 교육용 대본입니다. "
+                    "이 연락과 별개로 확인할 경로를 생각해 보세요."
+                )
+
+
+# ─────────────────────────────────────
+# 상황 선택 카드
+# ─────────────────────────────────────
+
+SCENARIO_CARDS = {
+    "가족 사칭": (
+        "👪",
+        "다른 기기로 연락했다는 가족",
+    ),
+    "기관 사칭": (
+        "🏛️",
+        "수사기관 담당자라는 연락",
+    ),
+    "택배 사칭": (
+        "📦",
+        "배송이 보류됐다는 안내",
+    ),
+    "쇼핑몰 환불 사칭": (
+        "🛍️",
+        "주문 취소·환불 확인 요청",
+    ),
+    "계정 보안 사칭": (
+        "🔐",
+        "낯선 로그인·보안 확인 알림",
+    ),
+    "아르바이트 사칭": (
+        "💼",
+        "예상하지 못한 온라인 부업 제안",
+    ),
+    "모바일 초대장 사칭": (
+        "💌",
+        "지인이 보낸 것 같은 초대장",
+    ),
+}
+
+SCENARIO_WIDGET_KEY = (
+    "chat_scenario_v3"
+    if STATE_KEY == "jamkkan_chat_refusal_v3"
+    else "jamkkan_scenario_v2"
+)
+
+
+def select_practice_scenario(name):
+    st.session_state[SCENARIO_WIDGET_KEY] = name
+    reset_chat()
+
+
+def render_scenario_picker():
+    selected = st.session_state.get(
+        SCENARIO_WIDGET_KEY,
+        "가족 사칭",
+    )
+
+    if selected not in SCENARIOS:
+        selected = "가족 사칭"
+        st.session_state[SCENARIO_WIDGET_KEY] = selected
+        reset_chat()
+
+    st.subheader("① 연습할 상황을 골라 주세요")
+
+    st.write(
+        "아래 카드의 선택 버튼을 누르면 해당 상황으로 시작해요."
+    )
+
+    st.caption(
+        "다른 상황을 선택하면 현재 대화와 리포트가 초기화됩니다."
+    )
+
+    names = list(SCENARIOS)
+
+    for start in range(0, len(names), 3):
+        columns = st.columns(3)
+
+        for offset, name in enumerate(
+            names[start:start + 3]
+        ):
+            icon, description = SCENARIO_CARDS.get(
+                name,
+                ("💬", name),
+            )
+
+            chosen = name == selected
+
+            with columns[offset]:
+                with st.container(border=True):
+                    st.markdown(
+                        f"### {icon} {name}"
+                    )
+
+                    st.caption(description)
+
+                    st.button(
+                        "✓ 선택됨"
+                        if chosen
+                        else f"{name} 선택",
+                        key=f"practice_card_{name}",
+                        type="primary"
+                        if chosen
+                        else "secondary",
+                        disabled=chosen,
+                        use_container_width=True,
+                        on_click=select_practice_scenario,
+                        args=(name,),
+                    )
+
+    st.success(
+        f"현재 선택한 상황: {selected}"
+    )
+
+    return selected
+
+
+
 def reset_chat():
     scenario = st.session_state.get(
         "jamkkan_scenario_v2",
@@ -583,12 +859,7 @@ st.info(
     "링크나 앱을 실제로 실행할 필요 없이 어떻게 대응할지만 말하면 됩니다."
 )
 
-scenario = st.selectbox(
-    "연습할 상황",
-    list(SCENARIOS),
-    key="jamkkan_scenario_v2",
-    on_change=reset_chat,
-)
+scenario = render_scenario_picker()
 
 if STATE_KEY not in st.session_state:
     reset_chat()
