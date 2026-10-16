@@ -308,7 +308,10 @@ def new_game(started=False):
 
 def start_game():
     st.session_state[KEY] = new_game(started=True)
-
+    
+def back_to_intro():
+    """다시 도전할 때는 게임 설명 화면부터 다시 보여 줍니다."""
+    st.session_state[KEY] = new_game(started=False)
 
 def open_clues():
     st.session_state[KEY]["clue_open"] = True
@@ -694,7 +697,7 @@ def show_ending(game):
         mime="text/plain",
     )
     show_mascot("retry", "다른 선택도 연습해 볼까요?", width=100)
-    st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=start_game)
+    st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=back_to_intro)
 
 
 # ─────────────────────────────────────
