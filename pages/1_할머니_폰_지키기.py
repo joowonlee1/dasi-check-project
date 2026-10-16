@@ -1,402 +1,700 @@
+import html
+
 import streamlit as st
 from mascot_ui import show_mascot
 
 
-KEY = "grandma_verify_v2"
+# 모든 인물·기관명·번호·링크·확인 결과는 교육용 가상 자료입니다.
+KEY = "grandma_v3"
 
-# 모든 연락과 확인 결과는 교육용으로 만든 가상 자료입니다.
+STOP_LINE = 20      # 사기범을 믿는 정도가 이 값 이하가 되면 할머니가 스스로 멈춰요.
+START_TRUST = 70    # 할머니가 처음에 나를 믿는 정도
+COUNTER_PUSH = 10   # 다그치거나 몰래 막으면 사기범이 다음에 더 세게 몰아붙여요.
+
+# 할머니 휴대전화에 시간 순서대로 들어오는 연락입니다.
+# real=True는 진짜 연락, False는 피싱입니다. push는 할머니가 사기범을 더 믿게 되는 정도입니다.
+# clues에는 판정 없이 '보이는 사실'만 적습니다. 판단은 플레이어가 합니다.
 EVENTS = [
     {
         "time": "10:02",
+        "kind": "notice",
         "sender": "○○은행",
-        "kind": "결제 알림",
-        "text": "체크카드 승인 12,800원 · 한빛마트",
-        "grandma": "아까 장 본 것 같은데, 금액도 한번 볼까?",
+        "lines": ["[○○은행] 체크카드 승인 12,800원 · 한빛마트"],
         "real": True,
-        "route": (
-            "문자에 답장하지 않고, 직접 실행한 은행 앱과 "
-            "영수증을 비교해요."
-        ),
-        "evidence": (
-            "가상 영수증과 은행 앱 내역에 "
-            "한빛마트 12,800원 결제가 모두 있어요."
-        ),
-        "finding": (
-            "이번 결제 알림은 할머니의 실제 구매 내역과 일치해요."
-        ),
+        "grandma": "아까 장 본 거네.",
+        "clues": [
+            "할머니가 오늘 아침 한빛마트에서 장을 봤어요.",
+            "금액과 가게 이름만 있고, 링크나 요구 사항은 없어요.",
+        ],
+        "route": "문자에 답하지 않고, 직접 실행한 은행 앱 내역이나 영수증과 비교해요.",
+        "result": "영수증과 은행 앱에 한빛마트 12,800원 결제가 모두 있어요.",
     },
     {
         "time": "10:05",
-        "sender": "서울중앙지검이라고 표시된 번호",
-        "kind": "전화",
-        "text": (
-            "수사관입니다. 할머님 통장이 범죄에 쓰였습니다. "
-            "가족에게도 통화 내용을 알리지 마세요."
-        ),
-        "grandma": (
-            "내가 무슨 일을 했다고… "
-            "무서워서 어떻게 해야 할지 모르겠네."
-        ),
+        "kind": "call",
+        "sender": "02-3480-○○○○ (발신 표시: 서울중앙지검)",
+        "lines": [
+            "서울중앙지방검찰청 김민준 수사관입니다.",
+            "할머님 명의 통장이 범죄에 쓰여 사건에 연루되셨습니다.",
+            "수사 보안상 지금 통화 내용은 가족에게도 알리시면 안 됩니다.",
+        ],
         "real": False,
-        "route": (
-            "상대와 통화를 끝내고, 별도 기기로 공식 홈페이지의 "
-            "대표번호를 찾아 확인해요."
-        ),
-        "evidence": (
-            "게임 속 공식 확인 결과, 이 연락에서 주장한 담당자와 "
-            "요청은 확인되지 않았어요. "
-            "상대는 가족과의 확인도 막고 있어요."
-        ),
-        "finding": (
-            "이 시나리오의 연락은 기관 사칭이에요. "
-            "발신 표시만으로 신원을 믿으면 안 돼요."
-        ),
+        "push": 70,
+        "stage": "검찰 사칭 전화",
+        "grandma": "아이고, 내가 무슨 일을… 경찰서 한 번 가 본 적 없는데.",
+        "grandma_alert": "아이고, 내가 무슨 일을… 경찰서 한 번 가 본 적 없는데.",
+        "clues": [
+            "화면에 ‘서울중앙지검’이라고 표시돼요.",
+            "할머니 통장이 범죄에 쓰였다고 말해요.",
+            "통화 내용을 가족에게도 알리지 말라고 해요.",
+        ],
+        "reason": "검찰은 전화로 사건을 알리면서 가족에게 비밀로 하라고 하지 않아요.",
+        "together": "놀라셨죠, 할머니 잘못 아니에요. 같이 검찰청 대표번호로 직접 걸어서 확인해 봐요.",
+        "route": "전화를 끊고, 검찰청 공식 홈페이지에서 직접 찾은 대표번호로 확인해요.",
+        "result": "공식 대표번호로 확인하니 그런 담당자와 사건은 없었어요. 발신 표시는 조작될 수 있어요.",
     },
     {
         "time": "10:08",
+        "kind": "sms",
         "sender": "햇살정형외과",
-        "kind": "문자",
-        "text": (
-            "내일 오전 10시 진료 예약 안내드립니다. "
-            "회신은 필요 없습니다."
-        ),
-        "grandma": (
-            "무릎 진료 예약을 해 둔 건 맞아. "
-            "시간이 언제였더라?"
-        ),
+        "saved": True,
+        "lines": ["[햇살정형외과] 내일(목) 오전 10시 진료 예약 안내드립니다. 회신은 필요 없습니다."],
         "real": True,
-        "route": (
-            "기존 예약증을 확인하고, "
-            "예약증에 적힌 병원 번호로 확인해요."
-        ),
-        "evidence": (
-            "기존 예약증과 게임 속 병원 확인 결과가 "
-            "모두 내일 오전 10시로 일치해요."
-        ),
-        "finding": (
-            "이번 문자는 기존 진료 예약과 일치하는 안내예요."
-        ),
+        "grandma": "아, 내일 무릎 보러 가는 날이지.",
+        "clues": [
+            "저장된 연락처 ‘햇살정형외과’에서 왔어요.",
+            "할머니가 내일 무릎 진료를 예약해 두었어요.",
+            "회신이나 링크를 요구하지 않아요.",
+        ],
+        "route": "기존 예약증에 적힌 병원 번호로 확인해요.",
+        "result": "예약증과 병원 확인 결과 모두 내일 오전 10시예요.",
     },
     {
         "time": "10:11",
-        "sender": "처음 보는 휴대전화 번호",
-        "kind": "문자와 전화",
-        "text": (
-            "[사건 열람 안내] 가상 앱 설치 링크. "
-            "상대는 설치하지 않으면 체포될 수 있다고 재촉합니다."
-        ),
-        "grandma": "빨리 설치해야 하는 거 아니니?",
+        "kind": "sms",
+        "sender": "010-6620-1184",
+        "saved": False,
+        "lines": [
+            "[서울중앙지검] 사건번호 2026형제1234 열람",
+            "🔗 가상의 앱 설치 링크 · 눌러도 실행되지 않음",
+        ],
+        "call_lines": ["(수사관) 링크 눌러서 보안 앱부터 설치하세요. 안 하시면 체포영장이 나갑니다."],
         "real": False,
-        "route": (
-            "링크를 열지 않고, 별도로 찾은 공식 연락처에서 "
-            "설치 요구를 확인해요."
-        ),
-        "evidence": (
-            "게임 속 공식 확인 결과, 이 링크와 앱 설치 요청은 "
-            "해당 기관의 안내가 아니에요."
-        ),
-        "finding": (
-            "겁을 주면서 앱 설치를 유도하는 사칭 연락이에요."
-        ),
+        "push": 25,
+        "stage": "앱 설치 요구",
+        "grandma": "체포? 내가 감옥에 가는 거야? 빨리 깔아야 하나…",
+        "grandma_alert": "또 그 수사관이야? 이번엔 앱을 깔라네… 안 깔면 체포라는데.",
+        "clues": [
+            "저장되지 않은 010 번호에서 왔어요.",
+            "‘사건 열람’을 하려면 앱을 설치하라는 링크가 있어요.",
+            "설치하지 않으면 체포영장이 나온다고 재촉해요.",
+        ],
+        "reason": "검찰은 앱 설치를 시키지 않아요. 이 앱은 휴대폰을 원격으로 조종하는 앱일 수 있어요.",
+        "together": "무서우시죠. 앱은 깔지 말고, 제가 옆에서 검찰청 대표번호로 같이 물어볼게요.",
+        "route": "링크를 누르지 않고, 직접 찾은 공식 연락처로 앱 설치 요구가 맞는지 물어봐요.",
+        "result": "공식 기관은 사건 열람을 위해 앱 설치를 요구하지 않아요. 원격 조종 앱일 수 있어요.",
     },
     {
         "time": "10:14",
-        "sender": "우체국이라고 표시된 발신자",
-        "kind": "문자",
-        "text": (
-            "등기우편이 오늘 14~16시에 배달될 예정입니다. "
-            "회신 요청 없음."
-        ),
-        "grandma": (
-            "올 서류가 있긴 한데, 이 안내가 맞는지 모르겠네."
-        ),
+        "kind": "sms",
+        "sender": "우체국",
+        "saved": True,
+        "lines": ["[우체국] 등기우편이 오늘 14~16시에 배달될 예정입니다. 링크·회신 요청 없음."],
         "real": True,
-        "route": (
-            "보낼 기관에서 미리 받은 접수번호를 이용해, "
-            "직접 접속한 공식 배송 조회에서 확인해요."
-        ),
-        "evidence": (
-            "기존 접수번호의 게임 속 배송 조회 결과가 "
-            "오늘 14~16시 배달 예정으로 일치해요."
-        ),
-        "finding": (
-            "별도 배송 기록으로 이번 안내를 확인했어요. "
-            "링크가 없다는 이유만으로 진짜라고 판단한 것은 아니에요."
+        "grandma": "무슨 등기가 오나? 연금 서류인가.",
+        "clues": [
+            "저장된 ‘우체국’ 연락처에서 왔어요.",
+            "할머니가 연금 서류를 기다리고 있어요.",
+            "링크도 회신 요청도 없어요.",
+        ],
+        "route": "미리 받은 접수번호로, 직접 접속한 공식 배송 조회에서 확인해요.",
+        "result": (
+            "배송 조회 결과도 오늘 14~16시 배달 예정이에요. "
+            "링크가 없다는 것만으로 진짜라고 단정하지 않고 따로 확인한 거예요."
         ),
     },
     {
         "time": "10:17",
-        "sender": "앞서 수사관이라고 말한 사람",
-        "kind": "전화",
-        "text": (
-            "돈을 보호하려면 안전계좌로 옮겨야 합니다. "
-            "은행 직원에게는 손주 등록금이라고 말하세요."
-        ),
-        "grandma": (
-            "내 돈을 지키려는 건데… "
-            "은행에 사실대로 말하면 안 되나?"
-        ),
+        "kind": "call",
+        "sender": "02-3480-○○○○ (발신 표시: 서울중앙지검)",
+        "lines": [
+            "할머님 예금이 범죄 자금과 섞여 있어요. 금융감독원 안전계좌로 옮겨야 보호됩니다.",
+            "은행 직원이 물으면 ‘손주 등록금’이라고 하세요. 사실대로 말하면 수사에 방해돼요.",
+        ],
         "real": False,
-        "route": (
-            "이체를 보류하고, 직접 찾은 은행 공식 연락처에 "
-            "상대의 요구를 그대로 설명해요."
-        ),
-        "evidence": (
-            "게임 속 은행 확인 결과, 이 송금 요구는 "
-            "사칭 수법으로 확인됐어요. "
-            "은행 직원에게 거짓말하라는 요구도 위험 신호예요."
-        ),
-        "finding": (
-            "요구를 따르지 않고 송금을 멈춰야 하는 상황이에요."
-        ),
+        "push": 25,
+        "stage": "안전계좌 이체 요구",
+        "grandma": "등록금이라고 하라고? …그래도 내 돈 지키려면 해야지.",
+        "grandma_alert": "아까 끊었는데 또 전화가 왔어. 돈을 옮기라는데… 진짜면 어쩌지?",
+        "clues": [
+            "아까 ‘수사관’이라던 사람이 다시 전화했어요.",
+            "할머니 돈을 ‘안전계좌’로 옮기라고 해요.",
+            "은행 직원에게는 ‘손주 등록금’이라고 말하라고 해요.",
+        ],
+        "reason": "‘안전계좌’는 없어요. 어떤 기관도 돈을 옮기라고 하지 않고, 은행 직원에게 거짓말하라는 건 사기예요.",
+        "together": "할머니 돈 지키려는 거 알아요. 이체하기 전에 저랑 같이 은행 창구에 가서 직원한테 먼저 물어봐요.",
+        "route": "이체하지 않고, 은행 창구나 직접 찾은 은행 대표번호에 상대의 요구를 그대로 말해요.",
+        "result": "‘안전계좌’는 없어요. 은행 직원에게 거짓말하라는 요구도 사기의 신호예요.",
     },
     {
         "time": "10:21",
-        "sender": "은행 앱의 이체 화면",
-        "kind": "송금 직전",
-        "text": (
-            "받는 분: 금융보안관리 / 9,800,000원. "
-            "전화 속 상대가 지금 바로 보내라고 재촉합니다."
-        ),
-        "grandma": "보내기 버튼만 누르면 된다는데…",
+        "kind": "notice",
+        "sender": "○○은행 앱",
+        "lines": [
+            "이체 화면 · 받는 분 ‘금융보안관리’ · 9,800,000원",
+            "(수사관) 지금 바로 보내세요. 10분 안에 안 하시면 계좌가 동결됩니다.",
+        ],
         "real": False,
-        "route": (
-            "보내기 버튼을 누르지 않고, 별도로 찾은 "
-            "은행 공식 연락처에 송금 목적을 설명해요."
-        ),
-        "evidence": (
-            "게임 속 은행은 상대가 요구한 송금을 "
-            "진행하지 말라고 안내해요. "
-            "은행 앱이 진짜여도 송금 요구까지 진짜인 것은 아니에요."
-        ),
-        "finding": (
-            "정상 앱에서도 사기범의 요구에 따라 "
-            "돈을 보낼 수 있어요. 송금을 멈추세요."
-        ),
+        "final": True,
+        "push": 20,
+        "stage": "송금 직전",
+        "grandma": "손이 떨려서 비밀번호가 잘 안 눌리네…",
+        "grandma_alert": "자꾸 재촉하니까 혹시나 싶어서 이체 화면을 열어 봤어…",
+        "clues": [
+            "은행 앱 이체 화면에 받는 분 ‘금융보안관리’, 980만 원이 입력돼 있어요.",
+            "전화 속 상대가 10분 안에 안 보내면 계좌가 동결된다고 재촉해요.",
+        ],
+        "reason": "할머니, 진짜 기관은 ‘10분 안에’ 같은 말로 돈을 보내라고 하지 않아요.",
+        "together": "할머니, 보내기 전에 딱 5분만요. 저랑 같이 은행에 전화해서 이 계좌가 뭔지 물어봐요.",
+        "route": "보내기 버튼을 누르지 않고, 은행에 연락해 받는 계좌를 확인해요.",
+        "result": "은행 앱이 진짜여도, 송금을 시키는 요구까지 진짜인 것은 아니에요.",
     },
 ]
+
+# 모든 연락에 같은 선택지를 보여 줍니다. 버튼 모양으로 정답을 알 수 없게 하기 위해서예요.
+# base: 사기범을 믿는 정도를 낮추는 힘 / trust: 피싱일 때 나에 대한 신뢰 변화
+# real_trust: 진짜 연락에 이 행동을 했을 때 신뢰 변화
+APPROACHES = {
+    "watch": {"label": "👀 일단 지켜본다", "base": 0, "trust": 0, "real_trust": 0},
+    "together": {
+        "label": "🤝 공감하고, 원래 알던 번호로 함께 확인하자고 한다",
+        "base": 45,
+        "trust": 10,
+        "real_trust": -10,
+        "lesson": "먼저 마음을 안심시키고, 상대가 준 번호가 아닌 공식 경로로 ‘같이’ 확인하자고 하면 할머니가 스스로 판단할 수 있어요.",
+    },
+    "reason": {
+        "label": "💡 수상한 점을 하나 짚어 준다",
+        "base": 25,
+        "trust": 0,
+        "real_trust": -10,
+        "lesson": "구체적인 근거 하나는 효과가 있어요. 다만 겁먹은 상태에서는 논리만으로 마음을 바꾸기 어려워요.",
+    },
+    "parent": {
+        "label": "📱 엄마에게 전화해 함께 설득한다",
+        "base": 35,
+        "trust": 0,
+        "real_trust": -10,
+        "lesson": "혼자 어려울 때 다른 가족과 함께하면 힘이 실려요. 할머니가 평소 믿는 사람일수록 좋아요.",
+    },
+    "scold": {
+        "label": "😠 “할머니, 그거 사기예요! 당장 끊어요!”",
+        "base": 10,
+        "trust": -15,
+        "real_trust": -15,
+        "counter": True,
+        "lesson": "다그치면 할머니는 창피하고 무서워져요. ‘가족에게 말하지 말라’던 사기범의 말이 맞는 것처럼 느껴져 오히려 사기범 편에 서기 쉬워요.",
+    },
+    "snatch": {
+        "label": "🤫 몰래 폰을 가져와 끊고 번호를 차단한다",
+        "base": 30,
+        "trust": -25,
+        "real_trust": -25,
+        "counter": True,
+        "lesson": "당장은 막을 수 있지만, 할머니는 무시당했다고 느껴요. 사기범은 다른 번호로 다시 연락하고, 할머니는 나 몰래 받을 수 있어요.",
+    },
+    "police": {
+        "label": "🚨 112에 신고하고, 은행에 지급정지를 요청한다",
+        "base": 100,
+        "trust": -5,
+        "real_trust": -5,
+        "lesson": "송금 직전·직후에는 망설이지 말고 112와 은행에 알려야 해요. 할머니가 놀라실 수 있으니 이유를 차분히 설명해 드려요.",
+    },
+}
+
+NORMAL_OPTIONS = ["watch", "together", "reason", "parent", "scold", "snatch"]
+FINAL_OPTIONS = NORMAL_OPTIONS + ["police"]
+
+# 진짜 연락까지 의심하거나 막은 행동입니다.
+DOUBT_KEYS = ("reason", "parent", "scold", "snatch", "police")
+
+REAL_LESSON = {
+    "together": "진짜 연락은 확인만 하고 넘어가면 충분해요. 모든 연락을 의심하면 할머니가 지칠 수 있어요.",
+    "doubt": "진짜 연락까지 의심하거나 막으면 할머니가 불편해지고, 정작 중요한 순간에 내 말을 덜 믿게 돼요.",
+}
+
+ENDINGS = {
+    "best": (
+        "⭐ 든든한 손주",
+        "일찍 알아채고, 할머니가 놀라지 않게 공감하며 함께 확인했어요. 진짜 연락은 괜히 막지 않았고, 사기범이 다시 연락해 와도 할머니는 흔들리지 않았어요.",
+        "#DCFCE7",
+    ),
+    "good": (
+        "🟢 지켜 냈다",
+        "중간에 사기범의 말이 먹히기도 했지만, 송금 전에 할머니가 멈추고 함께 확인했어요.",
+        "#ECFDF5",
+    ),
+    "close": (
+        "🟠 아슬아슬",
+        "송금 직전에야 막았어요. 실제라면 이미 앱이 깔리고 개인정보가 넘어갔을 수 있어요. 은행에 연락해 비밀번호를 바꾸고 설치된 앱을 지워야 해요.",
+        "#FFEDD5",
+    ),
+    "bad": (
+        "🔴 송금 완료",
+        "980만 원이 ‘안전계좌’로 넘어갔어요. 실제라면 즉시 112와 은행에 지급정지를 요청해야 해요. 다른 방법으로 다시 도전해 보세요.",
+        "#FEE2E2",
+    ),
+}
+
+
+st.markdown(
+    """
+    <style>
+    .gp-phone {max-width: 360px; margin: 0 auto 8px; background:#0B1220; border-radius:30px;
+               padding:10px 12px 14px; border:3px solid #2B3645; box-shadow:0 10px 26px rgba(15,23,42,.28);
+               color:#E5ECF4;}
+    .gp-phone .notch {width:90px; height:6px; background:#2B3645; border-radius:6px; margin:0 auto 6px;}
+    .gp-phone .status {display:flex; justify-content:space-between; font-size:.72rem; color:#AAB7C6; padding:2px 10px 8px;}
+    .gp-title {font-size:.78rem; color:#9FB0C3; text-align:center; margin-bottom:6px;}
+    .gp-item {background:#162033; border-radius:14px; padding:8px 10px; margin:6px 0; opacity:.55;}
+    .gp-item.new {opacity:1; border:2px solid #FBBF24; animation: gp-pop .4s ease-out;}
+    @keyframes gp-pop {from {transform:translateY(-8px); opacity:0;} to {transform:none; opacity:1;}}
+    .gp-head {display:flex; justify-content:space-between; font-size:.74rem; color:#AAB7C6; margin-bottom:4px; gap:6px;}
+    .gp-head b {color:#fff;}
+    .gp-tag {font-size:.66rem; background:#7F1D1D; color:#FECACA; border-radius:6px; padding:1px 6px; white-space:nowrap;}
+    .gp-tag.ok {background:#14532D; color:#BBF7D0;}
+    .gp-tag.call {background:#1E3A8A; color:#BFDBFE;}
+    .gp-line {font-size:.9rem; line-height:1.5; color:#F1F5F9;}
+    .gp-line.voice {color:#FDE68A;}
+    .gp-grandma {background:#FFF7ED; border:2px solid #FED7AA; border-radius:18px; padding:14px 16px; color:#172B3A;}
+    .gp-grandma .face {font-size:2.6rem; line-height:1;}
+    .gp-grandma .say {background:#fff; border-radius:14px 14px 14px 4px; padding:9px 12px; margin-top:8px;
+                      border:1px solid #FED7AA; font-size:.98rem;}
+    .gp-grandma .say.prev {color:#6B7280; font-size:.9rem;}
+    .gp-ending {border-radius:18px; padding:18px 20px; margin:6px 0 14px; color:#172B3A;}
+    .gp-ending .t {font-size:1.6rem; font-weight:900; margin-bottom:6px;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def esc(text):
+    return html.escape(str(text))
+
+
+def clamp(value):
+    return max(0, min(100, value))
 
 
 # ─────────────────────────────────────
 # 게임 상태
 # ─────────────────────────────────────
 
-def new_game():
+def new_game(started=False):
     return {
+        "started": started,
         "step": 0,
-        "checked": False,
-        "held": False,
-        "helper": False,
+        "belief": 0,             # 할머니가 사기범을 믿는 정도
+        "trust": START_TRUST,    # 할머니가 나를 믿는 정도
+        "counter": False,        # 다그치거나 몰래 막아서 사기범이 더 세게 나오는지
+        "alert": False,          # 할머니가 한 번이라도 스스로 멈췄는지
+        "pushed": -1,            # 사기범의 push를 이미 반영한 연락 번호
+        "clue_open": False,      # 현재 연락의 단서를 열어 봤는지
         "log": [],
-        "ending": None,
+        "result": None,          # protected / sent
     }
 
 
-def reset():
-    st.session_state[KEY] = new_game()
-    st.session_state[KEY + "_started"] = True
+def start_game():
+    st.session_state[KEY] = new_game(started=True)
 
 
-def record_choice(game, action):
+def open_clues():
+    st.session_state[KEY]["clue_open"] = True
+
+
+def scam_stage(step):
+    return sum(1 for event in EVENTS[: step + 1] if not event["real"])
+
+
+TOTAL_STAGES = sum(1 for event in EVENTS if not event["real"])
+
+
+def enter_event(game):
+    """피싱 연락이 오면 할머니가 사기범을 더 믿게 됩니다. 한 연락에 한 번만 반영합니다."""
+    step = game["step"]
+    event = EVENTS[step]
+    if event["real"] or game["pushed"] == step:
+        return
+    push = event["push"]
+    if game["alert"]:
+        # 이미 한 번 속지 않은 할머니는 덜 흔들려요.
+        push //= 2
+    if game["counter"]:
+        push += COUNTER_PUSH
+        game["counter"] = False
+    game["belief"] = clamp(game["belief"] + push)
+    game["pushed"] = step
+
+
+def grandma_reaction(key, game, stopped, real):
+    if real:
+        if key == "watch":
+            return "(할머니가 문자를 한 번 보고 휴대전화를 내려놓는다.)"
+        if key == "together":
+            return "그래, 같이 보자. …이건 맨날 오는 거야. 너무 걱정 말렴."
+        if key == "reason":
+            return "이게 뭐가 이상해? 할머니가 방금 한 건데."
+        if key == "parent":
+            return "엄마까지 부를 일이니? 이건 진짜야."
+        return "이건 진짜야! 너 왜 이래, 할머니가 그것도 모를까 봐?"
+
+    if key == "police":
+        return "경찰까지? …그래, 네 말대로 해 보자. 손이 다 떨리네."
+    if stopped and key == "watch":
+        return "(할머니가 고개를 갸웃한다) 아까부터 이상했어. 이번엔 안 따를래."
+    if stopped:
+        return "…듣고 보니 이상하네. 그래, 같이 확인해 보자. (할머니가 전화를 끊는다.)"
+    if key == "scold":
+        return "너까지 소리 지르니까 더 무섭다… 아무한테도 말하지 말랬는데."
+    if key == "snatch":
+        return "왜 남의 폰을 함부로 만져! 할머니가 알아서 해."
+    if key == "watch":
+        return "(할머니가 휴대전화를 귀에 댄 채 고개를 끄덕인다.)"
+    if game["belief"] > 45:
+        return "너는 몰라도 돼. 수사관이 진짜 같았어."
+    return "그래도… 진짜 수사관 같던데. 조금만 더 생각해 볼게."
+
+
+def act(key):
+    game = st.session_state[KEY]
+    step = game["step"]
+    event = EVENTS[step]
+    approach = APPROACHES[key]
+    real = event["real"]
+
+    if real:
+        game["trust"] = clamp(game["trust"] + approach["real_trust"])
+        stopped = False
+        if key == "together":
+            lesson = REAL_LESSON["together"]
+        elif key in DOUBT_KEYS:
+            lesson = REAL_LESSON["doubt"]
+        else:
+            lesson = ""
+    else:
+        # 나를 믿는 정도가 높을수록 같은 말도 더 잘 통합니다.
+        effect = round(approach["base"] * game["trust"] / START_TRUST)
+        if key == "police":
+            effect = 100
+        game["belief"] = clamp(game["belief"] - effect)
+        game["trust"] = clamp(game["trust"] + approach["trust"])
+        if approach.get("counter"):
+            game["counter"] = True
+        stopped = game["belief"] <= STOP_LINE
+        lesson = approach.get("lesson", "")
+
+    if key == "reason" and not real:
+        said = event["reason"]
+    elif key == "together" and not real:
+        said = event["together"]
+    else:
+        said = approach["label"]
+
     game["log"].append(
         {
-            "index": game["step"],
-            "checked": game["checked"],
-            "helper": game["helper"],
-            "action": action,
+            "step": step,
+            "key": key,
+            "said": said,
+            "checked": game["clue_open"],
+            "stopped": stopped,
+            "reaction": grandma_reaction(key, game, stopped, real),
+            "lesson": lesson,
+            "belief": game["belief"],
+            "trust": game["trust"],
         }
     )
 
+    if stopped:
+        game["alert"] = True
 
-def advance(game):
-    game["step"] += 1
-    game["checked"] = False
-    game["held"] = False
-    game["helper"] = False
-
-    if game["step"] >= len(EVENTS):
-        game["ending"] = "review"
-
-
-# ─────────────────────────────────────
-# 선택 처리
-# ─────────────────────────────────────
-
-def choose(game, action):
-    event = EVENTS[game["step"]]
-
-    # 확인은 장면을 넘기지 않고 근거만 공개합니다.
-    if action in ("check", "help"):
-        game["checked"] = True
-
-        if action == "help":
-            game["helper"] = True
-
-        return
-
-    if action == "pause":
-        game["held"] = True
-
-        # 확인 전 보류에는 정답 판정을 내리지 않습니다.
-        if not game["checked"]:
-            return
-
-        record_choice(
-            game,
-            "확인 후 요구를 멈춤 / 연락을 보류함",
-        )
-
-        if not event["real"]:
-            game["ending"] = "protected"
-        else:
-            advance(game)
-
-        return
-
-    if action == "continue":
-        record_choice(
-            game,
-            "연락을 받아들이고 계속 진행함",
-        )
-
-        if game["step"] == len(EVENTS) - 1:
-            game["ending"] = "sent"
-        else:
-            advance(game)
+    if event.get("final"):
+        game["result"] = "protected" if (stopped or key == "police") else "sent"
+    else:
+        game["step"] = step + 1
+        game["clue_open"] = False
 
 
 # ─────────────────────────────────────
-# 결과 기록
+# 판단 기록
 # ─────────────────────────────────────
 
-def make_report(game):
+def judged_right(record):
+    """진짜 연락은 차분히 넘기고, 피싱에는 끼어들었는지 봅니다."""
+    real = EVENTS[record["step"]]["real"]
+    if real:
+        return record["key"] in ("watch", "together")
+    return record["key"] != "watch"
+
+
+def judgment_text(record):
+    event = EVENTS[record["step"]]
+    key = record["key"]
+    if event["real"]:
+        if key == "watch":
+            return "✅ 진짜 연락을 차분히 넘겼어요."
+        if key == "together":
+            return "🙂 진짜 연락을 함께 확인했어요. 이 정도는 괜찮아요."
+        return "⚠️ 진짜 연락을 의심하거나 막았어요."
+    if key == "watch":
+        if record["stopped"]:
+            return "🙂 지켜보기만 했지만, 할머니가 스스로 알아챘어요."
+        return "⚠️ 피싱을 지켜보기만 했어요."
+    if record["stopped"]:
+        return "✅ 피싱에 끼어들어 할머니가 멈췄어요."
+    return "🟡 끼어들었지만 할머니는 아직 흔들리고 있었어요."
+
+
+def decide_ending(game):
+    log = game["log"]
+    if game["result"] == "sent":
+        return "bad"
+    stops = [record for record in log if record["stopped"]]
+    first = stops[0] if stops else log[-1]
+    if EVENTS[first["step"]].get("final"):
+        return "close"
+    doubted = sum(1 for r in log if EVENTS[r["step"]]["real"] and r["key"] in DOUBT_KEYS)
+    # 진짜 연락까지 매번 '함께 확인'하면 할머니가 지쳐요. 한 번까지는 괜찮아요.
+    over_checked = sum(1 for r in log if EVENTS[r["step"]]["real"] and r["key"] == "together")
+    early = scam_stage(first["step"]) <= 2
+    if early and game["trust"] >= START_TRUST and doubted == 0 and over_checked <= 1:
+        return "best"
+    return "good"
+
+
+def make_report(game, title):
+    log = game["log"]
+    right = sum(judged_right(r) for r in log)
     lines = [
-        "잠깐! · 할머니 폰 지키기",
-        "교육용 가상 상황의 결과",
+        "잠깐! · 할머니 폰 지키기 결과",
+        "교육용 가상 상황의 결과이며, 수치는 실제 확률이 아닙니다.",
+        "",
+        f"결말: {title}",
+        f"판단이 맞은 연락: {right} / {len(log)}",
+        f"마지막 신뢰: {game['trust']}",
         "",
     ]
-
-    for item in game["log"]:
-        event = EVENTS[item["index"]]
-
+    for record in log:
+        event = EVENTS[record["step"]]
         lines.extend(
             [
-                f"{event['time']} · {event['sender']}",
-                "게임 속 설정: "
-                + ("진짜 연락" if event["real"] else "피싱"),
-                "별도 경로 확인: "
-                + ("했음" if item["checked"] else "하지 않음"),
-                "내 선택: " + item["action"],
-                "확인 근거: " + event["evidence"],
+                f"{event['time']} · {event['sender']} ({'진짜 연락' if event['real'] else '피싱 · ' + event['stage']})",
+                f"   단서 확인: {'했음' if record['checked'] else '하지 않음'}",
+                f"   내 행동: {record['said']}",
+                f"   할머니: {record['reaction']}",
+                f"   판단: {judgment_text(record)}",
+                f"   확인 방법: {event['route']}",
+                f"   가상 확인 결과: {event['result']}",
                 "",
             ]
         )
-
     return "\n".join(lines)
 
 
-def show_result(game):
-    if game["ending"] == "protected":
-        st.success(
-            "🛡️ 별도 경로로 확인하고, 위험한 요구를 멈췄어요!"
-        )
-        st.write(
-            "이번 사건은 여기서 마무리돼요. "
-            "이후 연락은 진행하지 않아요."
-        )
+# ─────────────────────────────────────
+# 화면 조각
+# ─────────────────────────────────────
 
-    elif game["ending"] == "sent":
-        st.error(
-            "게임 속에서 사기범이 요구한 송금이 진행됐어요."
+def phone_html(step):
+    items = []
+    for index in range(step + 1):
+        event = EVENTS[index]
+        if event["kind"] == "call":
+            tag = '<span class="gp-tag call">📞 통화</span>'
+        elif event.get("saved"):
+            tag = '<span class="gp-tag ok">저장된 연락처</span>'
+        elif event["kind"] == "notice":
+            tag = '<span class="gp-tag ok">앱 알림</span>'
+        else:
+            tag = '<span class="gp-tag">저장되지 않은 번호</span>'
+        voice = " voice" if event["kind"] == "call" else ""
+        lines = "".join(f'<div class="gp-line{voice}">{esc(t)}</div>' for t in event["lines"])
+        lines += "".join(f'<div class="gp-line voice">{esc(t)}</div>' for t in event.get("call_lines", []))
+        new = " new" if index == step else ""
+        items.append(
+            f'<div class="gp-item{new}"><div class="gp-head"><b>{esc(event["sender"])}</b>'
+            f'<span>{tag} {esc(event["time"])}</span></div>{lines}</div>'
         )
-        st.write(
-            "어떤 단계에서 보류하고 별도로 확인할 수 있었는지 "
-            "기록을 살펴봐요."
-        )
-
-    else:
-        st.info(
-            "연습을 마쳤어요. 확인 과정과 선택을 돌아봐요."
-        )
-
-    checked = sum(
-        item["checked"]
-        for item in game["log"]
+    return (
+        '<div class="gp-phone"><div class="notch"></div>'
+        f'<div class="status"><span>{esc(EVENTS[step]["time"])}</span><span>📶 LTE 🔋 48%</span></div>'
+        '<div class="gp-title">👵 할머니 휴대전화</div>'
+        + "".join(reversed(items))
+        + "</div>"
     )
 
-    left, right = st.columns(2)
-    left.metric("판단한 연락", len(game["log"]))
-    right.metric("별도 경로로 확인한 연락", checked)
 
+def show_gauges(game):
+    stage = scam_stage(game["step"])
+    st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
+    st.progress(game["belief"] / 100)
+    st.markdown(f"**💛 할머니가 나를 믿는 정도 {game['trust']}**")
+    st.progress(game["trust"] / 100)
+    st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**")
+    st.progress(stage / TOTAL_STAGES)
     st.caption(
-        "학습 기록이며 실제 대응 능력이나 "
-        "피해 확률을 나타내지 않아요."
+        f"사기범을 믿는 정도가 {STOP_LINE} 이하로 내려가면 할머니가 스스로 멈춰요. "
+        "수치는 게임 속 상태이며 실제 확률이 아니에요."
     )
 
-    st.subheader("📋 내 선택 돌아보기")
 
-    for item in game["log"]:
-        event = EVENTS[item["index"]]
-        verdict = "진짜 연락" if event["real"] else "피싱"
+def show_last_feedback(game):
+    if not game["log"]:
+        return
+    last = game["log"][-1]
+    if last["stopped"]:
+        st.success(
+            "🛑 할머니가 방금 연락을 멈췄어요! "
+            "하지만 사기범은 쉽게 포기하지 않아요. 다음 연락도 잘 살펴봐요."
+        )
+    if not last["lesson"]:
+        return
+    if last["key"] in ("scold", "snatch") or (
+        EVENTS[last["step"]]["real"] and last["key"] in DOUBT_KEYS
+    ):
+        st.warning(f"💬 {last['lesson']}")
+    else:
+        st.info(f"💬 {last['lesson']}")
 
-        with st.expander(
-            f"{event['time']} · {verdict} · 내 선택 돌아보기"
-        ):
-            st.write("**연락 내용:** " + event["text"])
-            st.write("**내 선택:** " + item["action"])
-            st.write("**판단 근거:** " + event["evidence"])
 
-            if not item["checked"]:
-                st.warning(
-                    "선택 전 별도 경로로 확인하지 않았어요."
-                )
+def show_intro():
+    show_mascot("phone", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
+    st.markdown("### 🎯 미션: 할머니의 돈을 지켜라")
+    st.markdown(
+        "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어옵니다.\n\n"
+        "- **진짜 연락**과 **피싱**이 섞여 있어요. 무엇이 피싱인지 직접 판단하세요.\n"
+        "- **🔎 단서 살펴보기**를 누르면 판단에 도움이 되는 사실을 볼 수 있어요. 정답은 알려 주지 않아요.\n"
+        "- 모든 연락에 **같은 선택지**가 나와요. 지켜볼지, 끼어들지, **어떻게 말할지** 골라요.\n"
+        "- **다그치거나 몰래 막거나 진짜 연락까지 막으면** 할머니가 나를 덜 믿게 되고, 내 말이 잘 통하지 않아요.\n"
+        "- 할머니가 한 번 멈춰도 사기범은 다시 연락해요. **마지막 송금까지** 지켜 내야 해요."
+    )
+    st.markdown("#### 게이지 읽는 법")
+    st.markdown(
+        "- 😟 **사기범을 믿는 정도** — 피싱 연락이 올 때마다 올라가요. 설득하면 내려가요.\n"
+        "- 💛 **할머니가 나를 믿는 정도** — 높을수록 같은 말도 더 잘 통해요.\n"
+        "- 💸 **송금까지** — 마지막 단계에서 송금을 막아야 해요."
+    )
+    st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
+    st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game)
 
-            elif event["real"]:
-                st.info(
-                    "기존 내역과 대조했어요. "
-                    "조심스럽게 확인하거나 보류한 것 자체는 "
-                    "잘못이 아니에요."
-                )
 
-            elif "계속 진행" in item["action"]:
-                st.warning(
-                    "위험하다는 확인 결과가 있었지만 "
-                    "계속 진행했어요. "
-                    "확인 결과를 행동에도 반영해 봐요."
-                )
+def show_play(game):
+    enter_event(game)
+    step = game["step"]
+    event = EVENTS[step]
 
-            else:
-                st.success(
-                    "확인한 근거에 따라 위험한 요구를 멈췄어요."
-                )
+    st.caption(f"연락 {step + 1} / {len(EVENTS)}")
+    show_last_feedback(game)
+
+    phone_col, side_col = st.columns([1.1, 1])
+    with phone_col:
+        st.markdown(phone_html(step), unsafe_allow_html=True)
+    with side_col:
+        log = game["log"]
+        prev = log[-1]["reaction"] if log else None
+        belief = game["belief"]
+        mood = "😰" if belief > 45 else "🤔" if belief > STOP_LINE else "👵"
+        now = event["grandma_alert"] if (game["alert"] and not event["real"]) else event["grandma"]
+        bubble = f'<div class="say prev">{esc(prev)}</div>' if prev else ""
+        st.markdown(
+            f'<div class="gp-grandma"><div class="face">{mood}</div>'
+            f"{bubble}"
+            f'<div class="say">{esc(now)}</div></div>',
+            unsafe_allow_html=True,
+        )
+        st.write("")
+        show_gauges(game)
+
+    if game["clue_open"]:
+        with st.container(border=True):
+            st.markdown("**🔎 눈에 보이는 단서**")
+            st.markdown("\n".join(f"- {clue}" for clue in event["clues"]))
+            st.caption("단서는 사실만 보여 줘요. 진짜인지 피싱인지는 직접 판단하세요.")
+    else:
+        st.button("🔎 단서 살펴보기", on_click=open_clues)
+
+    st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
+    options = FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS
+    for key in options:
+        st.button(
+            APPROACHES[key]["label"],
+            key=f"gp3_btn_{step}_{key}",
+            on_click=act,
+            args=(key,),
+            use_container_width=True,
+        )
+
+
+def show_ending(game):
+    log = game["log"]
+    ending = decide_ending(game)
+    title, story, color = ENDINGS[ending]
+    trust = game["trust"]
 
     st.markdown(
-        "**기억해요**\n"
-        "- 발신자 이름이나 저장된 번호만으로 "
-        "신원을 확정하지 않아요.\n"
-        "- 모르겠으면 먼저 보류하고 "
-        "별도 경로로 확인해요.\n"
-        "- 가족을 다그치기보다 안심시키고 "
-        "함께 확인해요."
+        f'<div class="gp-ending" style="background:{color};"><div class="t">{esc(title)}</div>{esc(story)}</div>',
+        unsafe_allow_html=True,
+    )
+    if ending != "bad" and trust < 40:
+        st.warning("💔 막기는 했지만 할머니 마음이 많이 상했어요. 다그치거나 몰래 막은 일이 있었는지 아래 기록에서 확인해 보세요.")
+
+    right = sum(judged_right(r) for r in log)
+    checked = sum(1 for r in log if r["checked"])
+    harsh = sum(1 for r in log if r["key"] in ("scold", "snatch"))
+    first, second, third, fourth = st.columns(4)
+    first.metric("판단이 맞은 연락", f"{right} / {len(log)}")
+    second.metric("단서를 살펴본 연락", f"{checked}번")
+    third.metric("💛 마지막 신뢰", trust)
+    fourth.metric("다그치거나 몰래 막음", f"{harsh}번")
+    st.caption("학습 기록이며 실제 대응 능력이나 피해 확률을 나타내지 않아요.")
+
+    st.subheader("📋 그날 오전의 기록")
+    st.caption("게임 중에는 알려 주지 않았던, 각 연락이 진짜였는지 피싱이었는지와 확인 방법을 공개해요.")
+    for record in log:
+        event = EVENTS[record["step"]]
+        label = "✅ 진짜 연락" if event["real"] else f"🚨 피싱 · {event['stage']}"
+        with st.expander(f"{event['time']} · {event['sender']} — {label}"):
+            st.write("**연락 내용:**", " / ".join(event["lines"] + event.get("call_lines", [])))
+            st.write("**내가 한 말·행동:**", record["said"])
+            st.write("**할머니 반응:**", record["reaction"])
+            st.write("**내 판단:**", judgment_text(record))
+            if record["lesson"]:
+                st.write("**돌아보기:**", record["lesson"])
+            st.write("**이렇게 확인할 수 있어요:**", event["route"])
+            st.write("**가상 확인 결과:**", event["result"])
+            if not record["checked"]:
+                st.caption("이 연락은 단서를 살펴보지 않고 선택했어요.")
+            st.caption(f"이후 상태 · 사기범을 믿는 정도 {record['belief']} · 나를 믿는 정도 {record['trust']}")
+
+    st.markdown("#### 주변 사람이 속고 있을 때, 이렇게 도와요")
+    st.markdown(
+        "1. **다그치지 말고 먼저 안심시키기** — “놀라셨죠, 잘못한 거 아니에요.” 겁먹은 사람은 꾸중을 들으면 더 숨어요.\n"
+        "2. **근거는 짧고 분명하게** — “검찰은 전화로 돈을 옮기라고 하지 않아요.” 한 가지면 충분해요.\n"
+        "3. **함께 확인하기** — 상대가 준 번호가 아니라 공식 대표번호·은행 창구로 ‘같이’ 확인해요. 판단은 본인이 하게 도와요.\n"
+        "4. **진짜 연락은 막지 않기** — 모든 연락을 의심하면 정작 중요한 순간에 내 말을 믿지 않아요.\n"
+        "5. **한 번 막아도 끝이 아니에요** — 사기범은 번호를 바꿔 다시 연락해요. 계속 곁에서 함께 확인해요.\n"
+        "6. **급하면 바로 신고** — 송금 직전·직후라면 112, 은행 지급정지, 금융감독원(1332)에 알리고 다른 가족과 함께해요."
     )
 
     st.download_button(
         "기록 내려받기",
-        data=make_report(game).encode("utf-8-sig"),
+        data=make_report(game, title).encode("utf-8-sig"),
         file_name="jamkkan_grandma_report.txt",
         mime="text/plain",
     )
-
-    show_mascot(
-        "retry",
-        "다른 선택도 연습해 볼까요?",
-        width=100,
-    )
-
-    st.button(
-        "다시 도전하기",
-        on_click=reset,
-    )
+    show_mascot("retry", "다른 선택도 연습해 볼까요?", width=100)
+    st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=start_game)
 
 
 # ─────────────────────────────────────
@@ -404,165 +702,17 @@ def show_result(game):
 # ─────────────────────────────────────
 
 st.title("✋ 잠깐! · 할머니 폰 지키기")
-
-st.write(
-    "정답을 찍기보다, 근거를 확인하고 "
-    "할머니와 함께 대응해요."
-)
-
-st.caption(
-    "연락·확인 결과는 모두 가상입니다. "
-    "실제 전화·조회·설치·송금은 실행하지 않아요."
-)
+st.write("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?")
+st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
 if KEY not in st.session_state:
     st.session_state[KEY] = new_game()
 
 game = st.session_state[KEY]
 
-
-# 시작 안내
-if not st.session_state.get(KEY + "_started", False):
-    show_mascot(
-        "phone",
-        "모르겠으면 잠깐 멈추고, 함께 확인해요.",
-    )
-
-    st.markdown(
-        "### 어떻게 진행하나요?\n"
-        "1. 새 연락과 할머니의 말을 읽어요.\n"
-        "2. **함께 확인하기**로 별도 자료와 "
-        "확인 결과를 살펴봐요.\n"
-        "3. 확인한 내용을 바탕으로 계속 진행할지, "
-        "멈출지 선택해요.\n\n"
-        "모든 연락에 같은 버튼이 나와요. "
-        "아직 모르겠다면 **일단 멈추기**를 눌러도 괜찮아요. "
-        "가족에게 도움을 요청하면 "
-        "함께 확인하는 가상 결과를 볼 수 있어요."
-    )
-
-    st.button(
-        "👵 할머니 댁 들어가기",
-        type="primary",
-        on_click=reset,
-    )
-
-
-# 결과
-elif game["ending"]:
-    show_result(game)
-
-
-# 게임 진행
+if not game["started"]:
+    show_intro()
+elif game["result"]:
+    show_ending(game)
 else:
-    event = EVENTS[game["step"]]
-
-    st.caption(
-        f"연락 {game['step'] + 1} / {len(EVENTS)}"
-    )
-
-    phone, grandma = st.columns([1.1, 1])
-
-    with phone:
-        with st.container(border=True):
-            st.markdown("### 📱 할머니 휴대전화")
-
-            st.caption(
-                f"{event['time']} · {event['kind']}"
-            )
-
-            st.write(
-                "**화면에 표시된 발신자:** "
-                + event["sender"]
-            )
-
-            st.info(event["text"])
-
-            st.caption(
-                "발신자 표시는 확인 단서일 뿐, "
-                "신원 확인 결과가 아니에요."
-            )
-
-    with grandma:
-        show_mascot(
-            "phone",
-            "할머니의 이야기도 들어봐요.",
-            width=100,
-        )
-
-        st.markdown("### 👵 할머니")
-        st.write(event["grandma"])
-
-    if game["held"]:
-        st.info(
-            "요구를 잠시 보류했어요. "
-            "확인 전에는 진짜인지 피싱인지 단정하지 않아요."
-        )
-
-    if game["checked"]:
-        with st.container(border=True):
-            st.markdown("### 🔎 함께 확인한 근거")
-
-            if game["helper"]:
-                st.write(
-                    "가족이 함께 내용을 살펴보고 "
-                    "별도 경로로 확인했어요."
-                )
-
-            st.write(
-                "**확인 방법:** " + event["route"]
-            )
-
-            st.write(
-                "**가상 확인 결과:** " + event["evidence"]
-            )
-
-            st.write(
-                "**판단:** " + event["finding"]
-            )
-
-    else:
-        st.caption(
-            "‘함께 확인하기’를 누르면 "
-            "별도 경로로 확인한 가상 자료가 나타나요."
-        )
-
-    st.markdown("### 어떻게 대응할까요?")
-
-    a, b = st.columns(2)
-
-    with a:
-        if st.button(
-            "🔎 함께 확인하기",
-            use_container_width=True,
-        ):
-            choose(game, "check")
-            st.rerun()
-
-        if st.button(
-            "⏸️ 일단 멈추기 / 확인 후 보류하기",
-            use_container_width=True,
-        ):
-            choose(game, "pause")
-            st.rerun()
-
-    with b:
-        if st.button(
-            "👪 가족에게 도움 요청하기",
-            use_container_width=True,
-        ):
-            choose(game, "help")
-            st.rerun()
-
-        if st.button(
-            "➡️ 연락을 받아들이고 계속 진행",
-            use_container_width=True,
-        ):
-            choose(game, "continue")
-            st.rerun()
-
-    st.caption(
-        "확인 전 멈추면 현재 장면에 머물러요. "
-        "확인 후 멈추면 위험한 요구를 중단하거나 "
-        "정상 연락을 보류해요."
-    )
+    show_play(game)
