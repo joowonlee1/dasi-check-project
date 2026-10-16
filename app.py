@@ -147,16 +147,14 @@ st.markdown(
         line-height: 1.7 !important;
     }
 
-    /* 탭 번호와 선택 표시 */
-    [data-baseweb="tab-list"] {
+    /* 탭 모양과 선택 표시 (탭 이름에 번호가 이미 있어서 번호는 따로 붙이지 않아요) */
+    [data-testid="stTabs"] [role="tablist"] {
         gap: 8px;
-        counter-reset: guide-tabs;
         overflow-x: auto;
         padding: 6px 0 12px;
     }
 
-    [data-baseweb="tab-list"] [role="tab"] {
-        counter-increment: guide-tabs;
+    [data-testid="stTabs"] [role="tablist"] [role="tab"] {
         min-height: 50px;
         height: auto;
         flex-shrink: 0;
@@ -167,19 +165,13 @@ st.markdown(
         gap: 8px;
     }
 
-    [data-baseweb="tab-list"] [role="tab"]::before {
-        content: counter(guide-tabs, decimal-leading-zero);
-        font-weight: 800;
-        color: #0F766E;
-    }
-
-    [data-baseweb="tab-list"]
+    [data-testid="stTabs"] [role="tablist"]
     [role="tab"][aria-selected="true"] {
         background: #E0F0E8;
         border: 2px solid #0F766E;
     }
 
-    [data-baseweb="tab-list"] [role="tab"] p {
+    [data-testid="stTabs"] [role="tablist"] [role="tab"] p {
         font-size: 1rem !important;
         font-weight: 700;
         white-space: nowrap;
@@ -253,7 +245,7 @@ st.markdown(
             padding: 22px;
         }
 
-        [data-baseweb="tab-list"] [role="tab"] {
+        [data-testid="stTabs"] [role="tablist"] [role="tab"] {
             padding: 8px 10px;
         }
     }
@@ -478,29 +470,29 @@ if current:
         st.markdown(
             """
             <style>
-            [data-baseweb="tab-list"]
+            [data-testid="stTabs"] [role="tablist"]
             :is([role="tab"]) {
                 scroll-margin-inline: 12px;
             }
 
-            [data-baseweb="tab-list"]
+            [data-testid="stTabs"] [role="tablist"]
             :is([role="tab"]):focus-visible {
                 outline-offset: -3px;
             }
 
-            [data-baseweb="tab-list"]
+            [data-testid="stTabs"] [role="tablist"]
             :is([role="tab"]):nth-of-type(4) {
                 scroll-margin-inline: 12px;
             }
 
-            [data-baseweb="tab-list"]:has(
+            [data-testid="stTabs"] [role="tablist"]:has(
                 > [role="tab"]:nth-of-type(6)
             ) > [role="tab"]:nth-of-type(4) {
                 background: #FFF0C7;
                 border: 2px solid #986500;
             }
 
-            [data-baseweb="tab-list"]:has(
+            [data-testid="stTabs"] [role="tablist"]:has(
                 > [role="tab"]:nth-of-type(6)
             ) > [role="tab"]:nth-of-type(4)::after {
                 content: "필독";
