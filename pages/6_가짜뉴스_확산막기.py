@@ -7,6 +7,7 @@
 import json
 
 import streamlit as st
+import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from river_component_ui import create_river_component
 
@@ -498,6 +499,10 @@ function finish(){
   const deg = S.g.adj.map((a, i) => ({i, d: a.length})).filter(x => !S.g.sources.includes(x.i)).sort((a, b) => b.d - a.d).slice(0, 3);
   const good = stars >= 2;
   const last = G.stage === ST.length - 1;
+  sendResult({game: 'fakenews', type: 'stage', stage: G.stage, stars, pct});
+  const plays = STATS[`s${G.stage}_plays`] || 0;
+  const others = plays ? `<section class="panel"><h3>🌍 다른 친구들은?</h3><p>이 단계는 지금까지 <b>${plays}판</b> 진행됐고, 평균 <b>${Math.round((STATS[`s${G.stage}_pctsum`] || 0) / plays)}%</b>의 주민을 지켰어요. 별 3개는 <b>${Math.round((STATS[`s${G.stage}_star3`] || 0) * 100 / plays)}%</b>예요.</p></section>`
+    : '<section class="panel"><h3>🌍 다른 친구들은?</h3><p>아직 이 단계에 모인 기록이 없어요. 첫 기록의 주인공이에요!</p></section>';
   $('app').innerHTML = `
   <section class="result ${good ? 'good' : 'bad'}">
     <div class="stars">${[0,1,2].map(k => `<i style="animation-delay:${.2 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
@@ -506,6 +511,7 @@ function finish(){
     <div class="meter"><div id="mtr"></div></div>
   </section>
   ${hubTip(deg)}
+  ${others}
   <section class="panel"><h3>📢 수법 공개 · ${esc(S.st.icon + ' ' + S.st.tactic)}</h3><p>${esc(S.st.reveal)}</p><p class="tip">🔎 진실: ${esc(S.st.truth)}</p></section>
   <section class="panel"><h3>🧠 연결이 가장 많은 사람 TOP 3</h3>
     <ul class="hubs">${deg.map(x => `<li>${S.g.emoji[x.i]} 주민 ${x.i + 1} · 친구 ${x.d}명 → ${S.state[x.i] === 'I' ? '🔴 믿어 버림' : S.state[x.i] === 'R' ? '🛡️ 지킴' : S.state[x.i] === 'C' ? '💬 정정됨' : '⚪ 소식이 닿지 않음'}</li>`).join('')}</ul>
@@ -537,6 +543,7 @@ function final(){
   const total = G.stars.reduce((a, b) => a + b, 0);
   const avg = Math.round(G.best.reduce((a, b) => a + b, 0) / ST.length);
   const title = total >= 13 ? '🛡️ 마을 수호자' : total >= 9 ? '🔍 팩트체크 요원' : '🌱 새내기 확인러';
+  sendResult({game: 'fakenews', type: 'final', stars: total, avg});
   $('app').innerHTML = `
   <section class="final"><div class="big">🏆</div><b style="font-size:1.6rem;display:block">${title}</b>
   <span>별 ${total} / 15 · 평균 ${avg}%의 주민을 지켰어요</span></section>
@@ -560,7 +567,10 @@ function resize(force = false){
   const height = Math.ceil(root.getBoundingClientRect().height) + 16;
   if (force || height !== lastHeight) { sendHost('streamlit:setFrameHeight', {height}); lastHeight = height; }
 }
-window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') requestAnimationFrame(() => resize(true)); });
+// 도토리시 통계: 파이썬이 보낸 다른 사람들의 기록(stats)을 받고, 게임 결과를 파이썬으로 보냅니다.
+let STATS = {};
+function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
+window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { if (ev.data.args && ev.data.args.stats) STATS = ev.data.args.stats; requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
 window.addEventListener('load', resize); window.addEventListener('resize', resize);
@@ -570,7 +580,22 @@ intro();
 
 page = HTML.replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
 spread_component = create_river_component(page)
-spread_component(key="jamkkan_spread_v1", default=None)
+value = spread_component(key="jamkkan_spread_v1", default=None, stats=dd.stats("fakenews"))
+
+# 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
+event = dd.take_event(value)
+if event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
+    s, stars, pct = int(event["stage"]), int(event.get("stars", 1)), max(0, min(100, int(event.get("pct", 0))))
+    dd.record("fakenews", {f"s{s}_plays": 1, f"s{s}_pctsum": pct, f"s{s}_star3": 1 if stars == 3 else 0})
+elif event and event.get("type") == "final":
+    stars, avg = max(0, min(15, int(event.get("stars", 0)))), max(0, min(100, int(event.get("avg", 0))))
+    dd.record("fakenews", {"finals": 1})
+    dd.note_mine("fakenews", f"별 {stars}/15 · 평균 {avg}% 지킴")
+    st.session_state["fakenews_hall"] = dd.save_hall(
+        "fakenews", {"stars": stars, "avg": avg},
+        lambda old, new: (new["stars"], new["avg"]) > (old.get("stars", 0), old.get("avg", 0)),
+    )
+dd.show_hall_note(st.session_state.get("fakenews_hall"))
 
 with st.expander("🧠 이 게임 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
