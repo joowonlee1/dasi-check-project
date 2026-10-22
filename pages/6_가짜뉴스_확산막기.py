@@ -120,6 +120,27 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .float{font-weight:900;font-size:20px;pointer-events:none;animation:float 1s ease-out forwards;text-anchor:middle}
 .toast{min-height:1.6em;font-weight:800;color:#B4471B;text-align:center;margin:6px 0;word-break:keep-all}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row button{flex:1}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.step{background:#fff;border:2px solid #D7E2DD;border-radius:18px;padding:14px 10px;text-align:center;animation:pop .45s ease-out both;word-break:keep-all}
+.step.key{border:3px solid #FF7A45;background:#FFF6EE;position:relative;box-shadow:0 6px 16px #FF7A4530}
+.step.key b{color:#B4471B}
+.badge3{position:absolute;top:-11px;right:10px;background:#FF7A45;color:#fff;border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:900;animation:bob 1.6s ease-in-out infinite}
+.hubtip{border-radius:18px;padding:16px;margin:10px 0;font-weight:800;word-break:keep-all;animation:pop .5s .3s ease-out both;line-height:1.6}
+.hubtip.miss{background:#FFF1E6;border:3px solid #FF7A45;color:#7A2E0E}
+.hubtip.hit{background:#E6F4EC;border:3px solid #0F766E;color:#174D40}
+.hubtip big{display:block;font-size:1.2rem;font-weight:900;margin-bottom:4px}
+.step .num{display:inline-block;background:#0F766E;color:#fff;border-radius:999px;width:28px;height:28px;line-height:28px;font-weight:900;font-size:.9rem;text-align:center}
+.step .ic{font-size:38px;margin:4px 0}
+.step b{display:block;font-size:1.05rem;margin-bottom:4px}
+.step p{margin:0;font-size:.92rem;color:#33524A;line-height:1.5}
+.goal{background:#FFF1C2;border-radius:14px;padding:10px 14px;font-weight:800;text-align:center;word-break:keep-all}
+.todo{background:#20483F;color:#fff;border-radius:16px;padding:12px 16px;font-weight:900;font-size:1.08rem;text-align:center;margin:10px 0;word-break:keep-all;animation:pop .35s ease-out both}
+.todo small{display:block;font-weight:600;opacity:.85;font-size:.85rem;margin-top:2px}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}
+.keys div{background:#F4F8F6;border:1px solid #D7E2DD;border-radius:12px;padding:7px 4px;text-align:center;font-size:.82rem;font-weight:700;word-break:keep-all;line-height:1.35}
+.keys div em{display:block;font-style:normal;font-size:20px}
+.node.S:hover circle.body{stroke:#0F766E;stroke-width:5}
+.node.I:not(.src):hover circle.body{stroke:#5B6FD6;stroke-width:5}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:#52616B;margin:4px 2px}
 .panel{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:16px;margin:10px 0;animation:pop .45s ease-out both}
 .panel h3{margin:0 0 6px}
@@ -157,7 +178,7 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 @keyframes bob{50%{transform:translateY(-8px)}}
 .node{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:560px){.hero b{font-size:1.2rem}.map{grid-template-columns:repeat(5,1fr)}.map div{font-size:.7rem}.post .txt{font-size:.98rem}}
+@media (max-width:560px){.steps{grid-template-columns:1fr;gap:8px}.step{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px}.step .ic{font-size:30px;margin:0}.step .num{flex-shrink:0}.step b{font-size:1rem}.keys{grid-template-columns:repeat(2,1fr)}.hero b{font-size:1.2rem}.map{grid-template-columns:repeat(5,1fr)}.map div{font-size:.7rem}.post .txt{font-size:.98rem}}
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const DATA = __DATA__;
@@ -225,12 +246,13 @@ function intro(){
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
   ${stageMap()}
-  <section class="panel"><h3>🎮 이렇게 해요</h3>
-  <p>① <b>준비 시간</b>: 퍼지기 전에 딱 <b>1명</b>에게 미리 알려 줄 수 있어요(🛡️ 사전 알림).<br>
-  ② <b>시작</b>을 누르면 📢 계정에서 소식이 <b>친구 연결선을 따라 한 칸씩</b> 퍼져요.<br>
-  ③ 남은 카드로 <b>아직 안 믿은 사람</b>을 눌러 지키거나(🛡️), <b>이미 믿은 사람</b>을 눌러 알맞은 정정 문구를 보내요(💬).<br>
-  ④ 더 퍼질 곳이 없으면 끝! 지킨 사람이 많을수록 별을 받아요.</p>
-  <div class="legend"><span>⚪ 아직 모름</span><span>🔴 믿고 퍼뜨림</span><span>🛡️ 지킴</span><span>💬 정정됨</span><span>📢 처음 올린 계정</span></div></section>
+  <div class="steps">
+    <div class="step"><span class="num">1</span><div class="ic">🛡️</div><div class="txt"><b>퍼지기 전, 1명 지키기</b><p>시작 전에 흰 동그라미 <b style="display:inline">1명</b>을 눌러 미리 알려 줘요.</p></div></div>
+    <div class="step" style="animation-delay:.1s"><span class="num">2</span><div class="ic">📶</div><div class="txt"><b>시작하면 한 칸씩 퍼짐</b><p>📢에서 시작해 <b style="display:inline">연결선을 따라</b> 빨간색이 번져요.</p></div></div>
+    <div class="step key" style="animation-delay:.2s"><span class="badge3">핵심!</span><span class="num">3</span><div class="ic">🃏</div><div class="txt"><b>남은 카드로 막기</b><p>⚪ 누르면 🛡️ 지킴<br>🔴 누르면 💬 정정 문구 고르기</p></div></div>
+  </div>
+  <div class="goal">🎯 목표: 안 속은 사람 75% 이상 ⭐⭐⭐ · 55% 이상 ⭐⭐</div>
+  <div class="keys" style="margin-top:10px"><div><em>⚪</em>아직 모름</div><div><em>🔴</em>믿고 퍼뜨림</div><div><em>🛡️</em>지킴</div><div><em>📢</em>처음 올린 계정</div></div>
   <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚀 ${G.stage + 1}단계 시작 · ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>`;
 }
 
@@ -256,12 +278,15 @@ function render(){
   $('app').innerHTML = `
   <section class="hero"><span>${G.stage + 1}단계 · 수법 ${esc(st.icon + ' ' + st.tactic)}</span><b>이 소식이 마을에 퍼지기 시작했어요</b></section>
   <div class="post"><div class="ava">📢</div><div><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div></div>
-  <div class="hud"><span class="cards">🃏 카드 ${S.cards}장</span><span>🔴 믿음 ${c.I}명</span><span>🛡️ 지킴 ${c.R}명</span><span>💬 정정 ${c.C}명</span><span>⚪ 아직 ${c.S}명</span><span>${phaseText}</span></div>
+  <div class="hud"><span class="cards">🃏 카드 ${S.cards}장</span><span>🔴 믿음 ${c.I}명</span><span>🛡️ 지킴 ${c.R}명</span><span>💬 정정 ${c.C}명</span><span>⚪ 아직 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
+  <div class="todo" id="now"></div>
   <div class="board"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg></div>
+  <div class="keys"><div><em>⚪ 👆</em>누르면 🛡️ 지킴</div><div><em>🔴 👆</em>누르면 💬 정정 문구</div><div><em>📢</em>눌러도 소용없음</div><div><em>🃏 ${S.cards}</em>남은 카드</div></div>
   <div class="dialog" id="dlg" hidden></div>
   <div class="toast" id="toast" aria-live="polite"></div>
   <div class="row" id="ctrl"></div>`;
   drawSvg();
+  nowText();
   const ctrl = $('ctrl');
   if (S.phase === 'prep') {
     ctrl.innerHTML = `<button class="go" onclick="run()">▶ 소문 퍼지기 시작</button>`;
@@ -316,12 +341,24 @@ function tap(i){
   if (s === 'I') { openQuiz(i); return; }
 }
 
+function nowText(){
+  const el = $('now'); if (!el) return;
+  const goal = Math.ceil(S.st.n * 0.75);
+  let t;
+  if (S.phase === 'prep') t = S.pre ? '👆 지금 할 일: 흰 동그라미 1명을 눌러 미리 지켜요' : '👇 지금 할 일: 아래 ‘소문 퍼지기 시작’을 눌러요';
+  else if (S.cards > 0) t = `👆 지금 할 일: ⚪ 흰 사람은 눌러서 지키고, 🔴 빨간 사람은 눌러서 정정해요 (카드 ${S.cards}장)`;
+  else t = '👀 카드를 다 썼어요. 소문이 멈출 때까지 지켜봐요';
+  el.innerHTML = `${t}<small>⭐⭐⭐ 목표: 주민 ${S.st.n}명 중 ${goal}명 이상 안 속게 하기</small>`;
+  document.querySelectorAll('.keys div em').forEach(e => { if (e.textContent.startsWith('🃏')) e.textContent = '🃏 ' + S.cards; });
+}
+
 function refresh(){
   // 진행 중에는 지도만 다시 그려 깜빡임을 줄입니다.
   const c = counts();
   const hud = document.querySelector('.hud');
-  if (hud) hud.innerHTML = `<span class="cards">🃏 카드 ${S.cards}장</span><span>🔴 믿음 ${c.I}명</span><span>🛡️ 지킴 ${c.R}명</span><span>💬 정정 ${c.C}명</span><span>⚪ 아직 ${c.S}명</span><span>📶 퍼지는 중… ${S.tickNo}단계</span>`;
+  if (hud) hud.innerHTML = `<span class="cards">🃏 카드 ${S.cards}장</span><span>🔴 믿음 ${c.I}명</span><span>🛡️ 지킴 ${c.R}명</span><span>💬 정정 ${c.C}명</span><span>⚪ 아직 ${c.S}명</span><span>📶 ${S.tickNo}단계</span>`;
   drawSvg();
+  nowText();
 }
 
 function run(){
@@ -389,6 +426,7 @@ function finish(){
     <span>주민 ${n}명 중 <b style="display:inline;font-size:1.2rem">${saved}명</b>이 속지 않았어요 (${pct}%)</span>
     <div class="meter"><div id="mtr"></div></div>
   </section>
+  ${hubTip(deg)}
   <section class="panel"><h3>📢 수법 공개 · ${esc(S.st.icon + ' ' + S.st.tactic)}</h3><p>${esc(S.st.reveal)}</p><p class="tip">🔎 진실: ${esc(S.st.truth)}</p></section>
   <section class="panel"><h3>🧠 연결이 가장 많은 사람 TOP 3</h3>
     <ul class="hubs">${deg.map(x => `<li>${S.g.emoji[x.i]} 주민 ${x.i + 1} · 친구 ${x.d}명 → ${S.state[x.i] === 'I' ? '🔴 믿어 버림' : S.state[x.i] === 'R' ? '🛡️ 지킴' : S.state[x.i] === 'C' ? '💬 정정됨' : '⚪ 소식이 닿지 않음'}</li>`).join('')}</ul>
@@ -402,6 +440,18 @@ function finish(){
   <button class="go" onclick="${last ? 'final()' : `startStage(${G.stage + 1})`}">${last ? '🏆 최종 결과' : '다음 단계 ▶'}</button></div>`;
   requestAnimationFrame(() => setTimeout(() => { const m = $('mtr'); if (m) m.style.width = pct + '%'; }, 120));
   toTop();
+}
+
+function hubTip(deg){
+  const lost = deg.filter(x => S.state[x.i] === 'I');
+  const names = list => list.map(x => `${S.g.emoji[x.i]} 주민 ${x.i + 1}(친구 ${x.d}명)`).join(', ');
+  if (lost.length) {
+    return `<section class="hubtip miss"><big>💡 연결선이 많은 사람을 먼저 골랐다면 더 유리했을 거예요!</big>
+    ${names(lost)}이(가) 소문을 믿어 버렸어요. 친구가 많은 사람이 믿으면 한 번에 여러 명에게 퍼져요.
+    다음엔 <u>연결선이 가장 많이 뻗은 사람</u>에게 사전 알림이나 카드를 먼저 써 보세요.</section>`;
+  }
+  return `<section class="hubtip hit"><big>👍 연결선이 많은 사람을 잘 지켰어요!</big>
+  ${names(deg)} 모두 소문을 믿지 않았어요. 이런 사람을 지키면 그 너머 친구들까지 함께 지켜져요.</section>`;
 }
 
 function final(){
