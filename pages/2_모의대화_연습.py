@@ -789,6 +789,39 @@ def offline_report(messages):
 # ─────────────────────────────────────
 
 st.title("💬 잠깐! · AI 모의대화")
+
+# 화면에 생동감을 더하는 움직임(내용은 그대로, 보이는 효과만 추가)
+st.markdown(
+    """
+<style>
+@keyframes jb-pop {0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.06);opacity:1} 80%{transform:scale(.97)} 100%{transform:scale(1)}}
+@keyframes jb-bob {0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
+@keyframes jb-boing {0%{transform:scale(1)} 30%{transform:scale(1.07,.93)} 55%{transform:scale(.95,1.05)} 75%{transform:scale(1.03,.98)} 100%{transform:scale(1)}}
+@keyframes jb-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.025)}}
+@keyframes jb-wiggle {0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)}}
+/* 캐릭터는 둥실둥실, 핵심 질문 상자는 통 튀어나오게 */
+img[alt$="캐릭터"] {animation: jb-bob 2.6s ease-in-out infinite;}
+div[style*="border-left:8px solid #FF7A45"] {animation: jb-pop .6s ease-out both;}
+/* 버튼은 올리면 말랑하게, 주요 버튼은 살짝 두근두근 */
+[data-testid="stButton"] button:hover:not(:disabled),
+[data-testid="stFormSubmitButton"] button:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
+[data-testid="stBaseButton-primary"]:not(:disabled) {animation: jb-pulse 2.2s ease-in-out infinite;}
+[data-testid="stBaseButton-primary"]:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
+
+/* 대화: 상대 말풍선은 왼쪽에서, 내 말풍선은 오른쪽에서 통통 들어오기 */
+@keyframes jb-left {0%{transform:translateX(-30px) scale(.9);opacity:0} 60%{transform:translateX(6px) scale(1.02);opacity:1} 100%{transform:none}}
+@keyframes jb-right {0%{transform:translateX(30px) scale(.9);opacity:0} 60%{transform:translateX(-6px) scale(1.02);opacity:1} 100%{transform:none}}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {animation: jb-left .55s ease-out both;}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {animation: jb-right .55s ease-out both;}
+[data-testid="stChatMessageAvatarAssistant"], [data-testid="stChatMessageAvatarUser"] {animation: jb-bob 2.4s ease-in-out infinite;}
+.st-key-chat_screen {animation: jb-pop .5s ease-out both;}
+/* 코치 피드백 카드는 통 튀어나오기 */
+div[style*="border:2px solid #A5B4FC"] {animation: jb-pop .6s ease-out both;}
+@media (prefers-reduced-motion: reduce) {* {animation: none !important; transition: none !important;}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 show_mascot("suspicious", "익숙한 말투여도, 어떤 행동을 요구하는지 살펴봐요.")
 
 show_key_question(
