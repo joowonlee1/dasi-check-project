@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import streamlit.components.v1 as components
 from mascot_ui import show_key_question, show_mascot
+import dotori_data as dd
 
 
 # 모든 인물·기관명·번호·링크·확인 결과는 교육용 가상 자료입니다.
@@ -720,6 +721,9 @@ def show_ending(game):
 
     fresh = game.pop("fresh_end", False)
     if fresh:
+        # 결말만 이름 없이 숫자로 통계에 더해요.
+        dd.record("grandma", {"plays": 1, f"end_{ending}": 1})
+        dd.note_mine("grandma", f"결말: {title}")
         scroll_top()
         drumroll((("🥁", "두구두구…"), ("📱", "할머니 휴대전화를 확인하는 중…"), ("👵", "그날 오전의 결말은?")))
     stamp = {
@@ -734,6 +738,13 @@ def show_ending(game):
         f'<div class="t">{esc(title)}</div><div style="text-align:left;">{esc(story)}</div>{stamp}</div>',
         unsafe_allow_html=True,
     )
+    data = dd.stats("grandma")
+    plays = data.get("plays", 0)
+    if plays:
+        dd.show_others([
+            f"지금까지 <b>{plays}번</b>의 도전 중 <b>{dd.pct(data.get(f'end_{ending}', 0), plays)}%</b>가 ‘{esc(title)}’ 결말을 봤어요.",
+            "결말 분포 · " + " · ".join(f"{esc(ENDINGS[k][0])} {dd.pct(data.get(f'end_{k}', 0), plays)}%" for k in ENDINGS),
+        ])
     if ending != "bad" and trust < 40:
         st.warning("💔 막기는 했지만 할머니 마음이 많이 상했어요. 다그치거나 몰래 막은 일이 있었는지 아래 기록에서 확인해 보세요.")
 
