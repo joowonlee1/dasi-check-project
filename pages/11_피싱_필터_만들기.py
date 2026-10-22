@@ -9,6 +9,7 @@
 import json
 
 import streamlit as st
+import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from filter_component_ui import create_filter_component
 
@@ -185,6 +186,7 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 .twin{background:#FFFBEA;border:2px solid #F2D58A;border-radius:16px;padding:12px 14px;margin:10px 0;text-align:left;word-break:keep-all;animation:rise .5s .6s ease-out both}
 .twin .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
 .twin .pair div{background:#fff;border:1.5px solid #E6D9A8;border-radius:12px;padding:8px;font-size:.88rem;line-height:1.5}
+.others{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;margin:10px auto 0;max-width:640px;text-align:left;font-weight:700;font-size:.92rem;line-height:1.6;color:#1E3A5F;word-break:keep-all}
 .final{text-align:left}
 .guide{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;font-size:.9rem;line-height:1.6;margin:6px 0 8px;word-break:keep-all}
 .sintro{background:#fff;border:2px solid #C9DCD3;border-left:8px solid #0F766E;border-radius:14px;padding:8px 12px;font-weight:700;margin:8px 0;word-break:keep-all}
@@ -337,7 +339,7 @@ function resultHtml(st, res){
   if (!stars) {
     const msg = s.best > 0 ? `더 줄일 수 있어요! 이 단계는 ${s.best}개까지는 어쩔 수 없지만, 지금은 ${res.errors}개를 틀렸어요.` : `${res.errors}개를 틀렸어요. 빨간 테두리 문자를 보고 규칙을 고쳐 보세요.`;
     return `<section class="result lose${go}"><div class="big">🔧</div><b class="t">${esc(msg)}</b>${matrix}
-      <span class="stamp miss">다시 고치기</span>${whyHtml(st, res)}</section>`;
+      <span class="stamp miss">다시 고치기</span>${whyHtml(st, res)}${othersHtml(st)}</section>`;
   }
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 최고 기록이에요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
@@ -345,7 +347,7 @@ function resultHtml(st, res){
   const next = st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
   return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${s.best > 0 ? '이게 규칙으로 할 수 있는 최선이에요!' : '필터 완성!'}</b>
     <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
-    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${next}</section>`;
+    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${othersHtml(st)}${next}</section>`;
 }
 
 function twinHtml(st){
@@ -354,6 +356,16 @@ function twinHtml(st){
     <div class="pair"><div>🔴 <b>${esc(A[0])}</b> (가짜 · 계정 도용)<br>${esc(A[2])}</div><div>🟢 <b>${esc(B[0])}</b> (진짜)<br>${esc(B[2])}</div></div>
     두 문자는 <b>저장된 번호 · 돈 요구 · 재촉</b>으로 특징이 똑같아요. 똑같은 입력에는 규칙도 똑같이 답할 수밖에 없어서, 하나를 막으면 다른 하나도 막혀요.<br>
     👉 그래서 <b>규칙(필터)만으로는 완벽할 수 없어요.</b> 친구가 돈을 부탁하면 <b>원래 알던 번호로 전화</b>해서 직접 확인하는 게 마지막 방어선이에요.</div>`;
+}
+
+function othersHtml(st){
+  const runs = STATS[`s${st}_runs`] || 0;
+  if (!runs) return '<div class="others">🌍 아직 이 단계에 모인 기록이 없어요. 첫 기록의 주인공이에요!</div>';
+  const clear = STATS[`s${st}_clear`] || 0;
+  let worst = -1, wv = 0;
+  D.stages[st].msgs.forEach((_, i) => { const v = STATS[`s${st}_m${i}_wrong`] || 0; if (v > wv) { wv = v; worst = i; } });
+  return `<div class="others">🌍 지금까지 이 단계 필터가 <b>${runs}번</b> 실행됐고, <b>${Math.round(clear * 100 / runs)}%</b>가 목표를 달성했어요.`
+    + (worst >= 0 ? `<br>가장 많이 틀린 문자는 <b>문자 ${worst + 1}</b>(${esc(D.stages[st].msgs[worst][0])})예요. 실행한 필터의 ${Math.round(wv * 100 / runs)}%가 이 문자를 틀렸어요.` : '') + '</div>';
 }
 
 function verdictHtml(m, r){
@@ -415,11 +427,16 @@ function run(){
     const stars = starsFor(st, res);
     if (stars && (!G.best[st] || stars > G.best[st].stars)) G.best[st] = {stars, blocks: res.blocks};
     G.running = false; G.last = res; fresh = false; render();
+    sendResult({game: 'filter', type: 'run', stage: st, clear: stars > 0, stars, blocks: res.blocks,
+      wrong: res.rows.map((r, i) => r.flag !== s.msgs[i][4] ? i : -1).filter(i => i >= 0)});
     const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
   }, s.msgs.length * 260 + 500);
 }
 
-function toFinal(){ G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0); }
+function toFinal(){
+  sendResult({game: 'filter', type: 'final', stars: G.best.reduce((a, b) => a + (b ? b.stars : 0), 0), blocks: G.best.reduce((a, b) => a + (b ? b.blocks : 0), 0)});
+  G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0);
+}
 
 function renderFinal(){
   const total = G.best.reduce((a, b) => a + (b ? b.stars : 0), 0);
@@ -443,7 +460,10 @@ function restart(){ Object.assign(G, {screen: 'intro', stage: 0, best: [null, nu
 let lastHeight = 0;
 function sendHost(type, payload = {}) { window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*'); }
 function resize(force = false){ const root = document.querySelector('main.wrap'); if (!root) return; const h = Math.ceil(root.getBoundingClientRect().height) + 16; if (force || h !== lastHeight) { sendHost('streamlit:setFrameHeight', {height: h}); lastHeight = h; } }
-window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') requestAnimationFrame(() => resize(true)); });
+// 도토리시 통계: 파이썬이 보낸 다른 사람들의 기록(stats)을 받고, 게임 결과를 파이썬으로 보냅니다.
+let STATS = {};
+function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
+window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { if (ev.data.args && ev.data.args.stats) STATS = ev.data.args.stats; requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
 window.addEventListener('load', resize); window.addEventListener('resize', resize);
@@ -452,7 +472,24 @@ render();
 '''
 
 page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
-create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None)
+value = create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None, stats=dd.stats("filter"))
+
+# 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
+event = dd.take_event(value)
+if event and event.get("type") == "run" and event.get("stage") in (0, 1, 2):
+    s = int(event["stage"])
+    counts = {f"s{s}_runs": 1, f"s{s}_clear": 1 if event.get("clear") else 0}
+    counts.update({f"s{s}_m{int(i)}_wrong": 1 for i in event.get("wrong", []) if 0 <= int(i) < 12})
+    dd.record("filter", counts)
+elif event and event.get("type") == "final":
+    stars, blocks = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("blocks", 0)))
+    dd.record("filter", {"finals": 1})
+    dd.note_mine("filter", f"별 {stars}/9 · 블록 {blocks}개")
+    st.session_state["filter_hall"] = dd.save_hall(
+        "filter", {"stars": stars, "blocks": blocks},
+        lambda old, new: (new["stars"], -new["blocks"]) > (old.get("stars", 0), -old.get("blocks", 10**6)),
+    )
+dd.show_hall_note(st.session_state.get("filter_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
