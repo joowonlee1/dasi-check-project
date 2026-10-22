@@ -1,10 +1,11 @@
-"""12문항, 4개 축, 16가지 교육용 대처 유형. 외부 전송·공개 저장 없음."""
+"""12문항, 4개 축, 16가지 교육용 대처 유형. 답변은 저장하지 않고, 결과 유형만 이름 없이 숫자로 통계에 더합니다."""
 import base64
 import time
 from html import escape
 from pathlib import Path
 import streamlit as st
 from pledge_wall import show_pledge_wall
+import dotori_data as dd
 
 PREFIX = "coping_v1_"
 NOTICE = "교육용 자기점검입니다. MBTI나 검증된 심리검사가 아니며, 실제 피해 가능성을 예측하지 않습니다."
@@ -258,7 +259,7 @@ def show_intro():
     st.write("")
     st.button("🚀 테스트 시작하기", key=PREFIX + "start_top", type="primary", width="stretch", on_click=start)
     st.caption(NOTICE)
-    st.caption("답변은 공개 저장하거나 AI 서비스로 전송하지 않습니다.")
+    st.caption("답변은 저장하거나 AI 서비스로 전송하지 않아요. 결과 유형만 이름 없이 숫자로 도토리시 통계에 더해져요.")
     st.markdown('<div class="jk-section">🔤 유형 코드 4글자는 이런 뜻이에요</div>', unsafe_allow_html=True)
     st.caption("기준마다 3문항씩 답하고, 2개 이상 고른 쪽 글자가 내 코드에 들어가요.")
     show_axes_guide()
@@ -439,9 +440,19 @@ def result_card(code, labels):
 def show_result(answers):
     code, labels, counts = score(answers)
     if st.session_state.pop(PREFIX + "fresh", False):
+        dd.record("coping", {"plays": 1, f"t_{code}": 1})
+        dd.note_mine("coping", f"유형 {code} · {TYPE_NAMES[code]}")
         drumroll()
         st.balloons()
     st.markdown(hero_html(code, labels), unsafe_allow_html=True)
+    data = dd.stats("coping")
+    plays = data.get("plays", 0)
+    if plays:
+        top = sorted(((data.get(f"t_{c}", 0), c) for c in TYPE_NAMES), reverse=True)[:3]
+        dd.show_others([
+            f"지금까지 <b>{plays}명</b>이 테스트했고, 나와 같은 <b>{code}</b> 유형은 <b>{dd.pct(data.get(f't_{code}', 0), plays)}%</b>예요.",
+            "많이 나온 유형 TOP 3 · " + " · ".join(f"{c} {escape(TYPE_NAMES[c])} {dd.pct(n, plays)}%" for n, c in top if n),
+        ])
     st.caption("유형 코드는 안전 점수나 우열을 나타내지 않아요. 아래 탭을 눌러 더 살펴보세요.")
 
     # 결과가 길어 스크롤이 많아지지 않도록 탭으로 나눕니다. (6개가 되면 app.py의 '필독' 표시가 붙으니 4개 유지)
