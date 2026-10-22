@@ -384,7 +384,7 @@ def show_home():
 
     st.subheader("어떤 활동을 해볼까요?")
     st.caption(
-        "번호는 추천 순서예요. 원하는 활동부터 시작해도 괜찮아요."
+        "원하는 활동부터 시작해도 괜찮아요."
     )
 
     for number, title, icon, path, steps, description in FEATURES:
@@ -506,8 +506,8 @@ if current:
     st.markdown(
         (
             '<div class="route">'
-            # 07은 추천 학습 순서가 아닌 긴급 안내라 번호 대신 표시를 바꿉니다.
-            f"<strong>{'🚨 긴급 안내' if number == '07' else number} · "
+            # 번호는 보여 주지 않고, 긴급 안내(07)만 표시를 붙입니다.
+            f"<strong>{'🚨 긴급 안내 · ' if number == '07' else ''}"
             f"{html.escape(title)} 이용 순서</strong>"
             f"<p>{html.escape(steps)}</p>"
             "</div>"
