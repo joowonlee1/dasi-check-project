@@ -1,7 +1,7 @@
 import html
 
 import streamlit as st
-from mascot_ui import show_mascot
+from mascot_ui import show_key_question, show_mascot
 
 
 # 모든 인물·기관명·번호·링크·확인 결과는 교육용 가상 자료입니다.
@@ -574,6 +574,8 @@ def show_last_feedback(game):
 def show_intro():
     show_mascot("phone", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
     st.markdown("### 🎯 미션: 할머니의 돈을 지켜라")
+    st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, key="grandma_start_top", width="stretch")
+    st.caption("처음이라면 아래 설명을 먼저 읽어 보세요.")
     st.markdown(
         "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어옵니다.\n\n"
         "- **진짜 연락**과 **피싱**이 섞여 있어요. 무엇이 피싱인지 직접 판단하세요.\n"
@@ -589,7 +591,7 @@ def show_intro():
         "- 💸 **송금까지** — 마지막 단계에서 송금을 막아야 해요."
     )
     st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
-    st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game)
+    st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
 
 
 def show_play(game):
@@ -697,7 +699,7 @@ def show_ending(game):
         mime="text/plain",
     )
     show_mascot("retry", "다른 선택도 연습해 볼까요?", width=100)
-    st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=back_to_intro)
+    st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=back_to_intro, width="stretch")
 
 
 # ─────────────────────────────────────
@@ -705,7 +707,7 @@ def show_ending(game):
 # ─────────────────────────────────────
 
 st.title("✋ 잠깐! · 할머니 폰 지키기")
-st.write("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?")
+show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
 st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
 if KEY not in st.session_state:
