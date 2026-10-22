@@ -436,7 +436,8 @@ def mascot_svg(code, x=0, y=0, size=160):
     # 1536x1024 원본의 4열·4행을 유형 순서대로 표시합니다.
     return (f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" '
             f'viewBox="{col*384} {row*256} 384 256" overflow="hidden" role="img" aria-label="{escape(TYPE_NAMES[code])} 깡지">'
-            f'<image width="1536" height="1024" href="data:image/png;base64,{data}"/></svg>')
+            f'<defs><clipPath id="ggangji-{code}" clipPathUnits="userSpaceOnUse"><rect x="{col*384}" y="{row*256}" width="384" height="256"/></clipPath></defs>'
+            f'<g clip-path="url(#ggangji-{code})"><image width="1536" height="1024" href="data:image/png;base64,{data}"/></g></svg>')
 
 
 def type_image_uri(code):
