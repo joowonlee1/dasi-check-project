@@ -2,6 +2,7 @@ import html
 
 import streamlit as st
 from mascot_ui import show_mascot
+import dotori_data as dd
 
 
 st.set_page_config(
@@ -462,6 +463,11 @@ FEATURES = [
         "단서 읽기 → 칸 칠하기 → 그림 복원",
         "숫자 단서로 칸을 칠해 찢긴 QR 스티커를 복원하고, QR 코드 피싱(큐싱)을 알아봐요.",
     ),
+    (
+        "13", "도토리시 통계청", "📊", "pages/13_도토리시_통계청.py",
+        "게임 고르기 → 통계 보기 → 명예의 전당",
+        "시민들이 게임에서 남긴 진짜 기록으로 사람들이 어디서 많이 속는지 보고, 명예의 전당도 확인해요.",
+    ),
 ]
 
 # ─────────────────────────────────────
@@ -489,6 +495,7 @@ PLACES = {
     "10": ("🛒", "개암골", "도토리 중고마켓", "인기 운동화를 둘러싼 거래 중 진짜 판매자는 단 한 명이에요."),
     "11": ("📮", "시청로", "도토리 우체국 문자 필터실", "도시로 들어오는 문자를 걸러 낼 필터 규칙을 직접 만들어요."),
     "12": ("🅿️", "중앙동", "도토리 공영주차장", "주차 정산기에 수상한 QR 스티커가 덧붙어 있었어요. 찢긴 조각으로 그림을 복원해요."),
+    "13": ("🏛️", "시청로", "도토리시 통계청", "시민들이 게임에서 남긴 기록이 숫자로 모이는 곳이에요. 이름 없이 숫자만 모아요."),
 }
 
 
@@ -593,13 +600,14 @@ feature_pages = [
 ]
 
 page_by_number = {row[0]: page for row, page in zip(FEATURES, feature_pages)}
+citizen_page = st.Page("pages/0_도토리시_시민증.py", title="도토리시 시민증", icon="🪪")
 
 navigation = st.navigation(
     {
-        "잠깐!": [home],
+        "잠깐!": [home, citizen_page],
         "피해 도움": [page_by_number["07"]],
         "체험과 연습": [page_by_number[n] for n in ("01", "02", "03", "06", "09", "10", "11", "12", "08")],
-        "확인과 학습": [page_by_number[n] for n in ("04", "05")],
+        "확인과 학습": [page_by_number[n] for n in ("04", "05", "13")],
     },
     expanded=True,  # 페이지가 많아져도 'View more'로 접히지 않고 메뉴가 모두 보이게
 )
@@ -610,6 +618,17 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
+    # 시민증(로그인) 상태를 항상 보여 줘요.
+    me = dd.citizen()
+    if me:
+        st.markdown(
+            '<div style="background:#FFF4D6;border:2px solid #E2C98A;border-radius:14px;padding:8px 12px;'
+            'font-weight:800;color:#6B4A1E;margin-bottom:6px;">🪪 시민 '
+            f'<span style="color:#20483F">{html.escape(me["nickname"])}</span> 님</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.page_link(citizen_page, label="시민증 만들기 (닉네임 로그인)", icon="🪪")
     show_mascot(
         "stop",
         "멈추고, 확인하고, 판단하기",
