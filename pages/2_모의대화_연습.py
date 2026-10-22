@@ -1,3 +1,4 @@
+import html
 import json
 import re
 
@@ -14,6 +15,7 @@ from google.genai import types, errors
 MODEL_NAME = "gemini-3.5-flash-lite"
 MAX_TURNS = 10
 END_MARK = "[대화 종료]"
+COACH_MARK = "[코치]"
 STATE_KEY = "jamkkan_chat_realistic_v1"
 
 SCENARIOS = {
@@ -228,7 +230,9 @@ ROLE_RULES = """
   5) 사용자가 역할극 자체를 멈추고 싶어 하거나('진짜 그만', '역할극 그만') 불편하거나 무서워 보일 때
   6) 사용자가 요구에 두 번 따랐을 때. 이때 피드백은 '실제였다면 어떤 피해가 생겼을지'와
      '어느 순간에 멈추고 확인할 수 있었는지'를 구체적으로 짚는다. 사용자를 탓하지 않는다.
-- 종료할 때는 교육 코치로 돌아와 사용자가 실제로 한 대응을 근거로 2~3문장 피드백한다.
+- 종료할 때는 필요하면 상대 역할의 마지막 말을 짧게 쓴 뒤, 반드시 새 줄에 [코치]라고만 쓰고
+  그 아래에 교육 코치로서 사용자가 실제로 한 대응을 근거로 2~3문장 피드백한다.
+  상대 역할의 말과 코치 피드백을 한 문단에 섞지 않는다.
   하지 않은 행동을 칭찬하지 않는다. 붙잡혀도 버텼다면 그 점을 짚어 준다.
 - 마지막 줄에는 반드시 [대화 종료]라고만 쓴다.
 - 종료 상황이 아니면 종료 표식을 쓰지 않는다.
@@ -523,6 +527,22 @@ def run_diagnosis():
 # AI 응답과 리포트
 # ─────────────────────────────────────
 
+def split_reply(text):
+    """AI·대본 응답을 '상대의 말'과 '코치 피드백'으로 나눕니다."""
+    text = text.replace(END_MARK, "").strip()
+    if COACH_MARK in text:
+        scam, coach = text.split(COACH_MARK, 1)
+        return scam.strip(), coach.strip()
+    if text.startswith("(코치)"):
+        return "", text[len("(코치)"):].strip()
+    # 표식을 빠뜨린 경우: '코치'로 시작하는 문단부터 피드백으로 봅니다.
+    parts = re.split(r"\n\s*\n", text)
+    for i, part in enumerate(parts):
+        if re.match(r"\s*(\(코치\)|교육 코치|코치[:：])", part):
+            return "\n\n".join(parts[:i]).strip(), "\n\n".join(parts[i:]).strip()
+    return text, ""
+
+
 def build_contents(messages):
     contents = [
         types.Content(
@@ -536,6 +556,8 @@ def build_contents(messages):
     ]
 
     for message in messages:
+        if message["role"] == "coach":
+            continue
         contents.append(
             types.Content(
                 role=message["role"],
@@ -681,7 +703,7 @@ def offline_reply(messages, user_text, scenario):
 
     if explicit_stop(user_text):
         return (
-            "요청에 따라 연습을 마쳤어요. "
+            "(코치) 요청에 따라 연습을 마쳤어요. "
             "아래에서 대화 기록을 돌아볼 수 있어요.\n"
             + END_MARK
         )
@@ -876,6 +898,8 @@ with st.container(key="chat_screen"):
         unsafe_allow_html=True,
     )
     for message in messages:
+        if message["role"] == "coach":
+            continue
         role = (
             "assistant"
             if message["role"] == "model"
@@ -884,6 +908,19 @@ with st.container(key="chat_screen"):
 
         with st.chat_message(role):
             st.write(message["text"])
+
+# 코치 피드백은 상대의 말과 섞이지 않게 대화창 밖에 따로 보여 줍니다.
+for message in messages:
+    if message["role"] == "coach":
+        st.markdown(
+            '<div style="background:#EEF2FF;border:2px solid #A5B4FC;border-radius:18px;'
+            'padding:16px 18px;margin:14px 0;">'
+            '<div style="font-weight:900;color:#3730A3;font-size:1.1rem;margin-bottom:6px;">'
+            '🧑‍🏫 코치 피드백</div>'
+            f'<div style="color:#1E293B;font-size:1.08rem;line-height:1.8;word-break:keep-all;">'
+            f'{html.escape(message["text"]).replace(chr(10), "<br>")}</div></div>',
+            unsafe_allow_html=True,
+        )
 
 if state["report"] is not None:
     st.subheader("📋 나의 대응 리포트")
@@ -957,11 +994,11 @@ if pending is not None:
             with st.chat_message("assistant"):
                 if explicit_stop(pending):
                     reply = (
-                        "요청에 따라 연습을 마쳤어요. "
+                        COACH_MARK + "\n요청에 따라 연습을 마쳤어요. "
                         "아래에서 대화 내용을 돌아볼 수 있어요.\n"
                         + END_MARK
                     )
-                    st.write(reply.replace(END_MARK, ""))
+                    st.write(split_reply(reply)[1])
 
                 elif offline:
                     reply = offline_reply(
@@ -970,7 +1007,7 @@ if pending is not None:
                         scenario,
                     )
                     state["offline_used"] = True
-                    st.write(reply.replace(END_MARK, ""))
+                    st.write(split_reply(reply)[0] or split_reply(reply)[1])
 
                 else:
                     reply = st.write_stream(
@@ -990,15 +1027,13 @@ if pending is not None:
         else:
             state["ended"] = END_MARK in reply
 
-            state["messages"] = request_messages + [
-                {
-                    "role": "model",
-                    "text": reply.replace(
-                        END_MARK,
-                        "",
-                    ).strip(),
-                }
-            ]
+            scam_text, coach_text = split_reply(reply)
+            new_messages = []
+            if scam_text:
+                new_messages.append({"role": "model", "text": scam_text})
+            if coach_text:
+                new_messages.append({"role": "coach", "text": coach_text})
+            state["messages"] = request_messages + new_messages
 
             state["pending"] = None
             state["error"] = None
