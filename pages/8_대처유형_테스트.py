@@ -113,13 +113,13 @@ CSS = """
 @keyframes jk-bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}}
 @keyframes jk-wiggle {0%,100%{transform:rotate(0)} 25%{transform:rotate(-10deg)} 75%{transform:rotate(10deg)}}
 @keyframes jk-float {0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
-.jk-hero {border-radius:28px;padding:28px 22px;text-align:center;color:#1E3A34;
+.jk-hero {border-radius:28px;padding:20px 18px;text-align:center;color:#1E3A34;
   box-shadow:0 10px 28px rgba(32,72,63,.15);animation:jk-pop .7s ease-out both;margin-bottom:14px;}
 .jk-zzan {display:inline-block;background:#fff;border-radius:999px;padding:4px 16px;font-weight:800;
   font-size:1.05rem;letter-spacing:.05em;animation:jk-wiggle .6s .5s ease-in-out 2;}
-.jk-emblem {width:150px;height:150px;margin:16px auto 8px;border-radius:50%;background:rgba(255,255,255,.88);
-  display:flex;align-items:center;justify-content:center;font-size:82px;animation:jk-bounce 1.8s 1s ease-in-out infinite;}
-.jk-emblem img {width:140px;height:140px;object-fit:contain;border-radius:50%;}
+.jk-emblem {width:116px;height:116px;margin:12px auto 6px;border-radius:50%;background:rgba(255,255,255,.88);
+  display:flex;align-items:center;justify-content:center;font-size:64px;animation:jk-bounce 1.8s 1s ease-in-out infinite;}
+.jk-emblem img {width:108px;height:108px;object-fit:contain;border-radius:50%;}
 .jk-name {font-size:2.1rem;font-weight:900;margin:6px 0 2px;word-break:keep-all;}
 .jk-code {font-weight:700;opacity:.75;letter-spacing:.2em;}
 .jk-catch {font-size:1.1rem;font-weight:700;margin-top:8px;word-break:keep-all;}
@@ -442,56 +442,59 @@ def show_result(answers):
         drumroll()
         st.balloons()
     st.markdown(hero_html(code, labels), unsafe_allow_html=True)
-    st.caption("유형 코드는 안전 점수나 우열을 나타내지 않아요.")
+    st.caption("유형 코드는 안전 점수나 우열을 나타내지 않아요. 아래 탭을 눌러 더 살펴보세요.")
 
-    st.subheader(f"🔤 내 코드 읽는 법 · {code}")
-    show_decode(code)
+    # 결과가 길어 스크롤이 많아지지 않도록 탭으로 나눕니다. (6개가 되면 app.py의 '필독' 표시가 붙으니 4개 유지)
+    tab_pledge, tab_me, tab_card, tab_all = st.tabs(
+        ["✍️ 서약의 벽", "🎮 내 능력치·미션", "🖼️ 결과 카드", "📖 16가지 유형"]
+    )
 
-    st.subheader("🎮 나의 대처 능력치")
-    for row in (0, 2):  # 두 개씩 한 줄에 놓아 휴대폰에서도 순서가 유지되게 합니다.
-        cols = st.columns(2)
-        for i in (row, row + 1):
-            cols[i - row].markdown(trait_html(i, code[i], labels[i], counts[i]), unsafe_allow_html=True)
+    with tab_pledge:
+        show_pledge_wall()
 
-    st.subheader("🎯 오늘의 연습 미션")
-    st.caption("해 볼 미션에 체크해 보세요. 체크한 내용은 저장되지 않아요.")
-    for letter in code:
-        st.checkbox(HABITS[letter][1], key=f"{PREFIX}mission_{letter}")
+    with tab_me:
+        st.markdown(f'<div class="jk-section">🔤 내 코드 읽는 법 · {code}</div>', unsafe_allow_html=True)
+        show_decode(code)
+        st.markdown('<div class="jk-section">🎮 나의 대처 능력치</div>', unsafe_allow_html=True)
+        for row in (0, 2):  # 두 개씩 한 줄에 놓아 휴대폰에서도 순서가 유지되게 합니다.
+            cols = st.columns(2)
+            for i in (row, row + 1):
+                cols[i - row].markdown(trait_html(i, code[i], labels[i], counts[i]), unsafe_allow_html=True)
+        st.markdown('<div class="jk-section">🎯 오늘의 연습 미션</div>', unsafe_allow_html=True)
+        st.caption("해 볼 미션에 체크해 보세요. 체크한 내용은 저장되지 않아요.")
+        for letter in code:
+            st.checkbox(HABITS[letter][1], key=f"{PREFIX}mission_{letter}")
+        st.info("🗣️ 바로 쓸 문장: 지금은 진행하지 않을게요. 제가 원래 알고 있던 연락처로 따로 확인하겠습니다.")
+        with st.expander("🕹️ 추가로 연습할 수법 · 응답 풀이"):
+            st.caption("이 유형이 아래 수법에 더 잘 당한다는 통계가 아닙니다. 응답을 돌아보기 위한 교육용 추천이에요.")
+            seen = []
+            for letter in code:
+                if HABITS[letter][2] not in [s[0] for s in seen]:
+                    seen.append(HABITS[letter][2:])
+            for scenario, reason in seen:
+                st.markdown(f"- **{scenario}** · {reason}")
+            for i, (axis, letter, label) in enumerate(zip(AXES, code, labels)):
+                st.markdown(f"**{axis[0]} · {label}** — {HABITS[letter][0]}")
+                st.caption(f"{axis[2][0]} {counts[i][0]}개 / {axis[2][1]} {counts[i][1]}개 (각 3문항)")
+        st.page_link("pages/2_모의대화_연습.py", label="AI 모의대화로 바로 연습하기", icon="💬")
 
-    st.subheader("🕹️ 추가로 연습할 수법")
-    st.caption("이 유형이 아래 수법에 더 잘 당한다는 통계가 아닙니다. 응답을 돌아보기 위한 교육용 추천이에요.")
-    seen = []
-    for letter in code:
-        if HABITS[letter][2] not in [s[0] for s in seen]:
-            seen.append(HABITS[letter][2:])
-    for scenario, reason in seen:
-        st.markdown(f"- **{scenario}** · {reason}")
-    st.page_link("pages/2_모의대화_연습.py", label="AI 모의대화로 바로 연습하기", icon="💬")
-    st.info("🗣️ 바로 쓸 문장: 지금은 진행하지 않을게요. 제가 원래 알고 있던 연락처로 따로 확인하겠습니다.")
+    with tab_card:
+        svg = result_card(code, labels)
+        left, right = st.columns([3, 2], vertical_alignment="center")
+        left.image(svg, width=340)
+        right.download_button("🖼️ 결과 카드 내려받기", svg.encode("utf-8"),
+                              file_name=f"jamkkan_{code}.svg", mime="image/svg+xml", width="stretch")
+        text = f"잠깐! 나의 대처유형: {TYPE_NAMES[code]} ({code})\n" + " / ".join(labels) + "\n" + NOTICE
+        right.download_button("📝 공유용 문구 내려받기", text.encode("utf-8-sig"),
+                              file_name=f"jamkkan_{code}.txt", mime="text/plain", width="stretch")
+        right.caption("카드에는 이름·연락처·문항별 답변이 들어가지 않아요. 공유 여부는 직접 선택하세요.")
 
-    with st.expander("📝 응답 풀이 자세히 보기"):
-        for i, (axis, letter, label) in enumerate(zip(AXES, code, labels)):
-            st.markdown(f"**{axis[0]} · {label}** — {HABITS[letter][0]}")
-            st.caption(f"{axis[2][0]} {counts[i][0]}개 / {axis[2][1]} {counts[i][1]}개 (각 3문항)")
+    with tab_all:
+        show_gallery(code)
 
-    st.markdown('<div class="jk-section">📖 16가지 유형 모아보기</div>', unsafe_allow_html=True)
-    show_gallery(code)
-
-    st.subheader("🖼️ 결과 카드")
-    svg = result_card(code, labels)
-    st.image(svg)
-    c1, c2 = st.columns(2)
-    c1.download_button("결과 카드 내려받기 (SVG)", svg.encode("utf-8"),
-                       file_name=f"jamkkan_{code}.svg", mime="image/svg+xml", width="stretch")
-    text = f"잠깐! 나의 대처유형: {TYPE_NAMES[code]} ({code})\n" + " / ".join(labels) + "\n" + NOTICE
-    c2.download_button("공유용 문구 내려받기", text.encode("utf-8-sig"),
-                       file_name=f"jamkkan_{code}.txt", mime="text/plain", width="stretch")
-    st.caption("카드에는 이름·연락처·문항별 답변이 들어가지 않아요. 다운로드 후 공유 여부는 직접 선택하세요.")
     st.caption(NOTICE)
     st.button("🔄 다시 테스트하기", on_click=reset, width="stretch")
-    
-    st.divider()
-    show_pledge_wall()
+
 
 def main():
     st.markdown(CSS, unsafe_allow_html=True)
