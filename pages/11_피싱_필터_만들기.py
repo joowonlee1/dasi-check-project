@@ -1,0 +1,421 @@
+"""피싱 필터 만들기: 조건 블록(그리고·또는)을 조립해 문자를 거르는 규칙을 만드는 코딩 퍼즐.
+
+- 규칙 한 줄 = 조건 1~2개를 '그리고(AND)'로 묶음, 규칙 줄끼리는 '또는(OR)'
+- 실행하면 문자가 하나씩 필터를 지나가며 오탐(진짜인데 막음)·미탐(가짜인데 통과)을 보여 줍니다.
+- 목표 블록 수는 가능한 규칙 조합을 모두 검사(완전 탐색)해서 정했습니다.
+  1단계 최소 2블록, 2단계 최소 4블록, 3단계는 어떤 규칙으로도 1개는 틀릴 수밖에 없고 최소 3블록.
+모든 번호·이름·기관·링크는 교육용 가상 내용입니다.
+"""
+import json
+
+import streamlit as st
+from mascot_ui import show_key_question, show_mascot
+from filter_component_ui import create_filter_component
+
+st.title("🤖 피싱 필터 만들기")
+show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
+show_mascot("shield", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
+
+# 조건: L 링크 있음, U 모르는 번호, S 저장된 번호(모르는 번호가 아님), M 돈 요구, R 재촉, P 인증번호·개인정보 요구, A 앱 설치 요구
+DATA = {
+    "conds": {
+        "L": "🔗 링크 있음",
+        "U": "❓ 모르는 번호",
+        "S": "📇 저장된 번호",
+        "M": "💸 돈 요구",
+        "R": "⏰ 재촉",
+        "P": "🔑 인증번호·개인정보 요구",
+        "A": "📲 앱 설치 요구",
+    },
+    "code": {"L": "링크있음", "U": "모르는번호", "S": "저장된번호", "M": "돈요구", "R": "재촉", "P": "개인정보요구", "A": "앱설치요구"},
+    "stages": [
+        {
+            "name": "택배 문자",
+            "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
+            "best": 0,
+            "par": 2,
+            "hints": [
+                "진짜 문자 중에도 링크가 있는 게 있어요. ‘링크 있음’ 하나만으로는 진짜도 막혀요.",
+                "링크가 있으면서 ‘어떤 번호’에서 왔는지 같이 보세요. 블록 2개면 충분해요.",
+            ],
+            "msgs": [
+                ["도토리택배", "S", "[도토리택배] 주문하신 상품 배송 완료! 문 앞 사진 보기 ▶ (가상 링크)", "L", False],
+                ["010-48○○-○○○○", "U", "[택배] 주소 불일치로 반송 예정. 오늘 안에 주소를 수정하세요 ▶ (가상 링크)", "LR", True],
+                ["010-22○○-○○○○", "U", "안녕하세요, 도토리수학학원입니다. 이번 주 토요일 보강 안내드려요.", "", False],
+                ["070-○○○○-○○○○", "U", "[국제택배] 통관 보관료 3,000원 미납. 결제 후 배송 ▶ (가상 링크)", "LM", True],
+                ["엄마", "S", "오늘 저녁 뭐 먹고 싶어?", "", False],
+                ["도토리고", "S", "[도토리고] 가정통신문이 올라왔습니다. 확인하기 ▶ (가상 링크)", "L", False],
+            ],
+        },
+        {
+            "name": "사칭과 송금",
+            "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
+            "best": 0,
+            "par": 4,
+            "hints": [
+                "가짜 문자 4개는 모두 ‘모르는 번호’예요. 하지만 모르는 번호 중에도 진짜가 있어요.",
+                "규칙 줄을 2개 써 보세요. ‘모르는 번호 그리고 ○○’ 또는 ‘모르는 번호 그리고 △△’.",
+            ],
+            "msgs": [
+                ["010-73○○-○○○○", "U", "엄마야~ 폰 액정 깨져서 임시 번호야. 급하게 상품권 좀 사서 번호 보내 줄래?", "MR", True],
+                ["동아리 총무", "S", "이번 달 동아리 회비 5천 원 모임통장으로 보내 줘~", "M", False],
+                ["02-○○○○-○○○○", "U", "[○○은행] 보안 업데이트가 필요합니다. 아래 앱을 설치하세요 ▶ (가상 링크)", "LA", True],
+                ["○○은행", "S", "[○○은행] 체크카드 승인 12,800원 도토리마트", "", False],
+                ["02-○○○○-○○○○", "U", "도토리지검 수사관입니다. 사건에 연루되셨어요. 지금 바로 인증번호를 불러 주세요.", "PR", True],
+                ["친구 지후", "S", "빨리 와!! 영화 5분 뒤에 시작해", "R", False],
+                ["도토리고", "S", "[도토리고] 학교 공지 앱 설치 안내 ▶ (가상 링크)", "LA", False],
+                ["1588-○○○○", "U", "도토리병원입니다. 내일 오전 10시 진료 예약 안내드려요. 회신은 필요 없어요.", "", False],
+            ],
+        },
+        {
+            "name": "완벽한 필터?",
+            "goal": "틀리는 문자를 최대한 줄이기",
+            "best": 1,
+            "par": 3,
+            "hints": [
+                "이번에는 완벽한 필터를 만들 수 없을지도 몰라요. 특징 태그가 똑같은 두 문자가 있는지 찾아보세요.",
+                "‘인증번호·개인정보 요구’가 있는 진짜 문자는 하나도 없어요.",
+            ],
+            "msgs": [
+                ["010-91○○-○○○○", "U", "[택배] 배송지 확인 불가. 1시간 안에 주소 수정 ▶ (가상 링크)", "LR", True],
+                ["010-35○○-○○○○", "U", "아빠 폰 고장 나서 친구 폰 빌렸어. 급히 50만 원만 이 계좌로 보내 줘.", "MR", True],
+                ["친구 서연", "S", "급해 ㅠㅠ 문화상품권 5만 원만 사서 핀번호 보내 줘. 이따 바로 갚을게!", "MR", True],
+                ["친구 민준", "S", "급해!! 매점에서 천 원만 빌려줘 내일 줄게", "MR", False],
+                ["도토리고", "S", "[도토리고] 학부모 앱 설치 안내 ▶ (가상 링크)", "LA", False],
+                ["1588-○○○○", "U", "도토리치과입니다. 다음 주 화요일 검진 예약 확인 문자예요.", "", False],
+                ["02-○○○○-○○○○", "U", "[○○카드] 해외 결제 승인. 본인이 아니면 링크에서 카드 정보를 입력하세요 ▶ (가상 링크)", "LP", True],
+                ["엄마", "S", "언제 와? 빨리 와 밥 식는다", "R", False],
+                ["02-○○○○-○○○○", "U", "도토리지검입니다. 계좌가 범죄에 쓰였어요. 확인을 위해 인증번호를 알려 주세요.", "PR", True],
+                ["010-60○○-○○○○", "U", "택배 기사입니다. 문 앞에 두고 갑니다~", "", False],
+            ],
+        },
+    ],
+    # 3단계의 '규칙으로는 못 가르는' 두 문자: 서연(계정 도용, 가짜)과 민준(진짜)
+    "twins": [2, 3],
+}
+
+HTML = r'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#FFFEFA;color:#20483F;font:16px/1.6 'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
+button,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:12px;padding:10px 14px;background:#E4F0EA;color:#173D35;font-weight:800;min-height:44px;transition:transform .15s,background .15s}
+button:hover:not(:disabled){transform:translateY(-2px);background:#D7E8DF}
+button:active:not(:disabled){transform:scale(.95)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible{outline:3px solid #FF7A45;outline-offset:2px}
+.go{background:linear-gradient(135deg,#FF7A45,#FFB347);color:#fff;box-shadow:0 5px 14px #FF7A4540}
+.go:hover:not(:disabled){background:linear-gradient(135deg,#F06A35,#FFA337)}
+main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
+@keyframes pop{0%{transform:scale(.6);opacity:0}65%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}
+@keyframes rise{0%{transform:translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes stamp{0%{transform:scale(3) rotate(-18deg);opacity:0}60%{transform:scale(.9) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+@keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+@keyframes scan{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.hero{background:linear-gradient(135deg,#20483F,#2E7D6B);color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
+.hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
+.box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
+.box h3{margin:0 0 8px;font-size:1.12rem}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.step{background:#F4F8F6;border:1.5px solid #D7E2DD;border-radius:16px;padding:12px;text-align:center;word-break:keep-all}
+.step .ic{font-size:34px}.step b.h{display:block;font-size:1.02rem;margin:2px 0}.step p{margin:0;font-size:.9rem;color:#33524A;line-height:1.5}
+.ex{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.ex div{background:#F9FBF8;border:1.5px dashed #BFD4CA;border-radius:14px;padding:10px;font-size:.92rem;line-height:1.55}
+.terms{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.terms div{border-radius:14px;padding:10px 12px;font-size:.92rem;line-height:1.55;font-weight:700}
+.terms .fp{background:#FFF4E8;border:2px solid #FFB385}.terms .fn{background:#FFECEC;border:2px solid #F3A5A5}
+.stages{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stages button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:2px solid #C9DCD3;padding:8px 6px}
+.stages button.on{background:#20483F;color:#fff;border-color:#20483F;box-shadow:0 0 0 4px #FF7A4555}
+.stages button.on:hover:not(:disabled){background:#20483F}
+.stages small{font-weight:700;font-size:.8rem;opacity:.9}
+.goal{background:#FFF8E6;border:2px solid #F2D58A;border-radius:14px;padding:8px 12px;font-weight:800;margin:8px 0;word-break:keep-all}
+.cols{display:grid;grid-template-columns:1.05fr 1fr;gap:14px;align-items:start}
+.inbox{display:flex;flex-direction:column;gap:8px}
+.msg{position:relative;background:#fff;border:2px solid #D7E2DD;border-radius:16px;padding:10px 12px;word-break:keep-all;animation:rise .35s ease-out both}
+.msg .who{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:.85rem;color:#52616B;font-weight:800}
+.msg .txt{font-size:.98rem;font-weight:600;color:#1E2F2B;margin:4px 0 6px;line-height:1.55}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:.78rem;font-weight:800;border-radius:999px;padding:2px 8px;background:#EEF4F1;color:#33524A;border:1px solid #D2E1DA}
+.tag.hit{background:#FFE7D6;border-color:#FF7A45;color:#9A3412}
+.msg.scanning{background:linear-gradient(90deg,#fff 0%,#E8F6F0 50%,#fff 100%);background-size:400px 100%;animation:scan .5s linear infinite}
+.verdict{display:none;margin-top:8px;gap:6px;flex-wrap:wrap;align-items:center}
+.msg.done .verdict{display:flex;animation:pop .35s ease-out both}
+.vb{font-weight:900;border-radius:10px;padding:3px 10px;font-size:.88rem}
+.vb.block{background:#FFE4E4;color:#B42318}.vb.pass{background:#DFF5EA;color:#0B655B}
+.vb.ok{background:#E6F4EC;color:#0F766E}.vb.fp{background:#FFF1E2;color:#B4471B}.vb.fn{background:#FFE4E4;color:#B42318}
+.msg.done.good{border-color:#7FC8AE}.msg.done.bad{border-color:#E5484D;animation:shake .4s ease-in-out}
+.builder{position:sticky;top:6px}
+.rule{background:#F4F8F6;border:2px solid #C9DCD3;border-radius:16px;padding:10px;animation:pop .35s ease-out both}
+.rule .head{display:flex;justify-content:space-between;align-items:center;font-weight:900;margin-bottom:6px}
+.rule .head button{min-height:34px;padding:4px 10px;font-size:.85rem;background:#fff;border:1.5px solid #E4C7C7;color:#B42318}
+.rule .line{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.kw{font-weight:900;color:#0F766E;background:#E1F3EA;border-radius:8px;padding:2px 8px}
+.kw.and{color:#7C3AED;background:#EFE9FF}.kw.then{color:#B42318;background:#FFE4E4}
+select{min-height:44px;border-radius:12px;border:2px solid #9DBFB2;background:#fff;color:#173D35;font-weight:800;padding:6px 8px;max-width:100%;cursor:pointer}
+select.empty{border-style:dashed;color:#6B7F78}
+.or{text-align:center;font-weight:900;color:#B4471B;margin:6px 0;font-size:1.05rem}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0 6px;font-weight:800}
+.blocks{background:#20483F;color:#fff;border-radius:999px;padding:3px 12px}
+.blocks.over{background:#B4471B}
+pre{background:#1E2B28;color:#D6F5E8;border-radius:14px;padding:10px 12px;font:700 .9rem/1.6 'Courier New',monospace;white-space:pre-wrap;word-break:break-all;margin:8px 0}
+pre .k{color:#FFB385}pre .c{color:#8FD3B6}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>button{flex:1}
+.hint{background:#EEF2FF;border:2px solid #A5B4FC;border-radius:12px;padding:8px 12px;margin:8px 0;font-weight:700;word-break:keep-all;animation:pop .35s ease-out both}
+.toast{min-height:1.4em;font-weight:800;color:#B4471B;margin:6px 0;word-break:keep-all}
+.result{position:relative;overflow:hidden;border-radius:22px;padding:18px 14px;text-align:center;margin:12px 0;word-break:keep-all}
+.result.win{background:linear-gradient(135deg,#FFF1C2,#D9F2E6)}.result.lose{background:linear-gradient(135deg,#F3F5F4,#E2E9E5)}
+.result.fx{animation:pop .55s ease-out both}.result.lose.fx{animation:shake .5s ease-in-out both}
+.result .big{font-size:52px}.result b.t{display:block;font-size:1.35rem;font-weight:900}
+.stars{font-size:2rem;letter-spacing:4px}.fx .stars i{display:inline-block;font-style:normal;animation:pop .4s ease-out both}
+.stamp{display:inline-block;margin-top:8px;border:5px solid #16815F;color:#16815F;border-radius:12px;padding:3px 16px;font-size:1.5rem;font-weight:900;transform:rotate(-8deg);background:rgba(255,255,255,.6)}
+.stamp.miss{border-color:#5A7068;color:#5A7068}
+.fx .stamp{animation:stamp .5s .5s ease-out both}
+.spark{position:absolute;left:50%;top:40%;font-size:24px;opacity:0;pointer-events:none}
+.fx .spark{animation:burst 1.1s ease-out both}
+.matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;max-width:440px;margin:10px auto;font-size:.9rem;font-weight:800}
+.matrix div{border-radius:10px;padding:8px 6px;text-align:center;line-height:1.35}
+.matrix .h{background:transparent;color:#52616B}
+.matrix .tp{background:#DFF5EA}.matrix .tn{background:#DFF5EA}.matrix .fp{background:#FFF1E2;color:#B4471B}.matrix .fn{background:#FFE4E4;color:#B42318}
+.matrix b{display:block;font-size:1.3rem}
+.twin{background:#FFFBEA;border:2px solid #F2D58A;border-radius:16px;padding:12px 14px;margin:10px 0;text-align:left;word-break:keep-all;animation:rise .5s .6s ease-out both}
+.twin .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.twin .pair div{background:#fff;border:1.5px solid #E6D9A8;border-radius:12px;padding:8px;font-size:.88rem;line-height:1.5}
+.final{text-align:left}
+.still .hero,.still .box,.still .msg,.still .rule,.still .hint{animation:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:720px){.cols{grid-template-columns:1fr}.builder{position:static}.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}}
+@media (max-width:480px){.ex,.terms,.twin .pair{grid-template-columns:1fr}.hero b{font-size:1.2rem}.stages small{font-size:.72rem}}
+</style></head><body>
+<main class="wrap" id="app"></main>
+<script>
+const D = __DATA__;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const KEYS = Object.keys(D.conds);
+const G = {screen: 'intro', stage: 0, rules: [[['', '']], [['', '']], [['', '']]], best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]};
+let fresh = true;
+
+// 문자 하나가 조건을 만족하는지: S(저장된 번호)는 '모르는 번호가 아님'
+function has(msg, c){ if (c === 'U') return msg[1] === 'U'; if (c === 'S') return msg[1] === 'S'; return msg[3].includes(c); }
+function cleanRules(st){ return G.rules[st].map(r => r.filter(c => c)).filter(r => r.length); }
+function blocks(st){ return cleanRules(st).reduce((a, r) => a + r.length, 0); }
+function flagged(st, msg){ return cleanRules(st).some(r => r.every(c => has(msg, c))); }
+function starsFor(st, res){ const s = D.stages[st]; if (res.errors > s.best) return 0; return res.blocks <= s.par ? 3 : res.blocks <= s.par + 2 ? 2 : 1; }
+
+function codeView(st){
+  const rs = cleanRules(st);
+  if (!rs.length) return '<span class="c"># 아직 규칙이 없어요. 아래에서 조건을 골라 보세요.</span>\n<span class="k">결과</span> = "통과"';
+  const parts = rs.map(r => (r.length > 1 ? '(' : '') + r.map(c => D.code[c]).join(' <span class="k">and</span> ') + (r.length > 1 ? ')' : ''));
+  return `<span class="k">if</span> ${parts.join(' <span class="k">or</span> ')}:\n    <span class="k">결과</span> = "🚫 의심"\n<span class="k">else</span>:\n    <span class="k">결과</span> = "✅ 통과"`;
+}
+
+function tagsHtml(msg, hitSet){
+  const list = [msg[1]].concat(msg[3].split('').filter(Boolean));
+  return list.map(c => `<span class="tag ${hitSet && hitSet.has(c) ? 'hit' : ''}">${esc(D.conds[c])}</span>`).join('');
+}
+
+function render(){
+  const app = $('app');
+  app.classList.toggle('still', !fresh); fresh = false;
+  if (G.screen === 'intro') return renderIntro();
+  if (G.screen === 'final') return renderFinal();
+  renderPlay();
+}
+
+function renderIntro(){
+  $('app').innerHTML = `
+  <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>도시로 들어오는 문자, 내가 만든 규칙으로 걸러라!</b><span>조건 블록을 조립하면 컴퓨터가 그대로 실행해요.</span></section>
+  <div class="steps">
+    <div class="step"><div class="ic">🏷️</div><div><b class="h">① 태그 보기</b><p>문자마다 ‘링크 있음’, ‘모르는 번호’ 같은 특징 태그가 붙어 있어요.</p></div></div>
+    <div class="step"><div class="ic">🧩</div><div><b class="h">② 규칙 조립</b><p>‘만약 A <b>그리고</b> B면 의심’처럼 블록을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div></div>
+    <div class="step"><div class="ic">▶️</div><div><b class="h">③ 실행하고 고치기</b><p>문자가 하나씩 필터를 지나가요. 틀린 문자를 보고 규칙을 고쳐요.</p></div></div>
+  </div>
+  <section class="box"><h3>🔍 예시로 먼저 볼까요?</h3>
+    규칙: <span class="kw">만약</span> 🔗 링크 있음 <span class="kw and">그리고</span> ❓ 모르는 번호 <span class="kw then">→ 🚫 의심</span>
+    <div class="ex">
+      <div><b>문자 A</b> · 🔗 링크 있음 · ❓ 모르는 번호<br>두 조건이 <b>모두</b> 맞아요 → <b style="color:#B42318">🚫 의심</b></div>
+      <div><b>문자 B</b> · 🔗 링크 있음 · 📇 저장된 번호<br>하나만 맞아요 → <b style="color:#0B655B">✅ 통과</b></div>
+    </div>
+    <p style="margin:10px 0 0">👉 <b>그리고</b>는 조건이 <b>모두</b> 맞아야 걸리고, <b>또는</b>(규칙 줄 추가)은 <b>하나만</b> 맞아도 걸려요.</p>
+    <div class="terms">
+      <div class="fp">🟠 <b>오탐</b> · 진짜 문자인데 막아 버림<br><span style="font-weight:600">엄마 문자가 스팸함에 들어가는 경우</span></div>
+      <div class="fn">🔴 <b>미탐</b> · 가짜 문자인데 통과시킴<br><span style="font-weight:600">사기 문자가 그대로 도착하는 경우</span></div>
+    </div>
+  </section>
+  <section class="box"><h3>⭐ 별 받는 법</h3>
+    ⭐ 목표 달성 · ⭐ 블록을 목표보다 2개 넘게 쓰지 않기 · ⭐ 목표 블록 수 이하로 해내기<br>
+    <span style="font-size:.92rem;color:#52616B">블록 = 고른 조건 하나. 같은 결과라면 짧은 규칙이 더 좋은 프로그램이에요.</span>
+  </section>
+  <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🤖 필터실 입장하기</button>`;
+}
+
+function startStage(i){ G.screen = 'play'; G.stage = i; G.last = null; fresh = true; render(); window.scrollTo(0, 0); }
+
+function stageButtons(){
+  return `<div class="stages">${D.stages.map((s, i) => {
+    const locked = i > 0 && !G.best[i - 1];
+    const st = G.best[i] ? '⭐'.repeat(G.best[i].stars) + '☆'.repeat(3 - G.best[i].stars) : (locked ? '🔒' : '☆☆☆');
+    return `<button class="${i === G.stage ? 'on' : ''}" ${locked ? 'disabled' : ''} onclick="startStage(${i})">${i + 1}단계 · ${esc(s.name)}<small>${st}</small></button>`;
+  }).join('')}</div>`;
+}
+
+function ruleHtml(st, ri){
+  const r = G.rules[st][ri];
+  const sel = (ci) => `<select class="${r[ci] ? '' : 'empty'}" aria-label="규칙 ${ri + 1}의 조건 ${ci + 1}" onchange="setCond(${ri},${ci},this.value)" ${G.running ? 'disabled' : ''}>
+      <option value="">${ci === 0 ? '조건 고르기 ▾' : '(추가 조건 없음) ▾'}</option>
+      ${KEYS.map(k => `<option value="${k}" ${r[ci] === k ? 'selected' : ''}>${esc(D.conds[k])}</option>`).join('')}</select>`;
+  return `<div class="rule"><div class="head">🧩 규칙 ${ri + 1}${G.rules[st].length > 1 ? `<button onclick="delRule(${ri})" ${G.running ? 'disabled' : ''}>🗑 빼기</button>` : ''}</div>
+    <div class="line"><span class="kw">만약</span>${sel(0)}<span class="kw and">그리고</span>${sel(1)}<span class="kw then">→ 🚫 의심</span></div></div>`;
+}
+
+function renderPlay(){
+  const st = G.stage, s = D.stages[st], res = G.last;
+  const b = blocks(st);
+  const rules = G.rules[st].map((_, ri) => ruleHtml(st, ri)).join('<div class="or">또는</div>');
+  const msgs = s.msgs.map((m, i) => {
+    let cls = '', verdict = '', hit = null;
+    if (res) {
+      const r = res.rows[i];
+      cls = 'done ' + (r.flag === m[4] ? 'good' : 'bad');
+      hit = r.hit;
+      verdict = `<span class="vb ${r.flag ? 'block' : 'pass'}">${r.flag ? '🚫 의심으로 막음' : '✅ 통과'}</span>`
+        + (r.flag === m[4] ? `<span class="vb ok">⭕ 맞음 · ${m[4] ? '가짜 문자' : '진짜 문자'}</span>` : (r.flag ? '<span class="vb fp">🟠 오탐 · 진짜 문자였어요</span>' : '<span class="vb fn">🔴 미탐 · 가짜 문자였어요</span>'));
+    }
+    return `<div class="msg ${cls}" id="msg${i}" style="animation-delay:${i * .04}s">
+      <div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
+      <div class="txt">${esc(m[2])}</div><div class="tags">${tagsHtml(m, hit)}</div><div class="verdict">${verdict}</div></div>`;
+  }).join('');
+  const hints = s.hints.slice(0, G.hintOpen[st]).map((h, k) => `<div class="hint">💡 힌트 ${k + 1}: ${esc(h)}</div>`).join('');
+  $('app').innerHTML = `
+  <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>${st + 1}단계 · ${esc(s.name)}</b><span>문자 ${s.msgs.length}개 · 목표 블록 ${s.par}개 이하</span></section>
+  ${stageButtons()}
+  <div class="goal">🎯 목표: ${esc(s.goal)}</div>
+  ${res ? resultHtml(st, res) : ''}
+  <div class="cols">
+    <div><h3 style="margin:6px 0">📥 들어온 문자 ${s.msgs.length}개</h3><div class="inbox">${msgs}</div></div>
+    <div class="builder"><h3 style="margin:6px 0">🧩 내 필터 규칙</h3>
+      ${rules}
+      ${G.rules[st].length < 3 ? `<button style="width:100%;margin-top:8px;background:#fff;border:2px dashed #9DBFB2" onclick="addRule()" ${G.running ? 'disabled' : ''}>➕ 규칙 줄 추가 (또는)</button>` : ''}
+      <div class="meta"><span>📦 사용한 블록 <span class="blocks ${b > s.par ? 'over' : ''}">${b}개</span></span><span>목표 ${s.par}개 이하</span></div>
+      <div style="font-weight:800;font-size:.92rem;margin-top:6px">💻 컴퓨터가 읽는 코드</div>
+      <pre>${codeView(st)}</pre>
+      <div class="toast" id="toast"></div>
+      <div class="row"><button class="go" onclick="run()" ${G.running ? 'disabled' : ''}>▶ 필터 실행</button>
+        <button onclick="openHint()" ${G.running || G.hintOpen[st] >= s.hints.length ? 'disabled' : ''}>💡 힌트 (${G.hintOpen[st]}/${s.hints.length})</button></div>
+      ${hints}
+    </div>
+  </div>`;
+}
+
+function resultHtml(st, res){
+  const s = D.stages[st], stars = starsFor(st, res), go = res.fresh ? ' fx' : '';
+  res.fresh = false;
+  const matrix = `<div class="matrix">
+    <div class="h"></div><div class="h">🚫 막음</div><div class="h">✅ 통과</div>
+    <div class="h">가짜 문자</div><div class="tp"><b>${res.tp}</b>잘 막음</div><div class="fn"><b>${res.fn}</b>미탐</div>
+    <div class="h">진짜 문자</div><div class="fp"><b>${res.fp}</b>오탐</div><div class="tn"><b>${res.tn}</b>잘 통과</div></div>`;
+  if (!stars) {
+    const msg = s.best > 0 ? `더 줄일 수 있어요! 이 단계는 ${s.best}개까지는 어쩔 수 없지만, 지금은 ${res.errors}개를 틀렸어요.` : `${res.errors}개를 틀렸어요. 빨간 테두리 문자를 보고 규칙을 고쳐 보세요.`;
+    return `<section class="result lose${go}"><div class="big">🔧</div><b class="t">${esc(msg)}</b>${matrix}
+      <span class="stamp miss">다시 고치기</span></section>`;
+  }
+  const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
+  const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 최고 기록이에요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
+  const twins = s.best > 0 ? twinHtml(st) : '';
+  const next = st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
+  return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${s.best > 0 ? '이게 규칙으로 할 수 있는 최선이에요!' : '필터 완성!'}</b>
+    <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
+    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${next}</section>`;
+}
+
+function twinHtml(st){
+  const s = D.stages[st], [a, b] = D.twins, A = s.msgs[a], B = s.msgs[b];
+  return `<div class="twin"><b>🤔 왜 1개는 꼭 틀릴까요?</b>
+    <div class="pair"><div>🔴 <b>${esc(A[0])}</b> (가짜 · 계정 도용)<br>${esc(A[2])}</div><div>🟢 <b>${esc(B[0])}</b> (진짜)<br>${esc(B[2])}</div></div>
+    두 문자는 <b>저장된 번호 · 돈 요구 · 재촉</b>으로 특징이 똑같아요. 똑같은 입력에는 규칙도 똑같이 답할 수밖에 없어서, 하나를 막으면 다른 하나도 막혀요.<br>
+    👉 그래서 <b>규칙(필터)만으로는 완벽할 수 없어요.</b> 친구가 돈을 부탁하면 <b>원래 알던 번호로 전화</b>해서 직접 확인하는 게 마지막 방어선이에요.</div>`;
+}
+
+function setCond(ri, ci, v){ G.rules[G.stage][ri][ci] = v; G.last = null; render(); }
+function addRule(){ G.rules[G.stage].push(['', '']); G.last = null; render(); }
+function delRule(ri){ G.rules[G.stage].splice(ri, 1); G.last = null; render(); }
+function openHint(){ G.hintOpen[G.stage]++; render(); }
+
+function run(){
+  const st = G.stage, s = D.stages[st];
+  if (!cleanRules(st).length) { $('toast').textContent = '먼저 규칙 1의 조건을 하나 이상 골라 주세요.'; return; }
+  G.running = true; G.last = null; render();
+  const rows = s.msgs.map(m => {
+    const rs = cleanRules(st);
+    const fired = rs.filter(r => r.every(c => has(m, c)));
+    return {flag: fired.length > 0, hit: new Set(fired.flat())};
+  });
+  // 문자가 하나씩 필터를 지나가는 모습
+  s.msgs.forEach((m, i) => {
+    setTimeout(() => { const el = $('msg' + i); if (el) { el.classList.add('scanning'); el.scrollIntoView({block: 'nearest', behavior: 'smooth'}); } }, i * 260);
+    setTimeout(() => {
+      const el = $('msg' + i); if (!el) return;
+      el.classList.remove('scanning');
+      const r = rows[i], ok = r.flag === m[4];
+      el.classList.add('done', ok ? 'good' : 'bad');
+      el.querySelector('.tags').innerHTML = tagsHtml(m, r.hit);
+      el.querySelector('.verdict').innerHTML = `<span class="vb ${r.flag ? 'block' : 'pass'}">${r.flag ? '🚫 의심으로 막음' : '✅ 통과'}</span>`
+        + (ok ? `<span class="vb ok">⭕ 맞음 · ${m[4] ? '가짜 문자' : '진짜 문자'}</span>` : (r.flag ? '<span class="vb fp">🟠 오탐 · 진짜 문자였어요</span>' : '<span class="vb fn">🔴 미탐 · 가짜 문자였어요</span>'));
+    }, i * 260 + 230);
+  });
+  setTimeout(() => {
+    let tp = 0, tn = 0, fp = 0, fn = 0;
+    rows.forEach((r, i) => { const scam = s.msgs[i][4]; if (scam && r.flag) tp++; else if (scam) fn++; else if (r.flag) fp++; else tn++; });
+    const res = {rows, tp, tn, fp, fn, errors: fp + fn, blocks: blocks(st), fresh: true};
+    G.tries[st]++;
+    const stars = starsFor(st, res);
+    if (stars && (!G.best[st] || stars > G.best[st].stars)) G.best[st] = {stars, blocks: res.blocks};
+    G.running = false; G.last = res; fresh = false; render();
+    const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
+  }, s.msgs.length * 260 + 500);
+}
+
+function toFinal(){ G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0); }
+
+function renderFinal(){
+  const total = G.best.reduce((a, b) => a + (b ? b.stars : 0), 0);
+  const title = total >= 9 ? '🏅 수석 필터 엔지니어' : total >= 6 ? '🛠️ 필터 엔지니어' : '🌱 새내기 필터 개발자';
+  const sp = ['✨', '⭐', '🤖', '🎉', '✨', '💫', '⭐', '🎉', '🛡️', '✨'].map((ic, k) => { const a = k * Math.PI / 5; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 150)}px;--y:${Math.round(Math.sin(a) * 110)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
+  $('app').innerHTML = `
+  <section class="result win fx"><div class="big">🏆</div><b class="t">${title}</b>
+    <div class="stars">${'⭐'.repeat(total)}${'☆'.repeat(9 - total)}</div><div style="font-weight:800">별 ${total} / 9</div>
+    <span class="stamp">필터실 수료!</span>${sp}</section>
+  <section class="box final"><h3>📌 오늘 만든 필터에서 배운 것</h3>
+    ① <b>조건문</b>: “만약 ~라면 의심, 아니면 통과”. 컴퓨터는 규칙을 적힌 그대로만 실행해요.<br>
+    ② <b>그리고(AND)·또는(OR)</b>: 그리고는 조건을 더 좁게, 또는는 더 넓게 만들어요.<br>
+    ③ <b>오탐과 미탐</b>: 너무 넓게 막으면 진짜 문자가 막히고(오탐), 너무 좁게 막으면 사기 문자가 들어와요(미탐). 실제 스팸 필터도 이 균형을 고민해요.<br>
+    ④ <b>규칙의 한계</b>: 특징이 똑같은 문자는 규칙으로 가를 수 없어요. 마지막엔 <b>원래 알던 번호로 직접 확인</b>하는 사람의 판단이 필요해요.</section>
+  <div class="row"><button onclick="startStage(0)">🔁 1단계부터 다시 줄여 보기</button><button class="go" onclick="restart()">🔄 처음부터 다시</button></div>`;
+}
+
+function restart(){ Object.assign(G, {screen: 'intro', stage: 0, best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]}); G.rules = [[['', '']], [['', '']], [['', '']]]; fresh = true; render(); }
+
+// ───── Streamlit 높이 맞추기 ─────
+let lastHeight = 0;
+function sendHost(type, payload = {}) { window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*'); }
+function resize(force = false){ const root = document.querySelector('main.wrap'); if (!root) return; const h = Math.ceil(root.getBoundingClientRect().height) + 16; if (force || h !== lastHeight) { sendHost('streamlit:setFrameHeight', {height: h}); lastHeight = h; } }
+window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') requestAnimationFrame(() => resize(true)); });
+sendHost('streamlit:componentReady', {apiVersion: 1});
+new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
+window.addEventListener('load', resize); window.addEventListener('resize', resize);
+render();
+</script></body></html>
+'''
+
+page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None)
+
+with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
+    st.markdown(
+        "- **조건문과 논리 연산**: 규칙 한 줄은 `and`, 규칙 줄끼리는 `or`로 이어진 `if` 문이에요. 오른쪽 코드 창에서 내가 만든 규칙이 코드로 바뀌는 걸 볼 수 있어요.\n"
+        "- **오탐·미탐과 혼동 행렬**: 결과 표는 실제 스팸 필터와 인공지능 분류 모델을 평가할 때 쓰는 2×2 표와 같아요.\n"
+        "- **완전 탐색**: 단계마다 가능한 규칙 조합을 모두 검사해서, 가장 적은 블록 수(목표)와 3단계에서 1개는 꼭 틀릴 수밖에 없다는 사실을 확인했어요."
+    )
+st.caption("교육용 가상 문자입니다. 실제 번호·기관·링크와 관계없으며, 진행은 새로고침하면 초기화됩니다.")
