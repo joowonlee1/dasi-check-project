@@ -802,15 +802,43 @@ with st.expander("🔧 AI 연결 확인"):
 
 messages = state["messages"]
 
-for message in messages:
-    role = (
-        "assistant"
-        if message["role"] == "model"
-        else "user"
-    )
+# 대화가 안내 상자들 사이에 묻히지 않도록 말풍선을 크게, 상대와 나를 색으로 구분합니다.
+st.markdown(
+    """
+<style>
+.st-key-chat_screen {background:#EAF1F6;border:2px solid #C9D9E4;border-radius:24px;padding:16px 12px;}
+[data-testid="stChatMessage"] {border-radius:18px !important;padding:14px 16px !important;
+  box-shadow:0 3px 10px rgba(32,72,63,.10);}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {font-size:1.18rem !important;
+  line-height:1.75 !important;font-weight:600;color:#1E2F2B;}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]),
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarCustom"]):not(:has([aria-label="Chat message from user"])) {
+  background:#FFFFFF !important;border:2px solid #FFB385 !important;margin-right:12%;}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+  background:#E1F3EA !important;border:2px solid #7FC8AE !important;margin-left:12%;}
+.jk-chat-label {font-weight:800;color:#20483F;font-size:1.05rem;margin:2px 4px 8px;}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
-    with st.chat_message(role):
-        st.write(message["text"])
+st.subheader("② 대화 — 상대의 메시지를 읽고 답해 보세요")
+
+with st.container(key="chat_screen"):
+    st.markdown(
+        '<div class="jk-chat-label">📱 상대 <span style="color:#B4471B">(주황)</span> · '
+        '🙋 나 <span style="color:#2E8B6F">(초록)</span></div>',
+        unsafe_allow_html=True,
+    )
+    for message in messages:
+        role = (
+            "assistant"
+            if message["role"] == "model"
+            else "user"
+        )
+
+        with st.chat_message(role):
+            st.write(message["text"])
 
 if state["report"] is not None:
     st.subheader("📋 나의 대응 리포트")
