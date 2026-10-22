@@ -37,16 +37,22 @@ CSS = """
 .pw-count b {display:block;font-size:3rem;line-height:1.1;font-weight:900;}
 .pw-count span {font-weight:800;font-size:1.05rem;}
 .pw-bar {margin:6px 0;}
-.pw-bar-head {display:flex;justify-content:space-between;font-weight:700;color:#20483F;font-size:.92rem;word-break:keep-all;}
+.pw-bar-head {display:flex;justify-content:space-between;font-weight:700;color:#20483F;font-size:1rem;word-break:keep-all;}
 .pw-bar-track {background:#E8EFE6;border-radius:999px;height:12px;overflow:hidden;margin-top:3px;}
 .pw-bar-fill {background:linear-gradient(90deg,#3BA99C,#7FD1B9);height:100%;border-radius:999px;}
 .pw-wall {display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 6px;}
 .pw-note {--r:0deg;border-radius:6px;padding:12px 10px;box-shadow:0 4px 10px rgba(0,0,0,.08);transform:rotate(var(--r));
   animation:pw-pop .4s ease-out both;word-break:keep-all;color:#2B3A36;min-height:92px;}
-.pw-note b {display:block;font-size:.95rem;margin-bottom:4px;}
-.pw-note div {font-size:1.35rem;letter-spacing:2px;}
+.pw-note b {display:block;font-size:1.05rem;margin-bottom:4px;}
+.pw-note div {font-size:1.6rem;letter-spacing:2px;}
 .pw-note.me {outline:3px solid #FF7A45;}
 @media (max-width:640px) {.pw-wall {grid-template-columns:repeat(2,1fr);}}
+.pw-banner {background:linear-gradient(135deg,#FFF1E6,#E6F4F1);border:2px solid #FFC9A8;border-radius:24px;
+  padding:18px 16px;text-align:center;margin:4px 0 12px;}
+.pw-banner b {display:block;font-size:1.6rem;font-weight:900;color:#20483F;}
+.pw-banner span {color:#33524A;font-size:1.05rem;font-weight:600;word-break:keep-all;}
+.st-key-pledge_wall_choice [data-testid="stButtonGroup"] button {min-height:48px;font-size:1.02rem;padding:8px 14px;}
+.st-key-pledge_wall_choice label p {font-size:1.1rem !important;font-weight:800 !important;}
 .st-key-pledge_wall_save button {background:linear-gradient(135deg,#FF7A45,#FFB347) !important;border:none !important;
   padding:.8rem 1rem !important;}
 .st-key-pledge_wall_save button p {color:#fff !important;font-weight:800 !important;font-size:1.1rem !important;}
@@ -218,18 +224,24 @@ def board_fragment():
 
 def show_pledge_wall():
     st.markdown(CSS, unsafe_allow_html=True)
-    st.subheader("✍️ 잠깐! 서약의 벽")
-    st.write("지킬 약속을 고르고 별명을 남기면, 함께한 사람 수가 올라가요.")
-
-    board_fragment()
+    st.markdown(
+        '<div class="pw-banner"><b>✍️ 잠깐! 서약의 벽</b>'
+        '<span>지킬 약속을 고르고 별명을 남기면, 함께한 사람 수가 올라가요.</span></div>',
+        unsafe_allow_html=True,
+    )
     if st.session_state.pop(STATE + "celebrate", False):
         st.balloons()
+    show_form()
+    board_fragment()
+
+
+def show_form():
 
     saved = st.session_state.get(STATE + "saved")
     with st.container(border=True):
         if saved:
             picks = st.session_state.get(STATE + "picks", [])
-            st.success("서약을 남겼어요! 벽에 주황 테두리로 표시된 메모가 내 서약이에요.")
+            st.success("서약을 남겼어요! 아래 벽에서 주황 테두리 메모가 내 서약이에요.")
             st.markdown("\n".join(f"- {PLEDGES[p][0]} {PLEDGES[p][1]}" for p in picks))
             with st.expander("방금 남긴 서약 지우기"):
                 if st.button("내 서약 지우기", key=STATE + "delete"):
