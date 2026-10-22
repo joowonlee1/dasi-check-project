@@ -66,6 +66,17 @@ LETTER_INFO = {
     "I": ("Individual", "혼자 점검"), "T": ("Together", "함께 점검"),
     "H": ("Help", "도움 먼저"), "B": ("Boundary", "경계 먼저"),
 }
+# 글자마다 실제로 어떤 습관인지 풀어 쓴 설명
+LETTER_DESC = {
+    "Q": "낯선 연락에도 일단 답하거나 움직이면서 알아보는 편이에요.",
+    "S": "답하기 전에 먼저 읽고 생각을 정리하는 편이에요.",
+    "R": "누가, 어떤 말투로 말하는지를 먼저 느끼는 편이에요.",
+    "E": "무엇을 요구하는지, 근거가 맞는지를 먼저 따지는 편이에요.",
+    "I": "스스로 자료를 찾아보며 확인하는 편이에요.",
+    "T": "믿을 만한 사람과 이야기하며 확인하는 편이에요.",
+    "H": "곤란하다는 사람을 어떻게 도울지 먼저 생각하는 편이에요.",
+    "B": "내가 해 줄 수 있는 범위와 조건을 먼저 정하는 편이에요.",
+}
 TRAIT_ICONS = {"Q": "⚡", "S": "🐢", "R": "💗", "E": "🔬", "I": "🔦", "T": "👥", "H": "🫶", "B": "🚧"}
 HABITS = {
     "Q": ("반응을 시작하는 쪽을 더 골랐어요.", "답장과 별개로 송금·설치·인증 요청은 잠시 멈추세요.", "계정 보안 사칭", "긴급 알림을 받아도 먼저 공식 앱에서 확인하는 연습"),
@@ -136,13 +147,25 @@ CSS = """
 .jk-letter small {display:block;color:#6B8580;font-size:.78rem;}
 .jk-letter span {display:block;font-weight:800;color:#20483F;font-size:.92rem;word-break:keep-all;margin-top:4px;}
 .jk-letter em {display:block;font-style:normal;color:#8BA39C;font-size:.75rem;}
+.jk-letter p {color:#33524A;font-size:.82rem;line-height:1.45;margin:6px 4px 0;word-break:keep-all;}
+.jk-axes {display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:6px 0 10px;}
+.jk-axis {background:#FFFEFA;border:2px solid #DCE8D6;border-radius:22px;padding:14px 12px;}
+.jk-axis-title {font-weight:900;color:#20483F;font-size:1.05rem;margin-bottom:8px;text-align:center;}
+.jk-vs {display:flex;align-items:stretch;gap:6px;}
+.jk-side {flex:1;border-radius:16px;padding:10px 8px;text-align:center;word-break:keep-all;}
+.jk-side b {display:block;font-size:1.9rem;line-height:1.1;color:#20807A;}
+.jk-side span {display:block;font-weight:800;color:#20483F;font-size:.95rem;margin-top:2px;}
+.jk-side p {color:#4F6B63;font-size:.8rem;line-height:1.45;margin:6px 0 0;}
+.jk-vs-mark {align-self:center;font-weight:900;color:#9DB5AE;font-size:.85rem;}
+.jk-section {background:#EAF5EF;border-radius:999px;display:inline-block;padding:6px 16px;font-weight:900;
+  color:#20483F;font-size:1.15rem;margin:22px 0 8px;}
 .jk-gallery {display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 .jk-mini {border-radius:16px;padding:10px 4px;text-align:center;color:#1E3A34;word-break:keep-all;}
 .jk-mini div {font-size:30px;}
 .jk-mini b {display:block;font-size:.85rem;}
 .jk-mini small {letter-spacing:.12em;opacity:.75;font-size:.72rem;}
 .jk-mini.me {outline:3px solid #20483F;}
-@media (max-width:640px) {.jk-decode,.jk-gallery {grid-template-columns:repeat(2,1fr);}}
+@media (max-width:640px) {.jk-decode,.jk-gallery {grid-template-columns:repeat(2,1fr);} .jk-axes {grid-template-columns:1fr;}}
 .jk-drum {text-align:center;font-size:1.6rem;font-weight:800;color:#20483F;padding:48px 0;}
 .jk-drum div {font-size:72px;animation:jk-bounce .5s ease-in-out infinite;}
 </style>
@@ -227,12 +250,14 @@ def show_intro():
     st.button("🚀 테스트 시작하기", type="primary", width="stretch", on_click=start)
     st.caption(NOTICE)
     st.caption("답변은 공개 저장하거나 AI 서비스로 전송하지 않습니다.")
-    with st.expander("유형은 어떻게 정해지나요?"):
-        st.write("반응 속도·판단 단서·확인 방식·요청 대응의 4개 기준에 3문항씩 답해요. 기준마다 2개 이상 선택한 쪽을 조합해 16가지 유형을 만들어요.")
-        st.caption("세 문항이라 동점은 없지만, 2대 1 결과가 뚜렷한 성격 차이를 뜻하는 것은 아니에요.")
-        show_letter_table()
-    with st.expander("📖 16가지 유형 모두 보기"):
-        show_gallery()
+    st.markdown('<div class="jk-section">🔤 유형 코드 4글자는 이런 뜻이에요</div>', unsafe_allow_html=True)
+    st.caption("기준마다 3문항씩 답하고, 2개 이상 고른 쪽 글자가 내 코드에 들어가요.")
+    show_axes_guide()
+    st.caption("예: QRTH = 먼저 반응 · 관계·말투 먼저 · 함께 점검 · 도움 먼저 → ‘다정한 연결자’. "
+               "2대 1 결과가 뚜렷한 성격 차이를 뜻하는 것은 아니에요.")
+    st.markdown('<div class="jk-section">📖 16가지 유형 미리보기</div>', unsafe_allow_html=True)
+    show_gallery()
+    st.button("🚀 테스트 시작하기", key=PREFIX + "start_bottom", type="primary", width="stretch", on_click=start)
 
 
 def show_question(i):
@@ -276,14 +301,22 @@ def show_ready():
     st.button("◀ 답 고치기", on_click=go_to, args=(11,), width="stretch")
 
 
-def show_letter_table():
-    """시작 화면용: 유형 코드 네 자리의 뜻을 표로 보여 줍니다."""
-    rows = "".join(
-        f"| {n}번째 | {axis[0]} | **{a}** {LETTER_INFO[a][1]} / **{b}** {LETTER_INFO[b][1]} |\n"
-        for n, (axis, (a, b)) in enumerate(((ax, ax[1]) for ax in AXES), 1)
-    )
-    st.markdown("| 자리 | 기준 | 글자 |\n|---|---|---|\n" + rows)
-    st.caption("예: QRTH = 먼저 반응 · 관계·말투 먼저 · 함께 점검 · 도움 먼저 → ‘다정한 연결자’")
+def show_axes_guide():
+    """시작 화면용: 네 자리 글자가 무슨 뜻인지 기준별 카드로 보여 줍니다."""
+    cards = ""
+    for n, axis in enumerate(AXES, 1):
+        sides = []
+        for letter, bg in zip(axis[1], ("#FFF1E6", "#E6F4F1")):
+            sides.append(
+                f'<div class="jk-side" style="background:{bg};"><b>{letter}</b>'
+                f'<span>{TRAIT_ICONS[letter]} {LETTER_INFO[letter][1]}</span>'
+                f'<p>{LETTER_DESC[letter]}</p></div>'
+            )
+        cards += (
+            f'<div class="jk-axis"><div class="jk-axis-title">{n}번째 글자 · {axis[0]}</div>'
+            f'<div class="jk-vs">{sides[0]}<div class="jk-vs-mark">VS</div>{sides[1]}</div></div>'
+        )
+    st.markdown(f'<div class="jk-axes">{cards}</div>', unsafe_allow_html=True)
 
 
 def show_decode(code):
@@ -291,7 +324,7 @@ def show_decode(code):
     boxes = "".join(
         f'<div class="jk-letter" style="animation-delay:{0.12 * i:.2f}s"><b>{letter}</b>'
         f'<small>{LETTER_INFO[letter][0]}</small><span>{TRAIT_ICONS[letter]} {LETTER_INFO[letter][1]}</span>'
-        f'<em>{AXES[i][0]}</em></div>'
+        f'<em>{AXES[i][0]}</em><p>{LETTER_DESC[letter]}</p></div>'
         for i, letter in enumerate(code)
     )
     st.markdown(f'<div class="jk-decode">{boxes}</div>', unsafe_allow_html=True)
@@ -431,8 +464,8 @@ def show_result(answers):
             st.markdown(f"**{axis[0]} · {label}** — {HABITS[letter][0]}")
             st.caption(f"{axis[2][0]} {counts[i][0]}개 / {axis[2][1]} {counts[i][1]}개 (각 3문항)")
 
-    with st.expander("📖 16가지 유형 모두 보기"):
-        show_gallery(code)
+    st.markdown('<div class="jk-section">📖 16가지 유형 모아보기</div>', unsafe_allow_html=True)
+    show_gallery(code)
 
     st.subheader("🖼️ 결과 카드")
     svg = result_card(code, labels)
