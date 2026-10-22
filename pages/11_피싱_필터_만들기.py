@@ -32,6 +32,7 @@ DATA = {
         {
             "name": "택배 문자",
             "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
+            "intro": "규칙 한 줄 안에 조건을 2개까지 넣을 수 있어요. ‘그리고’로 묶으면 두 조건이 모두 맞는 문자만 걸려요.",
             "best": 0,
             "par": 2,
             "hints": [
@@ -50,6 +51,7 @@ DATA = {
         {
             "name": "사칭과 송금",
             "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
+            "intro": "🆕 가짜 문자의 종류가 다양해졌어요. 한 줄로 다 막기 어렵다면 ‘➕ 규칙 줄 추가’로 줄을 늘려요. 줄이 여러 개면 그중 하나에만 걸려도 막혀요(또는).",
             "best": 0,
             "par": 4,
             "hints": [
@@ -70,6 +72,7 @@ DATA = {
         {
             "name": "완벽한 필터?",
             "goal": "틀리는 문자를 최대한 줄이기",
+            "intro": "문자가 10개로 늘었어요. 그리고·또는을 모두 써서 틀리는 문자를 최대한 줄여 보세요.",
             "best": 1,
             "par": 3,
             "hints": [
@@ -183,6 +186,13 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 .twin .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
 .twin .pair div{background:#fff;border:1.5px solid #E6D9A8;border-radius:12px;padding:8px;font-size:.88rem;line-height:1.5}
 .final{text-align:left}
+.guide{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;font-size:.9rem;line-height:1.6;margin:6px 0 8px;word-break:keep-all}
+.sintro{background:#fff;border:2px solid #C9DCD3;border-left:8px solid #0F766E;border-radius:14px;padding:8px 12px;font-weight:700;margin:8px 0;word-break:keep-all}
+.ex2{background:#F9FBF8;border:1.5px dashed #BFD4CA;border-radius:14px;padding:10px;margin-top:8px;font-size:.92rem;line-height:1.6}
+.ex2 .r{display:inline-block;background:#fff;border:1.5px solid #C9DCD3;border-radius:10px;padding:2px 8px;margin:2px 0}
+.why{background:#fff;border:2px solid #E8D6CE;border-radius:14px;padding:10px 12px;margin:10px auto 0;max-width:640px;text-align:left;font-size:.92rem;line-height:1.6}
+.why li{margin:4px 0}
+.vb.by{background:#EFE9FF;color:#5B21B6}
 .still .hero,.still .box,.still .msg,.still .rule,.still .hint{animation:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:720px){.cols{grid-template-columns:1fr}.builder{position:static}.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}}
@@ -238,7 +248,14 @@ function renderIntro(){
       <div><b>문자 A</b> · 🔗 링크 있음 · ❓ 모르는 번호<br>두 조건이 <b>모두</b> 맞아요 → <b style="color:#B42318">🚫 의심</b></div>
       <div><b>문자 B</b> · 🔗 링크 있음 · 📇 저장된 번호<br>하나만 맞아요 → <b style="color:#0B655B">✅ 통과</b></div>
     </div>
-    <p style="margin:10px 0 0">👉 <b>그리고</b>는 조건이 <b>모두</b> 맞아야 걸리고, <b>또는</b>(규칙 줄 추가)은 <b>하나만</b> 맞아도 걸려요.</p>
+    <p style="margin:10px 0 0">👉 <b>그리고</b>는 한 줄 안의 조건이 <b>모두</b> 맞아야 걸려요.</p>
+    <div class="ex2"><b>규칙 줄이 2개라면? (또는)</b><br>
+      <span class="r">규칙 1 · 💸 돈 요구 <span class="kw and">그리고</span> ❓ 모르는 번호</span> <b style="color:#B4471B">또는</b>
+      <span class="r">규칙 2 · 🔑 인증번호·개인정보 요구</span><br>
+      · 문자 C (💸 돈 요구 · ❓ 모르는 번호) → 규칙 1에 걸림 → <b style="color:#B42318">🚫 의심</b><br>
+      · 문자 D (🔑 인증번호 요구 · 📇 저장된 번호) → 규칙 2에 걸림 → <b style="color:#B42318">🚫 의심</b><br>
+      · 문자 E (💸 돈 요구 · 📇 저장된 번호) → 어느 줄에도 다 맞지 않음 → <b style="color:#0B655B">✅ 통과</b></div>
+    <p style="margin:10px 0 0">👉 규칙 줄은 <b>‘➕ 규칙 줄 추가’</b>로 3줄까지 늘릴 수 있고, 줄끼리는 <b>또는</b>이라 <b>한 줄에만 걸려도</b> 막혀요.</p>
     <div class="terms">
       <div class="fp">🟠 <b>오탐</b> · 진짜 문자인데 막아 버림<br><span style="font-weight:600">엄마 문자가 스팸함에 들어가는 경우</span></div>
       <div class="fn">🔴 <b>미탐</b> · 가짜 문자인데 통과시킴<br><span style="font-weight:600">사기 문자가 그대로 도착하는 경우</span></div>
@@ -280,8 +297,7 @@ function renderPlay(){
       const r = res.rows[i];
       cls = 'done ' + (r.flag === m[4] ? 'good' : 'bad');
       hit = r.hit;
-      verdict = `<span class="vb ${r.flag ? 'block' : 'pass'}">${r.flag ? '🚫 의심으로 막음' : '✅ 통과'}</span>`
-        + (r.flag === m[4] ? `<span class="vb ok">⭕ 맞음 · ${m[4] ? '가짜 문자' : '진짜 문자'}</span>` : (r.flag ? '<span class="vb fp">🟠 오탐 · 진짜 문자였어요</span>' : '<span class="vb fn">🔴 미탐 · 가짜 문자였어요</span>'));
+      verdict = verdictHtml(m, r);
     }
     return `<div class="msg ${cls}" id="msg${i}" style="animation-delay:${i * .04}s">
       <div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
@@ -292,10 +308,12 @@ function renderPlay(){
   <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>${st + 1}단계 · ${esc(s.name)}</b><span>문자 ${s.msgs.length}개 · 목표 블록 ${s.par}개 이하</span></section>
   ${stageButtons()}
   <div class="goal">🎯 목표: ${esc(s.goal)}</div>
+  <div class="sintro">📢 ${esc(s.intro)}</div>
   ${res ? resultHtml(st, res) : ''}
   <div class="cols">
     <div><h3 style="margin:6px 0">📥 들어온 문자 ${s.msgs.length}개</h3><div class="inbox">${msgs}</div></div>
     <div class="builder"><h3 style="margin:6px 0">🧩 내 필터 규칙</h3>
+      <div class="guide">📘 <b>읽는 법</b> · 한 줄 안은 <b>그리고</b>: 조건이 <b>모두</b> 맞아야 걸려요.<br>줄과 줄 사이는 <b>또는</b>: <b>한 줄에만</b> 걸려도 막혀요.</div>
       ${rules}
       ${G.rules[st].length < 3 ? `<button style="width:100%;margin-top:8px;background:#fff;border:2px dashed #9DBFB2" onclick="addRule()" ${G.running ? 'disabled' : ''}>➕ 규칙 줄 추가 (또는)</button>` : ''}
       <div class="meta"><span>📦 사용한 블록 <span class="blocks ${b > s.par ? 'over' : ''}">${b}개</span></span><span>목표 ${s.par}개 이하</span></div>
@@ -319,7 +337,7 @@ function resultHtml(st, res){
   if (!stars) {
     const msg = s.best > 0 ? `더 줄일 수 있어요! 이 단계는 ${s.best}개까지는 어쩔 수 없지만, 지금은 ${res.errors}개를 틀렸어요.` : `${res.errors}개를 틀렸어요. 빨간 테두리 문자를 보고 규칙을 고쳐 보세요.`;
     return `<section class="result lose${go}"><div class="big">🔧</div><b class="t">${esc(msg)}</b>${matrix}
-      <span class="stamp miss">다시 고치기</span></section>`;
+      <span class="stamp miss">다시 고치기</span>${whyHtml(st, res)}</section>`;
   }
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 최고 기록이에요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
@@ -338,6 +356,31 @@ function twinHtml(st){
     👉 그래서 <b>규칙(필터)만으로는 완벽할 수 없어요.</b> 친구가 돈을 부탁하면 <b>원래 알던 번호로 전화</b>해서 직접 확인하는 게 마지막 방어선이에요.</div>`;
 }
 
+function verdictHtml(m, r){
+  const ok = r.flag === m[4];
+  const why = r.flag ? `<span class="vb by">🧩 규칙 ${r.fired.join('·')}에 걸림</span>` : '<span class="vb by">어느 규칙에도 안 걸림</span>';
+  return `<span class="vb ${r.flag ? 'block' : 'pass'}">${r.flag ? '🚫 의심으로 막음' : '✅ 통과'}</span>${why}`
+    + (ok ? `<span class="vb ok">⭕ 맞음 · ${m[4] ? '가짜 문자' : '진짜 문자'}</span>` : (r.flag ? '<span class="vb fp">🟠 오탐 · 진짜 문자였어요</span>' : '<span class="vb fn">🔴 미탐 · 가짜 문자였어요</span>'));
+}
+
+function whyHtml(st, res){
+  const s = D.stages[st], items = [];
+  res.rows.forEach((r, i) => {
+    const m = s.msgs[i];
+    if (r.flag === m[4]) return;
+    if (st === D.stages.length - 1 && D.twins.includes(i) && res.errors <= s.best) return;
+    if (!r.flag) {
+      const tip = G.rules[st].length < 3 ? ' 이 문자를 막을 <b>새 규칙 줄을 ➕로 추가</b>해 보세요.' : ' 규칙 줄 하나를 이 문자도 걸리게 바꿔 보세요.';
+      items.push(`<li>🔴 <b>문자 ${i + 1}</b>(${esc(m[0])}) · 가짜인데 <b>어느 규칙에도 안 걸렸어요</b>.${tip}</li>`);
+    } else {
+      const ri = r.fired[0], one = G.rules[st][ri - 1].filter(c => c).length === 1;
+      const tip = one ? ` 규칙 ${ri}에 <b>‘그리고’ 조건을 하나 더</b> 붙이면 더 좁게 걸러져요.` : ` 규칙 ${ri}의 조건을 다른 것으로 바꿔 보세요.`;
+      items.push(`<li>🟠 <b>문자 ${i + 1}</b>(${esc(m[0])}) · 진짜인데 <b>규칙 ${r.fired.join('·')}에 걸렸어요</b>.${tip}</li>`);
+    }
+  });
+  return items.length ? `<div class="why"><b>🔎 무엇이 틀렸을까요?</b><ul style="margin:6px 0 0;padding-left:18px">${items.join('')}</ul></div>` : '';
+}
+
 function setCond(ri, ci, v){ G.rules[G.stage][ri][ci] = v; G.last = null; render(); }
 function addRule(){ G.rules[G.stage].push(['', '']); G.last = null; render(); }
 function delRule(ri){ G.rules[G.stage].splice(ri, 1); G.last = null; render(); }
@@ -348,9 +391,9 @@ function run(){
   if (!cleanRules(st).length) { $('toast').textContent = '먼저 규칙 1의 조건을 하나 이상 골라 주세요.'; return; }
   G.running = true; G.last = null; render();
   const rows = s.msgs.map(m => {
-    const rs = cleanRules(st);
-    const fired = rs.filter(r => r.every(c => has(m, c)));
-    return {flag: fired.length > 0, hit: new Set(fired.flat())};
+    const fired = [], hit = new Set();
+    G.rules[st].forEach((r, ri) => { const conds = r.filter(c => c); if (conds.length && conds.every(c => has(m, c))) { fired.push(ri + 1); conds.forEach(c => hit.add(c)); } });
+    return {flag: fired.length > 0, hit, fired};
   });
   // 문자가 하나씩 필터를 지나가는 모습
   s.msgs.forEach((m, i) => {
@@ -361,8 +404,7 @@ function run(){
       const r = rows[i], ok = r.flag === m[4];
       el.classList.add('done', ok ? 'good' : 'bad');
       el.querySelector('.tags').innerHTML = tagsHtml(m, r.hit);
-      el.querySelector('.verdict').innerHTML = `<span class="vb ${r.flag ? 'block' : 'pass'}">${r.flag ? '🚫 의심으로 막음' : '✅ 통과'}</span>`
-        + (ok ? `<span class="vb ok">⭕ 맞음 · ${m[4] ? '가짜 문자' : '진짜 문자'}</span>` : (r.flag ? '<span class="vb fp">🟠 오탐 · 진짜 문자였어요</span>' : '<span class="vb fn">🔴 미탐 · 가짜 문자였어요</span>'));
+      el.querySelector('.verdict').innerHTML = verdictHtml(m, r);
     }, i * 260 + 230);
   });
   setTimeout(() => {
