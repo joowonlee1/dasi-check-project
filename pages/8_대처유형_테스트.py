@@ -4,6 +4,7 @@ import time
 from html import escape
 from pathlib import Path
 import streamlit as st
+from pledge_wall import show_pledge_wall
 
 PREFIX = "coping_v1_"
 NOTICE = "교육용 자기점검입니다. MBTI나 검증된 심리검사가 아니며, 실제 피해 가능성을 예측하지 않습니다."
@@ -488,7 +489,9 @@ def show_result(answers):
     st.caption("카드에는 이름·연락처·문항별 답변이 들어가지 않아요. 다운로드 후 공유 여부는 직접 선택하세요.")
     st.caption(NOTICE)
     st.button("🔄 다시 테스트하기", on_click=reset, width="stretch")
-
+    
+    st.divider()
+    show_pledge_wall()
 
 def main():
     st.markdown(CSS, unsafe_allow_html=True)
