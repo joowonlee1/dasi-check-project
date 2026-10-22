@@ -9,6 +9,7 @@
 import json
 
 import streamlit as st
+import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from puzzle_component_ui import create_puzzle_component
 
@@ -171,6 +172,7 @@ td.c button.bad{outline:3px solid #E5484D}
 .tips{background:#FFFBEA;border:2px solid #F1D98A;border-radius:14px;padding:10px 14px;margin:10px 0;word-break:keep-all}
 .tips ol{margin:4px 0 0;padding-left:22px}.tips li{margin:3px 0}
 .step{background:#EEF2FF;border:2px solid #A5B4FC;border-radius:12px;padding:8px 12px;margin:6px 0;font-weight:700;word-break:keep-all;animation:pop .35s ease-out both}
+.others{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;margin:10px auto 0;max-width:640px;text-align:left;font-weight:700;font-size:.92rem;line-height:1.6;color:#1E3A5F;word-break:keep-all}
 .still .hero,.still .sellers div,.still .story,.still .ex,.still .exbox,.still .memo,.still .tgrid span,.still .digits span,.still .got,.still .hint,.still .step:not(:last-of-type){animation:none!important}
 .drum{text-align:center;font-size:1.4rem;font-weight:900;padding:36px 0}
 .drum div{font-size:64px;animation:bob .45s ease-in-out infinite}
@@ -398,12 +400,18 @@ function answer(){
 function final(){
   const allMemo = G.solved.every(Boolean);
   const stars = 1 + (allMemo && G.gridChecked ? 1 : 0) + (G.hints.every(h => !h) && G.stepHint === 0 && G.wrongPick === 0 ? 1 : 0);
+  const hintsUsed = G.hints.filter(Boolean).length + G.stepHint;
+  sendResult({game: 'memo', type: 'finish', stars, hints: hintsUsed, wrong: G.wrongPick});
+  const plays = STATS.plays || 0;
+  const others = plays ? `<div class="others">🌍 지금까지 <b>${plays}번</b> 사기단이 검거됐어요. 별 3개 <b>${Math.round((STATS.star3 || 0) * 100 / plays)}%</b> · 한 번에 진짜를 지목한 비율 <b>${Math.round((STATS.first_pick || 0) * 100 / plays)}%</b></div>`
+    : '<div class="others">🌍 아직 모인 기록이 없어요. 첫 검거의 주인공이에요!</div>';
   const sp = ['✨', '⭐', '🎉', '💫', '✨', '⭐', '🎉', '✨'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 110)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   $('app').innerHTML = `
   <section class="result win"><div class="big">🏡</div><b>진짜 판매자는 ‘동네이웃’이었어요!</b>
   <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
   <span class="stamp">사기단 검거!</span>${sp}</section>
   <p style="text-align:center;font-size:.9rem;color:#52616B">⭐ 정답 · ⭐ 메모 3장 해독 + 표 완성 · ⭐ 힌트 없이 한 번에 지목</p>
+  ${others}
   <h3>📢 판매자별 수법 공개</h3>
   <div class="tact">${D.sellers.map((s, i) => `<div class="${s === D.real ? 'real' : ''}" style="animation-delay:${i * .08}s"><b>${D.emoji[i]} ${esc(s)} · ${esc(D.solution[s].join(' · '))}</b>${esc(D.tactics[s])}</div>`).join('')}</div>
   <section class="story" style="margin-top:12px"><b>🛡️ 중고거래 사기 막는 4가지</b><br>
@@ -419,7 +427,10 @@ function restart(){ fresh = true; Object.assign(G, {tab: 'memo', solved: [false,
 let lastHeight = 0;
 function sendHost(type, payload = {}) { window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*'); }
 function resize(force = false){ const root = document.querySelector('main.wrap'); if (!root) return; const h = Math.ceil(root.getBoundingClientRect().height) + 16; if (force || h !== lastHeight) { sendHost('streamlit:setFrameHeight', {height: h}); lastHeight = h; } }
-window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') requestAnimationFrame(() => resize(true)); });
+// 도토리시 통계: 파이썬이 보낸 다른 사람들의 기록(stats)을 받고, 게임 결과를 파이썬으로 보냅니다.
+let STATS = {};
+function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
+window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { if (ev.data.args && ev.data.args.stats) STATS = ev.data.args.stats; requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
 window.addEventListener('load', resize); window.addEventListener('resize', resize);
@@ -428,7 +439,19 @@ render();
 '''
 
 page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
-create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None)
+value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"))
+
+# 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
+event = dd.take_event(value)
+if event and event.get("type") == "finish":
+    stars, hints, wrong = max(1, min(3, int(event.get("stars", 1)))), max(0, int(event.get("hints", 0))), max(0, int(event.get("wrong", 0)))
+    dd.record("memo", {"plays": 1, f"star{stars}": 1, "first_pick": 1 if wrong == 0 else 0})
+    dd.note_mine("memo", f"별 {stars}/3 · 힌트 {hints}번 · 잘못 지목 {wrong}번")
+    st.session_state["memo_hall"] = dd.save_hall(
+        "memo", {"stars": stars, "hints": hints, "wrong": wrong},
+        lambda old, new: (new["stars"], -new["hints"], -new["wrong"]) > (old.get("stars", 0), -old.get("hints", 10**6), -old.get("wrong", 10**6)),
+    )
+dd.show_hall_note(st.session_state.get("memo_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
