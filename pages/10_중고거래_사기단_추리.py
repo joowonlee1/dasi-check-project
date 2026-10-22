@@ -100,8 +100,11 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .memo .tag{position:absolute;top:-12px;right:14px;background:#B4471B;color:#fff;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:900;transform:rotate(4deg)}
 .memo.done .tag{background:#0F766E}
 .code{font-family:'Courier New',monospace;font-weight:900;font-size:1.35rem;letter-spacing:.12em;background:#3B2F1E;color:#FFE9A8;border-radius:10px;padding:8px 12px;display:inline-block;word-break:break-all;margin:4px 0}
-.opts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.opts button.on{background:#20483F;color:#fff}
+.optlabel{font-weight:800;color:#B4471B;margin:8px 0 2px;font-size:.95rem}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px}
+.opts button{background:#fff;border:2px solid #9DBFB2;min-width:64px}
+.opts button:hover:not(:disabled){background:#F0F7F3;border-color:#20483F}
+.opts button.on,.opts button.on:hover:not(:disabled){background:#20483F;color:#fff;border-color:#20483F;box-shadow:0 0 0 4px #FF7A4555;transform:translateY(-2px)}
 .tgrid{display:grid;gap:4px;margin:8px 0}
 .tgrid span{background:#fff;border:1.5px solid #E6D9A8;border-radius:8px;text-align:center;font-weight:900;padding:6px 0;font-size:1.05rem;animation:flip .35s ease-out both}
 .read{background:#fff;border:2px dashed #C9B97A;border-radius:12px;padding:8px 12px;font-weight:800;word-break:break-all;margin:6px 0}
@@ -235,7 +238,8 @@ function memoTab(){
     <h3>📜 메모 1 · 글자 순서가 뒤섞인 메모</h3>
     <div class="code">${esc(m1.cipher)}</div>
     <p style="margin:6px 0">사기단은 문장을 <b>몇 칸짜리 줄</b>에 가로로 쓴 뒤, <b>세로로</b> 읽어 옮겨 적었어요. 칸 수를 맞히면 문장이 돼요.</p>
-    ${G.solved[0] ? '' : `<div class="opts">${m1.options.map(k => `<button class="${k === G.k ? 'on' : ''}" onclick="G.k=${k};render()">${k}칸</button>`).join('')}</div>
+    ${G.solved[0] ? '' : `<div class="optlabel">👆 칸 수를 눌러 바꿔 보세요 · 지금 고른 칸: <b>${G.k}칸</b></div>
+    <div class="opts">${m1.options.map(k => `<button class="${k === G.k ? 'on' : ''}" onclick="G.k=${k};render()">${k === G.k ? '✔ ' : ''}${k}칸</button>`).join('')}</div>
     <div class="tgrid" style="grid-template-columns:repeat(${G.k},1fr);max-width:${G.k * 52}px">${gridHtml}</div>`}
     <div class="read ${G.solved[0] ? 'good' : ''}">가로로 읽으면 → ${esc(G.solved[0] ? decodeColumns(m1.cipher, m1.answer).out : out)}</div>
     ${G.solved[0] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[0])}</div>` : `<div class="row"><button class="ok" onclick="check1()">이 칸 수로 해독 완료!</button><button onclick="hint(0)">💡 힌트</button></div>`}
