@@ -217,7 +217,7 @@ function makeGraph(idx){
 
 // ───── 화면 ─────
 function stageMap(){
-  return '<div class="map">' + ST.map((s, i) => `<div class="${G.stars[i] ? 'done' : ''} ${i === G.stage ? 'now' : ''}"><em>${s.icon}</em>${esc(s.tactic)}<br>${G.stars[i] ? '⭐'.repeat(G.stars[i]) : '·'}</div>`).join('') + '</div>';
+  return '<div class="map">' + ST.map((s, i) => `<div class="${G.stars[i] ? 'done' : ''} ${i === G.stage ? 'now' : ''}"><em>${s.icon}</em>${esc(s.tactic)}<br>${'⭐'.repeat(G.stars[i]) + '☆'.repeat(3 - G.stars[i])}</div>`).join('') + '</div>';
 }
 
 function intro(){
