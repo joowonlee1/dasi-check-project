@@ -243,6 +243,10 @@ CSS = """
 .mf-stamp {max-width:92%;}
 @media (max-width:640px) {.mf-stamp {font-size:1.5rem;}}
 .mf-spark {position:absolute;left:50%;top:40%;font-size:26px;animation:mf-burst 1.1s .5s ease-out both;pointer-events:none;}
+.st-key-mafia_v1_count button {font-size:1.2rem !important;font-weight:800;padding:12px 24px !important;min-height:54px;border-radius:16px !important;border-width:2px !important;}
+.st-key-mafia_v1_count button p {font-size:1.2rem !important;font-weight:800;}
+.st-key-mafia_v1_count [aria-checked="true"], .st-key-mafia_v1_count button[kind$="Active"] {background:#20483F !important;color:#fff !important;border-color:#20483F !important;}
+.st-key-mafia_v1_count [aria-checked="true"] p, .st-key-mafia_v1_count button[kind$="Active"] p {color:#fff !important;}
 .mf-drum {text-align:center;font-size:1.5rem;font-weight:900;color:#20483F;padding:40px 0;}
 .mf-drum div {font-size:70px;animation:mf-bounce .45s ease-in-out infinite;}
 .mf-score {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0;}
@@ -277,7 +281,7 @@ def state():
 
 def start_game():
     s = state()
-    count = st.session_state.get(KEY + "_count", 1)
+    count = st.session_state.get(KEY + "_count") or 1
     names = []
     for i in range(count):
         name = (st.session_state.get(f"{KEY}_name_{i}") or "").strip()[:8]
@@ -414,9 +418,11 @@ def show_setup():
             "3. **투표**: 마피아라고 생각하는 친구를 지목해요.\n"
             "4. 맞히면 100점 + 남은 조사 1번당 20점. 진짜 친구도 수상해 보이는 **함정**이 있어요."
         )
-    st.radio("몇 명이 함께 하나요?", [1, 2, 3, 4], horizontal=True, key=KEY + "_count",
-             format_func=lambda n: "혼자" if n == 1 else f"{n}명 (휴대폰 한 대로)")
-    count = st.session_state.get(KEY + "_count", 1)
+    st.markdown("#### 👥 몇 명이 함께 하나요?")
+    st.pills("몇 명이 함께 하나요?", [1, 2, 3, 4], default=1, key=KEY + "_count", label_visibility="collapsed",
+             format_func=lambda n: "🙋 혼자" if n == 1 else f"👥 {n}명")
+    st.caption("2명 이상이면 휴대폰 한 대를 돌려 가며 해요.")
+    count = st.session_state.get(KEY + "_count") or 1
     if count > 1:
         cols = st.columns(count)
         for i in range(count):
