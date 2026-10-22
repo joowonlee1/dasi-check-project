@@ -4,6 +4,7 @@ import time
 
 import streamlit as st
 from mascot_ui import show_mascot
+import dotori_data as dd
 
 from firebase_support import (
     ConnectionProblem,
@@ -1059,7 +1060,7 @@ def show_game_guide():
             st.markdown("### 공동 랭킹")
             st.markdown(
                 "- **혼자 연습:** 로그인 없이 바로 시작하고, 탈출 후 결과 파일을 받을 수 있어요.\n"
-                "- **랭킹 참여:** ‘시작 안내·입장’에서 ‘닉네임으로 입장하고 시작’을 누르면 탈출 기록이 자동 저장돼요.\n"
+                "- **랭킹 참여:** 메뉴의 ‘도토리시 시민증’에서 닉네임을 만든 뒤, ‘시작 안내·입장’에서 ‘시민증으로 랭킹 참여 시작’을 누르면 탈출 기록이 자동 저장돼요.\n"
                 "- **이미 연습 중이라면:** ‘시작 안내·입장’에서 새 게임을 랭킹 모드로 시작하세요. 현재 진행은 초기화돼요.\n"
                 "- **순위 기준:** 힌트가 적은 순 → 오답(재검토)이 적은 순이에요. 실패한 기록은 저장되지 않아요."
             )
@@ -1143,84 +1144,77 @@ def show_entry():
             start_game(False)
 
     with st.container(border=True):
-        st.markdown("### 🏆 닉네임으로 입장하고 시작")
+        st.markdown("### 🏆 시민증으로 랭킹 참여")
 
         st.write(
-            "입장과 게임 시작을 한 번에 진행해요. "
+            "도토리시 시민증의 닉네임으로 게임을 시작해요. "
             "탈출 완료 시 닉네임과 결과를 공동 랭킹에 자동 저장합니다."
         )
 
         st.caption(
             "닉네임·힌트·재검토 횟수·경과 시간·완료 여부·등록 시각이 공개돼요. "
-            "같은 익명 계정의 첫 저장 결과를 유지하며 "
+            "같은 계정의 첫 저장 결과를 유지하며 "
             "재도전으로 덮어쓰지 않아요."
         )
 
-        st.info(
-            "익명 계정 연결은 현재 접속 동안 유지됩니다. "
-            "새로고침·접속 종료 후에는 이전 계정을 복구하지 못할 수 있어요.\n\n"
-            "닉네임은 입장할 때 예약됩니다. 이전 계정과 연결이 끊기면 "
-            "본인이 사용했던 이름도 새 익명 계정에서는 사용할 수 없어요.\n\n"
-            "저장된 공개 기록은 남으며, 연결이 유지되는 동안 "
-            "‘탈출 랭킹’에서 내 기록을 삭제할 수 있어요. "
-            "공개 기록을 삭제해도 닉네임 예약은 해제되지 않습니다."
-        )
+        citizen = dd.citizen()
 
-        account = user()
-
-        with st.form("room_join_start"):
-            nickname = st.text_input(
-                "닉네임 (한글·영문·숫자·밑줄 2~12자)",
-                value=account["nickname"] if account else "",
-                max_chars=12,
-                disabled=bool(account),
+        if not citizen:
+            # 로그인은 시민증 한 곳에서만 해요. 방탈출 안에서 따로 닉네임을 만들지 않아요.
+            st.info(
+                "랭킹에 참여하려면 먼저 시민증(닉네임)을 만들어 주세요. "
+                "시민증이 없어도 위의 ‘연습으로 시작’은 할 수 있어요."
+            )
+            st.page_link(
+                "pages/0_도토리시_시민증.py",
+                label="도토리시 시민증 만들러 가기",
+                icon="🪪",
+            )
+        else:
+            st.success(f"🪪 시민 {citizen['nickname']} 님으로 참여해요.")
+            st.caption(
+                "시민증은 창을 닫거나 새로고침하면 로그아웃돼요. "
+                "저장된 랭킹 기록은 남고, 로그인한 동안 ‘탈출 랭킹’에서 내 기록을 삭제할 수 있어요."
             )
 
-            consent = st.checkbox(
-                "닉네임과 탈출 결과의 공개에 동의합니다."
-            )
-
-            submitted = st.form_submit_button(
-                (
-                    "현재 닉네임으로 랭킹 참여 시작"
-                    if account
-                    else "닉네임으로 입장하고 시작"
-                ),
-                type="primary",
-                disabled=not replace_ok,
-            )
-
-        if submitted:
-            nickname = nickname.strip()
-
-            if not re.fullmatch(
-                r"[가-힣a-zA-Z0-9_]{2,12}",
-                nickname,
-            ):
-                st.warning(
-                    "닉네임을 형식에 맞게 입력해 주세요. "
-                    "실명은 피해주세요."
+            with st.form("room_join_start"):
+                consent = st.checkbox(
+                    "닉네임과 탈출 결과의 공개에 동의합니다."
                 )
 
-            elif not consent:
-                st.warning(
-                    "공개에 동의하거나 연습 모드를 선택하세요."
+                submitted = st.form_submit_button(
+                    "시민증으로 랭킹 참여 시작",
+                    type="primary",
+                    disabled=not replace_ok,
                 )
 
-            else:
-                try:
-                    
-                    sign_in(nickname)
-
-                    start_game(True)
-
-                except ConnectionProblem as exc:
-                    st.error(explain(exc))
-
-                    st.info(
-                        "입장에 실패해 새 게임을 시작하지 않았어요. "
-                        "연결을 확인하거나 연습 모드를 이용하세요."
+            if submitted:
+                if not consent:
+                    st.warning(
+                        "공개에 동의하거나 연습 모드를 선택하세요."
                     )
+
+                else:
+                    try:
+                        # 시민증 계정을 방탈출 랭킹 계정으로 그대로 씁니다.
+                        st.session_state["firebase_user"] = citizen
+                        sign_in(citizen["nickname"])
+
+                        start_game(True)
+
+                    except ConnectionProblem as exc:
+                        if exc.reason == "NICKNAME_TAKEN":
+                            st.error(
+                                "예전 방탈출 랭킹에 같은 닉네임이 이미 있어요. "
+                                "시민증을 로그아웃하고 다른 닉네임으로 다시 만들어 주세요."
+                            )
+                        else:
+                            st.error(explain(exc))
+
+                        st.info(
+                            "입장에 실패해 새 게임을 시작하지 않았어요. "
+                            "연결을 확인하거나 연습 모드를 이용하세요."
+                        )
 
 
 def show_play():
