@@ -144,7 +144,7 @@ CSS = """
 .jk-letter {background:#FFFEFA;border:1.5px solid #DCE8D6;border-radius:18px;padding:12px 6px;text-align:center;
   animation:jk-pop .5s ease-out both;}
 .jk-letter b {display:block;font-size:2.2rem;line-height:1.1;color:#20807A;}
-.jk-letter small {display:block;color:#6B8580;font-size:.78rem;}
+.jk-letter small {display:block;color:#20807A;font-weight:700;font-size:.88rem;}
 .jk-letter span {display:block;font-weight:800;color:#20483F;font-size:.92rem;word-break:keep-all;margin-top:4px;}
 .jk-letter em {display:block;font-style:normal;color:#8BA39C;font-size:.75rem;}
 .jk-letter p {color:#33524A;font-size:.82rem;line-height:1.45;margin:6px 4px 0;word-break:keep-all;}
@@ -154,6 +154,7 @@ CSS = """
 .jk-vs {display:flex;align-items:stretch;gap:6px;}
 .jk-side {flex:1;border-radius:16px;padding:10px 8px;text-align:center;word-break:keep-all;}
 .jk-side b {display:block;font-size:1.9rem;line-height:1.1;color:#20807A;}
+.jk-side small {display:block;color:#20807A;font-weight:700;font-size:.85rem;letter-spacing:.03em;}
 .jk-side span {display:block;font-weight:800;color:#20483F;font-size:.95rem;margin-top:2px;}
 .jk-side p {color:#4F6B63;font-size:.8rem;line-height:1.45;margin:6px 0 0;}
 .jk-vs-mark {align-self:center;font-weight:900;color:#9DB5AE;font-size:.85rem;}
@@ -166,6 +167,13 @@ CSS = """
 .jk-mini small {letter-spacing:.12em;opacity:.75;font-size:.72rem;}
 .jk-mini.me {outline:3px solid #20483F;}
 @media (max-width:640px) {.jk-decode,.jk-gallery {grid-template-columns:repeat(2,1fr);} .jk-axes {grid-template-columns:1fr;}}
+@keyframes jk-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.03)}}
+.st-key-coping_v1_start_top button, .st-key-coping_v1_start_bottom button, .st-key-coping_v1_reveal button {
+  background:linear-gradient(135deg,#FF7A45,#FFB347) !important;border:none !important;
+  box-shadow:0 6px 16px rgba(255,122,69,.35);padding:.85rem 1rem !important;animation:jk-pulse 1.8s ease-in-out infinite;}
+.st-key-coping_v1_start_top button p, .st-key-coping_v1_start_bottom button p, .st-key-coping_v1_reveal button p {
+  color:#FFFFFF !important;font-weight:800 !important;font-size:1.15rem !important;}
+.st-key-coping_v1_start_bottom {margin-top:28px;}
 .jk-drum {text-align:center;font-size:1.6rem;font-weight:800;color:#20483F;padding:48px 0;}
 .jk-drum div {font-size:72px;animation:jk-bounce .5s ease-in-out infinite;}
 </style>
@@ -247,7 +255,7 @@ def show_intro():
         unsafe_allow_html=True,
     )
     st.write("")
-    st.button("🚀 테스트 시작하기", type="primary", width="stretch", on_click=start)
+    st.button("🚀 테스트 시작하기", key=PREFIX + "start_top", type="primary", width="stretch", on_click=start)
     st.caption(NOTICE)
     st.caption("답변은 공개 저장하거나 AI 서비스로 전송하지 않습니다.")
     st.markdown('<div class="jk-section">🔤 유형 코드 4글자는 이런 뜻이에요</div>', unsafe_allow_html=True)
@@ -297,7 +305,7 @@ def show_ready():
         '<div class="jk-q-text">12문항 완료!<br>나의 유형이 상자 안에 들어 있어요.</div></div>',
         unsafe_allow_html=True,
     )
-    st.button("✨ 짠! 결과 열기", type="primary", width="stretch", on_click=reveal)
+    st.button("✨ 짠! 결과 열기", key=PREFIX + "reveal", type="primary", width="stretch", on_click=reveal)
     st.button("◀ 답 고치기", on_click=go_to, args=(11,), width="stretch")
 
 
@@ -309,6 +317,7 @@ def show_axes_guide():
         for letter, bg in zip(axis[1], ("#FFF1E6", "#E6F4F1")):
             sides.append(
                 f'<div class="jk-side" style="background:{bg};"><b>{letter}</b>'
+                f'<small>{LETTER_INFO[letter][0]}</small>'
                 f'<span>{TRAIT_ICONS[letter]} {LETTER_INFO[letter][1]}</span>'
                 f'<p>{LETTER_DESC[letter]}</p></div>'
             )
