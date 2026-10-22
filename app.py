@@ -317,6 +317,16 @@ FEATURES = [
         "운영자 미션 → 수법 공개 → 강 건너기",
         "가짜 계정 운영자가 되어 속이는 수법을 써 보고, 받는 사람이 되어 그 수법을 가려내요.",
     ),
+    (
+        "07", "피해가 의심될 때", "🚨", "pages/7_피해_대처_안내.py",
+        "긴급 연락 → 상황 선택 → 필요한 조치 확인",
+        "송금·정보 노출·앱 설치 등 상황별로 공식 대처 안내를 확인해요.",
+    ),
+    (
+        "08", "대처유형 테스트", "🧭", "pages/8_대처유형_테스트.py",
+        "12문항 응답 → 대처 습관 확인 → 결과 카드 저장",
+        "16가지 교육용 유형으로 내 습관과 연습할 상황을 살펴봐요.",
+    ),
 ]
 
 # ─────────────────────────────────────
@@ -324,6 +334,7 @@ FEATURES = [
 # ─────────────────────────────────────
 
 def show_home():
+    st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
     with st.container(border=True):
         st.title("✋ 잠깐!")
         st.caption("멈추고 · 확인하고 · 판단하기")
@@ -399,11 +410,14 @@ feature_pages = [
     for row in FEATURES
 ]
 
+page_by_number = {row[0]: page for row, page in zip(FEATURES, feature_pages)}
+
 navigation = st.navigation(
     {
         "잠깐!": [home],
-        "체험과 연습": feature_pages[:3] + feature_pages[5:6],
-        "확인과 학습": feature_pages[3:5],
+        "피해 도움": [page_by_number["07"]],
+        "체험과 연습": [page_by_number[n] for n in ("01", "02", "03", "06", "08")],
+        "확인과 학습": [page_by_number[n] for n in ("04", "05")],
     }
 )
 
@@ -545,9 +559,10 @@ st.markdown(
     """
     <div class="footer-note">
         <b>잠깐! · 피싱 대응 교육 프로젝트</b><br>
-        가상 상황으로 연습합니다.
-        실제 개인정보나 인증번호를 입력하지 마세요.
+        체험과 테스트는 교육용입니다. 실제 피해는 ‘피해가 의심될 때’ 안내를 확인하세요.<br>
+        실제 개인정보나 인증번호를 이 웹앱에 입력하지 마세요.
     </div>
     """,
     unsafe_allow_html=True,
 )
+
