@@ -3,6 +3,12 @@ import streamlit as st
 from mascot_ui import show_mascot
 
 CHECKED = "2026-10-22"
+ICONS = {
+    "돈을 보냈어요": "💸", "개인정보·인증번호를 알려줬어요": "🔑", "의심스러운 앱을 설치했어요": "📲",
+    "링크를 눌렀어요": "🔗", "원격제어 앱을 깔고 화면을 보여 줬어요": "🖥️", "상품권·기프트카드 핀번호를 보냈어요": "🎁",
+    "모르는 돈이 내 계좌로 들어왔어요": "🏦", "통장·카드를 빌려줬거나 돈 전달 알바를 했어요": "💳",
+    "SNS·메신저 계정을 해킹당했어요": "👤", "중고거래 돈을 보냈는데 물건이 안 와요": "📦", "무슨 일이 일어났는지 모르겠어요": "❓",
+}
 SOURCES = {
     "금융 피해 대응 · 정부 정책브리핑": "https://www.korea.kr/news/policyNewsView.do?newsId=148925712",
     "스미싱 대응 · KISA 보안공지": "https://www.krcert.or.kr/kr/bbs/view.do?bbsId=B0000133&menuNo=205020&nttId=72049",
@@ -28,6 +34,36 @@ GUIDES = {
         "열린 화면에서 추가 입력·다운로드·앱 설치·결제를 멈추고 닫으세요. 링크를 눌렀다는 사실만으로 피해나 안전 여부를 확정할 수 없습니다.",
         "앱을 설치했는지, 로그인·카드·인증정보를 입력했는지 확인하세요. 해당 사항이 있으면 위에서 관련 상황도 함께 선택하세요.",
         "의심 문자를 다시 열어 실험하지 말고 KISA 118에 상담하거나 공식 보호나라의 확인 서비스를 이용하세요. 모바일 결제가 의심되면 통신사에 결제 내역 확인과 피해 신고 방법을 문의하세요.",
+    ],
+    "원격제어 앱을 깔고 화면을 보여 줬어요": [
+        "원격제어(화면 공유) 앱을 바로 종료하고 삭제한 뒤, 비행기 모드로 바꾸고 Wi-Fi도 꺼서 연결을 끊으세요.",
+        "그 기기 말고 다른 사람의 안전한 전화로 금융회사에 알리고, 계좌 지급정지·인증서와 인증수단 폐기·재발급을 요청하세요. 돈이 빠져나갔다면 112에도 신고하세요.",
+        "KISA 118이나 제조사 서비스센터에서 기기 점검을 상담하세요. 원격제어로 다른 앱이 몰래 설치됐을 수 있어요.",
+    ],
+    "상품권·기프트카드 핀번호를 보냈어요": [
+        "상품권을 발행한 회사 고객센터에 바로 연락해 핀번호 사용 여부와 사용 정지가 가능한지 문의하세요. 빨리 연락할수록 막을 수 있는 경우가 있어요.",
+        "구매 영수증, 핀번호를 보낸 대화, 상대의 번호·아이디를 보관하고 112에 신고하세요.",
+        "‘수수료’, ‘인증’ 같은 이유로 상품권을 더 사 달라고 해도 더 이상 보내지 마세요.",
+    ],
+    "모르는 돈이 내 계좌로 들어왔어요": [
+        "상대가 ‘잘못 보냈다’며 돌려 달라고 해도 직접 송금하거나 현금으로 찾아 전달하지 마세요. 보이스피싱 피해금을 옮기는 데 이용될 수 있어요.",
+        "내 계좌가 있는 은행에 바로 알리고 안내에 따라 처리하세요. 피해금으로 신고된 돈이면 계좌가 지급정지될 수 있어요.",
+        "입금 내역과 연락 기록을 보관하고, 협박이나 압박을 받으면 112에 신고하세요.",
+    ],
+    "통장·카드를 빌려줬거나 돈 전달 알바를 했어요": [
+        "통장·체크카드·OTP·비밀번호를 남에게 넘기는 것은 법으로 금지돼 처벌될 수 있어요. 바로 금융회사에 알려 거래를 막고 카드 사용을 정지하세요.",
+        "‘현금을 받아서 전달하는 고액 알바’는 보이스피싱 현금 수거일 수 있어요. 즉시 그만두고 112에 상황을 상담하세요.",
+        "받은 지시 메시지, 상대 연락처, 오간 돈의 기록을 지우지 말고 보관하세요. 보호자나 믿을 수 있는 어른과 함께 상담하세요.",
+    ],
+    "SNS·메신저 계정을 해킹당했어요": [
+        "공식 앱이나 공식 사이트에 직접 들어가 비밀번호를 바꾸고, 로그인된 다른 기기를 모두 로그아웃하세요. 2단계 인증도 켜 두세요.",
+        "비밀번호를 바꿀 수 없다면 해당 서비스 고객센터의 계정 복구 절차를 이용하세요. 같은 비밀번호를 쓴 다른 서비스도 바꾸세요.",
+        "내 이름으로 친구들에게 돈이나 상품권을 요구하는 메시지가 갈 수 있어요. 다른 경로로 친구들에게 해킹 사실을 알려 주세요.",
+    ],
+    "중고거래 돈을 보냈는데 물건이 안 와요": [
+        "판매자와의 대화, 판매 글, 송금 내역, 판매자 계좌와 연락처를 캡처해 보관하세요. 판매 글이 지워질 수 있어요.",
+        "거래한 앱·사이트 고객센터에 신고하고, 112 또는 경찰청 사이버범죄 신고로 사기 피해를 신고하세요.",
+        "송금한 금융회사에도 상황을 알리고 가능한 조치를 문의하세요. 물건 거래 사기는 보이스피싱과 절차가 다를 수 있어요.",
     ],
     "무슨 일이 일어났는지 모르겠어요": [
         "상대의 요구를 잠시 멈추고 믿을 수 있는 가족·지인과 함께 상황을 정리하세요. 혼자 해결할 필요는 없습니다.",
@@ -58,13 +94,29 @@ def main():
     st.caption("대한민국 기준. 상담 범위·시간은 아래 공식 안내에서 확인하세요.")
     show_mascot("phone", "당황스러워도 혼자 해결하지 않아도 괜찮아요.", width=90)
     st.subheader("지금 어떤 상황인가요?")
-    selected = st.multiselect("해당하는 상황을 모두 선택하세요", list(GUIDES), placeholder="눌러서 상황을 골라 주세요")
+    # 상황 버튼을 크게 보여 줘요(여러 개 고를 수 있어요).
+    st.markdown(
+        """<style>
+        .st-key-help_pick button {font-size:1.12rem !important;font-weight:800;padding:14px 18px !important;min-height:58px;
+          border-radius:16px !important;border-width:2px !important;}
+        .st-key-help_pick button p {font-size:1.12rem !important;font-weight:800;}
+        .st-key-help_pick button {max-width:100%;height:auto !important;text-align:left;}
+        .st-key-help_pick button * {white-space:normal !important;overflow:visible !important;text-overflow:clip !important;word-break:keep-all;}
+        .st-key-help_pick [aria-pressed="true"], .st-key-help_pick [aria-checked="true"] {background:#B42318 !important;border-color:#B42318 !important;}
+        .st-key-help_pick [aria-pressed="true"] p, .st-key-help_pick [aria-checked="true"] p {color:#fff !important;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+    selected = st.pills(
+        "해당하는 상황을 모두 눌러 주세요 (여러 개 가능)", list(GUIDES), selection_mode="multi",
+        key="help_pick", format_func=lambda name: f"{ICONS[name]} {name}",
+    ) or []
     if not selected:
         st.info("상황을 선택하면 지금 할 일과 확인할 곳을 보여드려요. 선택 전에도 위 연락처로 도움을 요청할 수 있어요.")
     for name in GUIDES:
         if name in selected:
             with st.container(border=True):
-                st.subheader(name)
+                st.subheader(f"{ICONS[name]} {name}")
                 for i, text in enumerate(GUIDES[name], 1):
                     st.write(f"**{i}.** {text}")
 
