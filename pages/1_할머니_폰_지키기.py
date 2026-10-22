@@ -1,6 +1,8 @@
 import html
+import time
 
 import streamlit as st
+import streamlit.components.v1 as components
 from mascot_ui import show_key_question, show_mascot
 
 
@@ -278,41 +280,59 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 화면에 생동감을 더하는 움직임(내용은 그대로, 보이는 효과만 추가)
+# '짠!' 효과: 결과가 나오는 순간에만 두구두구 → 도장 쾅 → 반짝이가 터져요.
 st.markdown(
     """
 <style>
-@keyframes jb-pop {0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.06);opacity:1} 80%{transform:scale(.97)} 100%{transform:scale(1)}}
-@keyframes jb-bob {0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
-@keyframes jb-boing {0%{transform:scale(1)} 30%{transform:scale(1.07,.93)} 55%{transform:scale(.95,1.05)} 75%{transform:scale(1.03,.98)} 100%{transform:scale(1)}}
-@keyframes jb-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.025)}}
-@keyframes jb-wiggle {0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)}}
-/* 캐릭터는 둥실둥실, 핵심 질문 상자는 통 튀어나오게 */
-img[alt$="캐릭터"] {animation: jb-bob 2.6s ease-in-out infinite;}
-div[style*="border-left:8px solid #FF7A45"] {animation: jb-pop .6s ease-out both;}
-/* 버튼은 올리면 말랑하게, 주요 버튼은 살짝 두근두근 */
-[data-testid="stButton"] button:hover:not(:disabled),
-[data-testid="stFormSubmitButton"] button:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
-[data-testid="stBaseButton-primary"]:not(:disabled) {animation: jb-pulse 2.2s ease-in-out infinite;}
-[data-testid="stBaseButton-primary"]:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
-
-/* 할머니 휴대전화: 화면이 통 튀어나오고, 새 연락은 위에서 툭 떨어지며 흔들림 */
-@keyframes jb-drop {0%{transform:translateY(-26px) scale(.96);opacity:0} 55%{transform:translateY(5px) scale(1.02);opacity:1} 75%{transform:translateY(-3px)} 100%{transform:none}}
-@keyframes jb-glow {0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.0)} 50%{box-shadow:0 0 0 6px rgba(251,191,36,.28)}}
-.gp-phone {animation: jb-pop .55s ease-out both;}
-.gp-item.new {animation: jb-drop .7s ease-out both, jb-glow 1.8s .7s ease-in-out infinite;}
-.gp-item.new .gp-tag {display:inline-block; animation: jb-wiggle .5s .7s ease-in-out 2;}
-.gp-grandma {animation: jb-pop .5s .1s ease-out both;}
-.gp-grandma .face {display:inline-block; animation: jb-bob 2.2s ease-in-out infinite;}
-.gp-grandma .say {animation: jb-pop .45s .35s ease-out both; transform-origin: left bottom;}
-.gp-ending {animation: jb-pop .65s ease-out both;}
-.gp-ending .t {display:inline-block; animation: jb-wiggle .6s .6s ease-in-out 2;}
-[data-testid="stProgress"] > div > div > div > div {transition: width .6s cubic-bezier(.34,1.56,.64,1);}
-@media (prefers-reduced-motion: reduce) {* {animation: none !important; transition: none !important;}}
+@keyframes zz-pop {0%{transform:scale(.5);opacity:0} 65%{transform:scale(1.06);opacity:1} 100%{transform:scale(1)}}
+@keyframes zz-bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}}
+@keyframes zz-stamp {0%{transform:scale(3) rotate(-18deg);opacity:0} 60%{transform:scale(.9) rotate(-12deg);opacity:1} 100%{transform:scale(1) rotate(-8deg);opacity:1}}
+@keyframes zz-shake {0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)}}
+@keyframes zz-burst {0%{transform:translate(0,0) scale(.3);opacity:1} 100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
+.zz-drum {text-align:center;font-size:1.5rem;font-weight:900;color:#20483F;padding:40px 0;}
+.zz-drum div {font-size:70px;animation:zz-bounce .45s ease-in-out infinite;}
+.zz-card {position:relative;overflow:hidden;}
+.zz-card.go.win {animation:zz-pop .6s ease-out both;}
+.zz-card.go.lose {animation:zz-shake .6s ease-in-out both;}
+.zz-stamp {display:inline-block;margin-top:10px;border:5px solid #D7263D;color:#D7263D;border-radius:12px;padding:4px 18px;
+  font-size:1.7rem;font-weight:900;letter-spacing:.08em;background:rgba(255,255,255,.65);transform:rotate(-8deg);max-width:92%;}
+.zz-stamp.ok {border-color:#16815F;color:#16815F;}
+.zz-stamp.miss {border-color:#5A7068;color:#5A7068;}
+.go .zz-stamp {animation:zz-stamp .5s .45s ease-out both;}
+.zz-spark {position:absolute;left:50%;top:45%;font-size:26px;opacity:0;pointer-events:none;}
+.go .zz-spark {animation:zz-burst 1.1s ease-out both;}
+@media (max-width:640px) {.zz-stamp {font-size:1.35rem;}}
+@media (prefers-reduced-motion: reduce) {.zz-card *, .zz-card, .zz-drum div {animation:none !important;opacity:1;}}
 </style>
 """,
     unsafe_allow_html=True,
 )
+
+
+def drumroll(frames):
+    """결과를 바로 보여 주지 않고 잠깐 뜸을 들여요."""
+    box = st.empty()
+    for icon, text in frames:
+        box.markdown(f'<div class="zz-drum"><div>{icon}</div>{text}</div>', unsafe_allow_html=True)
+        time.sleep(0.6)
+    box.empty()
+
+
+def sparks(icons):
+    out = []
+    for i, icon in enumerate(icons):
+        x = [140, 120, 70, 0, -70, -120, -140, -120, -70, 0, 70, 120][i % 12]
+        y = [0, -70, -120, -140, -120, -70, 0, 70, 120, 140, 120, 70][i % 12]
+        out.append(f'<span class="zz-spark" style="--x:{x}px;--y:{y}px;animation-delay:{.45 + i * .02:.2f}s">{icon}</span>')
+    return "".join(out)
+
+
+def scroll_top():
+    components.html(
+        "<script>const m = window.parent.document.querySelector('[data-testid=stMain]');"
+        "if (m) m.scrollTo(0, 0); window.parent.scrollTo(0, 0);</script>",
+        height=0,
+    )
 
 
 def esc(text):
@@ -408,6 +428,8 @@ def grandma_reaction(key, game, stopped, real):
 
 def act(key):
     game = st.session_state[KEY]
+    if game["result"]:
+        return  # 결과 화면이 열리는 중에 남아 있던 버튼을 또 눌러도 기록이 늘지 않게 해요.
     step = game["step"]
     event = EVENTS[step]
     approach = APPROACHES[key]
@@ -457,9 +479,11 @@ def act(key):
 
     if stopped:
         game["alert"] = True
+        game["fresh_stop"] = True
 
     if event.get("final"):
         game["result"] = "protected" if (stopped or key == "police") else "sent"
+        game["fresh_end"] = True
     else:
         game["step"] = step + 1
         game["clue_open"] = False
@@ -593,9 +617,20 @@ def show_last_feedback(game):
         return
     last = game["log"][-1]
     if last["stopped"]:
-        st.success(
+        fresh = game.pop("fresh_stop", False)
+        go = " go" if fresh else ""
+        if fresh:
+            scroll_top()  # 선택 버튼은 아래에 있어서, 멈춘 순간을 보도록 위로 올려 줘요.
+        st.markdown(
+            f'<div class="zz-card win{go}" style="background:linear-gradient(135deg,#DCFCE7,#FEF3C7);'
+            'border-radius:20px;padding:16px 18px;margin:4px 0 12px;text-align:center;">'
+            '<div style="font-size:1.15rem;font-weight:800;color:#14532D;word-break:keep-all;line-height:1.7;">'
             "🛑 할머니가 방금 연락을 멈췄어요! "
-            "하지만 사기범은 쉽게 포기하지 않아요. 다음 연락도 잘 살펴봐요."
+            "하지만 사기범은 쉽게 포기하지 않아요. 다음 연락도 잘 살펴봐요.</div>"
+            '<span class="zz-stamp ok">멈춤 성공!</span>'
+            + sparks(["✨", "💛", "⭐", "✨", "🛑", "⭐", "💛", "✨"])
+            + "</div>",
+            unsafe_allow_html=True,
         )
     if not last["lesson"]:
         return
@@ -683,8 +718,20 @@ def show_ending(game):
     title, story, color = ENDINGS[ending]
     trust = game["trust"]
 
+    fresh = game.pop("fresh_end", False)
+    if fresh:
+        scroll_top()
+        drumroll((("🥁", "두구두구…"), ("📱", "할머니 휴대전화를 확인하는 중…"), ("👵", "그날 오전의 결말은?")))
+    stamp = {
+        "best": '<span class="zz-stamp ok">송금 차단!</span>' + sparks(["🛡️", "✨", "⭐", "💛", "🎉", "✨", "🛡️", "⭐", "🎉", "✨", "💫", "💛"]),
+        "good": '<span class="zz-stamp ok">송금 차단!</span>' + sparks(["🛡️", "✨", "⭐", "💛", "✨", "⭐", "💫", "✨"]),
+        "close": '<span class="zz-stamp">아슬아슬 차단</span>',
+        "bad": '<span class="zz-stamp miss">송금 완료…</span>',
+    }[ending]
+    mood = "lose" if ending == "bad" else "win"
     st.markdown(
-        f'<div class="gp-ending" style="background:{color};"><div class="t">{esc(title)}</div>{esc(story)}</div>',
+        f'<div class="gp-ending zz-card {mood}{" go" if fresh else ""}" style="background:{color};text-align:center;">'
+        f'<div class="t">{esc(title)}</div><div style="text-align:left;">{esc(story)}</div>{stamp}</div>',
         unsafe_allow_html=True,
     )
     if ending != "bad" and trust < 40:
