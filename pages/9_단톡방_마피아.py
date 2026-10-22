@@ -421,7 +421,7 @@ def show_setup():
     st.markdown("#### 👥 몇 명이 함께 하나요?")
     st.pills("몇 명이 함께 하나요?", [1, 2, 3, 4], default=1, key=KEY + "_count", label_visibility="collapsed",
              format_func=lambda n: "🙋 혼자" if n == 1 else f"👥 {n}명")
-    st.caption("2명 이상이면 휴대폰 한 대를 돌려 가며 해요.")
+    st.markdown("📱 **2명 이상이면 휴대폰 한 대를 돌려 가며 해요.**")
     count = st.session_state.get(KEY + "_count") or 1
     if count > 1:
         cols = st.columns(count)
