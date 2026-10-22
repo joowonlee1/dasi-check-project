@@ -424,7 +424,6 @@ def reveal():
 
 TYPE_POSES = {code: (index % 4, index // 4) for index, code in enumerate(TYPE_NAMES)}
 
-@st.cache_data(show_spinner=False)
 def _mascot_sheet(name):
     path = Path(__file__).resolve().parents[1] / "assets" / name
     return base64.b64encode(path.read_bytes()).decode("ascii") if path.is_file() else ""
@@ -433,7 +432,7 @@ def mascot_svg(code, x=0, y=0, size=160):
     col, row = TYPE_POSES[code]
     data = _mascot_sheet("ggangji_16_types.png")
     if not data:
-        return f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" font-size="10">깡지 이미지를 추가해 주세요</text></svg>'
+        return f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" font-size="7">이미지 파일 확인 필요</text></svg>'
     # 1536x1024 원본의 4열·4행을 유형 순서대로 표시합니다.
     return (f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" '
             f'viewBox="{col*384} {row*256} 384 256" overflow="hidden" role="img" aria-label="{escape(TYPE_NAMES[code])} 깡지">'
