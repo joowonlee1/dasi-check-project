@@ -348,11 +348,11 @@ function render(){
   const st = S.st, c = counts(), n = st.n;
   const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}단계` : '';
   $('app').innerHTML = `
-  <section class="hero"><span>${G.stage + 1}단계 · 수법 ${esc(st.icon + ' ' + st.tactic)}</span><b>이 소식이 마을에 퍼지기 시작했어요</b></section>
+  <section class="hero"><span>${G.stage + 1}단계 · 수법 ${esc(st.icon + ' ' + st.tactic)}</span><b>${S.phase === 'prep' ? '이 소식이 곧 퍼지려고 해요! 먼저 1명을 지켜요' : '소식이 마을에 퍼지고 있어요!'}</b></section>
   <div class="post"><div class="ava">📢</div><div><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div></div>
   <div class="hud"><span class="cards">🃏 남은 카드 ${S.cards}장 (1장 = 1명 지키기·정정)</span><span>🔴 속은 사람 ${c.I}명</span><span>🛡️ 지킨 사람 ${c.R}명</span><span>💬 정정한 사람 ${c.C}명</span><span>⚪ 아직 모르는 사람 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
   <div class="todo" id="now"></div>
-  ${S.phase === 'prep' ? `<button class="go" style="width:100%;margin-bottom:8px" onclick="run()">▶ 소문 퍼지기 시작</button>` : ''}
+  ${S.phase === 'prep' ? `<button class="go" style="width:100%;margin-bottom:8px" onclick="run()" ${S.pre ? 'disabled' : ''}>${S.pre ? '🔒 지킬 사람 1명을 먼저 골라야 시작할 수 있어요' : '▶ 소문 퍼지기 시작'}</button>` : ''}
   <div class="board"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg></div>
   <div class="keys"><div><em>⚪ 👆</em>아직 모르는 사람 → 🛡️ 지킴</div><div><em>🔴 👆</em>속은 사람 → 💬 근거 있는 정정</div><div><em>📢</em>눌러도 소용없음</div><div><em>🃏 ${S.cards}</em>남은 카드 · 1장으로 1명</div></div>
   <div class="dialog" id="dlg" hidden></div>
@@ -363,7 +363,7 @@ function render(){
   const ctrl = $('ctrl');
   if (S.phase === 'prep') {
     ctrl.innerHTML = '';
-    toast(S.pre ? '퍼지기 전! 연결선이 많은 사람 1명을 눌러 미리 알려 주세요.' : '준비 완료! 시작을 눌러요.');
+    toast(S.pre ? '퍼지기 전! 연결선이 많은 사람 1명을 눌러 🛡️ 지켜 주세요.' : '준비 완료! 지도 위 ‘소문 퍼지기 시작’을 눌러요.');
   } else if (S.phase === 'run') {
     ctrl.innerHTML = `<button onclick="startStage(${G.stage})">↺ 이 단계 다시</button>`;
   }
@@ -418,7 +418,7 @@ function nowText(){
   const el = $('now'); if (!el) return;
   const goal = Math.ceil(S.st.n * 0.75);
   let t;
-  if (S.phase === 'prep') t = S.pre ? '👆 지금 할 일: 흰 동그라미 1명을 눌러 미리 지켜요' : '👇 지금 할 일: 바로 아래 ‘소문 퍼지기 시작’을 눌러요';
+  if (S.phase === 'prep') t = S.pre ? '① 지금 할 일: 🛡️ 지킬 사람 1명을 골라 눌러요 (연결선이 많은 사람 추천)' : '② 지금 할 일: 바로 아래 ‘소문 퍼지기 시작’을 눌러요';
   else if (S.cards > 0) t = `👆 지금 할 일: ⚪ 아직 모르는 사람은 눌러서 지키고, 🔴 속은 사람은 눌러서 정정해요 (카드 ${S.cards}장)`;
   else t = '👀 카드를 다 썼어요. 소문이 멈출 때까지 지켜봐요';
   el.innerHTML = `${t}<small>⭐⭐⭐ 목표: 주민 ${S.st.n}명 중 ${goal}명 이상 안 속게 하기</small>`;
@@ -435,6 +435,7 @@ function refresh(){
 }
 
 function run(){
+  if (S.pre) { toast('먼저 지킬 사람 1명을 골라 주세요.'); return; }
   S.phase = 'run'; render();
   tick();  // 시작하자마자 첫 단계가 번져요: 미리 알리기(사전 알림)가 중요한 이유
   if (S.phase === 'run') {
