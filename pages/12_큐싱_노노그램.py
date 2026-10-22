@@ -8,6 +8,7 @@
 import json
 
 import streamlit as st
+import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from nonogram_component_ui import create_nonogram_component
 
@@ -125,6 +126,7 @@ table.board{border-collapse:collapse;touch-action:none;user-select:none;-webkit-
 .ctable{width:100%;border-collapse:collapse;margin:8px 0;font-size:.92rem}
 .ctable th,.ctable td{border:1px solid #D7E2DD;padding:6px;text-align:center}
 .ctable th{background:#E4F0EA}
+.others{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;margin:10px auto 0;max-width:640px;text-align:left;font-weight:700;font-size:.92rem;line-height:1.6;color:#1E3A5F;word-break:keep-all}
 .still .hero,.still .box,.still .story{animation:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:720px){.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}.exs{grid-template-columns:1fr}}
@@ -272,6 +274,7 @@ function checkSolved(){
   if (!g.every((row, r) => row.every((v, c) => (v === 1) === (sol[r][c] === 1)))) return;
   G.solved[st] = true; G.justSolved = true;
   G.stars[st] = Math.max(G.stars[st], 1 + (G.hints[st] === 0 ? 1 : 0) + (G.checks[st] === 0 ? 1 : 0));
+  sendResult({game: 'nono', type: 'clear', stage: st, stars: 1 + (G.hints[st] === 0 ? 1 : 0) + (G.checks[st] === 0 ? 1 : 0), hints: G.hints[st]});
   render();
   const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
   G.justSolved = false;
@@ -320,10 +323,18 @@ function resultHtml(st){
     <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
     <div style="font-size:.88rem;color:#52616B">힌트 ${G.hints[st]}번 · 틀린 칸 검사 ${G.checks[st]}번</div>
     <span class="stamp">복원 완료!</span>${sp}
-    <div class="lesson">🔎 ${esc(s.lesson)}</div>${qr}${next}</section>`;
+    <div class="lesson">🔎 ${esc(s.lesson)}</div>${qr}${othersHtml(st)}${next}</section>`;
 }
 
-function toFinal(){ G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0); }
+function toFinal(){
+  sendResult({game: 'nono', type: 'final', stars: G.stars.reduce((a, b) => a + b, 0), hints: G.hints.reduce((a, b) => a + b, 0)});
+  G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0);
+}
+function othersHtml(st){
+  const n = STATS[`s${st}_clear`] || 0;
+  if (!n) return '<div class="others">🌍 아직 이 그림을 복원한 기록이 없어요. 첫 복원의 주인공이에요!</div>';
+  return `<div class="others">🌍 지금까지 <b>${n}번</b> 이 그림이 복원됐어요. 힌트 없이 푼 비율 <b>${Math.round((STATS[`s${st}_nohint`] || 0) * 100 / n)}%</b> · 별 3개 <b>${Math.round((STATS[`s${st}_star3`] || 0) * 100 / n)}%</b></div>`;
+}
 
 function fullRle(line){ const out = []; let cur = line[0], c = 0; for (const v of line) { if (v === cur) c++; else { out.push(c); cur = v; c = 1; } } out.push(c); return {start: line[0], runs: out}; }
 
@@ -363,7 +374,10 @@ function restart(){ Object.assign(G, {screen: 'intro', stage: 0, mode: 1, grid: 
 let lastHeight = 0;
 function sendHost(type, payload = {}) { window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*'); }
 function resize(force = false){ const root = document.querySelector('main.wrap'); if (!root) return; const h = Math.ceil(root.getBoundingClientRect().height) + 16; if (force || h !== lastHeight) { sendHost('streamlit:setFrameHeight', {height: h}); lastHeight = h; } }
-window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') requestAnimationFrame(() => resize(true)); });
+// 도토리시 통계: 파이썬이 보낸 다른 사람들의 기록(stats)을 받고, 게임 결과를 파이썬으로 보냅니다.
+let STATS = {};
+function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
+window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { if (ev.data.args && ev.data.args.stats) STATS = ev.data.args.stats; requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
 window.addEventListener('load', resize); window.addEventListener('resize', resize);
@@ -372,7 +386,22 @@ render();
 '''
 
 page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
-create_nonogram_component(page)(key="jamkkan_qr_nonogram_v1", default=None)
+value = create_nonogram_component(page)(key="jamkkan_qr_nonogram_v1", default=None, stats=dd.stats("nono"))
+
+# 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
+event = dd.take_event(value)
+if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2):
+    s, stars, hints = int(event["stage"]), int(event.get("stars", 0)), int(event.get("hints", 0))
+    dd.record("nono", {f"s{s}_clear": 1, f"s{s}_nohint": 1 if hints == 0 else 0, f"s{s}_star3": 1 if stars == 3 else 0})
+elif event and event.get("type") == "final":
+    stars, hints = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("hints", 0)))
+    dd.record("nono", {"finals": 1})
+    dd.note_mine("nono", f"별 {stars}/9 · 힌트 {hints}번")
+    st.session_state["nono_hall"] = dd.save_hall(
+        "nono", {"stars": stars, "hints": hints},
+        lambda old, new: (new["stars"], -new["hints"]) > (old.get("stars", 0), -old.get("hints", 10**6)),
+    )
+dd.show_hall_note(st.session_state.get("nono_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
