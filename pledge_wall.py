@@ -2,12 +2,15 @@
 
 - 정해진 서약 중에서만 고르게 해서, 자유롭게 쓴 글은 저장하지 않습니다.
 - 익명 계정마다 한 번만 남길 수 있고, 별명은 비워 두면 '익명'으로 표시합니다.
-- 무료 사용량을 아끼기 위해 전체 문서를 읽지 않고 개수(count)·합계(sum)만 받아 옵니다.
+- 무료 사용량을 아끼기 위해 공동 기록은 60초에 한 번만 새로 읽습니다.
 """
 import html
+import json
 import re
 import time
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
+from urllib.request import Request, urlopen
 
 import streamlit as st
 from firebase_support import ConnectionProblem, config, explain, request
@@ -24,7 +27,7 @@ PLEDGES = [
 ]
 FIELDS = [f"p{i}" for i in range(len(PLEDGES))]
 NOTE_COLORS = ["#FFF3B0", "#FFD6E0", "#D7F2E3", "#DCEBFF", "#FFE2C6", "#EADCFF"]
-REFRESH = 30  # 초. 공동 기록을 다시 읽는 간격
+REFRESH = 60  # 초. 공동 기록을 다시 읽는 간격
 
 CSS = """
 <style>
@@ -62,39 +65,56 @@ def _wall_parent():
     return _documents_url() + f"/pledges/{WALL}"
 
 
+def _read(url):
+    """공개 기록을 읽습니다. 실패하면 Google이 알려 준 원인 메시지를 함께 전달합니다.
+    읽기 주소에는 API 키가 들어가지 않아 메시지를 보여 줘도 안전합니다."""
+    try:
+        with urlopen(Request(url), timeout=12) as response:
+            return json.loads(response.read() or b"{}")
+    except HTTPError as exc:
+        reason = "UNKNOWN"
+        try:
+            body = json.loads(exc.read())
+            body = body[0] if isinstance(body, list) and body else body
+            reason = str(body.get("error", {}).get("message", "UNKNOWN"))[:160]
+        except (ValueError, AttributeError, OSError):
+            pass
+        raise ConnectionProblem(exc.code, reason) from None
+    except (URLError, TimeoutError, ValueError, OSError):
+        raise ConnectionProblem() from None
+
+
 @st.cache_data(ttl=REFRESH, show_spinner=False)
 def load_summary(project):
-    """전체 참여자 수, 서약별 선택 수, 최근 서약 12개를 읽어 옵니다."""
-    parent = _wall_parent()
-    query = {"from": [{"collectionId": "entries"}]}
+    """전체 참여자 수, 서약별 선택 수, 최근 서약 12개를 계산합니다.
+    방탈출 랭킹과 같은 '목록 읽기' 방식을 씁니다."""
+    base = _wall_parent() + "/entries"
+    documents, page = [], None
+    for _ in range(10):  # 최대 3,000개까지 읽습니다.
+        params = {"pageSize": 300}
+        if page:
+            params["pageToken"] = page
+        result = _read(base + "?" + urlencode(params))
+        documents.extend(result.get("documents", []))
+        page = result.get("nextPageToken")
+        if not page:
+            break
 
-    def aggregate(items):
-        body = {"structuredAggregationQuery": {"structuredQuery": query, "aggregations": items}}
-        result = request(parent + ":runAggregationQuery", "POST", body)
-        fields = result[0].get("result", {}).get("aggregateFields", {}) if result else {}
-        return {k: int(float(v.get("integerValue", v.get("doubleValue", 0)))) for k, v in fields.items()}
-
-    # 한 번에 최대 5개까지 집계할 수 있어 두 번에 나눠 요청합니다.
-    first = aggregate([{"alias": "total", "count": {}}] +
-                      [{"alias": f, "sum": {"field": {"fieldPath": f}}} for f in FIELDS[:4]])
-    second = aggregate([{"alias": f, "sum": {"field": {"fieldPath": f}}} for f in FIELDS[4:]])
-    counts = {**first, **second}
-
-    recent_body = {"structuredQuery": {**query, "orderBy": [
-        {"field": {"fieldPath": "created_at"}, "direction": "DESCENDING"}], "limit": 12}}
+    counts = [0] * len(FIELDS)
     notes = []
-    for row in request(parent + ":runQuery", "POST", recent_body):
-        doc = row.get("document")
-        if not doc:
-            continue
+    for doc in documents:
         f = doc.get("fields", {})
         picks = [i for i, name in enumerate(FIELDS) if f.get(name, {}).get("integerValue") == "1"]
+        for i in picks:
+            counts[i] += 1
         notes.append({
             "uid": doc["name"].rsplit("/", 1)[-1],
             "name": f.get("nickname", {}).get("stringValue", "익명"),
             "picks": picks,
+            "time": doc.get("createTime", ""),
         })
-    return counts.get("total", 0), [counts.get(f, 0) for f in FIELDS], notes
+    notes.sort(key=lambda n: n["time"], reverse=True)
+    return len(documents), counts, notes[:12]
 
 
 def _anonymous_account():
