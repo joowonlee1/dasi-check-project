@@ -58,7 +58,7 @@ def main():
     st.caption("대한민국 기준. 상담 범위·시간은 아래 공식 안내에서 확인하세요.")
     show_mascot("phone", "당황스러워도 혼자 해결하지 않아도 괜찮아요.", width=90)
     st.subheader("지금 어떤 상황인가요?")
-    selected = st.multiselect("해당하는 상황을 모두 선택하세요", list(GUIDES))
+    selected = st.multiselect("해당하는 상황을 모두 선택하세요", list(GUIDES), placeholder="눌러서 상황을 골라 주세요")
     if not selected:
         st.info("상황을 선택하면 지금 할 일과 확인할 곳을 보여드려요. 선택 전에도 위 연락처로 도움을 요청할 수 있어요.")
     for name in GUIDES:
@@ -86,4 +86,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
