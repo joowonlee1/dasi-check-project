@@ -149,13 +149,8 @@ new ResizeObserver(()=>requestAnimationFrame(resize)).observe(document.querySele
 
 page = HTML.replace("__DATA__", json.dumps({"stages": STAGES, "questions": QUESTIONS}, ensure_ascii=False).replace("<", "\\u003c"))
 page = page.replace("__MASCOT__", mascot)
-@st.cache_resource(show_spinner=False)
-def prepare_river_component(html_text):
-    # 높이 변경을 Streamlit에 전달하는 컴포넌트로 등록합니다.
-    folder = Path(tempfile.mkdtemp(prefix="jamkkan_river_"))
-    (folder / "index.html").write_text(html_text, encoding="utf-8")
-    return components.declare_component("jamkkan_river_adventure", path=str(folder))
+from river_component_ui import create_river_component
 
-river_component = prepare_river_component(page)
+river_component = create_river_component(page)
 river_component(key="jamkkan_river_height_v2", default=None)
 st.caption("교육용 가상 자료입니다. 진행은 새로고침·페이지 이동 시 초기화될 수 있으며 랭킹에는 저장하지 않습니다.")
