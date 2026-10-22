@@ -2,7 +2,7 @@ import json
 import re
 
 import streamlit as st
-from mascot_ui import show_mascot
+from mascot_ui import show_key_question, show_mascot
 from google import genai
 from google.genai import types, errors
 
@@ -724,9 +724,10 @@ def offline_report(messages):
 st.title("💬 잠깐! · AI 모의대화")
 show_mascot("suspicious", "익숙한 말투여도, 어떤 행동을 요구하는지 살펴봐요.")
 
-st.write(
-    "상대의 말에 직접 답하면서 의심 신호를 찾고, "
-    "안전하게 확인하는 방법을 연습해 보세요."
+show_key_question(
+    "상대의 말에 직접 답하면서 **의심 신호**를 찾고, "
+    "**안전하게 확인하는 방법**을 연습해 보세요.",
+    "💬",
 )
 
 st.caption(
