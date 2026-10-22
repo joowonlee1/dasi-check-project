@@ -278,6 +278,42 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# 화면에 생동감을 더하는 움직임(내용은 그대로, 보이는 효과만 추가)
+st.markdown(
+    """
+<style>
+@keyframes jb-pop {0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.06);opacity:1} 80%{transform:scale(.97)} 100%{transform:scale(1)}}
+@keyframes jb-bob {0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
+@keyframes jb-boing {0%{transform:scale(1)} 30%{transform:scale(1.07,.93)} 55%{transform:scale(.95,1.05)} 75%{transform:scale(1.03,.98)} 100%{transform:scale(1)}}
+@keyframes jb-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.025)}}
+@keyframes jb-wiggle {0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)}}
+/* 캐릭터는 둥실둥실, 핵심 질문 상자는 통 튀어나오게 */
+img[alt$="캐릭터"] {animation: jb-bob 2.6s ease-in-out infinite;}
+div[style*="border-left:8px solid #FF7A45"] {animation: jb-pop .6s ease-out both;}
+/* 버튼은 올리면 말랑하게, 주요 버튼은 살짝 두근두근 */
+[data-testid="stButton"] button:hover:not(:disabled),
+[data-testid="stFormSubmitButton"] button:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
+[data-testid="stBaseButton-primary"]:not(:disabled) {animation: jb-pulse 2.2s ease-in-out infinite;}
+[data-testid="stBaseButton-primary"]:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
+
+/* 할머니 휴대전화: 화면이 통 튀어나오고, 새 연락은 위에서 툭 떨어지며 흔들림 */
+@keyframes jb-drop {0%{transform:translateY(-26px) scale(.96);opacity:0} 55%{transform:translateY(5px) scale(1.02);opacity:1} 75%{transform:translateY(-3px)} 100%{transform:none}}
+@keyframes jb-glow {0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.0)} 50%{box-shadow:0 0 0 6px rgba(251,191,36,.28)}}
+.gp-phone {animation: jb-pop .55s ease-out both;}
+.gp-item.new {animation: jb-drop .7s ease-out both, jb-glow 1.8s .7s ease-in-out infinite;}
+.gp-item.new .gp-tag {display:inline-block; animation: jb-wiggle .5s .7s ease-in-out 2;}
+.gp-grandma {animation: jb-pop .5s .1s ease-out both;}
+.gp-grandma .face {display:inline-block; animation: jb-bob 2.2s ease-in-out infinite;}
+.gp-grandma .say {animation: jb-pop .45s .35s ease-out both; transform-origin: left bottom;}
+.gp-ending {animation: jb-pop .65s ease-out both;}
+.gp-ending .t {display:inline-block; animation: jb-wiggle .6s .6s ease-in-out 2;}
+[data-testid="stProgress"] > div > div > div > div {transition: width .6s cubic-bezier(.34,1.56,.64,1);}
+@media (prefers-reduced-motion: reduce) {* {animation: none !important; transition: none !important;}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 
 def esc(text):
     return html.escape(str(text))
