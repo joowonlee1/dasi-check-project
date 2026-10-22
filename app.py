@@ -124,6 +124,36 @@ st.markdown(
         font-weight: 800;
     }
 
+    /* 페이지 링크: 글꼴에 따라 글씨 아래가 잘리지 않게 높이를 글씨에 맞춥니다 */
+    [data-testid="stPageLink"] a {
+        height: auto !important;
+        min-height: 44px;
+        padding: 8px 12px !important;
+    }
+
+    [data-testid="stPageLink"] a p,
+    [data-testid="stPageLink"] a span {
+        overflow: visible !important;
+        line-height: 1.6 !important;
+        white-space: normal !important;
+    }
+
+    /* 홈 맨 위 긴급 안내 링크는 눈에 띄게 */
+    .st-key-emergency_link {
+        margin-top: 18px;
+    }
+
+    .st-key-emergency_link [data-testid="stPageLink"] a {
+        border: 2px solid #E5484D;
+        background: #FFF1F1;
+        border-radius: 12px;
+    }
+
+    .st-key-emergency_link [data-testid="stPageLink"] a p {
+        color: #B42318 !important;
+        font-weight: 800 !important;
+    }
+
     /* 입력 영역 */
     [data-testid="stForm"] {
         border: 1px solid #BBCFC7;
@@ -360,7 +390,8 @@ FEATURES = [
 # ─────────────────────────────────────
 
 def show_home():
-    st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
+    with st.container(key="emergency_link"):
+        st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
     with st.container(border=True):
         st.title("✋ 잠깐!")
         st.caption("멈추고 · 확인하고 · 판단하기")
