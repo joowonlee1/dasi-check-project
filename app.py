@@ -501,7 +501,8 @@ if current:
     st.markdown(
         (
             '<div class="route">'
-            f"<strong>{number} · "
+            # 07은 추천 학습 순서가 아닌 긴급 안내라 번호 대신 표시를 바꿉니다.
+            f"<strong>{'🚨 긴급 안내' if number == '07' else number} · "
             f"{html.escape(title)} 이용 순서</strong>"
             f"<p>{html.escape(steps)}</p>"
             "</div>"
