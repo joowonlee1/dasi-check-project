@@ -8,6 +8,7 @@ from html import escape
 import streamlit as st
 import streamlit.components.v1 as components
 from mascot_ui import show_key_question, show_mascot
+import dotori_data as dd
 
 KEY = "mafia_v1"
 MAX_CHECKS = 3  # 사건마다 쓸 수 있는 조사 횟수
@@ -289,6 +290,7 @@ def start_game():
     st.session_state[KEY] = new_state(names)
     st.session_state[KEY]["phase"] = "play"
     st.session_state[KEY]["scores"] = {n: 0 for n in names}
+    st.session_state[KEY]["gid"] = str(time.time())  # 이번 판을 구분해 통계를 한 번만 세요.
 
 
 def investigate(friend, kind):
@@ -484,6 +486,8 @@ def show_reveal():
     case = CASES[s["case"]]
     result = s["results"][-1]
     if s.pop("fresh", False):
+        if dd.once(f"mafia-{s.get('gid')}-{s['case']}"):
+            dd.record("mafia", {f"c{s['case']}_plays": 1, f"c{s['case']}_win": 1 if result["winners"] else 0})
         drumroll()
     answer = case["answer"]
     emoji = FRIENDS[answer][0]
@@ -514,6 +518,11 @@ def show_reveal():
     with st.container(border=True):
         st.markdown("**🪤 함정이었던 것**")
         st.markdown("\n".join(f"- {t}" for t in case["traps"]))
+    data, num = dd.stats("mafia"), s["case"]
+    plays = data.get(f"c{num}_plays", 0)
+    if plays:
+        found = dd.pct(data.get(f"c{num}_win", 0), plays)
+        dd.show_others([f"이 사건은 지금까지 <b>{plays}번</b> 수사됐고, 마피아를 찾아낸 비율은 <b>{found}%</b>예요."])
     st.info("📞 실제라면? 단톡방 안에서 따지기보다 **원래 번호로 전화하거나 직접 만나서** 확인하세요. "
             "계정이 해킹된 것 같으면 친구에게 알리고, 해당 서비스에 신고해요.")
     label = "다음 사건으로 ▶" if s["case"] + 1 < len(CASES) else "🏆 최종 결과 보기"
@@ -543,6 +552,15 @@ def show_final():
         unsafe_allow_html=True,
     )
     st.caption(f"사건 {len(CASES)}개 중 {solved}개 해결 · 한 사건 최고 {best}점")
+    if len(s["players"]) == 1:
+        # 혼자 한 판만 명예의 전당에 올려요(여럿이 한 판은 점수를 나눠 가져서 비교가 어려워요).
+        if dd.once(f"mafia-final-{s.get('gid')}"):
+            dd.note_mine("mafia", f"{top_score}점 · 사건 {solved}/{len(CASES)} 해결")
+            st.session_state[KEY + "_hall"] = dd.save_hall(
+                "mafia", {"score": top_score, "solved": solved},
+                lambda old, new: new["score"] > old.get("score", -1),
+            )
+        dd.show_hall_note(st.session_state.get(KEY + "_hall"))
     show_mascot("trophy", "말투·질문·프로필은 단서일 뿐! 마지막 확인은 언제나 다른 경로로 해요.", width=110)
     st.markdown("### 🧠 오늘 배운 마피아(사칭범) 찾는 법")
     cols = st.columns(2)
