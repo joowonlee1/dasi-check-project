@@ -53,6 +53,14 @@ DATA = {
     "memo2": {"before": "선입금 이체를 요구한 판매자의 가격: ", "cipher": "453333", "after": "원", "shift": 3},
     # 메모 3: 2진수 01110 = 14
     "memo3": {"before": "오픈채팅 판매자의 가격(만 원): ", "bits": "01110", "answer": 14},
+    # 추리 표에서 막혔을 때 한 단계씩 보여 주는 힌트(정답 표를 바로 알려 주지 않음)
+    "steps": [
+        "먼저 ‘누가 무엇’이 바로 적힌 단서 4개를 표에 ⭕로 옮겨요: 동네이웃=앱 채팅, 새상품만=문자, 운동화왕=상품권, 급처분해요=9만 원.",
+        "‘전화 = 19만 원’과 ‘신분증 사진 = 가장 비쌈(19만 원)’을 이어 보세요. 전화로 연락한 판매자와 신분증 사진을 요구한 판매자는 같은 사람이에요.",
+        "남은 연락 방식은 외부 메신저·전화·오픈채팅이고, 남은 사람은 한정판러·급처분해요·운동화왕이에요. 상품권을 요구한 운동화왕은 전화(신분증)도, 외부 메신저(가짜 링크, 메모 1)도 아니에요.",
+        "운동화왕이 오픈채팅이면 메모 3에 따라 가격이 정해져요. 급처분해요는 9만 원이라 19만 원인 전화가 될 수 없어요.",
+        "마지막으로 앱 안전결제와 선입금 이체 중 누가 무엇인지 정해요. ‘앱 안전결제 판매자는 문자로 연락하지 않았다’와 메모 2를 써 보세요.",
+    ],
     "tactics": {
         "한정판러": "📞 전화로 친근하게 다가와 ‘본인 확인’이라며 신분증 사진을 요구했어요. 신분증 사진은 명의 도용에 쓰일 수 있어요. 가격도 정가(18만 원)보다 비쌌죠.",
         "급처분해요": "⚡ 정가의 절반인 9만 원으로 눈길을 끈 뒤, 외부 메신저로 옮겨 ‘안전결제’처럼 보이는 가짜 결제 링크를 보냈어요.",
@@ -145,6 +153,22 @@ td.c button.bad{outline:3px solid #E5484D}
 .tact div{background:#fff;border:1.5px solid #D7E2DD;border-radius:14px;padding:10px 12px;word-break:keep-all;animation:pop .45s ease-out both}
 .tact div.real{border:2.5px solid #0F766E;background:#EEF8F2}
 .tact b{display:block}
+.ex{background:#fff;border:2px solid #D7E2DD;border-radius:18px;padding:14px;margin:10px 0;animation:pop .45s ease-out both}
+.ex h3{margin:0 0 6px}
+.exrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.exbox{background:#F7FAF8;border:1.5px solid #D7E2DD;border-radius:14px;padding:10px;text-align:center;word-break:keep-all;animation:pop .45s ease-out both}
+.exbox:nth-child(2){animation-delay:.15s}.exbox:nth-child(3){animation-delay:.3s}
+.exbox p{margin:6px 0 0;font-size:.86rem;line-height:1.5}
+.extag{display:inline-block;background:#20483F;color:#fff;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:800;margin-bottom:6px}
+.mini{border-collapse:collapse;margin:4px auto;table-layout:auto;width:auto}
+.mini th,.mini td{border:1.5px solid #D7E2DD;padding:3px 7px;font-size:.85rem;font-weight:800;text-align:center;background:#fff}
+.mini th{background:#EDF4F1}
+.mini td.o{background:#D7F2E3}.mini td.x{background:#FFF1F1}.mini td.new{outline:3px solid #FF7A45;outline-offset:-3px}
+.code.sm{font-size:1rem;padding:4px 8px}
+.tips{background:#FFFBEA;border:2px solid #F1D98A;border-radius:14px;padding:10px 14px;margin:10px 0;word-break:keep-all}
+.tips ol{margin:4px 0 0;padding-left:22px}.tips li{margin:3px 0}
+.step{background:#EEF2FF;border:2px solid #A5B4FC;border-radius:12px;padding:8px 12px;margin:6px 0;font-weight:700;word-break:keep-all;animation:pop .35s ease-out both}
+.still .hero,.still .sellers div,.still .story,.still .ex,.still .exbox,.still .memo,.still .tgrid span,.still .digits span,.still .got,.still .hint,.still .step:not(:last-of-type){animation:none!important}
 .drum{text-align:center;font-size:1.4rem;font-weight:900;padding:36px 0}
 .drum div{font-size:64px;animation:bob .45s ease-in-out infinite}
 @keyframes pop{0%{transform:scale(.6);opacity:0}65%{transform:scale(1.04);opacity:1}100%{transform:scale(1)}}
@@ -156,27 +180,29 @@ td.c button.bad{outline:3px solid #E5484D}
 @keyframes starpop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:560px){.sellers,.pick{grid-template-columns:repeat(5,1fr);gap:4px}.sellers div,.pick button{font-size:.68rem}.pick button em,.sellers div em{font-size:22px}.tabs button{font-size:.85rem;padding:8px 4px}.code{font-size:1.05rem}.digits span{width:36px;height:46px;font-size:1.3rem}.lamp{width:50px}}
+@media (max-width:560px){.exrow{grid-template-columns:1fr}.sellers,.pick{grid-template-columns:repeat(5,1fr);gap:4px}.sellers div,.pick button{font-size:.68rem}.pick button em,.sellers div em{font-size:22px}.tabs button{font-size:.85rem;padding:8px 4px}.code{font-size:1.05rem}.digits span{width:36px;height:46px;font-size:1.3rem}.lamp{width:50px}}
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
 const KINDS = ['c', 'r', 'p'];
 const G = {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0,
-  k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, auto: true, pick: null, gridChecked: false, done: false, bad: {}};
+  k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, auto: true, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0};
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastMsg = '';
+let fresh = true;  // 탭을 처음 열 때만 튀어나오는 효과를 보여 줍니다.
 
 function cluesOpen(){ return G.solved.filter(Boolean).length; }
 
 function render(){
   const app = $('app');
   if (G.done) return;
+  app.classList.toggle('still', !fresh); fresh = false;
   app.innerHTML = `
   <section class="hero"><span>🔐 추리 퍼즐 · 메모 해독 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
   <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요.</span></section>
   <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em>${esc(s)}</div>`).join('')}</div>
-  <div class="chips"><span class="hot">📜 해독한 메모 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 힌트 ${G.hints.filter(Boolean).length}번</span></div>
+  <div class="chips"><span class="hot">📜 해독한 메모 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
   <div class="tabs">
     <button class="${G.tab === 'memo' ? 'on' : ''}" onclick="go('memo')">① 📜 메모 해독</button>
     <button class="${G.tab === 'grid' ? 'on' : ''}" onclick="go('grid')">② 🧩 추리 표</button>
@@ -187,7 +213,7 @@ function render(){
   toastMsg = '';
   if (G.tab === 'memo') memoTab(); else if (G.tab === 'grid') gridTab(); else pickTab();
 }
-function go(t){ G.tab = t; render(); }
+function go(t){ G.tab = t; fresh = true; render(); }
 function toast(t, el){ const x = $('toast'); if (x) x.textContent = t; if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
 
 // ───── ① 메모 해독 ─────
@@ -203,6 +229,7 @@ function memoTab(){
   const sum = G.lamps.reduce((a, v, i) => a + (v ? [16, 8, 4, 2, 1][i] : 0), 0);
   $('body').innerHTML = `
   <div class="story">🚓 경찰 사이버수사대가 중고거래 사기단에게서 <b>작업 메모 3장</b>을 압수했어요. 메모는 암호로 적혀 있어요. 하나씩 풀면 <b>추리 표에 쓸 단서</b>가 열려요.</div>
+  ${memoExample()}
 
   <section class="memo ${G.solved[0] ? 'done' : ''}" id="m0"><span class="tag">${G.solved[0] ? '해독 완료 ✔' : '메모 1 · 자리 바꾸기'}</span>
     <h3>📜 메모 1 · 글자 순서가 뒤섞인 메모</h3>
@@ -237,6 +264,51 @@ function memoTab(){
   </section>
   ${cluesOpen() === 3 ? `<button class="go" style="width:100%" onclick="go('grid')">🧩 단서 3개 확보! 추리 표로 가기 ▶</button>` : ''}`;
 }
+function memoExample(){
+  return `<section class="ex"><h3>👀 먼저 예시로 볼까요? 암호 3가지 푸는 법</h3>
+  <div class="exrow">
+    <div class="exbox"><span class="extag">자리 바꾸기</span><br>
+      원래 문장 <b>가나다라마바</b>를 <b>3칸</b> 줄에 가로로 쓰면
+      <table class="mini"><tr><td>가</td><td>나</td><td>다</td></tr><tr><td>라</td><td>마</td><td>바</td></tr></table>
+      세로로 읽어 적은 암호는 <span class="code sm">가라나마다바</span>
+      <p>👉 거꾸로, 암호를 <b>3칸</b>에 세로로 채우고 <b>가로로 읽으면</b> 원래 문장!</p></div>
+    <div class="exbox"><span class="extag">숫자 밀기</span><br>
+      <span class="code sm">1234</span> 를 <b>2칸 앞으로</b> 밀면 <span class="code sm">3456</span>
+      <p>👉 암호 <b>3456</b>을 <b>2칸 되돌리면</b> 1234!<br>9 다음은 0으로 돌아가요 (8을 3칸 밀면 1).</p></div>
+    <div class="exbox"><span class="extag">2진수</span><br>
+      자리마다 <b>16 · 8 · 4 · 2 · 1</b><br><span class="code sm">00101</span>
+      <p>👉 1이 있는 자리만 더해요: <b>4 + 1 = 5</b></p></div>
+  </div></section>`;
+}
+function gridExample(){
+  return `<section class="ex"><h3>👀 먼저 예시로 볼까요? 추리 표 채우는 법 (3명 × 색깔)</h3>
+  <p style="margin:0 0 8px;word-break:keep-all">단서 ① <b>B는 파랑이다.</b> &nbsp; 단서 ② <b>A는 빨강이 아니다.</b></p>
+  <div class="exrow">
+    <div class="exbox"><span class="extag">1. 바로 정해지는 단서</span>
+      <table class="mini"><tr><th></th><th>빨강</th><th>파랑</th><th>노랑</th></tr>
+      <tr><th>A</th><td></td><td class="x new">❌</td><td></td></tr>
+      <tr><th>B</th><td class="x new">❌</td><td class="o new">⭕</td><td class="x new">❌</td></tr>
+      <tr><th>C</th><td></td><td class="x new">❌</td><td></td></tr></table>
+      <p>단서 ①로 B-파랑 ⭕. 한 사람은 색 하나, 한 색은 한 사람뿐이라 같은 줄·같은 칸은 ❌</p></div>
+    <div class="exbox"><span class="extag">2. ‘아니다’ 단서</span>
+      <table class="mini"><tr><th></th><th>빨강</th><th>파랑</th><th>노랑</th></tr>
+      <tr><th>A</th><td class="x new">❌</td><td class="x">❌</td><td></td></tr>
+      <tr><th>B</th><td class="x">❌</td><td class="o">⭕</td><td class="x">❌</td></tr>
+      <tr><th>C</th><td></td><td class="x">❌</td><td></td></tr></table>
+      <p>단서 ②로 A-빨강 ❌</p></div>
+    <div class="exbox"><span class="extag">3. 하나 남으면 ⭕</span>
+      <table class="mini"><tr><th></th><th>빨강</th><th>파랑</th><th>노랑</th></tr>
+      <tr><th>A</th><td class="x">❌</td><td class="x">❌</td><td class="o new">⭕</td></tr>
+      <tr><th>B</th><td class="x">❌</td><td class="o">⭕</td><td class="x">❌</td></tr>
+      <tr><th>C</th><td class="o new">⭕</td><td class="x">❌</td><td class="x new">❌</td></tr></table>
+      <p>A 줄에 남은 칸은 노랑뿐 → ⭕. 그러면 C는 빨강!</p></div>
+  </div>
+  <div class="tips"><b>🧭 진짜 문제에서는 이렇게 해요</b><ol>
+    <li><b>‘누가 무엇’이 바로 적힌 단서</b>부터 ⭕로 옮겨요.</li>
+    <li><b>두 단서를 이어 붙여요.</b> 예: ‘전화 = 19만 원’ + ‘신분증 = 19만 원’ → 전화한 사람이 신분증을 요구했어요.</li>
+    <li>한 줄에 <b>남은 칸이 하나</b>면 그게 ⭕예요.</li>
+    <li>‘아니다’ 단서는 ❌로 표시해요.</li></ol></div></section>`;
+}
 function hint(i){ G.hints[i] = true; render(); }
 function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
 function unlock(i){ G.solved[i] = true; toastMsg = '🔓 해독 성공! 추리 표에 새 단서가 열렸어요.'; render(); }
@@ -255,10 +327,14 @@ function gridTab(){
   $('body').innerHTML = `
   <div class="story">👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label style="display:block;margin-top:6px;font-weight:700"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
+  ${gridExample()}
   <h3 style="margin:8px 2px">🔎 단서 (${D.base.length + cluesOpen()} / ${D.base.length + 3})</h3>
   <div class="clues">${clueHtml}</div>
   <div class="grids">${KINDS.map(gridHtml).join('')}</div>
-  <div class="row"><button onclick="resetGrid()">↺ 표 지우기</button><button class="ok" onclick="checkGrid()">표 채점하기 (⭕ 15개를 모두 채우면)</button></div>
+  ${D.steps.slice(0, G.stepHint).map((t, i) => `<div class="step">🧭 다음 한 수 ${i + 1}: ${esc(t)}</div>`).join('')}
+  <div class="row"><button onclick="resetGrid()">↺ 표 지우기</button>
+  <button onclick="G.stepHint=Math.min(G.stepHint+1,D.steps.length);render()" ${G.stepHint >= D.steps.length ? 'disabled' : ''}>🧭 막혔어요! 다음 한 수 힌트 (${G.stepHint}/${D.steps.length})</button>
+  <button class="ok" onclick="checkGrid()">표 채점하기 (⭕ 15개를 모두 채우면)</button></div>
   ${cluesOpen() < 3 ? '<div class="hint">💡 단서 7개만으로는 답이 하나로 안 정해져요. 메모를 해독해서 단서를 더 모아요!</div>' : ''}`;
 }
 function clueBtn(id, text, locked, memo){
@@ -317,7 +393,7 @@ function answer(){
 }
 function final(){
   const allMemo = G.solved.every(Boolean);
-  const stars = 1 + (allMemo && G.gridChecked ? 1 : 0) + (G.hints.every(h => !h) && G.wrongPick === 0 ? 1 : 0);
+  const stars = 1 + (allMemo && G.gridChecked ? 1 : 0) + (G.hints.every(h => !h) && G.stepHint === 0 && G.wrongPick === 0 ? 1 : 0);
   const sp = ['✨', '⭐', '🎉', '💫', '✨', '⭐', '🎉', '✨'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 110)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   $('app').innerHTML = `
   <section class="result win"><div class="big">🏡</div><b>진짜 판매자는 ‘동네이웃’이었어요!</b>
@@ -333,7 +409,7 @@ function final(){
   ④ <b>신분증 사진·상품권 결제</b> 요구는 거절해요.</section>
   <button class="go" style="width:100%" onclick="restart()">🔄 처음부터 다시</button>`;
 }
-function restart(){ Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}}); render(); }
+function restart(){ fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0}); render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
