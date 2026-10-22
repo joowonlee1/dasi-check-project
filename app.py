@@ -573,8 +573,8 @@ def show_home():
             "- 실제 개인정보나 인증번호는 입력하지 마세요.\n"
             "- 체험은 가상이며 실제 연락이나 송금을 실행하지 않습니다.\n"
             "- URL 확인 결과는 사이트의 안전을 보장하지 않습니다.\n"
-            "- 공개 랭킹에 참여하려면 방탈출 시작 전에 "
-            "닉네임으로 입장하세요."
+            "- 방탈출 랭킹과 명예의 전당에 참여하려면 "
+            "메뉴의 ‘도토리시 시민증’에서 닉네임을 만들어 주세요."
         )
 
 
@@ -618,7 +618,7 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
-    # 시민증(로그인) 상태를 항상 보여 줘요.
+    # 로그인했을 때만 시민증 상태를 보여 줘요(시민증 만들기는 위 메뉴에 있어요).
     me = dd.citizen()
     if me:
         st.markdown(
@@ -627,8 +627,6 @@ with st.sidebar:
             f'<span style="color:#20483F">{html.escape(me["nickname"])}</span> 님</div>',
             unsafe_allow_html=True,
         )
-    else:
-        st.page_link(citizen_page, label="시민증 만들기 (닉네임 로그인)", icon="🪪")
     show_mascot(
         "stop",
         "멈추고, 확인하고, 판단하기",
