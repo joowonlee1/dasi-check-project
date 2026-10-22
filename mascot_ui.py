@@ -2,6 +2,7 @@
 import base64
 import html
 import io
+import re
 from functools import lru_cache
 from pathlib import Path
 import streamlit as st
@@ -60,5 +61,17 @@ def show_mascot(pose, message="", width=130):
         f'style="width:{width}px;max-width:100%;height:auto;flex-shrink:0;">'
         f'<div style="flex:1;min-width:100px;color:#24443B;font-size:1.05rem;'
         f'font-weight:700;line-height:1.75;word-break:keep-all;">{text}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def show_key_question(text, icon="💡"):
+    """페이지의 핵심 질문·문장을 눈에 띄는 상자로 보여 줍니다. **굵게** 표시를 쓸 수 있어요."""
+    body = re.sub(r"\*\*(.+?)\*\*", r'<b style="color:#B4471B;">\1</b>', html.escape(text))
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,#FFF4E8,#EAF6F1);border-left:8px solid #FF7A45;'
+        f'border-radius:18px;padding:18px 20px;margin:6px 0 16px;box-shadow:0 4px 14px rgba(32,72,63,.08);">'
+        f'<div style="font-size:1.35rem;font-weight:900;color:#20483F;line-height:1.6;word-break:keep-all;">'
+        f'{icon} {body}</div></div>',
         unsafe_allow_html=True,
     )
