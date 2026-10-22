@@ -1,6 +1,7 @@
 import html
 import json
 import re
+import time
 
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
@@ -790,38 +791,53 @@ def offline_report(messages):
 
 st.title("💬 잠깐! · AI 모의대화")
 
-# 화면에 생동감을 더하는 움직임(내용은 그대로, 보이는 효과만 추가)
+# '짠!' 효과: 결과가 나오는 순간에만 두구두구 → 도장 쾅 → 반짝이가 터져요.
 st.markdown(
     """
 <style>
-@keyframes jb-pop {0%{transform:scale(.6);opacity:0} 60%{transform:scale(1.06);opacity:1} 80%{transform:scale(.97)} 100%{transform:scale(1)}}
-@keyframes jb-bob {0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
-@keyframes jb-boing {0%{transform:scale(1)} 30%{transform:scale(1.07,.93)} 55%{transform:scale(.95,1.05)} 75%{transform:scale(1.03,.98)} 100%{transform:scale(1)}}
-@keyframes jb-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.025)}}
-@keyframes jb-wiggle {0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)}}
-/* 캐릭터는 둥실둥실, 핵심 질문 상자는 통 튀어나오게 */
-img[alt$="캐릭터"] {animation: jb-bob 2.6s ease-in-out infinite;}
-div[style*="border-left:8px solid #FF7A45"] {animation: jb-pop .6s ease-out both;}
-/* 버튼은 올리면 말랑하게, 주요 버튼은 살짝 두근두근 */
-[data-testid="stButton"] button:hover:not(:disabled),
-[data-testid="stFormSubmitButton"] button:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
-[data-testid="stBaseButton-primary"]:not(:disabled) {animation: jb-pulse 2.2s ease-in-out infinite;}
-[data-testid="stBaseButton-primary"]:hover:not(:disabled) {animation: jb-boing .45s ease-out;}
-
-/* 대화: 상대 말풍선은 왼쪽에서, 내 말풍선은 오른쪽에서 통통 들어오기 */
-@keyframes jb-left {0%{transform:translateX(-30px) scale(.9);opacity:0} 60%{transform:translateX(6px) scale(1.02);opacity:1} 100%{transform:none}}
-@keyframes jb-right {0%{transform:translateX(30px) scale(.9);opacity:0} 60%{transform:translateX(-6px) scale(1.02);opacity:1} 100%{transform:none}}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {animation: jb-left .55s ease-out both;}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {animation: jb-right .55s ease-out both;}
-[data-testid="stChatMessageAvatarAssistant"], [data-testid="stChatMessageAvatarUser"] {animation: jb-bob 2.4s ease-in-out infinite;}
-.st-key-chat_screen {animation: jb-pop .5s ease-out both;}
-/* 코치 피드백 카드는 통 튀어나오기 */
-div[style*="border:2px solid #A5B4FC"] {animation: jb-pop .6s ease-out both;}
-@media (prefers-reduced-motion: reduce) {* {animation: none !important; transition: none !important;}}
+@keyframes zz-pop {0%{transform:scale(.5);opacity:0} 65%{transform:scale(1.06);opacity:1} 100%{transform:scale(1)}}
+@keyframes zz-bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)}}
+@keyframes zz-stamp {0%{transform:scale(3) rotate(-18deg);opacity:0} 60%{transform:scale(.9) rotate(-12deg);opacity:1} 100%{transform:scale(1) rotate(-8deg);opacity:1}}
+@keyframes zz-shake {0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)}}
+@keyframes zz-burst {0%{transform:translate(0,0) scale(.3);opacity:1} 100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
+.zz-drum {text-align:center;font-size:1.5rem;font-weight:900;color:#20483F;padding:40px 0;}
+.zz-drum div {font-size:70px;animation:zz-bounce .45s ease-in-out infinite;}
+.zz-card {position:relative;overflow:hidden;}
+.zz-card.go.win {animation:zz-pop .6s ease-out both;}
+.zz-card.go.lose {animation:zz-shake .6s ease-in-out both;}
+.zz-stamp {display:inline-block;margin-top:10px;border:5px solid #D7263D;color:#D7263D;border-radius:12px;padding:4px 18px;
+  font-size:1.7rem;font-weight:900;letter-spacing:.08em;background:rgba(255,255,255,.65);transform:rotate(-8deg);max-width:92%;}
+.zz-stamp.ok {border-color:#16815F;color:#16815F;}
+.zz-stamp.miss {border-color:#5A7068;color:#5A7068;}
+.go .zz-stamp {animation:zz-stamp .5s .45s ease-out both;}
+.zz-spark {position:absolute;left:50%;top:45%;font-size:26px;opacity:0;pointer-events:none;}
+.go .zz-spark {animation:zz-burst 1.1s ease-out both;}
+@media (max-width:640px) {.zz-stamp {font-size:1.35rem;}}
+@media (prefers-reduced-motion: reduce) {.zz-card *, .zz-card, .zz-drum div {animation:none !important;opacity:1;}}
 </style>
 """,
     unsafe_allow_html=True,
 )
+
+
+def drumroll(frames):
+    """결과를 바로 보여 주지 않고 잠깐 뜸을 들여요."""
+    box = st.empty()
+    for icon, text in frames:
+        box.markdown(f'<div class="zz-drum"><div>{icon}</div>{text}</div>', unsafe_allow_html=True)
+        time.sleep(0.6)
+    box.empty()
+
+
+def sparks(icons):
+    out = []
+    for i, icon in enumerate(icons):
+        x = [140, 120, 70, 0, -70, -120, -140, -120, -70, 0, 70, 120][i % 12]
+        y = [0, -70, -120, -140, -120, -70, 0, 70, 120, 140, 120, 70][i % 12]
+        out.append(f'<span class="zz-spark" style="--x:{x}px;--y:{y}px;animation-delay:{.45 + i * .02:.2f}s">{icon}</span>')
+    return "".join(out)
+
+
 show_mascot("suspicious", "익숙한 말투여도, 어떤 행동을 요구하는지 살펴봐요.")
 
 show_key_question(
@@ -956,7 +972,20 @@ for message in messages:
         )
 
 if state["report"] is not None:
-    st.subheader("📋 나의 대응 리포트")
+    fresh = not state.get("report_shown")
+    state["report_shown"] = True
+    if fresh:
+        drumroll((("🥁", "두구두구…"), ("📋", "나의 대응 리포트 도착!")))
+    st.markdown(
+        f'<div class="zz-card win{" go" if fresh else ""}" style="background:linear-gradient(135deg,#EEF2FF,#E1F3EA);'
+        'border-radius:22px;padding:20px 18px;margin:10px 0 12px;text-align:center;">'
+        '<div style="font-size:52px;">📋</div>'
+        '<div style="font-size:1.6rem;font-weight:900;color:#20483F;">나의 대응 리포트</div>'
+        '<span class="zz-stamp ok">연습 완료!</span>'
+        + sparks(["✨", "⭐", "💬", "🎉", "✨", "💫", "⭐", "💬", "🎉", "✨"])
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     st.markdown(state["report"])
 
     st.caption(
@@ -1080,9 +1109,18 @@ else:
         )
 
     elif state["ended"]:
-        st.success(
-            "역할극을 마쳤어요. "
-            "아래 버튼으로 나의 대응을 돌아보세요."
+        fresh = not state.get("end_shown")
+        state["end_shown"] = True
+        st.markdown(
+            f'<div class="zz-card win{" go" if fresh else ""}" style="background:linear-gradient(135deg,#FFF4E8,#E1F3EA);'
+            'border-radius:22px;padding:18px;margin:10px 0;text-align:center;">'
+            '<div style="font-size:48px;">🎬</div>'
+            '<div style="font-size:1.15rem;font-weight:800;color:#20483F;word-break:keep-all;line-height:1.7;">'
+            "역할극을 마쳤어요. 아래 버튼으로 나의 대응을 돌아보세요.</div>"
+            '<span class="zz-stamp">역할극 끝!</span>'
+            + sparks(["🎬", "✨", "⭐", "💬", "✨", "💫", "⭐", "✨"])
+            + "</div>",
+            unsafe_allow_html=True,
         )
 
     elif turns >= MAX_TURNS:
