@@ -59,6 +59,13 @@ TYPE_LOOK = {
     "SETH": ("📊", "#3AAFA9", "#B4EBCA", "자료는 같이 볼수록 정확해요"),
     "SETB": ("🧭", "#20807A", "#7FD1B9", "흔들려도 방향은 잃지 않아요"),
 }
+# 유형 코드 글자 뜻: 글자 → (영어 단어, 뜻)
+LETTER_INFO = {
+    "Q": ("Quick", "먼저 반응"), "S": ("Slow", "잠시 숙고"),
+    "R": ("Relation", "관계·말투 먼저"), "E": ("Evidence", "내용·근거 먼저"),
+    "I": ("Individual", "혼자 점검"), "T": ("Together", "함께 점검"),
+    "H": ("Help", "도움 먼저"), "B": ("Boundary", "경계 먼저"),
+}
 TRAIT_ICONS = {"Q": "⚡", "S": "🐢", "R": "💗", "E": "🔬", "I": "🔦", "T": "👥", "H": "🫶", "B": "🚧"}
 HABITS = {
     "Q": ("반응을 시작하는 쪽을 더 골랐어요.", "답장과 별개로 송금·설치·인증 요청은 잠시 멈추세요.", "계정 보안 사칭", "긴급 알림을 받아도 먼저 공식 앱에서 확인하는 연습"),
@@ -122,6 +129,20 @@ CSS = """
 .jk-gauge {display:flex;align-items:center;gap:6px;margin:8px 0;font-size:.85rem;color:#4F6B63;}
 .jk-dot {width:16px;height:16px;border-radius:50%;background:#E3EAE0;display:inline-block;}
 .jk-dot.on {background:#3BA99C;}
+.jk-decode {display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 14px;}
+.jk-letter {background:#FFFEFA;border:1.5px solid #DCE8D6;border-radius:18px;padding:12px 6px;text-align:center;
+  animation:jk-pop .5s ease-out both;}
+.jk-letter b {display:block;font-size:2.2rem;line-height:1.1;color:#20807A;}
+.jk-letter small {display:block;color:#6B8580;font-size:.78rem;}
+.jk-letter span {display:block;font-weight:800;color:#20483F;font-size:.92rem;word-break:keep-all;margin-top:4px;}
+.jk-letter em {display:block;font-style:normal;color:#8BA39C;font-size:.75rem;}
+.jk-gallery {display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.jk-mini {border-radius:16px;padding:10px 4px;text-align:center;color:#1E3A34;word-break:keep-all;}
+.jk-mini div {font-size:30px;}
+.jk-mini b {display:block;font-size:.85rem;}
+.jk-mini small {letter-spacing:.12em;opacity:.75;font-size:.72rem;}
+.jk-mini.me {outline:3px solid #20483F;}
+@media (max-width:640px) {.jk-decode,.jk-gallery {grid-template-columns:repeat(2,1fr);}}
 .jk-drum {text-align:center;font-size:1.6rem;font-weight:800;color:#20483F;padding:48px 0;}
 .jk-drum div {font-size:72px;animation:jk-bounce .5s ease-in-out infinite;}
 </style>
@@ -209,6 +230,9 @@ def show_intro():
     with st.expander("유형은 어떻게 정해지나요?"):
         st.write("반응 속도·판단 단서·확인 방식·요청 대응의 4개 기준에 3문항씩 답해요. 기준마다 2개 이상 선택한 쪽을 조합해 16가지 유형을 만들어요.")
         st.caption("세 문항이라 동점은 없지만, 2대 1 결과가 뚜렷한 성격 차이를 뜻하는 것은 아니에요.")
+        show_letter_table()
+    with st.expander("📖 16가지 유형 모두 보기"):
+        show_gallery()
 
 
 def show_question(i):
@@ -250,6 +274,45 @@ def show_ready():
     )
     st.button("✨ 짠! 결과 열기", type="primary", width="stretch", on_click=reveal)
     st.button("◀ 답 고치기", on_click=go_to, args=(11,), width="stretch")
+
+
+def show_letter_table():
+    """시작 화면용: 유형 코드 네 자리의 뜻을 표로 보여 줍니다."""
+    rows = "".join(
+        f"| {n}번째 | {axis[0]} | **{a}** {LETTER_INFO[a][1]} / **{b}** {LETTER_INFO[b][1]} |\n"
+        for n, (axis, (a, b)) in enumerate(((ax, ax[1]) for ax in AXES), 1)
+    )
+    st.markdown("| 자리 | 기준 | 글자 |\n|---|---|---|\n" + rows)
+    st.caption("예: QRTH = 먼저 반응 · 관계·말투 먼저 · 함께 점검 · 도움 먼저 → ‘다정한 연결자’")
+
+
+def show_decode(code):
+    """결과 화면용: 내가 받은 코드 네 글자를 하나씩 풀어 줍니다."""
+    boxes = "".join(
+        f'<div class="jk-letter" style="animation-delay:{0.12 * i:.2f}s"><b>{letter}</b>'
+        f'<small>{LETTER_INFO[letter][0]}</small><span>{TRAIT_ICONS[letter]} {LETTER_INFO[letter][1]}</span>'
+        f'<em>{AXES[i][0]}</em></div>'
+        for i, letter in enumerate(code)
+    )
+    st.markdown(f'<div class="jk-decode">{boxes}</div>', unsafe_allow_html=True)
+    other = " · ".join(
+        f"{axis[1][1 - axis[1].index(letter)]} {LETTER_INFO[axis[1][1 - axis[1].index(letter)]][1]}"
+        for axis, letter in zip(AXES, code)
+    )
+    st.caption(f"반대쪽 글자: {other}")
+
+
+def show_gallery(mine=None):
+    """16가지 유형을 한눈에 보여 줍니다. 내 유형은 테두리로 표시합니다."""
+    cards = "".join(
+        f'<div class="jk-mini{" me" if c == mine else ""}" '
+        f'style="background:linear-gradient(135deg,{TYPE_LOOK[c][1]},{TYPE_LOOK[c][2]});">'
+        f'<div>{TYPE_LOOK[c][0]}</div><b>{escape(TYPE_NAMES[c])}</b><small>{c}</small></div>'
+        for c in TYPE_NAMES
+    )
+    st.markdown(f'<div class="jk-gallery">{cards}</div>', unsafe_allow_html=True)
+    if mine:
+        st.caption("테두리가 있는 카드가 나의 유형이에요. 어떤 유형이 더 낫거나 안전한 것은 아니에요.")
 
 
 def drumroll():
@@ -338,6 +401,9 @@ def show_result(answers):
     st.markdown(hero_html(code, labels), unsafe_allow_html=True)
     st.caption("유형 코드는 안전 점수나 우열을 나타내지 않아요.")
 
+    st.subheader(f"🔤 내 코드 읽는 법 · {code}")
+    show_decode(code)
+
     st.subheader("🎮 나의 대처 능력치")
     for row in (0, 2):  # 두 개씩 한 줄에 놓아 휴대폰에서도 순서가 유지되게 합니다.
         cols = st.columns(2)
@@ -364,6 +430,9 @@ def show_result(answers):
         for i, (axis, letter, label) in enumerate(zip(AXES, code, labels)):
             st.markdown(f"**{axis[0]} · {label}** — {HABITS[letter][0]}")
             st.caption(f"{axis[2][0]} {counts[i][0]}개 / {axis[2][1]} {counts[i][1]}개 (각 3문항)")
+
+    with st.expander("📖 16가지 유형 모두 보기"):
+        show_gallery(code)
 
     st.subheader("🖼️ 결과 카드")
     svg = result_card(code, labels)
