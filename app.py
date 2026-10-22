@@ -103,6 +103,27 @@ st.markdown(
         color: white;
     }
 
+    /* 중요한 버튼(시작·제출·다시 도전)은 크고 넓게 보여 줍니다 */
+    [data-testid="stElementContainer"]:has([data-testid="stBaseButton-primary"]),
+    [data-testid="stElementContainer"]:has([data-testid="stBaseButton-primaryFormSubmit"]),
+    [data-testid="stButton"]:has([data-testid="stBaseButton-primary"]),
+    [data-testid="stFormSubmitButton"]:has([data-testid="stBaseButton-primaryFormSubmit"]) {
+        width: 100% !important;
+    }
+
+    [data-testid="stBaseButton-primary"],
+    [data-testid="stBaseButton-primaryFormSubmit"] {
+        width: 100% !important;
+        min-height: 58px !important;
+        box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+    }
+
+    [data-testid="stBaseButton-primary"] p,
+    [data-testid="stBaseButton-primaryFormSubmit"] p {
+        font-size: 1.15rem !important;
+        font-weight: 800;
+    }
+
     /* 입력 영역 */
     [data-testid="stForm"] {
         border: 1px solid #BBCFC7;
@@ -575,4 +596,3 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
