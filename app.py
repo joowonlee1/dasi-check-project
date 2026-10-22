@@ -434,6 +434,16 @@ with st.sidebar:
     )
 
     st.caption(
+        "캐릭터 원작 출처: "
+        "[깡지 · @ggang.zi_](https://www.instagram.com/ggang.zi_/)"
+    )
+
+    st.caption(
+        "웹앱에 사용한 일부 동작 이미지는 "
+        "원작 캐릭터를 바탕으로 AI를 활용해 제작했습니다."
+    )
+
+    st.caption(
         "처음이라면 ‘할머니 폰 지키기’를 추천해요. "
         "원하는 활동부터 이용해도 괜찮아요."
     )
