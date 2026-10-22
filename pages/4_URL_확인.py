@@ -3,7 +3,7 @@ import re
 from urllib.parse import urlsplit, unquote
 
 import streamlit as st
-from mascot_ui import show_mascot
+from mascot_ui import show_key_question, show_mascot
 
 
 # 이 목록은 모든 단축 주소 서비스를 포함하지 않습니다.
@@ -401,7 +401,7 @@ def analyze_message(text):
 
 st.title("🔗 잠깐! · 의심 URL 확인")
 show_mascot("shield", "누르기 전에 주소부터 살펴봐요. 검사 결과가 안전을 보장하지는 않아요.")
-st.write("주소를 붙여넣으면 살펴볼 특징을 설명해 드려요.")
+show_key_question("누르기 전에 **주소부터** 확인해요. 붙여넣으면 살펴볼 특징을 설명해 드려요.", "🔗")
 st.caption("입력 주소에 접속하거나 파일을 내려받지 않습니다.")
 
 with st.form("url_check_form"):
