@@ -389,7 +389,7 @@ def show_home():
 
     for number, title, icon, path, steps, description in FEATURES:
         with st.container(border=True):
-            st.markdown(f"### {number} · {icon} {title}")
+            st.markdown(f"### {icon} {title}")
             st.write(description)
             st.caption(steps)
 
