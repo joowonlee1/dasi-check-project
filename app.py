@@ -277,6 +277,70 @@ st.markdown(
         font-size: 1rem !important;
     }
 
+    /* 도토리시 */
+    .city-intro {
+        background: linear-gradient(135deg, #FFF4D6, #E8F4EC);
+        border: 2px solid #E2C98A;
+        border-radius: 20px;
+        padding: 18px 20px;
+        margin: 4px 0 12px;
+        color: #2F3B2A;
+        font-weight: 700;
+        line-height: 1.8;
+        word-break: keep-all;
+    }
+
+    .city-intro b {
+        display: block;
+        font-size: 1.35rem;
+        color: #6B4A1E;
+        margin-bottom: 4px;
+    }
+
+    .st-key-dotori_map {
+        background: #EAF4E4;
+        border: 2px dashed #A7C79A;
+        border-radius: 22px;
+        padding: 12px;
+    }
+
+    .st-key-dotori_map [data-testid="stPageLink"] a {
+        background: #FFFFFF;
+        border: 1.5px solid #CFE0C6;
+        border-radius: 14px;
+    }
+
+    .st-key-dotori_map [data-testid="stPageLink"] a:hover {
+        background: #FFF7E3;
+        border-color: #E2C98A;
+    }
+
+    .place-tag {
+        display: inline-block;
+        background: #FFF4D6;
+        color: #6B4A1E;
+        border: 1px solid #E2C98A;
+        border-radius: 999px;
+        padding: 2px 12px;
+        font-size: 0.9rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+
+    .route .place {
+        display: block;
+        color: #6B4A1E;
+        font-weight: 800;
+        font-size: 1.05rem;
+        margin-bottom: 2px;
+    }
+
+    .route .place-line {
+        margin: 0 0 8px;
+        color: #3E4A3A;
+        font-weight: 600;
+    }
+
     .footer-note {
         border-top: 1px solid #CBDAD2;
         margin-top: 32px;
@@ -391,6 +455,32 @@ FEATURES = [
 ]
 
 # ─────────────────────────────────────
+# 도토리시 세계관
+# 모든 활동은 가상의 도시 '도토리시' 곳곳에서 일어나요. (실제 지역·기관과 관계없음)
+# 번호: (장소 아이콘, 동네, 장소, 들어갈 때 보이는 한 줄 소개)
+# ─────────────────────────────────────
+
+CITY_INTRO = (
+    "도토리시는 다람쥐처럼 부지런한 시민들이 사는 가상의 도시예요. "
+    "그런데 요즘 도시 곳곳에 수상한 연락과 소문이 돌고 있어요. "
+    "장소를 하나씩 돌며 시민들을 지켜 주세요!"
+)
+
+PLACES = {
+    "01": ("🏡", "상수리동", "할머니 댁", "주말 오전, 할머니 댁에 놀러 왔어요. 그런데 할머니 휴대전화가 자꾸 울려요."),
+    "02": ("🎙️", "시청로", "시민훈련센터 대화 연습실", "수상한 연락에 어떻게 답할지, 실제로 받기 전에 미리 연습하는 곳이에요."),
+    "03": ("🗝️", "다람쥐동", "민서네 집", "도토리시 사건 파일 01. 같은 엄마 번호로 서로 다른 연락이 왔어요."),
+    "04": ("🚧", "도토리역 앞", "사이버 검문소", "링크가 도시 안으로 들어오기 전에, 주소부터 꼼꼼히 검문해요."),
+    "05": ("📚", "시청로", "도토리 시립도서관", "체험에서 만난 수법의 뜻과 공식 통계를 찾아 읽는 곳이에요."),
+    "06": ("⛲", "중앙동", "도토리 광장", "광장에서 시작된 가짜 소식이 이웃을 타고 번지고 있어요."),
+    "07": ("🚑", "중앙동", "시민안전센터", "실제 상황에서 쓰는 진짜 대처 안내예요."),
+    "08": ("🪪", "시청로", "시민 등록소", "질문에 답하면 나의 피싱 대처유형이 적힌 결과 카드를 받아요."),
+    "09": ("🏫", "떡갈나무동", "도토리고 2학년 3반 단톡방", "우리 반 단톡방에 친구를 사칭한 계정이 숨어들었어요."),
+    "10": ("🛒", "개암골", "도토리 중고마켓", "인기 운동화를 둘러싼 거래 중 진짜 판매자는 단 한 명이에요."),
+}
+
+
+# ─────────────────────────────────────
 # 홈
 # ─────────────────────────────────────
 
@@ -418,6 +508,19 @@ def show_home():
             icon="📱",
         )
 
+    st.subheader("🌰 도토리시 지도")
+    st.markdown(
+        f'<div class="city-intro"><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}</div>',
+        unsafe_allow_html=True,
+    )
+    with st.container(key="dotori_map"):
+        # 두 칸씩 한 줄로 만들어, 휴대폰에서도 같은 순서로 보이게 해요.
+        for i, (number, title, icon, path, steps, description) in enumerate(FEATURES):
+            if i % 2 == 0:
+                map_cols = st.columns(2)
+            place_icon, town, place, _ = PLACES[number]
+            map_cols[i % 2].page_link(path, label=f"{town} · {place}", icon=place_icon, width="stretch")
+
     st.subheader("어떤 활동을 해볼까요?")
     st.caption(
         "원하는 활동부터 시작해도 괜찮아요."
@@ -425,6 +528,11 @@ def show_home():
 
     for number, title, icon, path, steps, description in FEATURES:
         with st.container(border=True):
+            place_icon, town, place, _ = PLACES[number]
+            st.markdown(
+                f'<span class="place-tag">{place_icon} {html.escape(town)} · {html.escape(place)}</span>',
+                unsafe_allow_html=True,
+            )
             st.markdown(f"### {icon} {title}")
             st.write(description)
             st.caption(steps)
@@ -539,9 +647,18 @@ if current:
         description,
     ) = current
 
+    place_icon, town, place, place_line = PLACES[number]
+    # 실제 피해 안내(07)는 급한 사람이 바로 읽도록 세계관 문구를 붙이지 않아요.
+    place_html = (
+        ""
+        if number == "07"
+        else f'<span class="place">{place_icon} 도토리시 {html.escape(town)} · {html.escape(place)}</span>'
+        f'<p class="place-line">{html.escape(place_line)}</p>'
+    )
     st.markdown(
         (
             '<div class="route">'
+            f"{place_html}"
             # 번호는 보여 주지 않고, 긴급 안내(07)만 표시를 붙입니다.
             f"<strong>{'🚨 긴급 안내 · ' if number == '07' else ''}"
             f"{html.escape(title)} 이용 순서</strong>"
