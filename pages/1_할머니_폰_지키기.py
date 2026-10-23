@@ -724,6 +724,7 @@ def show_ending(game):
         # 결말만 이름 없이 숫자로 통계에 더해요.
         dd.record("grandma", {"plays": 1, f"end_{ending}": 1})
         dd.note_mine("grandma", f"결말: {title}")
+        dd.stamp("01")
         scroll_top()
         drumroll((("🥁", "두구두구…"), ("📱", "할머니 휴대전화를 확인하는 중…"), ("👵", "그날 오전의 결말은?")))
     stamp = {
