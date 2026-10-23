@@ -2,21 +2,8 @@ import html
 
 import streamlit as st
 import streamlit.components.v1 as components
-from mascot_ui import show_mascot
+from mascot_ui import ID_PHOTOS, id_photo, show_mascot
 import dotori_data as dd
-
-
-# 사이드바 시민증에 넣는 깡지 증명사진(표정·배경이 조금씩 다른 4장)
-ID_PHOTOS = ["ggangji_id_green.png", "ggangji_id_blue.png", "ggangji_id_pink.png", "ggangji_id_cream.png"]
-
-
-@st.cache_data(show_spinner=False)
-def id_photo(filename):
-    """assets 폴더의 증명사진을 화면에 넣을 수 있게 base64 글자로 바꿔요."""
-    import base64
-    from pathlib import Path
-
-    return base64.b64encode((Path(__file__).resolve().parent / "assets" / filename).read_bytes()).decode()
 
 
 st.set_page_config(
@@ -674,7 +661,7 @@ with st.sidebar:
             st.session_state["photo_i"] = st.session_state.get("photo_i", -1) + 1
         photo = ID_PHOTOS[st.session_state["photo_i"] % len(ID_PHOTOS)]
         if me and len(dd.stamps()) == len(dd.STAMP_PLACES):
-            photo = "ggangji_id_cream.png"
+            photo = "ggangji_cream.png"
         try:
             pic_html = (
                 f'<img src="data:image/png;base64,{id_photo(photo)}" alt="깡지 증명사진" '
