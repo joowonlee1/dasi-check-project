@@ -393,6 +393,7 @@ event = dd.take_event(value)
 if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2):
     s, stars, hints = int(event["stage"]), int(event.get("stars", 0)), int(event.get("hints", 0))
     dd.record("nono", {f"s{s}_clear": 1, f"s{s}_nohint": 1 if hints == 0 else 0, f"s{s}_star3": 1 if stars == 3 else 0})
+    dd.stamp("12")
 elif event and event.get("type") == "final":
     stars, hints = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("hints", 0)))
     dd.record("nono", {"finals": 1})
