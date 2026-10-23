@@ -56,7 +56,7 @@ def show_mascot(pose, message="", width=130):
     st.markdown(
         f'<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;'
         f'background:#FFFFFF;border:1px solid #E4E9DD;border-radius:20px;'
-        f'padding:12px 16px;margin:8px 0 18px;">'
+        f'padding:8px 14px;margin:4px 0 10px;">'
         f'<img src="data:image/png;base64,{encoded}" alt="{label}" '
         f'style="width:{width}px;max-width:100%;height:auto;flex-shrink:0;">'
         f'<div style="flex:1;min-width:100px;color:#24443B;font-size:1.05rem;'
@@ -70,8 +70,8 @@ def show_key_question(text, icon="💡"):
     body = re.sub(r"\*\*(.+?)\*\*", r'<b style="color:#B4471B;">\1</b>', html.escape(text))
     st.markdown(
         f'<div style="background:linear-gradient(135deg,#FFF4E8,#EAF6F1);border-left:8px solid #FF7A45;'
-        f'border-radius:18px;padding:18px 20px;margin:6px 0 16px;box-shadow:0 4px 14px rgba(32,72,63,.08);">'
-        f'<div style="font-size:1.35rem;font-weight:900;color:#20483F;line-height:1.6;word-break:keep-all;">'
+        f'border-radius:18px;padding:12px 18px;margin:4px 0 10px;box-shadow:0 4px 14px rgba(32,72,63,.08);">'
+        f'<div style="font-size:1.25rem;font-weight:900;color:#20483F;line-height:1.55;word-break:keep-all;">'
         f'{icon} {body}</div></div>',
         unsafe_allow_html=True,
     )
