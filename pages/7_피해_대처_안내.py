@@ -2,6 +2,7 @@
 import streamlit as st
 from mascot_ui import show_mascot
 import dotori_data as dd
+from card_ui import show_result_card
 
 CHECKED = "2026-10-22"
 ICONS = {
@@ -130,8 +131,22 @@ def main():
         st.markdown("- [Msafer 명의도용방지서비스](https://www.msafer.or.kr)")
         st.caption("이 사이트들은 별도 외부 서비스입니다. 주소를 확인하고 안전한 기기에서 이용하세요.")
     if selected:
-        st.download_button("선택한 대처 안내 내려받기", checklist(selected).encode("utf-8-sig"),
-                           file_name="jamkkan_help.txt", mime="text/plain")
+        # 긴 글 파일 대신, 고른 상황의 '지금 할 일'과 연락처를 담은 카드(사진)로 저장해요.
+        st.markdown("#### 🖼️ 지금 할 일 카드")
+        chosen = [name for name in GUIDES if name in selected]
+        show_result_card(
+            {
+                "color": "#B42318", "place": "시민안전센터", "game": "피해가 의심될 때", "emoji": "🚨",
+                "title": "지금 바로 할 일", "subtitle": "멈추고 바로 연락",
+                "note": ["증거 정리보다 연락이 먼저예요.", "자세한 절차는 각 기관 안내를 따르세요."],
+                "stats": [("범죄 피해 신고", "112"), ("해킹·스미싱 상담", "118")],
+                "sections": [(f"{ICONS[name]} {name}", GUIDES[name][:2]) for name in chosen[:3]],
+                "mascot": "phone",
+            },
+            "jamkkan_help_card.png",
+        )
+        if len(chosen) > 3:
+            st.caption("카드에는 처음 고른 상황 3개만 들어가요. 나머지 상황은 위 안내에서 확인하세요.")
     st.subheader("공식 출처")
     for title, url in SOURCES.items():
         st.markdown(f"- [{title}]({url})")
