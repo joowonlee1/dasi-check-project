@@ -832,6 +832,7 @@ def show_ending():
     hint_count = sum(game["hints"].values())
     title, story = ending()
 
+    dd.stamp("03")
     show_mascot("escape", "탈출 성공! 근거를 비교하고 직접 확인했어요.", width=160)
     st.success("🚪 잠금 해제! 사건의 확인 경로를 완성했습니다.")
     st.subheader(title)
