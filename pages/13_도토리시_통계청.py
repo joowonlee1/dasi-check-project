@@ -26,6 +26,7 @@ CODES = [a + b + c + d for a in "QS" for b in "RE" for c in "IT" for d in "HB"]
 st.title("📈 도토리시 통계청")
 show_key_question("시민들이 게임에서 남긴 **진짜 기록**으로, 사람들이 **어디서 많이 속는지** 살펴봐요.", "📊")
 show_mascot("hint", "숫자는 처음엔 0이에요. 누군가 게임을 끝낼 때마다 하나씩 늘어나요!", width=100)
+dd.stamp("13")
 
 
 def bar(rows, label, value, unit="%"):
