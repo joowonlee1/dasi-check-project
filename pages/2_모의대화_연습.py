@@ -5,6 +5,7 @@ import time
 
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
+import dotori_data as dd
 from google import genai
 from google.genai import types, errors
 
@@ -975,6 +976,7 @@ if state["report"] is not None:
     fresh = not state.get("report_shown")
     state["report_shown"] = True
     if fresh:
+        dd.stamp("02")
         drumroll((("🥁", "두구두구…"), ("📋", "나의 대응 리포트 도착!")))
     st.markdown(
         f'<div class="zz-card win{" go" if fresh else ""}" style="background:linear-gradient(135deg,#EEF2FF,#E1F3EA);'
@@ -1111,6 +1113,8 @@ else:
     elif state["ended"]:
         fresh = not state.get("end_shown")
         state["end_shown"] = True
+        if fresh:
+            dd.stamp("02")
         st.markdown(
             f'<div class="zz-card win{" go" if fresh else ""}" style="background:linear-gradient(135deg,#FFF4E8,#E1F3EA);'
             'border-radius:22px;padding:18px;margin:10px 0;text-align:center;">'
