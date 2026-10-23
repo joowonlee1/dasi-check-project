@@ -4,6 +4,7 @@ from urllib.parse import urlsplit, unquote
 
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
+import dotori_data as dd
 
 
 # 이 목록은 모든 단축 주소 서비스를 포함하지 않습니다.
@@ -420,6 +421,7 @@ if submitted:
         st.warning(str(error))
 
     else:
+        dd.stamp("04")
         st.subheader("주소에서 읽은 실제 호스트명")
 
         # 클릭 가능한 링크 대신 일반 코드로 표시합니다.
@@ -488,6 +490,7 @@ if message_submitted:
         st.warning(str(error))
 
     else:
+        dd.stamp("04")
         links = report["links"]
         signs = report["signs"]
 
