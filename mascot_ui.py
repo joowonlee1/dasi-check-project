@@ -83,13 +83,15 @@ ID_PHOTOS = ["ggangji_citizen_photo.png", "ggangji_blue.png", "ggangji_pink.png"
 
 @st.cache_data(show_spinner=False)
 def id_photo(filename):
-    """증명사진 위쪽 빈 공간을 조금 잘라 작게 줄인 뒤 PNG(base64)로 돌려줘요."""
+    """증명사진에서 얼굴부터 어깨 맨 위까지만 잘라 작게 줄인 뒤 PNG(base64)로 돌려줘요."""
     from PIL import Image
 
     path = Path(__file__).resolve().parent / "assets" / filename
     with Image.open(path) as image:
         w, h = image.size
-        part = image.convert("RGB").crop((0, int(h * 0.097), w, h)).resize((180, 240))
+        # 원본(1086×1448) 기준 얼굴 양옆 빈 곳과 몸통을 덜어 내는 비율이에요.
+        box = (int(w * 0.037), int(h * 0.207), int(w * 0.963), int(h * 0.822))
+        part = image.convert("RGB").crop(box).resize((240, 212))
     buffer = io.BytesIO()
     part.save(buffer, format="PNG", optimize=True)
     return base64.b64encode(buffer.getvalue()).decode()
