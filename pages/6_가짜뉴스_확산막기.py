@@ -103,6 +103,14 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .post .ava{font-size:30px}.post .acc{font-size:.85rem;font-weight:800;color:#B4471B}
 .post .txt{font-weight:800;font-size:1.05rem;word-break:keep-all}
 .tip{background:#F0F7F3;border-left:5px solid #0F766E;border-radius:10px;padding:9px 12px;font-weight:700;word-break:keep-all}
+.readme{position:absolute;inset:0;z-index:5;background:rgba(255,252,244,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;text-align:center;word-break:keep-all;animation:pop .45s ease-out both}
+.readme .rm-tag{font-weight:900;color:#B4471B;font-size:1.05rem}
+.readme .rm-post{background:#fff;border:3px solid #FF9A62;border-radius:18px;padding:16px 18px;max-width:560px;box-shadow:0 6px 18px rgba(180,71,27,.15)}
+.readme .rm-post .acc{font-size:.9rem;font-weight:800;color:#B4471B;margin-bottom:6px}
+.readme .rm-post .txt{font-size:1.3rem;font-weight:900;color:#1F2D29;line-height:1.5}
+.readme .rm-tip{font-weight:700;color:#33524A}
+.board.locked{min-height:400px}
+@media (max-width:560px){.readme{gap:10px;padding:12px}.readme .rm-post{padding:12px 14px}.readme .rm-post .txt{font-size:1.1rem}}
 .board{position:relative;background:radial-gradient(circle at 30% 20%,#F4FBF7,#E2EFE8);border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
 svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .edge{stroke:#B7CBC2;stroke-width:2.5}
@@ -333,7 +341,7 @@ function startStage(idx){
   clearInterval(timer); clearTimeout(timer); timer = null;
   G.stage = idx;
   const g = makeGraph(idx);
-  S = {g, st: ST[idx], state: g.pts.map(() => 'S'), cards: ST[idx].cards, phase: 'prep', pre: 1, tickNo: 0, levels: [], quizFor: null, used: []};
+  S = {g, st: ST[idx], state: g.pts.map(() => 'S'), cards: ST[idx].cards, phase: 'prep', pre: 1, tickNo: 0, levels: [], quizFor: null, used: [], read: false};
   g.sources.forEach(s => S.state[s] = 'I');
   render();
   toTop();
@@ -354,7 +362,11 @@ function render(){
   <div class="hud"><span class="cards">🃏 남은 카드 ${S.cards}장 (1장 = 1명 지키기·정정)</span><span>🔴 속은 사람 ${c.I}명</span><span>🛡️ 지킨 사람 ${c.R}명</span><span>💬 정정한 사람 ${c.C}명</span><span>⚪ 아직 모르는 사람 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
   <div class="todo" id="now"></div>
   ${S.phase === 'prep' ? `<button class="go" style="width:100%;margin-bottom:8px" onclick="run()" ${S.pre ? 'disabled' : ''}>${S.pre ? '🔒 지킬 사람 1명을 먼저 골라야 시작할 수 있어요' : '▶ 소문 퍼지기 시작'}</button>` : ''}
-  <div class="board"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg></div>
+  <div class="board${S.read ? '' : ' locked'}"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg>${S.read ? '' : `
+    <div class="readme"><div class="rm-tag">📢 방금 올라온 소식</div>
+      <div class="rm-post"><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div>
+      <div class="rm-tip">이 소식이 마을에 퍼지려고 해요. 어디가 수상한지 생각해 보고 막으러 가요!</div>
+      <button class="go" onclick="S.read=true;render()">읽었어요, 막으러 가기 ▶</button></div>`}</div>
   <div class="keys"><div><em>⚪ 👆</em>아직 모르는 사람 → 🛡️ 지킴</div><div><em>🔴 👆</em>속은 사람 → 💬 근거 있는 정정</div><div><em>📢</em>눌러도 소용없음</div><div><em>🃏 ${S.cards}</em>남은 카드 · 1장으로 1명</div></div>
   <div class="dialog" id="dlg" hidden></div>
   <div class="toast" id="toast" aria-live="polite"></div>
