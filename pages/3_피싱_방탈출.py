@@ -1123,6 +1123,16 @@ def show_entry():
             "초기화되는 것에 동의합니다."
         )
 
+    # 동의 체크칸이 작아서 놓치지 않게, 체크 상자와 글씨를 크게 보여 줘요.
+    st.markdown(
+        """<style>
+        [data-testid="stCheckbox"] label {align-items: center; padding: 6px 0;}
+        [data-testid="stCheckbox"] label > div:not([data-testid]) {transform: scale(1.7); margin: 0 .9rem 0 .4rem;}
+        [data-testid="stCheckbox"] label [data-testid="stMarkdownContainer"] p {font-size: 1.15rem !important; font-weight: 800 !important;}
+        .st-key-room_ready {background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 14px; padding: 8px 12px;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
     ready = st.checkbox(
         "안내서의 ‘⚠️ 꼭 알아야 할 7가지’를 확인했어요.",
         key="room_ready",
