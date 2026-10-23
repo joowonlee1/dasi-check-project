@@ -495,6 +495,7 @@ def show_reveal():
     if s.pop("fresh", False):
         if dd.once(f"mafia-{s.get('gid')}-{s['case']}"):
             dd.record("mafia", {f"c{s['case']}_plays": 1, f"c{s['case']}_win": 1 if result["winners"] else 0})
+        dd.stamp("09")
         drumroll()
     answer = case["answer"]
     emoji = FRIENDS[answer][0]
