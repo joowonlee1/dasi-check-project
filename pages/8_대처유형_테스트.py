@@ -231,7 +231,7 @@ CSS = """
 
   display:flex;align-items:center;justify-content:center;font-size:64px;animation:jk-bounce 1.8s 1s ease-in-out infinite;}
 
-.jk-emblem {background:transparent;} .jk-emblem img {width:116px;height:116px;object-fit:contain;border-radius:0;} .jk-mascot-mini{height:110px;display:flex;justify-content:center;align-items:center;}
+.jk-emblem {background:transparent;} .jk-emblem img {width:116px;height:116px;object-fit:contain;border-radius:0;} .jk-mascot-mini{display:flex;justify-content:center;align-items:center;width:100%;margin:0 auto 12px;} .jk-mascot-mini svg{display:block;width:min(100%,240px);height:auto;aspect-ratio:3 / 2;}
 
 .jk-name {font-size:2.1rem;font-weight:900;margin:6px 0 2px;word-break:keep-all;}
 
@@ -315,18 +315,20 @@ CSS = """
 
   color:#20483F;font-size:1.15rem;margin:22px 0 8px;}
 
-.jk-gallery {display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.jk-gallery {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
 
-.jk-mini {border-radius:16px;padding:10px 4px;text-align:center;color:#1E3A34;word-break:keep-all;}
+.jk-mini {min-width:0;border-radius:22px;padding:20px 12px 14px;text-align:center;color:#173B34;word-break:keep-all;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;}
 
-.jk-mini div {font-size:30px;}
+.jk-mini-label {background:rgba(255,255,255,.9);border-radius:14px;padding:12px 6px;box-sizing:border-box;}
 
-.jk-mini b {display:block;font-size:.85rem;}
+.jk-mini .jk-mini-label b {display:block;font-size:1.25rem;font-weight:900;line-height:1.4;letter-spacing:-.03em;color:#173B34;}
 
-.jk-mini small {letter-spacing:.12em;opacity:.75;font-size:.72rem;}
+.jk-mini .jk-mini-label small {display:block;margin-top:6px;letter-spacing:.14em;font-size:.85rem;font-weight:700;color:#48645D;}
 
 .jk-mini.me {outline:3px solid #20483F;}
 
+@media (min-width:641px) and (max-width:1000px) {.jk-gallery {grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media (max-width:640px) {.jk-gallery{gap:10px;} .jk-mini{padding:14px 8px 10px;border-radius:18px;} .jk-mini .jk-mini-label b{font-size:1.05rem;} .jk-mini-label{padding:10px 4px;} }
 @media (max-width:640px) {.jk-decode,.jk-gallery {grid-template-columns:repeat(2,1fr);} .jk-axes {grid-template-columns:1fr;}}
 
 @keyframes jk-pulse {0%,100%{transform:scale(1)} 50%{transform:scale(1.03)}}
@@ -653,7 +655,7 @@ def show_gallery(mine=None):
 
         f'style="background:linear-gradient(135deg,{TYPE_LOOK[c][1]},{TYPE_LOOK[c][2]});">'
 
-        f'<div class="jk-mascot-mini">{mascot_svg(c, size=100)}</div><b>{escape(TYPE_NAMES[c])}</b><small>{c}</small></div>'
+        f'<div class="jk-mascot-mini">{mascot_svg(c, size=240)}</div><div class="jk-mini-label"><b>{escape(TYPE_NAMES[c])}</b><small>{c}</small></div></div>'
 
         for c in TYPE_NAMES
 
@@ -938,3 +940,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
