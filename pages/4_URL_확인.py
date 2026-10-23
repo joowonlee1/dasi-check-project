@@ -237,10 +237,10 @@ def analyze_url(raw):
             ):
                 findings.append(
                     (
-                        f"익숙한 이름({name})이 들어 있지만, 비교할 도메인 경계는 {owner}예요.",
-                        "자신이 관리하는 도메인 앞부분에는 익숙한 기관 이름을 넣을 수도 있어요. "
-                        f"이 앱의 {name} 참고 주소({', '.join(sorted(official))})와 달라요. 참고 목록은 불완전하며 사칭 판정은 아닙니다. "
-                        "문자 속 링크 대신 평소 쓰던 앱이나 직접 찾은 공식 사이트에서 확인하세요.",
+                        f"{name} 이름이 들어 있지만, 진짜 주인은 {owner}예요.",
+                        f"{name}의 대표 공식 주소는 {', '.join(sorted(official))}인데, 이 주소의 주인은 달라요. "
+                        "주소 앞부분에는 누구나 익숙한 이름을 붙일 수 있어서, 공식 주소처럼 보이게 만든 것일 수 있어요. "
+                        "(이 앱의 공식 주소 목록에 없는 진짜 주소일 수도 있어요.)",
                     )
                 )
                 break
@@ -255,7 +255,7 @@ def analyze_url(raw):
                 (
                     f"로그인·인증을 떠올리게 하는 단어가 있어요 ({', '.join(words)}).",
                     "공식 사이트에도 쓰이는 단어지만, 피싱 주소가 믿음을 주려고 "
-                    "자주 넣는 단어예요. 위의 도메인 경계와 함께 확인하세요.",
+                    "자주 넣는 단어예요. 위의 진짜 주인 주소와 함께 확인하세요.",
                 )
             )
 
@@ -264,18 +264,18 @@ def analyze_url(raw):
         if extra.count(".") >= 2:
             findings.append(
                 (
-                    "도메인 경계 앞에 붙은 이름이 여러 겹이에요.",
-                    "정상 서비스도 여러 단계의 하위 도메인을 사용해요. "
-                    "오른쪽 끝의 도메인 경계을 먼저 보세요.",
+                    "진짜 주인 앞에 붙은 이름이 여러 겹이에요.",
+                    "정상 사이트도 앞에 이름을 여러 개 붙이기도 해요. "
+                    "오른쪽 끝의 진짜 주인 주소를 먼저 보세요.",
                 )
             )
 
     ext = None if is_ip else EXTRACT(host)
     if not is_ip and not owner:
-        findings.append(("도메인 경계를 확인하지 못했어요.",
+        findings.append(("진짜 주인 주소를 찾지 못했어요.",
                          "목록에 없는 끝부분 또는 접미사만 있는 주소예요. 존재 여부나 안전성은 판단할 수 없어요."))
     if ext and ext.is_private:
-        findings.append(("공유 호스팅의 사이트 경계예요.", "호스팅 회사 주소와 개별 사용자의 사이트를 구분합니다. 운영자 신원은 확인하지 않았어요."))
+        findings.append(("누구나 사이트를 만들 수 있는 호스팅 주소예요.", "호스팅 회사 주소 안에 개인이 만든 사이트예요. 호스팅 회사가 운영하는 사이트라는 뜻이 아니에요."))
     return {
         "suffix": ext.suffix if ext else "",
         "subdomain": ext.subdomain if ext else "",
@@ -386,7 +386,7 @@ def analyze_message(text):
             if result and result["owner"] and result["owner"] not in official:
                 signs.append(
                     (
-                        f"문자에서는 ‘{name}’이라고 하는데, 링크의 도메인 경계는 {result['owner']}예요.",
+                        f"문자에서는 ‘{name}’이라고 하는데, 링크의 진짜 주인은 {result['owner']}예요.",
                         "단축 주소이거나 다른 회사 주소라서, 링크만 보고는 정말 "
                         f"{name}에서 보낸 것인지 알 수 없어요. 링크를 누르지 말고 "
                         f"{name} 앱이나 직접 검색한 공식 사이트({', '.join(sorted(official))})에서 "
@@ -408,20 +408,27 @@ def analyze_message(text):
 
 
 def show_structure(result):
-    with st.expander("🔎 주소를 부분별로 펼쳐 보기", expanded=True):
-        st.table([
-            {"부분": "통신 방식", "값": result["scheme"], "뜻": "HTTPS도 기관 신원을 보증하지 않아요"},
-            {"부분": "호스트명", "값": result["host"], "뜻": "처음 연결 대상으로 지정한 서버 이름"},
-            {"부분": "국제화 표기", "값": result["unicode_host"], "뜻": "ASCII 표기와 함께 비교하세요"},
-            {"부분": "공개 접미사", "값": result["suffix"] or "확인 불가 / IP", "뜻": "co.kr 등, 공유 호스팅 접미사 포함"},
-            {"부분": "도메인 경계", "값": result["owner"] or "확인 불가 / IP", "뜻": "실제 소유자 확인 결과가 아니에요"},
-            {"부분": "하위 도메인", "값": result["subdomain"] or "없음", "뜻": "도메인 경계 앞에 붙인 이름"},
-            {"부분": "포트", "값": str(result["port"] if result["port"] is not None else (443 if result["scheme"] == "https" else 80)), "뜻": "미지정이면 방식의 기본값 표시"},
-            {"부분": "경로", "값": result["path"] or "/", "뜻": "사이트 안의 자원 위치"},
-            {"부분": "쿼리", "값": result["query"] or "없음", "뜻": "? 뒤의 전달 값. 개인정보를 넣지 마세요"},
-            {"부분": "프래그먼트", "값": result["fragment"] or "없음", "뜻": "# 뒤의 페이지 내 위치 등. HTTP 요청 자체에는 포함되지 않아요"},
-            {"부분": "사용자 정보", "값": "있음 (내용 숨김)" if result["userinfo"] else "없음", "뜻": "@ 앞부분은 호스트명이 아니에요"},
-        ])
+    # 전문 용어 대신 쉬운 말로 쓰고, 처음에는 접어 둬요. (궁금한 사람만 펼쳐 보기)
+    with st.expander("🔎 주소를 부분별로 자세히 보기"):
+        rows = [
+            {"부분": "통신 방식", "값": result["scheme"], "뜻": "https여도 진짜 기관이라는 보증은 아니에요"},
+            {"부분": "서버 이름(호스트)", "값": result["host"], "뜻": "실제로 접속하는 서버의 전체 이름"},
+        ]
+        if result["unicode_host"] != result["host"]:
+            rows.append({"부분": "한글 등으로 풀어 쓴 이름", "값": result["unicode_host"], "뜻": "xn--로 시작하는 주소를 글자로 바꾼 모습"})
+        rows += [
+            {"부분": "진짜 주인", "값": result["owner"] or "찾지 못함", "뜻": "주소 끝에서 찾은 이름. 이것이 아는 회사 주소와 같은지 보세요"},
+            {"부분": "앞에 붙은 이름", "값": result["subdomain"] or "없음", "뜻": "주인이 마음대로 붙일 수 있는 이름"},
+            {"부분": "끝부분", "값": result["suffix"] or "없음", "뜻": ".com, .co.kr 같은 공통 끝부분"},
+            {"부분": "포트", "값": str(result["port"] if result["port"] is not None else (443 if result["scheme"] == "https" else 80)), "뜻": "적지 않으면 기본 번호를 써요"},
+            {"부분": "경로", "값": result["path"] or "/", "뜻": "사이트 안의 어느 페이지인지"},
+            {"부분": "쿼리(? 뒤)", "값": result["query"] or "없음", "뜻": "서버로 보내는 값. 개인정보를 넣지 마세요"},
+            {"부분": "프래그먼트(# 뒤)", "값": result["fragment"] or "없음", "뜻": "페이지 안의 위치. 서버로 보내지 않아요"},
+            {"부분": "사용자 정보(@ 앞)", "값": "있음 (내용 숨김)" if result["userinfo"] else "없음", "뜻": "@ 앞부분은 주소가 아니에요"},
+        ]
+        for row in rows:  # 주소가 눌리는 링크로 바뀌지 않게 글자(코드)로 보여 줘요
+            row["값"] = f"`{row['값']}`"
+        st.table(rows)
 
 
 st.title("🔗 잠깐! · 의심 URL 확인")
@@ -446,45 +453,31 @@ if submitted:
 
     else:
         dd.stamp("04")
-        st.subheader("주소에서 읽은 실제 호스트명")
 
-        # 클릭 가능한 링크 대신 일반 코드로 표시합니다.
-        st.code(result["host"], language=None)
-        show_structure(result)
+        # ① 가장 중요한 것 하나: 이 주소의 진짜 주인
+        st.subheader("🏠 이 주소의 진짜 주인")
+        st.code(result["owner"] or result["host"], language=None)  # 누를 수 없게 글자로만 보여 줘요
+        st.caption("주소 맨 끝에서 찾은 이름이에요. 그 앞에 붙은 이름은 누구나 마음대로 붙일 수 있어요. "
+                   "이 이름이 내가 아는 회사의 공식 주소와 같은지 먼저 보세요.")
 
-        if result["owner"]:
-            st.markdown(f"**🏠 비교할 도메인 경계: `{result['owner']}`**")
-            st.caption(
-                "공개 접미사 목록(PSL)으로 경계를 나눴어요. 공유 호스팅의 개별 사이트도 구분해요. "
-                "실제 등록 여부·소유자·기관의 신원을 확인한 결과는 아니에요."
-            )
-
-        if result["assumed"]:
-            st.caption(
-                "프로토콜이 없어 분석할 때만 https://를 붙였어요. "
-                "실제 HTTPS 지원 여부를 확인한 것은 아닙니다."
-            )
-
+        # ② 확인할 점
         findings = result["findings"]
-
         if findings:
-            st.warning(f"확인할 특징이 {len(findings)}개 있어요.")
-
+            st.markdown(f"#### ⚠️ 확인할 점 {len(findings)}개")
             for title, description in findings:
                 with st.container(border=True):
                     st.markdown(f"**{title}**")
                     st.write(description)
-
         else:
-            st.info(
-                "현재 검사 규칙에 해당하는 특징을 찾지 못했어요. "
-                "안전한 사이트라는 뜻은 아닙니다."
-            )
+            st.info("검사 규칙에 걸리는 특징은 없었어요. 그래도 안전하다는 뜻은 아니에요.")
 
-        st.write(
-            "문자 속 주소와 별개로, 평소 이용하던 앱이나 "
-            "직접 확인한 공식 경로에서 관련 내용을 확인해 보세요."
-        )
+        # ③ 그래서 어떻게 하면 되는지
+        st.success("**이렇게 하세요** · 문자 속 링크는 누르지 말고, 평소 쓰던 앱이나 직접 검색한 공식 사이트에서 확인하세요.")
+
+        # ④ 궁금한 사람만 펼쳐 보는 자세한 내용
+        show_structure(result)
+        if result["assumed"]:
+            st.caption("주소에 https://가 없어서 분석할 때만 붙였어요.")
 
 st.divider()
 
@@ -536,7 +529,7 @@ if message_submitted:
                     continue
 
                 if result["owner"]:
-                    st.markdown(f"**🏠 도메인 경계: `{result['owner']}`**")
+                    st.markdown(f"**🏠 진짜 주인: `{result['owner']}`**")
 
                 if result["findings"]:
                     for title, description in result["findings"]:
