@@ -44,153 +44,152 @@ CASES = [
         ],
         "clues": {
             "민서": {
-                "profile": "사진·이름 그대로. 상태 메시지 ‘시험 끝나면 떡볶이🐣’는 2주 전에 바꾼 것.",
-                "question": "“3등!! 계주에서 지호가 넘어져서 ㅠㅠ 🐣” — 그날 있었던 일과 정확히 일치.",
-                "history": "평소: “오늘 급식 미쳤당 ㅋㅋㅋ 🐣” — 메시지 끝에 🐣를 거의 항상 붙임.",
+                "profile": "오늘 저녁 프로필 사진을 떡볶이 사진으로 바꿈. 상태 메시지 ‘시험 끝 🐣’.",
+                "question": "“3등!! 계주에서 지호가 넘어져서 ㅠㅠ 🐣”",
+                "history": "평소: “오늘 급식 미쳤당 ㅋㅋㅋ 🐣” — 메시지 끝에 🐣를 자주 붙임.",
             },
             "지호": {
-                "profile": "사진·이름 그대로. 상태 메시지 없음(원래 없음).",
-                "question": "“3등. 계주에서 내가 넘어짐” — 정확함. 본인 실수까지 말함.",
+                "profile": "사진·이름 그대로. 상태 메시지 없음.",
+                "question": "“3등. 계주에서 내가 넘어짐”",
                 "history": "평소: “냄”, “ㅇㅇ”, “자러감” — 대부분 두세 글자.",
             },
             "하준": {
-                "profile": "오늘 이름이 ‘하준(액정깨짐)’으로 바뀜. 사진은 그대로.",
-                "question": "“3등이잖아ㄹㅇ 지호넘어진거평생놀릴거임” — 정확함.",
+                "profile": "오늘 이름을 ‘하준(액정깨짐)’으로 바꿈. 사진은 그대로.",
+                "question": "“3등이잖아ㄹㅇ 지호넘어진거평생놀릴거임”",
                 "history": "평소에도 띄어쓰기를 거의 안 하고 ‘ㄹㅇ’를 자주 씀.",
             },
             "서연": {
                 "profile": "사진·이름 그대로. 상태 메시지 ‘2-3 반장 📋’.",
-                "question": "“3등이요! 계주 진짜 아쉬웠죠 ㅠ” — 정확함.",
+                "question": "“3등이요! 계주 진짜 아쉬웠죠 ㅠ”",
                 "history": "공지는 늘 ‘담임쌤 공지’라고 밝히고 학교 알림 앱 링크만 올림. ‘~해 주세요!’ 말투.",
             },
             "도윤": {
-                "profile": "오늘 21:20에 프로필 사진이 기본 이미지로 바뀌고 상태 메시지가 지워짐.",
-                "question": "“아 그건 기억 안 나 ㅋㅋ 지금 그게 중요한 게 아니라 인증번호 먼저 ㅠ” — 질문을 피함.",
+                "profile": "사진·이름 그대로. 오늘 상태 메시지를 지움.",
+                "question": "“아 그건 기억 안 나 ㅋㅋ 지금 그게 중요한 게 아니라 인증번호 먼저 ㅠ”",
                 "history": "평소: “형 ㄱㄱ”, “ㅇㅋㅇㅋ” — 친구들에게 존댓말을 쓴 적이 한 번도 없음.",
             },
         },
         "answer": "도윤",
         "decisive": [
-            "대화 직전(21:20)에 프로필 사진이 기본 이미지로 바뀌었어요.",
             "둘만 아는 질문(체육대회 등수)에 답하지 않고 인증번호 이야기로 돌렸어요.",
             "존댓말을 안 쓰는 도윤이 “부탁드려요”라고 썼어요. 말투가 한 번 미끄러졌죠.",
-            "무엇보다 **인증번호는 친구에게도 불러 줄 이유가 없는 정보**예요.",
+            "무엇보다 **인증번호는 친구에게도 불러 줄 이유가 없는 정보**예요. ‘잘못 갔다’는 말 자체가 사칭범의 대표 수법이에요.",
         ],
         "traps": [
-            "하준의 ‘액정깨짐’ 이름 변경은 진짜였어요. 질문에 정확히 답했고, 말투도 평소와 같았어요.",
+            "프로필을 바꾼 사람은 민서와 하준이었지만 둘 다 진짜였어요. 프로필 변화만으로는 판단할 수 없어요.",
             "서연의 링크는 늘 그렇듯 ‘담임쌤 공지’와 학교 알림 앱이었어요.",
         ],
-        "missed": "가짜 도윤은 민서에게서 [가상 인증번호]를 받아 진짜 도윤의 계정을 가져갔어요.",
+        "missed": "가짜 도윤은 민서에게서 [가상 인증번호]를 받아 민서의 계정까지 가져갔어요.",
     },
     {
-        "title": "사건 2 · 수학여행 사진 앨범",
+        "title": "사건 2 · 반티 대금",
         "stars": "★★★★☆",
         "question": "수학여행 장기자랑 때 우리 반 뭐 했지?",
         "chat": [
             ("19:10", "민서", "나 내일 매점 천 원만 빌려줄 사람 🐣 지갑 두고 옴 ㅠㅠ"),
             ("19:11", "하준", "ㄴㄴ지난번에빌려간거부터갚으셈ㅋㅋ"),
             ("19:12", "지호", "내가 줌"),
-            ("19:40", "서연", "여러분! 수학여행 사진 앨범이 올라왔습니다~ 선생님께서 공유해 주셨어요"),
-            ("19:40", "서연", "[가상 링크] 들어가서 학교 계정으로 로그인하면 원본 받을 수 있어요! 오늘까지만 열려 있대요"),
-            ("19:42", "도윤", "오 내 골 세리머니 사진 있냐ㅋㅋ 형들 빨리 봐"),
-            ("19:43", "지호", "학교 앱엔 없던데"),
-            ("19:43", "서연", "앱이 오류라서 따로 올렸대요~ 마감 전에 빨리 받아 가세요!"),
-            ("19:45", "하준", "나이미로그인함ㅋㅋ근데사진안뜨는데?"),
+            ("19:40", "서연", "여러분! 반티 대금 1인 15,000원 오늘 밤 10시까지 입금해 주세요~ 선생님께서 급하다고 하셨어요"),
+            ("19:40", "서연", "원래 계좌가 막혀서 이번엔 제 사촌 언니 계좌로 받아요! [가상 계좌번호] 10시 넘으면 주문이 취소된대요"),
+            ("19:42", "도윤", "오 반티 나오냐ㅋㅋ 형들 빨리 보내"),
+            ("19:43", "지호", "반 돈은 스쿨뱅킹으로 걷지 않음?"),
+            ("19:43", "서연", "이번엔 시간이 없어서요~ 입금하고 이름만 남겨 주세요!"),
+            ("19:45", "하준", "나보냈음ㅋㅋ근데입금자명뭐로함?"),
         ],
         "clues": {
             "민서": {
-                "profile": "사진·이름 그대로.",
-                "question": "“아이돌 춤!! 하준이 센터였잖아 🐣” — 정확함.",
+                "profile": "사진·이름 그대로. 상태 메시지 ‘시험 끝 🐣’.",
+                "question": "“아이돌 춤!! 하준이 센터였잖아 🐣”",
                 "history": "가끔 천 원, 이천 원을 빌리고 다음 날 “어제 빌린 거 갚음 🐣”이라고 남김.",
             },
             "지호": {
-                "profile": "사진·이름 그대로.",
-                "question": "“아이돌 춤. 하준 센터” — 정확함.",
-                "history": "평소: “학교 앱 확인함”, “공지 봄” — 링크보다 학교 앱을 먼저 확인하는 편.",
+                "profile": "사진·이름 그대로. 상태 메시지 없음.",
+                "question": "“아이돌 춤. 하준 센터”",
+                "history": "평소: “학교 앱 확인함”, “공지 봄” — 무엇이든 학교 앱부터 확인하는 편.",
             },
             "하준": {
-                "profile": "이름이 다시 ‘하준’으로 돌아옴(액정 수리 완료). 사진 그대로.",
-                "question": "“아이돌춤ㄹㅇ내가센터였지ㅋㅋ” — 정확함.",
-                "history": "평소에도 일단 눌러 보고 나중에 묻는 편.",
+                "profile": "이름을 ‘하준’으로 바꿈. 상태 메시지 ‘액정 고침 ㅎㅎ’.",
+                "question": "“아이돌춤ㄹㅇ내가센터였지ㅋㅋ”",
+                "history": "평소에도 일단 해 보고 나중에 묻는 편.",
             },
             "서연": {
-                "profile": "사진·이름·상태 메시지 모두 그대로. 겉보기엔 변화가 없음.",
-                "question": "“사진 받아 보면 다 나와 있어요~ 링크부터 들어가 봐요!” — 질문에 답하지 않음.",
-                "history": "공지할 때 늘 ‘담임쌤 공지’라고 쓰고 학교 알림 앱 링크만 공유함. ‘선생님께서’라고 쓴 적도, 마감을 재촉한 적도 없음.",
+                "profile": "사진·이름 그대로. 상태 메시지 ‘2-3 반장 📋’.",
+                "question": "“그건 나중에 얘기해요~ 입금 마감이 얼마 안 남았어요!”",
+                "history": "반 돈은 늘 ‘담임쌤 공지’와 함께 스쿨뱅킹으로만 걷음. 개인 계좌를 올린 적도, 마감을 재촉한 적도 없음.",
             },
             "도윤": {
                 "profile": "3일 전 축구 경기 사진으로 프로필 변경.",
-                "question": "“아이돌 춤 ㅋㅋ 하준 센터 ㅇㅋㅇㅋ” — 정확함.",
+                "question": "“아이돌 춤 ㅋㅋ 하준 센터 ㅇㅋㅇㅋ”",
                 "history": "평소: “형들 경기 보러 와 ㅇㅋㅇㅋ” — 말투 그대로.",
             },
         },
         "answer": "서연",
         "decisive": [
             "프로필은 그대로였어요. **계정을 통째로 빼앗기면 겉모습은 똑같아요.**",
-            "학교 앱이 아닌 링크 + 학교 계정 로그인 + ‘오늘까지만’이라는 재촉이 한꺼번에 나왔어요.",
+            "학교 스쿨뱅킹이 아닌 **다른 사람 이름의 계좌** + ‘10시까지’라는 재촉이 한꺼번에 나왔어요.",
             "‘담임쌤 공지’라고 쓰던 서연이 ‘선생님께서’라고 쓰고, 둘만 아는 질문은 피했어요.",
-            "지호가 학교 앱에 없다고 하자 ‘앱 오류’라고 둘러댔어요.",
+            "지호가 스쿨뱅킹을 묻자 ‘시간이 없어서’라고 둘러댔어요.",
         ],
         "traps": [
             "민서의 돈 부탁은 진짜였어요. 액수가 작고, 내일 직접 만나 받는 부탁이었고, 평소에도 꼭 갚았어요.",
             "도윤의 프로필 변경은 3일 전 경기 사진이었어요.",
-            "하준은 마피아가 아니라 **이미 링크에 로그인한 피해자**예요.",
+            "하준은 마피아가 아니라 **이미 돈을 보낸 피해자**예요.",
         ],
-        "missed": "가짜 서연의 링크로 하준을 포함한 여러 친구의 학교 계정이 넘어갔어요.",
+        "missed": "가짜 서연의 계좌로 하준을 포함한 여러 친구가 반티 대금을 보냈어요.",
     },
     {
-        "title": "사건 3 · 다들 해 봤대",
+        "title": "사건 3 · 다들 해 줬대",
         "stars": "★★★★★",
         "question": "오늘 급식 후식 뭐였지?",
         "chat": [
-            ("23:48", "민서", "얘들아 이거 봄?? 학생 인증하면 기프티콘 준대 🐣 [가상 링크]"),
-            ("23:49", "하준", "ㄹㅇ?공짜?"),
-            ("23:51", "지호", "ㅇㅇ 나 해 봄 진짜 줌ㅋㅋ"),
-            ("23:51", "지호", "전화번호랑 [가상 인증번호] 넣으면 바로 옴 빨리 해 선착순임"),
-            ("23:53", "서연", "이런 이벤트는 학교에서 조심하라고 했던 것 같은데요…"),
-            ("23:54", "지호", "나 받았다니까 의심 ㄴㄴ 너네도 빨리"),
-            ("23:56", "도윤", "형들 나 폰 바꿈 새 번호 저장 ㄱㄱ"),
-            ("23:57", "하준", "나도해볼까"),
+            ("23:40", "민서", "누구 내일 아침에 편의점 가는 사람? 나 우유 하나만 🐣 돈은 등교해서 줄게"),
+            ("23:41", "하준", "내가감ㅋㅋ딸기우유?"),
+            ("23:48", "지호", "얘들아 나 게임 결제가 막혀서 그런데 편의점에서 기프트카드 5만 원짜리 사서 뒷면 [가상 핀번호] 사진만 찍어 줄 사람ㅋㅋ"),
+            ("23:49", "지호", "내일 바로 현금으로 줌 지난번에 도윤이도 해 줬음 빨리 ㅠ"),
+            ("23:51", "서연", "그런 부탁은 조심하라고 배웠던 것 같은데요…"),
+            ("23:52", "지호", "나라니까 의심 ㄴㄴ 오늘 안에 해야 됨"),
+            ("23:55", "도윤", "형들 나 폰 바꿈 새 번호 저장 ㄱㄱ"),
+            ("23:56", "하준", "편의점가는김에사다줄까"),
         ],
         "clues": {
             "민서": {
-                "profile": "사진·이름 그대로.",
-                "question": "“딸기 요거트!! 🐣 근데 이 링크 친척 언니가 보내 준 거라 올렸어” — 정확함.",
-                "history": "재미있어 보이는 걸 찾으면 바로 단톡방에 공유하는 편.",
+                "profile": "사진·이름 그대로. 상태 메시지 ‘시험 끝 🐣’.",
+                "question": "“딸기 요거트!! 🐣 근데 기프트카드 얘기 좀 이상하지 않아?”",
+                "history": "작은 심부름을 자주 부탁하고, 다음 날 꼭 돈을 갚음.",
             },
             "지호": {
-                "profile": "사진·이름 그대로. 변경 기록 없음.",
-                "question": "“그런 거 왜 물어봄ㅋㅋ 링크나 해” — 질문을 피함.",
-                "history": "평소: 매일 11시 전에 “자러감 ㅂㅂ”. ‘ㅋㅋ’를 거의 안 씀. 지난달에는 “이벤트 링크 다 사기임 누르지 마”라고 말함.",
+                "profile": "사진·이름 그대로. 상태 메시지 없음.",
+                "question": "“그런 거 왜 물어봄ㅋㅋ 사진이나 찍어 줘”",
+                "history": "평소: 매일 11시 전에 “자러감 ㅂㅂ”. ‘ㅋㅋ’를 거의 안 씀. 지난달에는 “기프트카드 번호 달라는 건 다 사기임”이라고 말함.",
             },
             "하준": {
-                "profile": "사진·이름 그대로.",
-                "question": "“딸기요거트ㄹㅇ맛있었음” — 정확함.",
-                "history": "평소 말투 그대로. 공짜라면 일단 관심부터 보이는 편.",
+                "profile": "사진·이름 그대로. 상태 메시지 ‘액정 고침 ㅎㅎ’.",
+                "question": "“딸기요거트ㄹㅇ맛있었음”",
+                "history": "평소 말투 그대로. 친구 부탁은 일단 들어주는 편.",
             },
             "서연": {
-                "profile": "사진·이름 그대로. (지난 사건 뒤 비밀번호를 바꾸고 2단계 인증을 켬)",
-                "question": "“딸기 요거트요! 근데 저 링크는 누르지 마세요 ㅠ” — 정확함.",
-                "history": "공지는 학교 알림 앱으로만. 지난 사건 뒤로 의심스러운 링크에 먼저 경고함.",
+                "profile": "사진·이름 그대로. 상태 메시지 ‘2-3 반장 📋’. (지난 사건 뒤 비밀번호를 바꾸고 2단계 인증을 켬)",
+                "question": "“딸기 요거트요! 근데 핀번호는 아무에게도 보내지 마세요 ㅠ”",
+                "history": "공지는 학교 알림 앱으로만. 지난 사건 뒤로 이상한 부탁에 먼저 경고함.",
             },
             "도윤": {
-                "profile": "오늘 23:55에 사진과 번호가 바뀜. 상태 메시지 ‘폰 바꿈 📱’.",
-                "question": "“딸기 요거트 ㅇㅋㅇㅋ 근데 형 나 진짜 폰 바꾼 거임” — 정확함.",
-                "history": "평소: “형 ㄱㄱ”, “ㅇㅋㅇㅋ” — 말투 그대로. 아무것도 요구하지 않음.",
+                "profile": "오늘 23:54에 사진과 번호가 바뀜. 상태 메시지 ‘폰 바꿈 📱’.",
+                "question": "“딸기 요거트 ㅇㅋㅇㅋ 근데 형 나 진짜 폰 바꾼 거임”",
+                "history": "평소: “형 ㄱㄱ”, “ㅇㅋㅇㅋ” — 말투 그대로. 아무것도 요구하지 않음. 지호에게 기프트카드를 사 준 적은 없음.",
             },
         },
         "answer": "지호",
         "decisive": [
-            "링크를 올린 민서는 진짜였어요. **진짜 친구도 모르고 사기 링크를 퍼뜨릴 수 있어요.**",
-            "마피아는 링크를 올린 사람이 아니라 “나도 해 봤어”라며 **부추긴 사람**이었어요.",
-            "11시 전에 자던 지호가 새벽에 ‘ㅋㅋ’를 쓰며, 사기라고 말했던 이벤트를 권했어요.",
+            "**기프트카드 뒷면 번호는 현금과 같아요.** 사진을 보내는 순간 돈이 넘어가요.",
+            "11시 전에 자던 지호가 새벽에 ‘ㅋㅋ’를 쓰며, 사기라고 말했던 부탁을 직접 했어요.",
+            "‘도윤이도 해 줬음’이라며 다른 친구를 끌어들였지만, 도윤은 그런 적이 없었어요.",
             "프로필 변화가 전혀 없었어요. 해킹된 계정은 겉모습이 똑같아요. 질문은 피했죠.",
         ],
         "traps": [
             "도윤의 사진·번호 변경은 가장 수상해 보였지만 진짜였어요. 질문에 정확히 답했고 아무것도 요구하지 않았어요.",
-            "민서는 마피아가 아니라 링크를 믿고 퍼뜨린 친구예요.",
+            "민서의 우유 부탁은 진짜였어요. 작은 금액을 내일 직접 만나서 주는 부탁이었어요.",
         ],
-        "missed": "‘지호도 받았대’라는 말을 믿은 친구들이 [가상 인증번호]를 넣어 계정을 빼앗겼어요.",
+        "missed": "‘내일 갚을게’라는 말을 믿은 하준이 기프트카드를 사서 [가상 핀번호] 사진을 보냈어요.",
     },
 ]
 
@@ -219,7 +218,10 @@ CSS = """
 .mf-friend div {font-size:34px;animation:mf-bounce 2.4s ease-in-out infinite;}
 .mf-friend b {display:block;color:#1E2F2B;}
 .mf-friend small {color:#3E5751;font-size:.78rem;line-height:1.35;display:block;}
-.mf-chat {background:#DCEAE3;border-radius:24px;padding:14px 12px;margin:8px 0 14px;}
+.mf-chat {background:#DCEAE3;border-radius:24px;padding:14px 12px;margin:8px 0 14px;max-height:620px;overflow-y:auto;}
+.mf-hero-sm {padding:12px 16px;border-radius:20px;}
+.mf-hero-sm b {font-size:1.3rem;margin:2px 0;}
+@media (max-width:640px) {.mf-chat {max-height:440px;}}
 .mf-chat-top {text-align:center;font-weight:800;color:#20483F;margin-bottom:8px;}
 .mf-msg {display:flex;gap:8px;align-items:flex-start;margin:8px 0;animation:mf-in .4s ease-out both;}
 .mf-ava {width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
@@ -439,46 +441,51 @@ def show_play():
     case = CASES[s["case"]]
     st.progress(s["case"] / len(CASES), text=f"사건 {s['case'] + 1} / {len(CASES)}")
     st.markdown(
-        f'<div class="mf-hero"><span>난이도 {case["stars"]}</span><b>{case["title"]}</b>'
+        f'<div class="mf-hero mf-hero-sm"><span>난이도 {case["stars"]}</span><b>{case["title"]}</b>'
         f'<span>이 대화방 안에 마피아가 한 명 숨어 있어요.</span></div>',
         unsafe_allow_html=True,
     )
-    st.markdown(chat_html(case), unsafe_allow_html=True)
+    # 넓은 화면에서는 대화(왼쪽)와 조사·투표(오른쪽)를 나란히 놓아 스크롤을 줄여요. 휴대폰에서는 위아래로 쌓여요.
+    chat_col, work_col = st.columns([1.1, 1], gap="medium")
+    with chat_col:
+        st.markdown(chat_html(case), unsafe_allow_html=True)
 
-    left = MAX_CHECKS - len(s["checks"])
-    dots = "🔍" * left + "▫️" * (MAX_CHECKS - left)
-    st.markdown(f'<div class="mf-left">🔎 조사하기 <span class="mf-dots">{dots}</span> 남은 횟수 {left}/{MAX_CHECKS}</div>',
-                unsafe_allow_html=True)
-    friend = st.pills("누구를 조사할까요?", list(FRIENDS), key=f"{KEY}_who_{s['case']}",
-                      format_func=lambda n: f"{FRIENDS[n][0]} {n}")
-    if friend:
-        cols = st.columns(3)
-        for col, (kind, label) in zip(cols, KINDS.items()):
-            done = (friend, kind) in s["checks"]
-            col.button(label + (" ✓" if done else ""), key=f"{KEY}_{s['case']}_{friend}_{kind}",
-                       disabled=done or left == 0, width="stretch", on_click=investigate, args=(friend, kind))
-    if left == 0:
-        st.caption("조사를 모두 썼어요. 이제 수사 노트를 보고 투표하세요.")
+    with work_col:
+        left = MAX_CHECKS - len(s["checks"])
+        dots = "🔍" * left + "▫️" * (MAX_CHECKS - left)
+        st.markdown(f'<div class="mf-left">🔎 조사하기 <span class="mf-dots">{dots}</span> 남은 횟수 {left}/{MAX_CHECKS}</div>',
+                    unsafe_allow_html=True)
+        friend = st.pills("누구를 조사할까요?", list(FRIENDS), key=f"{KEY}_who_{s['case']}",
+                          format_func=lambda n: f"{FRIENDS[n][0]} {n}")
+        if friend:
+            cols = st.columns(3)
+            for col, (kind, label) in zip(cols, KINDS.items()):
+                done = (friend, kind) in s["checks"]
+                col.button(label + (" ✓" if done else ""), key=f"{KEY}_{s['case']}_{friend}_{kind}",
+                           disabled=done or left == 0, width="stretch", on_click=investigate, args=(friend, kind))
+        if left == 0:
+            st.caption("조사를 모두 썼어요. 이제 수사 노트를 보고 투표하세요.")
 
-    if s["checks"]:
-        st.markdown("**🗒️ 수사 노트**")
-        st.markdown("".join(note_html(case, f, k, i) for i, (f, k) in enumerate(s["checks"])), unsafe_allow_html=True)
+        if s["checks"]:
+            st.markdown("**🗒️ 수사 노트** (최근 조사가 위에 있어요)")
+            notes = list(enumerate(s["checks"]))[::-1]
+            st.markdown("".join(note_html(case, f, k, i) for i, (f, k) in notes), unsafe_allow_html=True)
 
-    st.divider()
-    player = s["players"][s["voter"]]
-    multi = len(s["players"]) > 1
-    st.markdown(f"### 🗳️ {'%s님의 ' % escape(player) if multi else ''}투표")
-    if multi:
-        done = ", ".join(f"{p} ✓" for p in s["players"][:s["voter"]])
-        st.caption("다른 사람은 화면을 보지 마세요! " + (f"투표 완료: {done}" if done else ""))
-    pick_key = f"{KEY}_pick_{s['case']}_{s['voter']}"
-    st.radio("마피아라고 생각하는 친구", list(FRIENDS), index=None, horizontal=True, key=pick_key,
-             format_func=lambda n: f"{FRIENDS[n][0]} {n}")
-    st.button("🚨 이 친구가 마피아다!", type="primary", width="stretch",
-              key=f"{KEY}_vote_{s['case']}_{s['voter']}", on_click=cast_vote, args=(player, pick_key),
-              disabled=not st.session_state.get(pick_key))
-    if left > 0:
-        st.caption(f"지금 투표하면 남은 조사 {left}번만큼 보너스 +{left * 20}점! 단, 틀리면 0점이에요.")
+        player = s["players"][s["voter"]]
+        multi = len(s["players"]) > 1
+        with st.container(border=True):
+            st.markdown(f"**🗳️ {'%s님의 ' % escape(player) if multi else ''}투표**")
+            if multi:
+                done = ", ".join(f"{p} ✓" for p in s["players"][:s["voter"]])
+                st.caption("다른 사람은 화면을 보지 마세요! " + (f"투표 완료: {done}" if done else ""))
+            pick_key = f"{KEY}_pick_{s['case']}_{s['voter']}"
+            st.radio("마피아라고 생각하는 친구", list(FRIENDS), index=None, horizontal=True, key=pick_key,
+                     format_func=lambda n: f"{FRIENDS[n][0]} {n}")
+            st.button("🚨 이 친구가 마피아다!", type="primary", width="stretch",
+                      key=f"{KEY}_vote_{s['case']}_{s['voter']}", on_click=cast_vote, args=(player, pick_key),
+                      disabled=not st.session_state.get(pick_key))
+            if left > 0:
+                st.caption(f"지금 투표하면 남은 조사 {left}번만큼 보너스 +{left * 20}점! 단, 틀리면 0점이에요.")
 
 
 def josa(name, with_final, without_final):
