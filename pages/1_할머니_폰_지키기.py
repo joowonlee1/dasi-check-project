@@ -4,6 +4,7 @@ import time
 import streamlit as st
 import streamlit.components.v1 as components
 from mascot_ui import show_key_question, show_mascot
+from card_ui import show_result_card
 import dotori_data as dd
 
 
@@ -787,11 +788,33 @@ def show_ending(game):
         "6. **급하면 바로 신고** — 송금 직전·직후라면 112, 은행 지급정지, 금융감독원(1332)에 알리고 다른 가족과 함께해요."
     )
 
-    st.download_button(
-        "기록 내려받기",
-        data=make_report(game, title).encode("utf-8-sig"),
-        file_name="jamkkan_grandma_report.txt",
-        mime="text/plain",
+    # 긴 글 파일 대신, 결말·숫자·기억할 점 3줄을 담은 결과 카드(사진)로 내려받아요.
+    tips = []
+    if harsh:
+        tips.append("다그치거나 몰래 막기보다 먼저 안심시켜 드리기")
+    if checked < len(log):
+        tips.append("답하기 전에 🔎 단서부터 살펴보기")
+    if right < len(log):
+        tips.append("진짜 연락은 막지 않고, 피싱만 골라 함께 확인하기")
+    for tip in ("상대가 준 번호 말고 공식 대표번호로 함께 확인하기", "근거는 짧고 분명하게 한 가지만 말하기",
+                "급하면 112·은행 지급정지에 바로 알리기"):
+        if len(tips) < 3:
+            tips.append(tip)
+    icon, _, name = title.partition(" ")
+    me = dd.citizen()
+    st.markdown("#### 🖼️ 나의 결과 카드")
+    show_result_card(
+        {
+            "color": {"best": "#0F766E", "good": "#15803D", "close": "#C2410C", "bad": "#6B7280"}[ending],
+            "place": "할머니 댁", "game": "할머니 폰 지키기", "emoji": icon or "👵", "title": name or title,
+            "subtitle": {"best": "송금 차단!", "good": "송금 차단!", "close": "아슬아슬 차단", "bad": "송금 완료…"}[ending],
+            "stats": [("판단이 맞은 연락", f"{right} / {len(log)}"), ("단서를 살펴본 연락", f"{checked}번"),
+                      ("💛 마지막 신뢰", str(trust)), ("다그치거나 몰래 막음", f"{harsh}번")],
+            "sections": [("💡 다음에 기억할 점", tips[:3])],
+            "nickname": me["nickname"] if me else "",
+            "mascot": "retry" if ending == "bad" else "trophy",
+        },
+        "jamkkan_grandma_card.png",
     )
     show_mascot("retry", "다른 선택도 연습해 볼까요?", width=100)
     st.button("🔄 다른 방법으로 다시 도전", type="primary", on_click=back_to_intro, width="stretch")
