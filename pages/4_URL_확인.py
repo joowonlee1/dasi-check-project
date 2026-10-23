@@ -1,7 +1,5 @@
 import ipaddress
 import re
-import csv
-import io
 import unicodedata
 import idna
 import tldextract
@@ -611,36 +609,3 @@ with st.expander("📚 URL 원리 공부 · 먼저 알아둘 세 가지"):
     st.write("③ HTTPS는 암호화된 연결을 요청하는 방식이에요. 사이트가 사기인지, 발신자가 누구인지를 보증하지 않아요.")
     st.caption("이 도구는 제한된 HTTP(S) 주소 분석기예요. 브라우저의 모든 주소 해석을 재현하지 않으며, PSL 스냅샷도 최신 목록과 차이가 날 수 있어요.")
     st.markdown("참고: [Python URL 분석 문서](https://docs.python.org/3/library/urllib.parse.html#url-parsing-security) · [PSL 기반 경계 분석](https://github.com/john-kurkowski/tldextract)")
-
-EXERCISES = [
-    ("기본 구조", "https://news.example.com/notice?id=7#details", "news.example.com", "경로·쿼리·프래그먼트는 호스트와 별개"),
-    ("@ 앞 이름", "https://familiar.example@other.example/", "other.example", "@ 앞 이름이 연결 호스트가 아님"),
-    ("하위 도메인", "https://bank.example.com.login.example.org/", "bank.example.com.login.example.org", "도메인 경계는 example.org"),
-    ("경로 속 이름", "https://example.org/bank.example.com", "example.org", "경로의 이름은 호스트를 바꾸지 않음"),
-    ("쿼리 속 주소", "https://example.org/?next=https%3A%2F%2Fexample.com", "example.org", "쿼리만으로 실제 이동 여부를 알 수 없음"),
-    ("암호화 구별", "http://example.com/", "example.com", "HTTP. 악성 여부와는 다른 특징"),
-    ("국제화", "https://예시.example/", "xn--vv4b11d.example", "국제화 주소 자체는 악성 증거가 아님"),
-    ("설치 파일 경로", "https://example.com/app/check%2Eapk", "example.com", "인코딩을 풀면 APK 경로. 파일 내용은 미검사"),
-]
-with st.expander("🧪 심화탐구 · 주소를 보고 먼저 예상해 보기"):
-    choice = st.selectbox("연습 상황", range(len(EXERCISES)), format_func=lambda i: EXERCISES[i][0])
-    label, sample, expected, reason = EXERCISES[choice]
-    st.code(sample, language=None)
-    guess = st.text_input("처음 연결 대상으로 지정된 호스트명을 적어 보세요", key=f"url_guess_{choice}")
-    if st.button("예상과 분석 결과 비교"):
-        answer = analyze_url(sample)
-        if guess.strip().lower() == answer["host"]:
-            st.success("호스트명을 정확히 찾았어요!")
-        else:
-            st.info("호스트명은 아래와 같아요. @, /, ?, #의 위치를 다시 살펴보세요.")
-        st.code(answer["host"], language=None)
-        st.write(reason)
-        show_structure(answer)
-    st.write("탐구 질문: 익숙한 이름이 놓인 위치에 따라 주소 해석은 어떻게 달라질까?")
-    st.write("같은 예시로 학습 전·후 호스트명 정답 수를 비교하세요. 이는 주소 구조 이해도이며 피싱 탐지 정확도가 아니에요. 실제 악성 여부는 정답으로 표시하지 않습니다.")
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(["상황", "연습 주소", "기대 호스트", "설명", "학습 전 내 예상", "학습 후 내 예상"])
-    for label, sample, expected, reason in EXERCISES:
-        writer.writerow([label, sample, expected, reason, "", ""])
-    st.download_button("탐구 기록표 내려받기 (CSV)", buf.getvalue().encode("utf-8-sig"), "url_experiment.csv", "text/csv")
