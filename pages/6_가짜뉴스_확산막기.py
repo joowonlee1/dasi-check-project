@@ -587,6 +587,7 @@ event = dd.take_event(value)
 if event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
     s, stars, pct = int(event["stage"]), int(event.get("stars", 1)), max(0, min(100, int(event.get("pct", 0))))
     dd.record("fakenews", {f"s{s}_plays": 1, f"s{s}_pctsum": pct, f"s{s}_star3": 1 if stars == 3 else 0})
+    dd.stamp("06")
 elif event and event.get("type") == "final":
     stars, avg = max(0, min(15, int(event.get("stars", 0)))), max(0, min(100, int(event.get("avg", 0))))
     dd.record("fakenews", {"finals": 1})
