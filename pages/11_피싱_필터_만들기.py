@@ -481,6 +481,7 @@ if event and event.get("type") == "run" and event.get("stage") in (0, 1, 2):
     counts = {f"s{s}_runs": 1, f"s{s}_clear": 1 if event.get("clear") else 0}
     counts.update({f"s{s}_m{int(i)}_wrong": 1 for i in event.get("wrong", []) if 0 <= int(i) < 12})
     dd.record("filter", counts)
+    dd.stamp("11")
 elif event and event.get("type") == "final":
     stars, blocks = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("blocks", 0)))
     dd.record("filter", {"finals": 1})
