@@ -1,6 +1,7 @@
 import html
 
 import streamlit as st
+import streamlit.components.v1 as components
 from mascot_ui import show_mascot
 import dotori_data as dd
 
@@ -257,23 +258,38 @@ st.markdown(
     }
 
     /* 페이지별 이용 순서 */
+    /* 스크롤을 줄이려고 위쪽 여백과 안내 상자를 작게 만들어요. */
+    [data-testid="stMainBlockContainer"] {
+        padding-top: 2.6rem;
+    }
+
+    [data-testid="stMainBlockContainer"] h1 {
+        padding-top: 0.2rem;
+        padding-bottom: 0.4rem;
+    }
+
     .route {
-        padding: 16px 20px;
+        padding: 10px 16px;
         border: 1px solid #CBDAD2;
         border-left: 5px solid #0F766E;
         border-radius: 12px;
         background: #F0F7F3;
-        margin-bottom: 24px;
+        margin-bottom: 10px;
         color: #233D35;
     }
 
     .route strong {
-        display: block;
-        margin-bottom: 6px;
+        display: inline;
+        margin-right: 6px;
         color: #0B655B;
     }
 
+    .route strong::after {
+        content: " ·";
+    }
+
     .route p {
+        display: inline;
         margin: 0;
         font-size: 1rem !important;
     }
@@ -336,8 +352,9 @@ st.markdown(
         margin-bottom: 2px;
     }
 
-    .route .place-line {
-        margin: 0 0 8px;
+    .route p.place-line {
+        display: block;
+        margin: 0 0 4px;
         color: #3E4A3A;
         font-weight: 600;
     }
@@ -618,6 +635,44 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
+    # 시민증 상태를 메뉴 맨 위에 보여 줘요. 없으면 시민증 만들기로 먼저 안내해요.
+    # (사이드바 메뉴보다 위에 두려고 CSS로 자리를 옮겨요.)
+    me = dd.citizen()
+    st.markdown(
+        """<style>
+        [data-testid="stSidebarNav"] {margin-top: 120px;}
+        .st-key-citizen_top {position: absolute; top: 56px; left: 16px; width: calc(100% - 40px) !important; z-index: 5;
+          background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 6px;
+          box-sizing: border-box; gap: 2px !important;}
+        .st-key-citizen_top > * {flex-shrink: 0;}
+        .st-key-citizen_top [data-testid="stMarkdownContainer"] {margin: 0 !important;}
+        .st-key-citizen_top [data-testid="stMarkdown"], .st-key-citizen_top [data-testid="stMarkdown"] > div {height: auto !important; margin: 0 !important;}
+        .st-key-citizen_top p {margin: 0;}
+        .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 10px; padding: 2px 10px;}
+        .st-key-citizen_top [data-testid="stPageLink"] a span, .st-key-citizen_top [data-testid="stPageLink"] a p {color: #fff !important; font-weight: 800;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="citizen_top"):
+        if me:
+            stamps = len(dd.stamps())
+            records = len(st.session_state.get(dd.MY, []))
+            st.markdown(
+                '<div style="font-weight:800;color:#6B4A1E;">🪪 시민 '
+                f'<span style="color:#20483F;">{html.escape(me["nickname"])}</span> 님</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f'<div style="font-size:.85rem;font-weight:700;color:#52616B;">🏅 도장 {stamps}/13 · 📒 기록 {records}개</div>',
+                unsafe_allow_html=True,
+            )
+            st.page_link(citizen_page, label="내 시민증 보기", icon="🪪", width="stretch")
+        else:
+            st.markdown('<div style="font-weight:800;color:#6B4A1E;">🪪 아직 시민증이 없어요</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:.85rem;font-weight:700;color:#52616B;">닉네임만 있으면 기록이 남아요</div>',
+                        unsafe_allow_html=True)
+            st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
+
     # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
     big_text = st.toggle("🔠 큰 글씨로 보기", key="big_text", help="본문 글씨와 버튼을 크게 보여 줘요.")
     if big_text:
@@ -631,15 +686,20 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    # 로그인했을 때만 시민증 상태를 보여 줘요(시민증 만들기는 위 메뉴에 있어요).
-    me = dd.citizen()
-    if me:
-        st.markdown(
-            '<div style="background:#FFF4D6;border:2px solid #E2C98A;border-radius:14px;padding:8px 12px;'
-            'font-weight:800;color:#6B4A1E;margin-bottom:6px;">🪪 시민 '
-            f'<span style="color:#20483F">{html.escape(me["nickname"])}</span> 님</div>',
-            unsafe_allow_html=True,
+    # 다른 페이지로 이동하면 사이드바를 맨 위로 올리고, 휴대폰에서는 메뉴를 닫아 바로 내용을 보여 줘요.
+    current = navigation.url_path
+    if st.session_state.get("last_page") not in (None, current):
+        components.html(
+            "<script>const d = window.parent.document;"
+            "const s = d.querySelector('[data-testid=stSidebarContent]'); if (s) s.scrollTo(0, 0);"
+            "if (window.parent.innerWidth < 768) {"
+            "const b = d.querySelector('[data-testid=stSidebarCollapseButton] button') || d.querySelector('[data-testid=stSidebarCollapseButton]');"
+            "if (b) b.click(); }</script>"
+            f"<!-- {current} {len(st.session_state.get(dd.MY, []))} -->",
+            height=0,
         )
+    st.session_state["last_page"] = current
+
     show_mascot(
         "stop",
         "멈추고, 확인하고, 판단하기",
