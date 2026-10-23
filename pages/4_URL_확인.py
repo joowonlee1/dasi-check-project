@@ -1,5 +1,10 @@
 import ipaddress
 import re
+import csv
+import io
+import unicodedata
+import idna
+import tldextract
 from urllib.parse import urlsplit, unquote
 
 import streamlit as st
@@ -63,32 +68,20 @@ LURE_WORDS = (
     "update", "auth", "confirm", "wallet", "otp", "cert",
 )
 
-# 정상 사이트도 쓰지만 피싱에 자주 악용되는 최상위 도메인 예시입니다.
-OFTEN_ABUSED_TLDS = {
-    "xyz", "top", "icu", "click", "buzz", "cyou", "rest", "monster",
-    "sbs", "cfd", "live", "shop", "online", "site", "vip", "work", "support",
-}
-
-# 끝에서 세 칸을 읽어야 하는 2단계 도메인입니다. (예: example.co.kr)
-SECOND_LEVEL = {"co", "or", "go", "ac", "ne", "re", "pe", "mil", "hs", "ms", "es", "kg", "sc"}
-TWO_PART_SUFFIXES = {"co.uk", "com.au", "co.jp", "com.cn"}
+# 설치된 라이브러리의 PSL 스냅샷만 사용합니다. 외부 조회/디스크 캐시 없음.
+EXTRACT = tldextract.TLDExtract(suffix_list_urls=(), cache_dir=None,
+                              include_psl_private_domains=True)
 
 
 def registered_domain(host):
-    """주소의 실제 주인에 해당하는 등록 도메인을 찾습니다. 오른쪽 끝부터 읽어요."""
-    labels = host.split(".")
-
-    if len(labels) >= 3 and (
-        (labels[-1] == "kr" and labels[-2] in SECOND_LEVEL)
-        or ".".join(labels[-2:]) in TWO_PART_SUFFIXES
-    ):
-        return ".".join(labels[-3:])
-
-    return ".".join(labels[-2:])
+    item = EXTRACT(host)
+    return f"{item.domain}.{item.suffix}" if item.domain and item.suffix else None
 
 
 def analyze_url(raw):
     """주소 문자열만 분석합니다. 네트워크 요청은 하지 않습니다."""
+    if any(unicodedata.category(c) in {"Cc", "Cf"} for c in raw):
+        raise ValueError("제어 문자나 보이지 않는 문자가 포함돼 있어요. 주소를 다시 확인하세요.")
     raw = raw.strip()
 
     if not raw:
@@ -114,7 +107,7 @@ def analyze_url(raw):
         candidate = raw
         assumed = False
     else:
-        if re.match(r"^(javascript|data|file|mailto):", raw, re.I):
+        if re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", raw) and not re.match(r"^[^/?#]+\.[^/?#:]+:[0-9]+(?:[/?#]|$)", raw):
             raise ValueError("http 또는 https 웹 주소만 확인할 수 있어요.")
         candidate = "https://" + raw
         assumed = True
@@ -131,7 +124,15 @@ def analyze_url(raw):
         if not hostname:
             raise ValueError("사이트 주소를 찾을 수 없어요.")
 
-        host = hostname.rstrip(".").encode("idna").decode("ascii").lower()
+        hostname = hostname.removesuffix(".")
+        if "%" in hostname or parts.netloc.endswith(":"):
+            raise ValueError("모호한 호스트 또는 빈 포트")
+        try:
+            host = str(ipaddress.ip_address(hostname))
+        except ValueError:
+            host = idna.encode(hostname, uts46=True, std3_rules=True).decode("ascii").lower()
+        if port == 0:
+            raise ValueError("포트 0은 지원하지 않음")
 
     except (ValueError, UnicodeError):
         raise ValueError("주소 형식이 올바르지 않아요. 호스트명과 포트 번호를 확인해 주세요.")
@@ -154,6 +155,9 @@ def analyze_url(raw):
                 label,
             ):
                 raise ValueError("도메인 이름의 형식이 올바르지 않아요.")
+
+    if not is_ip and re.fullmatch(r"(?:0x[0-9a-f]+|[0-9]+)(?:\.(?:0x[0-9a-f]+|[0-9]+))*", host):
+        raise ValueError("축약·16진수 등 특수 숫자 주소는 브라우저마다 해석이 달라 여기서는 분석하지 않아요.")
 
     findings = []
 
@@ -224,20 +228,20 @@ def analyze_url(raw):
 
     owner = None if is_ip else registered_domain(host)
 
-    if owner and owner not in OFFICIAL_DOMAINS:
+    if owner:
         tokens = set(re.split(r"[.-]", host))
         joined = host.replace("-", "")   # cj-logistics처럼 하이픈을 넣은 이름도 찾아요.
 
         for name, keywords, _, official in BRANDS:
-            if any(
+            if owner not in official and any(
                 keyword in tokens or (len(keyword) >= 5 and keyword in joined)
                 for keyword in keywords
             ):
                 findings.append(
                     (
-                        f"익숙한 이름({name})이 들어 있지만, 진짜 주인은 {owner}예요.",
-                        "주소의 앞부분이나 중간에는 누구나 원하는 이름을 넣을 수 있어요. "
-                        f"{name}의 대표적인 공식 주소({', '.join(sorted(official))})와 다르니, "
+                        f"익숙한 이름({name})이 들어 있지만, 비교할 도메인 경계는 {owner}예요.",
+                        "자신이 관리하는 도메인 앞부분에는 익숙한 기관 이름을 넣을 수도 있어요. "
+                        f"이 앱의 {name} 참고 주소({', '.join(sorted(official))})와 달라요. 참고 목록은 불완전하며 사칭 판정은 아닙니다. "
                         "문자 속 링크 대신 평소 쓰던 앱이나 직접 찾은 공식 사이트에서 확인하세요.",
                     )
                 )
@@ -253,18 +257,7 @@ def analyze_url(raw):
                 (
                     f"로그인·인증을 떠올리게 하는 단어가 있어요 ({', '.join(words)}).",
                     "공식 사이트에도 쓰이는 단어지만, 피싱 주소가 믿음을 주려고 "
-                    "자주 넣는 단어예요. 위의 진짜 주인 도메인과 함께 확인하세요.",
-                )
-            )
-
-        tld = host.rsplit(".", 1)[-1]
-
-        if tld in OFTEN_ABUSED_TLDS:
-            findings.append(
-                (
-                    f"피싱에 자주 악용되는 최상위 도메인(.{tld})이에요.",
-                    "정상 사이트도 쓸 수 있어요. 끝부분만으로 판단하지 말고 "
-                    "다른 특징과 함께 살펴보세요.",
+                    "자주 넣는 단어예요. 위의 도메인 경계와 함께 확인하세요.",
                 )
             )
 
@@ -273,13 +266,27 @@ def analyze_url(raw):
         if extra.count(".") >= 2:
             findings.append(
                 (
-                    "주인 도메인 앞에 붙은 이름이 여러 겹이에요.",
-                    "앞부분을 길게 늘여 진짜 주인을 가리는 경우가 있어요. "
-                    "오른쪽 끝의 진짜 주인 도메인을 먼저 보세요.",
+                    "도메인 경계 앞에 붙은 이름이 여러 겹이에요.",
+                    "정상 서비스도 여러 단계의 하위 도메인을 사용해요. "
+                    "오른쪽 끝의 도메인 경계을 먼저 보세요.",
                 )
             )
 
+    ext = None if is_ip else EXTRACT(host)
+    if not is_ip and not owner:
+        findings.append(("도메인 경계를 확인하지 못했어요.",
+                         "목록에 없는 끝부분 또는 접미사만 있는 주소예요. 존재 여부나 안전성은 판단할 수 없어요."))
+    if ext and ext.is_private:
+        findings.append(("공유 호스팅의 사이트 경계예요.", "호스팅 회사 주소와 개별 사용자의 사이트를 구분합니다. 운영자 신원은 확인하지 않았어요."))
     return {
+        "suffix": ext.suffix if ext else "",
+        "subdomain": ext.subdomain if ext else "",
+        "unicode_host": host if is_ip else idna.decode(host),
+        "port": port,
+        "path": parts.path,
+        "query": parts.query,
+        "fragment": parts.fragment,
+        "userinfo": parts.username is not None,
         "host": host,
         "owner": owner,
         "scheme": parts.scheme,
@@ -294,8 +301,8 @@ def analyze_url(raw):
 
 # 문자 속 주소를 찾습니다. https://로 시작하지 않는 주소(abc.kr/xyz)도 찾아요.
 URL_PATTERN = re.compile(
-    r"(?:https?://[^\s<>\"'()\[\]]+)"
-    r"|(?<![A-Za-z0-9@.\-])(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?:/[^\s<>\"'()\[\]]*)?",
+    r"https?://[^\s<>\"'()]+|(?<![\w@.:-])(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?::[0-9]+)?(?:[/?#][^\s<>\"'()]*)?",
+    re.IGNORECASE,
 )
 
 # 문자 내용에서 살펴볼 신호입니다. 하나만으로 피싱이라고 판단하지 않아요.
@@ -315,8 +322,8 @@ MESSAGE_SIGNS = [
     (
         "민감한 정보나 행동을 요구하는 말이 있어요",
         ("인증번호", "비밀번호", "계좌", "송금", "입금", "설치", "카드번호", "신분증", "원격"),
-        "공식 기관과 회사는 문자 링크로 인증번호·비밀번호·송금·앱 설치를 요구하지 않는 경우가 많아요. "
-        "어떤 경우에도 문자에 답하거나 링크로 입력하지 마세요.",
+        "이 단어가 있다는 이유만으로 사기라고 단정할 수는 없어요. "
+        "요구에 응하기 전에 평소 사용하던 앱이나 별도로 확인한 공식 연락처에서 확인하세요.",
     ),
     (
         "가족·지인을 떠올리게 하는 말이 있어요",
@@ -335,7 +342,9 @@ def find_urls(text):
     urls = []
 
     for match in URL_PATTERN.findall(text):
-        url = match.rstrip(".,!?)]}>」』'\"")
+        url = match.rstrip(".,!)}〉」』'\"")
+        if url.endswith("]") and "[" not in url:
+            url = url[:-1]
 
         if url and url not in urls:
             urls.append(url)
@@ -379,7 +388,7 @@ def analyze_message(text):
             if result and result["owner"] and result["owner"] not in official:
                 signs.append(
                     (
-                        f"문자에서는 ‘{name}’이라고 하는데, 링크의 진짜 주인은 {result['owner']}예요.",
+                        f"문자에서는 ‘{name}’이라고 하는데, 링크의 도메인 경계는 {result['owner']}예요.",
                         "단축 주소이거나 다른 회사 주소라서, 링크만 보고는 정말 "
                         f"{name}에서 보낸 것인지 알 수 없어요. 링크를 누르지 말고 "
                         f"{name} 앱이나 직접 검색한 공식 사이트({', '.join(sorted(official))})에서 "
@@ -391,13 +400,30 @@ def analyze_message(text):
     if "(광고)" in text and "수신거부" in text:
         signs.append(
             (
-                "(광고) 표시와 무료수신거부 번호가 있어요.",
-                "광고 문자의 법적 표기 형식을 갖춘 것이에요. 다만 사기 문자도 이 형식을 흉내 낼 수 있어서, "
+                "(광고)와 수신거부 문구가 있어요.",
+                "광고 형식의 문구가 포함돼 있어요. 법적 요건 충족 여부는 검사하지 않아요. 다만 사기 문자도 이 형식을 흉내 낼 수 있어서, "
                 "표기만으로 진짜라고 판단할 수는 없어요.",
             )
         )
 
     return {"links": links, "signs": signs}
+
+
+def show_structure(result):
+    with st.expander("🔎 주소를 부분별로 펼쳐 보기", expanded=True):
+        st.table([
+            {"부분": "통신 방식", "값": result["scheme"], "뜻": "HTTPS도 기관 신원을 보증하지 않아요"},
+            {"부분": "호스트명", "값": result["host"], "뜻": "처음 연결 대상으로 지정한 서버 이름"},
+            {"부분": "국제화 표기", "값": result["unicode_host"], "뜻": "ASCII 표기와 함께 비교하세요"},
+            {"부분": "공개 접미사", "값": result["suffix"] or "확인 불가 / IP", "뜻": "co.kr 등, 공유 호스팅 접미사 포함"},
+            {"부분": "도메인 경계", "값": result["owner"] or "확인 불가 / IP", "뜻": "실제 소유자 확인 결과가 아니에요"},
+            {"부분": "하위 도메인", "값": result["subdomain"] or "없음", "뜻": "도메인 경계 앞에 붙인 이름"},
+            {"부분": "포트", "값": str(result["port"] if result["port"] is not None else (443 if result["scheme"] == "https" else 80)), "뜻": "미지정이면 방식의 기본값 표시"},
+            {"부분": "경로", "값": result["path"] or "/", "뜻": "사이트 안의 자원 위치"},
+            {"부분": "쿼리", "값": result["query"] or "없음", "뜻": "? 뒤의 전달 값. 개인정보를 넣지 마세요"},
+            {"부분": "프래그먼트", "값": result["fragment"] or "없음", "뜻": "# 뒤의 페이지 내 위치 등. HTTP 요청 자체에는 포함되지 않아요"},
+            {"부분": "사용자 정보", "값": "있음 (내용 숨김)" if result["userinfo"] else "없음", "뜻": "@ 앞부분은 호스트명이 아니에요"},
+        ])
 
 
 st.title("🔗 잠깐! · 의심 URL 확인")
@@ -426,12 +452,13 @@ if submitted:
 
         # 클릭 가능한 링크 대신 일반 코드로 표시합니다.
         st.code(result["host"], language=None)
+        show_structure(result)
 
         if result["owner"]:
-            st.markdown(f"**🏠 이 주소의 진짜 주인(등록 도메인): `{result['owner']}`**")
+            st.markdown(f"**🏠 비교할 도메인 경계: `{result['owner']}`**")
             st.caption(
-                "주소는 맨 오른쪽 끝부터 읽어요. 앞부분에 붙은 이름은 누구나 붙일 수 있어서, "
-                "진짜 주인은 끝부분이에요."
+                "공개 접미사 목록(PSL)으로 경계를 나눴어요. 공유 호스팅의 개별 사이트도 구분해요. "
+                "실제 등록 여부·소유자·기관의 신원을 확인한 결과는 아니에요."
             )
 
         if result["assumed"]:
@@ -465,11 +492,11 @@ st.divider()
 
 st.subheader("📩 문자 전체를 붙여넣어 확인하기")
 st.write(
-    "받은 문자를 통째로 붙여넣으면, 안에 있는 링크를 모두 찾아 살펴보고 "
+    "받은 문자를 통째로 붙여넣으면, 인식할 수 있는 링크를 최대 5개 살펴보고 "
     "문자 내용에서 확인할 신호도 함께 알려 드려요."
 )
 st.caption(
-    "입력한 내용은 저장하거나 전송하지 않고, 링크에도 접속하지 않습니다. "
+    "입력 내용은 앱 서버에서 처리합니다. 이 검사 기능은 별도 저장·외부 조회를 하지 않고 링크에도 접속하지 않습니다. "
     "내 이름·계좌번호 같은 개인정보는 지우고 붙여넣어 주세요."
 )
 
@@ -511,7 +538,7 @@ if message_submitted:
                     continue
 
                 if result["owner"]:
-                    st.markdown(f"**🏠 진짜 주인: `{result['owner']}`**")
+                    st.markdown(f"**🏠 도메인 경계: `{result['owner']}`**")
 
                 if result["findings"]:
                     for title, description in result["findings"]:
@@ -544,12 +571,12 @@ st.divider()
 
 with st.expander("검사할 수 있는 것과 없는 것"):
     st.write(
-        "확인하는 것: 주소 형식, 호스트명, 진짜 주인 도메인, 익숙한 이름 끼워 넣기, "
-        "로그인·인증 단어, 자주 악용되는 끝부분, 일부 단축 도메인, APK 경로 등"
+        "확인하는 것: 주소 형식, 호스트명, 도메인 경계, 익숙한 이름 끼워 넣기, "
+        "로그인·인증 단어, 일부 단축 도메인, APK 경로 등"
     )
     st.write(
         "문자 전체 확인에서 더 보는 것: 문자 속 링크 찾기, 문자에서 말하는 회사와 "
-        "링크 주인의 일치 여부, 서두르게 하는 말, 불이익 표현, 민감한 요구, 가족 사칭 표현, 국제발신 표시"
+        "링크 도메인과 참고 목록의 일치 여부, 서두르게 하는 말, 불이익 표현, 민감한 요구, 가족 사칭 표현, 국제발신 표시"
     )
     st.write(
         "익숙한 이름 비교는 일부 기관·회사의 대표 공식 주소만 담고 있어요. "
@@ -575,3 +602,45 @@ with st.expander("연습용 주소"):
         "https://www.epost.go.kr.delivery.example/track",
         language=None,
     )
+
+
+with st.expander("📚 URL 원리 공부 · 먼저 알아둘 세 가지"):
+    st.code("https://news.example.com:443/notice?id=7#details", language=None)
+    st.write("① 호스트는 news.example.com이고, 경로는 /notice예요. 경로·쿼리에 기관 이름이 있어도 그 기관의 사이트라는 뜻은 아니에요.")
+    st.write("② 도메인을 점으로 나눈 뒤 마지막 두 칸만 읽으면 co.kr 같은 주소를 잘못 해석해요. PSL 목록으로 경계를 구분해야 해요.")
+    st.write("③ HTTPS는 암호화된 연결을 요청하는 방식이에요. 사이트가 사기인지, 발신자가 누구인지를 보증하지 않아요.")
+    st.caption("이 도구는 제한된 HTTP(S) 주소 분석기예요. 브라우저의 모든 주소 해석을 재현하지 않으며, PSL 스냅샷도 최신 목록과 차이가 날 수 있어요.")
+    st.markdown("참고: [Python URL 분석 문서](https://docs.python.org/3/library/urllib.parse.html#url-parsing-security) · [PSL 기반 경계 분석](https://github.com/john-kurkowski/tldextract)")
+
+EXERCISES = [
+    ("기본 구조", "https://news.example.com/notice?id=7#details", "news.example.com", "경로·쿼리·프래그먼트는 호스트와 별개"),
+    ("@ 앞 이름", "https://familiar.example@other.example/", "other.example", "@ 앞 이름이 연결 호스트가 아님"),
+    ("하위 도메인", "https://bank.example.com.login.example.org/", "bank.example.com.login.example.org", "도메인 경계는 example.org"),
+    ("경로 속 이름", "https://example.org/bank.example.com", "example.org", "경로의 이름은 호스트를 바꾸지 않음"),
+    ("쿼리 속 주소", "https://example.org/?next=https%3A%2F%2Fexample.com", "example.org", "쿼리만으로 실제 이동 여부를 알 수 없음"),
+    ("암호화 구별", "http://example.com/", "example.com", "HTTP. 악성 여부와는 다른 특징"),
+    ("국제화", "https://예시.example/", "xn--vv4b11d.example", "국제화 주소 자체는 악성 증거가 아님"),
+    ("설치 파일 경로", "https://example.com/app/check%2Eapk", "example.com", "인코딩을 풀면 APK 경로. 파일 내용은 미검사"),
+]
+with st.expander("🧪 심화탐구 · 주소를 보고 먼저 예상해 보기"):
+    choice = st.selectbox("연습 상황", range(len(EXERCISES)), format_func=lambda i: EXERCISES[i][0])
+    label, sample, expected, reason = EXERCISES[choice]
+    st.code(sample, language=None)
+    guess = st.text_input("처음 연결 대상으로 지정된 호스트명을 적어 보세요", key=f"url_guess_{choice}")
+    if st.button("예상과 분석 결과 비교"):
+        answer = analyze_url(sample)
+        if guess.strip().lower() == answer["host"]:
+            st.success("호스트명을 정확히 찾았어요!")
+        else:
+            st.info("호스트명은 아래와 같아요. @, /, ?, #의 위치를 다시 살펴보세요.")
+        st.code(answer["host"], language=None)
+        st.write(reason)
+        show_structure(answer)
+    st.write("탐구 질문: 익숙한 이름이 놓인 위치에 따라 주소 해석은 어떻게 달라질까?")
+    st.write("같은 예시로 학습 전·후 호스트명 정답 수를 비교하세요. 이는 주소 구조 이해도이며 피싱 탐지 정확도가 아니에요. 실제 악성 여부는 정답으로 표시하지 않습니다.")
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["상황", "연습 주소", "기대 호스트", "설명", "학습 전 내 예상", "학습 후 내 예상"])
+    for label, sample, expected, reason in EXERCISES:
+        writer.writerow([label, sample, expected, reason, "", ""])
+    st.download_button("탐구 기록표 내려받기 (CSV)", buf.getvalue().encode("utf-8-sig"), "url_experiment.csv", "text/csv")
