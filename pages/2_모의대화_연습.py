@@ -5,6 +5,7 @@ import time
 
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
+from card_ui import show_result_card
 import dotori_data as dd
 from google import genai
 from google.genai import types, errors
@@ -620,6 +621,38 @@ def generate_report(messages):
         return response.text
 
 
+def report_card(report, scenario, messages):
+    """리포트에서 '잘한 대응'과 '다음에 사용할 문장'을 몇 줄만 뽑아 카드 내용으로 만들어요."""
+    good, phrases, part = [], [], ""
+    for raw in report.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("#") or re.match(r"^\*?\*?\d\.", line):
+            part = "good" if "잘한" in line else "phrase" if "문장" in line else ""
+            continue
+        item = re.sub(r"^[-*•\d.)\s]+", "", line).replace("**", "").strip().strip("“”\"")
+        if not item:
+            continue
+        if part == "good" and len(good) < 1:
+            good.append(item[:70])
+        elif part == "phrase" and len(phrases) < 2:
+            phrases.append(item[:70])
+    if len(phrases) < 2:
+        phrases += ["지금은 진행하지 않을게요. 원래 알고 있던 번호로 확인할게요.",
+                    "보내 준 링크 대신 공식 앱에서 직접 확인할게요."][: 2 - len(phrases)]
+    sections = [("💬 다음에 쓸 문장", phrases)]
+    if good:
+        sections.insert(0, ("👍 내가 잘한 대응", good))
+    me = dd.citizen()
+    return {
+        "color": "#4338CA", "place": "시민훈련센터 대화 연습실", "game": "AI 모의대화", "emoji": "💬",
+        "title": f"{scenario} 대화 연습 완료", "subtitle": "연습 완료!",
+        "stats": [("내 답장", f"{sum(m['role'] == 'user' for m in messages)}번"), ("연습한 상황", scenario)],
+        "sections": sections, "nickname": me["nickname"] if me else "", "mascot": "phone",
+    }
+
+
 # ─────────────────────────────────────
 # 명확한 종료 요청 처리
 # ─────────────────────────────────────
@@ -995,12 +1028,9 @@ if state["report"] is not None:
         "학습용 피드백입니다. 실제 대화 내용과 맞는지 확인해 주세요."
     )
 
-    st.download_button(
-        "리포트 내려받기",
-        data=state["report"].encode("utf-8-sig"),
-        file_name="jamkkan_chat_report.txt",
-        mime="text/plain",
-    )
+    # 긴 리포트 대신, 상황·답장 수·다음에 쓸 문장을 담은 결과 카드(사진)로 내려받아요.
+    st.markdown("#### 🖼️ 나의 결과 카드")
+    show_result_card(report_card(state["report"], scenario, messages), "jamkkan_chat_card.png")
 
     st.stop()
 
