@@ -6,6 +6,19 @@ from mascot_ui import show_mascot
 import dotori_data as dd
 
 
+# 사이드바 시민증에 넣는 깡지 증명사진(표정·배경이 조금씩 다른 4장)
+ID_PHOTOS = ["ggangji_id_green.png", "ggangji_id_blue.png", "ggangji_id_pink.png", "ggangji_id_cream.png"]
+
+
+@st.cache_data(show_spinner=False)
+def id_photo(filename):
+    """assets 폴더의 증명사진을 화면에 넣을 수 있게 base64 글자로 바꿔요."""
+    import base64
+    from pathlib import Path
+
+    return base64.b64encode((Path(__file__).resolve().parent / "assets" / filename).read_bytes()).decode()
+
+
 st.set_page_config(
     page_title="잠깐!",
     page_icon="✋",
@@ -640,7 +653,7 @@ with st.sidebar:
     me = dd.citizen()
     st.markdown(
         """<style>
-        [data-testid="stSidebarNav"] {margin-top: 120px;}
+        [data-testid="stSidebarNav"] {margin-top: 126px;}
         .st-key-citizen_top {position: absolute; top: 56px; left: 16px; width: calc(100% - 40px) !important; z-index: 5;
           background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 6px;
           box-sizing: border-box; gap: 2px !important;}
@@ -648,29 +661,49 @@ with st.sidebar:
         .st-key-citizen_top [data-testid="stMarkdownContainer"] {margin: 0 !important;}
         .st-key-citizen_top [data-testid="stMarkdown"], .st-key-citizen_top [data-testid="stMarkdown"] > div {height: auto !important; margin: 0 !important;}
         .st-key-citizen_top p {margin: 0;}
-        .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 10px; padding: 2px 10px;}
-        .st-key-citizen_top [data-testid="stPageLink"] a span, .st-key-citizen_top [data-testid="stPageLink"] a p {color: #fff !important; font-weight: 800;}
+        .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 999px; padding: 4px 12px !important;
+          min-height: 0 !important; line-height: 1.2 !important; justify-content: center; margin-top: 4px;}
+        .st-key-citizen_top [data-testid="stPageLink"] a span, .st-key-citizen_top [data-testid="stPageLink"] a p {color: #fff !important; font-weight: 800; font-size: .86rem !important;}
         </style>""",
         unsafe_allow_html=True,
     )
     with st.container(key="citizen_top"):
+        # 시민증 왼쪽 깡지 증명사진: 페이지를 옮길 때마다 표정이 바뀌고, 명예 시민이 되면 활짝 웃는 사진으로 고정돼요.
+        if st.session_state.get("photo_page") != navigation.url_path:
+            st.session_state["photo_page"] = navigation.url_path
+            st.session_state["photo_i"] = st.session_state.get("photo_i", -1) + 1
+        photo = ID_PHOTOS[st.session_state["photo_i"] % len(ID_PHOTOS)]
+        if me and len(dd.stamps()) == len(dd.STAMP_PLACES):
+            photo = "ggangji_id_cream.png"
+        try:
+            pic_html = (
+                f'<img src="data:image/png;base64,{id_photo(photo)}" alt="깡지 증명사진" '
+                'style="width:48px;height:64px;object-fit:cover;flex-shrink:0;border:3px solid #fff;border-radius:4px;'
+                'box-shadow:0 1px 4px rgba(0,0,0,.25);">'
+            )
+        except Exception:
+            pic_html = '<div style="font-size:40px;">🐿️</div>'
         if me:
             stamps = len(dd.stamps())
             records = len(st.session_state.get(dd.MY, []))
-            st.markdown(
-                '<div style="font-weight:800;color:#6B4A1E;">🪪 시민 '
-                f'<span style="color:#20483F;">{html.escape(me["nickname"])}</span> 님</div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(
-                f'<div style="font-size:.85rem;font-weight:700;color:#52616B;">🏅 도장 {stamps}/13 · 📒 기록 {records}개</div>',
-                unsafe_allow_html=True,
-            )
+            label = "🎖️ 명예 시민" if stamps == len(dd.STAMP_PLACES) else "🪪 도토리시 시민"
+            line1 = html.escape(me["nickname"])
+            line2 = f"🏅 도장 {stamps}/13 · 📒 기록 {records}"
+        else:
+            label = "🪪 도토리시 시민증"
+            line1 = "아직 없어요"
+            line2 = "만들면 기록이 남아요!"
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;">{pic_html}'
+            f'<div style="line-height:1.3;min-width:0;word-break:keep-all;">'
+            f'<div style="font-size:.74rem;font-weight:800;color:#B7791F;">{label}</div>'
+            f'<div style="font-size:1.05rem;font-weight:900;color:#20483F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{line1}</div>'
+            f'<div style="font-size:.76rem;font-weight:700;color:#52616B;white-space:nowrap;">{line2}</div></div></div>',
+            unsafe_allow_html=True,
+        )
+        if me:
             st.page_link(citizen_page, label="내 시민증 보기", icon="🪪", width="stretch")
         else:
-            st.markdown('<div style="font-weight:800;color:#6B4A1E;">🪪 아직 시민증이 없어요</div>', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:.85rem;font-weight:700;color:#52616B;">닉네임만 있으면 기록이 남아요</div>',
-                        unsafe_allow_html=True)
             st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
 
     # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
