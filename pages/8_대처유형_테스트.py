@@ -796,6 +796,7 @@ def show_result(answers):
 
         dd.record("coping", {"plays": 1, f"t_{code}": 1})
         dd.note_mine("coping", f"유형 {code} · {TYPE_NAMES[code]}")
+        dd.stamp("08")
 
         drumroll()
 
