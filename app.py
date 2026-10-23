@@ -665,7 +665,7 @@ with st.sidebar:
         try:
             pic_html = (
                 f'<img src="data:image/png;base64,{id_photo(photo)}" alt="깡지 증명사진" '
-                'style="width:48px;height:64px;object-fit:cover;flex-shrink:0;border:3px solid #fff;border-radius:4px;'
+                'style="width:62px;height:55px;object-fit:cover;flex-shrink:0;border:3px solid #fff;border-radius:4px;'
                 'box-shadow:0 1px 4px rgba(0,0,0,.25);">'
             )
         except Exception:
