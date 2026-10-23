@@ -598,7 +598,7 @@ with st.expander("연습용 주소"):
 with st.expander("📚 URL 원리 공부 · 먼저 알아둘 세 가지"):
     st.code("https://news.example.com:443/notice?id=7#details", language=None)
     st.write("① 호스트는 news.example.com이고, 경로는 /notice예요. 경로·쿼리에 기관 이름이 있어도 그 기관의 사이트라는 뜻은 아니에요.")
-    st.write("② 도메인을 점으로 나눈 뒤 마지막 두 칸만 읽으면 co.kr 같은 주소를 잘못 해석해요. PSL 목록으로 경계를 구분해야 해요.")
+    st.write("② 진짜 주인은 주소 맨 끝에서 찾아요. 그 앞에 붙은 이름은 누구나 마음대로 붙일 수 있어요.")
     st.write("③ HTTPS는 암호화된 연결을 요청하는 방식이에요. 사이트가 사기인지, 발신자가 누구인지를 보증하지 않아요.")
-    st.caption("이 도구는 제한된 HTTP(S) 주소 분석기예요. 브라우저의 모든 주소 해석을 재현하지 않으며, PSL 스냅샷도 최신 목록과 차이가 날 수 있어요.")
-    st.markdown("참고: [Python URL 분석 문서](https://docs.python.org/3/library/urllib.parse.html#url-parsing-security) · [PSL 기반 경계 분석](https://github.com/john-kurkowski/tldextract)")
+    st.caption("이 도구는 제한된 HTTP(S) 주소 분석기예요. 브라우저의 모든 주소 해석을 그대로 따라 하지는 않아요.")
+    st.markdown("참고: [Python URL 분석 문서](https://docs.python.org/3/library/urllib.parse.html#url-parsing-security)")
