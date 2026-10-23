@@ -1,4 +1,4 @@
-"""12문항, 4개 축, 16가지 교육용 대처 유형. 외부 전송·공개 저장 없음."""
+"""12문항, 4개 축, 16가지 교육용 대처 유형. 답변은 저장하지 않고, 결과 유형만 이름 없이 숫자로 통계에 더합니다."""
 
 import base64
 
@@ -11,6 +11,7 @@ from pathlib import Path
 import streamlit as st
 
 from pledge_wall import show_pledge_wall
+import dotori_data as dd
 
 PREFIX = "coping_v1_"
 
@@ -424,20 +425,30 @@ def reveal():
 
 TYPE_POSES = {code: (index % 4, index // 4) for index, code in enumerate(TYPE_NAMES)}
 
-def _mascot_sheet(name):
-    path = Path(__file__).resolve().parents[1] / "assets" / name
-    return base64.b64encode(path.read_bytes()).decode("ascii") if path.is_file() else ""
+@st.cache_data(show_spinner=False)
+def _type_png(code):
+    """16종 그림 시트(1536×1024, 4열·4행)에서 이 유형 칸만 잘라 작은 PNG(base64)로 만듭니다.
+    시트 전체(약 2MB)를 그림마다 넣으면 결과 화면이 50MB가 넘어 느려져서, 한 번만 잘라 재사용합니다."""
+    from PIL import Image
+    import io
+    path = Path(__file__).resolve().parents[1] / "assets" / "ggangji_16_types.png"
+    if not path.is_file():
+        return ""
+    col, row = TYPE_POSES[code]
+    with Image.open(path) as sheet:
+        cell = sheet.convert("RGBA").crop((col * 384, row * 256, col * 384 + 384, row * 256 + 256))
+    cell.thumbnail((288, 192))
+    buffer = io.BytesIO()
+    cell.save(buffer, format="PNG", optimize=True)
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 def mascot_svg(code, x=0, y=0, size=160):
-    col, row = TYPE_POSES[code]
-    data = _mascot_sheet("ggangji_16_types.png")
+    data = _type_png(code)
     if not data:
         return f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" viewBox="0 0 100 100"><text x="50" y="50" text-anchor="middle" font-size="7">이미지 파일 확인 필요</text></svg>'
-    # 1536x1024 원본의 4열·4행을 유형 순서대로 표시합니다.
     return (f'<svg xmlns="http://www.w3.org/2000/svg" x="{x}" y="{y}" width="{size}" height="{size}" '
-            f'viewBox="{col*384} {row*256} 384 256" overflow="hidden" role="img" aria-label="{escape(TYPE_NAMES[code])} 깡지">'
-            f'<defs><clipPath id="ggangji-{code}" clipPathUnits="userSpaceOnUse"><rect x="{col*384}" y="{row*256}" width="384" height="256"/></clipPath></defs>'
-            f'<g clip-path="url(#ggangji-{code})"><image width="1536" height="1024" href="data:image/png;base64,{data}"/></g></svg>')
+            f'viewBox="0 0 384 256" role="img" aria-label="{escape(TYPE_NAMES[code])} 깡지">'
+            f'<image width="384" height="256" href="data:image/png;base64,{data}"/></svg>')
 
 
 def type_image_uri(code):
@@ -478,7 +489,7 @@ def show_intro():
 
     st.caption(NOTICE)
 
-    st.caption("답변은 공개 저장하거나 AI 서비스로 전송하지 않습니다.")
+    st.caption("답변은 저장하거나 AI 서비스로 전송하지 않아요. 결과 유형만 이름 없이 숫자로 도토리시 통계에 더해져요.")
 
     st.markdown('<div class="jk-section">🔤 유형 코드 4글자는 이런 뜻이에요</div>', unsafe_allow_html=True)
 
@@ -670,7 +681,6 @@ def hero_html(code, labels):
 
     emoji, c1, c2, catch = TYPE_LOOK[code]
 
-    image = type_image_uri(code)
 
     emblem = mascot_svg(code, size=150)
 
@@ -784,11 +794,23 @@ def show_result(answers):
 
     if st.session_state.pop(PREFIX + "fresh", False):
 
+        dd.record("coping", {"plays": 1, f"t_{code}": 1})
+        dd.note_mine("coping", f"유형 {code} · {TYPE_NAMES[code]}")
+
         drumroll()
 
         st.balloons()
 
     st.markdown(hero_html(code, labels), unsafe_allow_html=True)
+
+    data = dd.stats("coping")
+    plays = data.get("plays", 0)
+    if plays:
+        top = sorted(((data.get(f"t_{c}", 0), c) for c in TYPE_NAMES), reverse=True)[:3]
+        dd.show_others([
+            f"지금까지 <b>{plays}명</b>이 테스트했고, 나와 같은 <b>{code}</b> 유형은 <b>{dd.pct(data.get(f't_{code}', 0), plays)}%</b>예요.",
+            "많이 나온 유형 TOP 3 · " + " · ".join(f"{c} {escape(TYPE_NAMES[c])} {dd.pct(n, plays)}%" for n, c in top if n),
+        ])
 
     st.caption("유형 코드는 안전 점수나 우열을 나타내지 않아요. 아래 탭을 눌러 더 살펴보세요.")
 
@@ -915,4 +937,3 @@ def main():
 if __name__ == "__main__":
 
     main()
-
