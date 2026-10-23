@@ -618,6 +618,19 @@ navigation = st.navigation(
 # ─────────────────────────────────────
 
 with st.sidebar:
+    # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
+    big_text = st.toggle("🔠 큰 글씨로 보기", key="big_text", help="본문 글씨와 버튼을 크게 보여 줘요.")
+    if big_text:
+        st.markdown(
+            """<style>
+            [data-testid="stMainBlockContainer"] {zoom: 1.2;}
+            /* 게임 화면(iframe)은 폭이 정해져 있어 키우면 휴대폰에서 옆으로 넘쳐요. 원래 크기로 둬요. */
+            [data-testid="stMainBlockContainer"] iframe {zoom: calc(1 / 1.2);}
+            [data-testid="stSidebarNav"] a span {font-size: 1.12rem !important;}
+            </style>""",
+            unsafe_allow_html=True,
+        )
+
     # 로그인했을 때만 시민증 상태를 보여 줘요(시민증 만들기는 위 메뉴에 있어요).
     me = dd.citizen()
     if me:
