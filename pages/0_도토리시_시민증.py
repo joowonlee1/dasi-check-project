@@ -12,6 +12,49 @@ from firebase_support import ConnectionProblem, explain
 st.title("🪪 도토리시 시민증")
 show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당**에 내 최고 기록이 올라가요.", "🪪")
 
+
+def show_stamps():
+    """시민증 도장판: 도토리시 13곳에서 받은 도장(이번 방문 기준)."""
+    got = dd.stamps()
+    total = len(dd.STAMP_PLACES)
+    st.subheader(f"🏅 시민증 도장판  {len(got)}/{total}")
+    st.progress(len(got) / total)
+    cells = []
+    for code, (icon, place, how) in dd.STAMP_PLACES.items():
+        if code in got:
+            cells.append(
+                f'<div class="stp on"><div class="ring">{icon}</div><b>{escape(place)}</b>'
+                f'<small>{got[code]} 받음</small></div>'
+            )
+        else:
+            cells.append(
+                f'<div class="stp"><div class="ring">{icon}</div><b>{escape(place)}</b>'
+                f'<small>{escape(how)}</small></div>'
+            )
+    st.markdown(
+        """<style>
+        .stpgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:8px 0 12px;}
+        .stp{background:#F7F7F4;border:2px dashed #C9CFCB;border-radius:18px;padding:12px 8px;text-align:center;
+          word-break:keep-all;line-height:1.35;color:#6B7280;}
+        .stp .ring{width:62px;height:62px;margin:0 auto 6px;border-radius:50%;border:3px dashed #C9CFCB;
+          display:flex;align-items:center;justify-content:center;font-size:30px;filter:grayscale(1);opacity:.45;}
+        .stp b{display:block;font-size:.95rem;color:#52616B;}
+        .stp small{display:block;font-size:.8rem;margin-top:3px;}
+        .stp.on{background:#FFF8E6;border:2px solid #E2C98A;color:#6B4A1E;}
+        .stp.on .ring{border:3px solid #B42318;color:#B42318;filter:none;opacity:1;transform:rotate(-8deg);
+          box-shadow:inset 0 0 0 3px #FFF8E6,inset 0 0 0 5px #B42318;background:#FFF;}
+        .stp.on b{color:#20483F;}
+        .stp.on small{color:#B42318;font-weight:800;}
+        .stp-done{background:linear-gradient(135deg,#FFF4D6,#E8F4EC);border:3px solid #B42318;border-radius:20px;
+          padding:14px;text-align:center;font-weight:900;color:#20483F;font-size:1.2rem;margin-bottom:10px;}
+        </style>"""
+        + ('<div class="stp-done">🎖️ 13곳 도장 완성! 도토리시 명예 시민이에요.</div>' if len(got) == total else "")
+        + '<div class="stpgrid">' + "".join(cells) + "</div>",
+        unsafe_allow_html=True,
+    )
+    st.caption("도장은 시민증이 없어도 모을 수 있어요. 저장하지 않아서 창을 닫으면 처음부터 다시 모아요.")
+
+
 account = dd.citizen()
 
 if account:
@@ -24,6 +67,8 @@ if account:
         '<div style="color:#52616B;font-weight:600;">게임을 끝내면 최고 기록이 명예의 전당에 저장돼요.</div></div></div>',
         unsafe_allow_html=True,
     )
+
+    show_stamps()
 
     st.subheader("🏆 명예의 전당 속 내 순위")
     rows = []
@@ -71,5 +116,7 @@ else:
         "- 같은 닉네임은 **하루 동안** 처음 만든 사람만 쓸 수 있어요. 하루가 지나면 다른 사람도 쓸 수 있어요.\n"
         "- 다른 사람이 불쾌할 수 있는 닉네임은 쓰지 않아요."
     )
+
+    show_stamps()
 
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
