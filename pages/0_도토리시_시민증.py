@@ -6,6 +6,7 @@ from html import escape
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
 import dotori_data as dd
+from card_ui import show_result_card
 from firebase_support import ConnectionProblem, explain
 
 
@@ -53,6 +54,20 @@ def show_stamps():
         unsafe_allow_html=True,
     )
     st.caption("도장은 시민증이 없어도 모을 수 있어요. 저장하지 않아서 창을 닫으면 처음부터 다시 모아요.")
+    if len(got) == total:
+        # 13곳을 모두 모으면 깡지와 함께하는 명예 시민증 카드를 사진으로 저장할 수 있어요.
+        me = dd.citizen()
+        st.markdown("#### 🎖️ 명예 시민증")
+        show_result_card(
+            {
+                "color": "#B7791F", "place": "시민 등록소", "game": "명예 시민증", "emoji": "🎖️",
+                "title": "도토리시 명예 시민", "subtitle": "13곳 완주!",
+                "stats": [("모은 도장", f"{len(got)} / {total}"), ("완주한 시각", max(got.values()))],
+                "sections": [("🏅 다녀온 곳", [" · ".join(place for _, place, _ in dd.STAMP_PLACES.values())])],
+                "nickname": me["nickname"] if me else "", "mascot": "trophy",
+            },
+            "jamkkan_honorary_citizen.png",
+        )
 
 
 account = dd.citizen()
