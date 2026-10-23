@@ -957,7 +957,8 @@ with st.container(key="chat_screen"):
         )
 
         with st.chat_message(role):
-            st.write(message["text"])
+            # "20~30분"처럼 물결표가 두 개 있으면 취소선으로 바뀌어서, 물결표를 글자 그대로 보여 줘요.
+            st.write(message["text"].replace("~", "\\~"))
 
 # 코치 피드백은 상대의 말과 섞이지 않게 대화창 밖에 따로 보여 줍니다.
 for message in messages:
@@ -968,7 +969,7 @@ for message in messages:
             '<div style="font-weight:900;color:#3730A3;font-size:1.1rem;margin-bottom:6px;">'
             '🧑‍🏫 코치 피드백</div>'
             f'<div style="color:#1E293B;font-size:1.08rem;line-height:1.8;word-break:keep-all;">'
-            f'{html.escape(message["text"]).replace(chr(10), "<br>")}</div></div>',
+            f'{html.escape(message["text"]).replace(chr(10), "<br>").replace("~", "&#126;")}</div></div>',
             unsafe_allow_html=True,
         )
 
