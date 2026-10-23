@@ -1,6 +1,7 @@
 """대한민국 기준 피해 대처 안내. 개인정보 입력이나 신고 접수 기능은 없습니다."""
 import streamlit as st
 from mascot_ui import show_mascot
+import dotori_data as dd
 
 CHECKED = "2026-10-22"
 ICONS = {
@@ -88,6 +89,7 @@ def checklist(selected):
 
 def main():
     st.title("🚨 피해가 의심될 때")
+    dd.stamp("07", quiet=True)  # 실제 피해 안내 페이지라 알림 없이 조용히 찍어요.
     st.error("돈을 보냈거나 범죄 피해가 진행 중이라면 112 또는 금융회사에 먼저 연락하세요.")
     st.warning("악성앱·원격제어가 의심되면 다른 안전한 전화로 연락하세요. 이 페이지는 신고를 대신 접수하지 않습니다.")
     st.write("**112** · 범죄 피해 신고 / **118** · KISA 해킹·스미싱 상담")
