@@ -19,6 +19,7 @@ CITIZEN = "dotori_citizen"     # 시민증(로그인) 정보
 ANON = "dotori_anon"           # 로그인하지 않은 사람의 익명 계정(통계 저장용)
 SEEN = "dotori_seen"           # 이미 집계한 결과(새로고침·다시 그리기 때 두 번 세지 않게)
 MY = "dotori_my"               # 이번 방문에서 내가 한 기록
+STAMPS = "dotori_stamps"       # 이번 방문에서 모은 장소 도장(저장하지 않아요)
 REFRESH = 60                   # 통계·명예의 전당을 다시 읽는 간격(초)
 
 GAMES = {
@@ -29,6 +30,23 @@ GAMES = {
     "memo": ("🔐", "중고거래 사기단 추리"),
     "filter": ("🤖", "피싱 필터 만들기"),
     "nono": ("🧩", "큐싱 노노그램"),
+}
+
+# 시민증 도장판: 도토리시 지도의 13곳(번호, 아이콘, 장소, 도장 받는 방법)
+STAMP_PLACES = {
+    "01": ("🏡", "할머니 댁", "할머니 폰 지키기 결말 보기"),
+    "02": ("🎙️", "대화 연습실", "모의대화 연습 끝내기"),
+    "03": ("🗝️", "민서네 집", "피싱 방탈출 탈출하기"),
+    "04": ("🚧", "사이버 검문소", "주소나 문자 한 번 검사하기"),
+    "05": ("📚", "시립도서관", "개념과 통계 둘러보기"),
+    "06": ("⛲", "도토리 광장", "가짜뉴스 한 단계 끝내기"),
+    "07": ("🚑", "시민안전센터", "피해 대처 안내 위치 알아 두기"),
+    "08": ("🪪", "시민 등록소", "대처유형 결과 받기"),
+    "09": ("🏫", "2학년 3반 단톡방", "마피아 사건 하나 공개하기"),
+    "10": ("🛒", "중고마켓", "사기단 검거하기"),
+    "11": ("📮", "우체국 필터실", "필터 한 번 실행하기"),
+    "12": ("🅿️", "공영주차장", "노노그램 그림 하나 복원하기"),
+    "13": ("🏛️", "통계청", "통계청 둘러보기"),
 }
 
 # 명예의 전당: 정렬 기준(앞이 작을수록 높은 순위)과 기록 글자
@@ -182,6 +200,25 @@ def once(event_id):
 
 def note_mine(game, text):
     st.session_state.setdefault(MY, []).append((game, text, time.strftime("%H:%M")))
+
+
+def stamp(code, quiet=False):
+    """그 장소의 도장을 찍어요. 이미 있으면 그대로 두고, 처음 받을 때만 알림을 띄워요.
+    도장은 이번 방문(창)에만 있고 데이터베이스에는 저장하지 않아요."""
+    got = st.session_state.setdefault(STAMPS, {})
+    if code in got or code not in STAMP_PLACES:
+        return False
+    got[code] = time.strftime("%H:%M")
+    if not quiet:
+        icon, place, _ = STAMP_PLACES[code]
+        st.toast(f"{place} 도장을 받았어요! ({len(got)}/{len(STAMP_PLACES)})", icon=icon)
+        if len(got) == len(STAMP_PLACES):
+            st.toast("13곳 도장을 모두 모아 명예 시민이 되었어요!", icon="🎖️")
+    return True
+
+
+def stamps():
+    return st.session_state.get(STAMPS, {})
 
 
 # ───────── 통계(+1) ─────────
