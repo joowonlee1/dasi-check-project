@@ -1,5 +1,6 @@
 import streamlit as st
 from mascot_ui import show_key_question, show_mascot
+import dotori_data as dd
 
 
 SOURCE_URL = "https://www.data.go.kr/data/15063815/fileData.do"
@@ -43,6 +44,7 @@ st.title("📊 잠깐! · 개념과 통계")
 show_mascot("hint", "체험에서 만난 수법과 통계의 출처를 함께 알아봐요.", width=110)
 show_key_question("체험에서 만난 **수법을 이해**하고 **공식 자료**를 살펴봐요.", "📊")
 
+dd.stamp("05")
 concept_tab, statistics_tab = st.tabs(["개념 알아보기", "공식 통계"])
 
 with concept_tab:
