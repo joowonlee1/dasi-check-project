@@ -481,6 +481,13 @@ def show_play():
         st.caption(f"지금 투표하면 남은 조사 {left}번만큼 보너스 +{left * 20}점! 단, 틀리면 0점이에요.")
 
 
+def josa(name, with_final, without_final):
+    """이름 끝 글자에 받침이 있으면 앞 조사, 없으면 뒤 조사를 붙여요. (도윤이었어요 / 지호였어요)"""
+    last = name[-1]
+    has_final = "가" <= last <= "힣" and (ord(last) - 0xAC00) % 28 != 0
+    return name + (with_final if has_final else without_final)
+
+
 def show_reveal():
     s = state()
     case = CASES[s["case"]]
@@ -495,10 +502,10 @@ def show_reveal():
     multi = len(s["players"]) > 1
     if win:
         stamp = '<span class="mf-stamp">마피아 검거!</span>' + sparks()
-        line = f"{answer}은(는) 마피아(사칭범)였습니다!"
+        line = f"{josa(answer, '은', '는')} 마피아(사칭범)였습니다!"
     else:
         stamp = '<span class="mf-stamp miss">놓쳤다…</span>'
-        line = f"진짜 마피아는 {answer}였어요"
+        line = f"진짜 마피아는 {josa(answer, '이었어요', '였어요')}"
     st.markdown(
         f'<div class="mf-reveal {"win" if win else "lose"}"><div class="who">{emoji}</div>'
         f'<div class="line">{line}</div>{stamp}</div>',
@@ -510,7 +517,7 @@ def show_reveal():
             st.markdown(f"- {mark} **{escape(player)}** → {FRIENDS[pick][0]} {pick}")
     elif not win:
         pick = result["votes"][s["players"][0]]
-        st.warning(f"{FRIENDS[pick][0]} {pick}은(는) 시민(진짜 친구)이었어요. {case['missed']}")
+        st.warning(f"{FRIENDS[pick][0]} {josa(pick, '은', '는')} 시민(진짜 친구)이었어요. {case['missed']}")
 
     with st.container(border=True):
         st.markdown("**🔑 결정적 단서**")
