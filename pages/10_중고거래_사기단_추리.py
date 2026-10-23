@@ -447,6 +447,7 @@ if event and event.get("type") == "finish":
     stars, hints, wrong = max(1, min(3, int(event.get("stars", 1)))), max(0, int(event.get("hints", 0))), max(0, int(event.get("wrong", 0)))
     dd.record("memo", {"plays": 1, f"star{stars}": 1, "first_pick": 1 if wrong == 0 else 0})
     dd.note_mine("memo", f"별 {stars}/3 · 힌트 {hints}번 · 잘못 지목 {wrong}번")
+    dd.stamp("10")
     st.session_state["memo_hall"] = dd.save_hall(
         "memo", {"stars": stars, "hints": hints, "wrong": wrong},
         lambda old, new: (new["stars"], -new["hints"], -new["wrong"]) > (old.get("stars", 0), -old.get("hints", 10**6), -old.get("wrong", 10**6)),
