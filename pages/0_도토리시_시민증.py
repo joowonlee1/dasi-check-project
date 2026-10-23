@@ -1,12 +1,10 @@
 """도토리시 시민증: 닉네임만으로 로그인해 명예의 전당에 기록을 남기는 페이지.
 이름·학번·이메일·비밀번호는 받지 않아요. 창을 닫으면 로그아웃돼요.
 """
-import base64
 from html import escape
-from pathlib import Path
 
 import streamlit as st
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import id_photo, show_key_question, show_mascot
 import dotori_data as dd
 from card_ui import show_result_card
 from firebase_support import ConnectionProblem, explain
@@ -77,13 +75,12 @@ account = dd.citizen()
 if account:
     # 시민증 사진 자리에 깡지 증명사진을 넣어요. (사진 파일이 없으면 다람쥐 그림으로 대신해요.)
     try:
-        photo = Path(__file__).resolve().parent.parent / "assets" / "ggangji_id_cream.png"
         photo_html = (
-            f'<img src="data:image/png;base64,{base64.b64encode(photo.read_bytes()).decode()}" alt="깡지 증명사진" '
+            f'<img src="data:image/png;base64,{id_photo("ggangji_cream.png")}" alt="깡지 증명사진" '
             'style="width:84px;height:112px;object-fit:cover;border:4px solid #fff;border-radius:6px;'
             'box-shadow:0 2px 8px rgba(0,0,0,.2);">'
         )
-    except OSError:
+    except Exception:
         photo_html = '<div style="font-size:64px;">🐿️</div>'
     st.markdown(
         '<div style="background:linear-gradient(135deg,#FFF4D6,#E8F4EC);border:3px solid #E2C98A;border-radius:22px;'
