@@ -75,3 +75,21 @@ def show_key_question(text, icon="💡"):
         f'{icon} {body}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+# 깡지 증명사진(배경색과 표정이 조금씩 다른 4장). 사이드바와 시민증 페이지에서 함께 써요.
+ID_PHOTOS = ["ggangji_citizen_photo.png", "ggangji_blue.png", "ggangji_pink.png", "ggangji_cream.png"]
+
+
+@st.cache_data(show_spinner=False)
+def id_photo(filename):
+    """증명사진 위쪽 빈 공간을 조금 잘라 작게 줄인 뒤 PNG(base64)로 돌려줘요."""
+    from PIL import Image
+
+    path = Path(__file__).resolve().parent / "assets" / filename
+    with Image.open(path) as image:
+        w, h = image.size
+        part = image.convert("RGB").crop((0, int(h * 0.097), w, h)).resize((180, 240))
+    buffer = io.BytesIO()
+    part.save(buffer, format="PNG", optimize=True)
+    return base64.b64encode(buffer.getvalue()).decode()
