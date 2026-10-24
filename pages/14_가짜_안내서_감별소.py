@@ -16,6 +16,7 @@ KEY = "notice_v1"
 
 # 도토리 우체국 집배원 공식 번호부: 번호 순서로 정렬된 64칸(가상의 내선 번호)
 BOOK = [1012 + 131 * i for i in range(64)]
+GOAL = 7  # 64칸은 절반씩 줄이면 아무리 운이 나빠도 7번 안에 끝나요(64→32→16→8→4→2→1)
 
 # 감별할 안내서 5장. paper: 감열지/일반 종이, attach: 붙인 방식, number: 적힌 집배원 번호, ask: 안내 문구
 CASES = [
@@ -64,7 +65,7 @@ def fresh():
 
 def new_case():
     return {"paper": False, "attach": False, "lo": 0, "hi": len(BOOK) - 1, "mid": None,
-            "probes": 0, "slips": 0, "found": None, "verdict": None}
+            "probes": 0, "found": None, "verdict": None, "opened": [], "log": [], "near_mid": 0}
 
 
 S = st.session_state.setdefault(KEY, fresh())
@@ -101,7 +102,12 @@ def book_html(c, target):
             cls += " mid"
         if c["found"] is True and BOOK[i] == target:
             cls += " hit"
-        label = n if (c["mid"] == i or cls.endswith("hit")) else i + 1
+        # 아직 안 펼친 칸은 '몇 번째 칸'인지만, 펼쳐 본 칸은 그 안의 집배원 번호를 보여 줘요.
+        if i == c["mid"] or i in c["opened"] or cls.endswith("hit"):
+            cls += " seen"
+            label = f"<small>{i + 1}번째</small>{n}"
+        else:
+            label = i + 1
         cells.append(f'<div class="{cls}" title="{i + 1}번째 칸">{label}</div>')
     return '<div class="book">' + "".join(cells) + "</div>"
 
@@ -126,6 +132,7 @@ st.markdown(
     .bk.out{background:#F1F1F1;border-color:#E2E2E2;color:#C4C4C4;}
     .bk.mid{background:#FFE7A3;border-color:#E0A800;color:#5A3D00;font-size:.85rem;}
     .bk.hit{background:#0F766E;border-color:#0F766E;color:#fff;}
+    .bk.seen{font-size:.8rem;line-height:1.15;padding:3px 0;} .bk small{display:block;font-size:.62rem;font-weight:600;opacity:.75;}
     .tool-res{background:#F4F8F6;border:1.5px solid #D7E2DD;border-radius:12px;padding:8px 12px;margin:4px 0;}
     </style>""",
     unsafe_allow_html=True,
@@ -147,7 +154,8 @@ def show_intro():
         "1. 🔥 **열 테스트**: 진짜 안내서는 영수증 같은 감열지예요.\n"
         "2. ✋ **떼기 테스트**: 진짜는 포스트잇처럼 쉽게 떨어지고 흔적이 없어요.\n"
         "3. 📒 **번호부 찾기**: 적힌 집배원 번호가 공식 번호부(64칸)에 있는지 찾아요. "
-        "번호부는 번호 순서로 정렬돼 있어서, 가운데를 펼쳐 보고 절반씩 줄이면 빨리 찾을 수 있어요."
+        "번호부는 번호 순서로 정렬돼 있어서, 가운데를 펼쳐 보고 절반씩 줄이면 빨리 찾을 수 있어요.\n\n"
+        "세 가지를 모두 확인해야 판정할 수 있어요. 단서가 서로 다르게 말할 때는 어느 쪽을 믿을지가 핵심이에요!"
     )
     st.caption("모든 기관·번호는 가상이에요. 실제 안내서의 번호로 전화하거나 QR을 찍지 마세요.")
     if st.button("🔍 감별 시작하기", type="primary", width="stretch"):
@@ -156,48 +164,69 @@ def show_intro():
 
 
 def show_book(c, case):
-    st.markdown(f"**📒 번호부 찾기** · 찾는 번호: **내선 {case['number']}**  ·  펼친 횟수 {c['probes']}번")
-    st.markdown(book_html(c, case["number"]), unsafe_allow_html=True)
-    if c["found"] is True:
-        st.success(f"{c['probes']}번 펼쳐서 찾았어요. 번호부에 있는 공식 번호예요.")
-        return
-    if c["found"] is False:
-        st.error(f"{c['probes']}번 펼쳐서 후보가 다 사라졌어요. 번호부에 없는 번호예요!")
-        return
-    if c["mid"] is None:
-        mid = (c["lo"] + c["hi"]) // 2
-        st.caption(f"남은 후보 {c['hi'] - c['lo'] + 1}칸 ({c['lo'] + 1}~{c['hi'] + 1}번째)")
-        if st.button(f"📖 가운데 {mid + 1}번째 칸 펼치기", key=f"open{S['i']}"):
-            c["mid"], c["probes"] = mid, c["probes"] + 1
-            st.rerun()
-        return
-    value = BOOK[c["mid"]]
-    st.markdown(f"{c['mid'] + 1}번째 칸은 **내선 {value}** 이에요. 찾는 번호 **{case['number']}** 와 비교하면?")
-    a, b, d = st.columns(3)
-    pick = None
-    if a.button("⬅️ 더 앞에 있어요 (작아요)", key=f"lt{S['i']}", width="stretch"):
-        pick = "lt"
-    if b.button("🎯 이 번호예요", key=f"eq{S['i']}", width="stretch"):
-        pick = "eq"
-    if d.button("➡️ 더 뒤에 있어요 (커요)", key=f"gt{S['i']}", width="stretch"):
-        pick = "gt"
-    if pick:
-        target = case["number"]
-        right = "lt" if target < value else "gt" if target > value else "eq"
-        if pick != right:
-            c["slips"] += 1
-            st.warning(f"다시 비교해 봐요. {target}은(는) {value}보다 {'작아요' if right == 'lt' else '커요' if right == 'gt' else '같아요'}.")
-            return
-        if right == "eq":
-            c["found"] = True
-        elif right == "lt":
-            c["hi"] = c["mid"] - 1
+    target = case["number"]
+    st.markdown(f"**📒 번호부 찾기** · 찾는 번호: **내선 {target}**  ·  펼친 횟수 {c['probes']}번 (목표 {GOAL}번 이내)")
+    st.caption("공식 집배원 번호 64개가 작은 번호부터 큰 번호 순서로 꽂혀 있어요. 칸의 숫자는 '몇 번째 칸'인지이고, "
+               "펼쳐 본 칸에만 집배원 번호가 보여요. 회색 칸은 답이 있을 수 없어서 지운 칸이에요.")
+    st.markdown(book_html(c, target), unsafe_allow_html=True)
+
+    # 지금까지 펼친 기록: 어느 칸을 골랐고, 그 결과 몇 칸을 지울 수 있었는지
+    for line in c["log"]:
+        st.markdown(f"- {line}")
+
+    if c["found"] is not None:
+        over = c["probes"] > GOAL
+        if c["found"]:
+            idx = BOOK.index(target)
+            st.success(f"**{idx + 1}번째 칸에서 찾았어요.** 내선 {target}은 도토리 우체국에 등록된 공식 집배원 번호예요. "
+                       "다만 번호는 진짜를 베껴 쓸 수도 있으니, 종이와 붙인 흔적도 함께 보고 판정하세요.")
         else:
-            c["lo"] = c["mid"] + 1
-        c["mid"] = None
-        if c["found"] is None and c["lo"] > c["hi"]:
-            c["found"] = False
+            j = sum(1 for n in BOOK if n < target)  # 찾는 번호가 들어가야 할 자리
+            if j == 0:
+                where = f"맨 앞 칸(내선 {BOOK[0]})보다도 작은데"
+            elif j == len(BOOK):
+                where = f"맨 뒤 칸(내선 {BOOK[-1]})보다도 큰데"
+            else:
+                where = f"{j}번째 칸(내선 {BOOK[j - 1]})과 {j + 1}번째 칸(내선 {BOOK[j]}) 사이에 있어야 하는데"
+            st.error(f"**번호부에 없는 번호예요.** 내선 {target}은 {where}, 그 사이에는 칸이 없어요. "
+                     "번호부가 정렬돼 있으니 다른 곳을 더 찾을 필요도 없어요. "
+                     "도토리 우체국 집배원 번호가 아니라는 뜻이라, 사기범이 지어낸 번호일 가능성이 커요.")
+        if over:
+            st.caption(f"목표({GOAL}번)보다 많이 펼쳤어요. 남은 후보의 가운데를 고르면 어떤 결과가 나와도 절반이 지워져요.")
+        return
+
+    # 몇 번째 칸을 펼칠지는 직접 골라요. (어디를 고르느냐가 이진 탐색의 핵심)
+    lo, hi = c["lo"], c["hi"]
+    st.markdown(f"**남은 후보: {lo + 1}~{hi + 1}번째 ({hi - lo + 1}칸)** · 어느 칸을 펼쳐 볼까요?")
+    pick = st.number_input("펼칠 칸 (몇 번째)", min_value=lo + 1, max_value=hi + 1, value=lo + 1, step=1,
+                           key=f"pick{S['i']}_{c['probes']}")
+    if st.button("📖 이 칸 펼치기", key=f"open{S['i']}", type="primary"):
+        idx, mid = int(pick) - 1, (lo + hi) // 2
+        value = BOOK[idx]
+        c["probes"] += 1
+        c["opened"].append(idx)
+        c["mid"] = idx
+        if abs(idx - mid) <= 1:
+            c["near_mid"] += 1
+        if value == target:
+            c["found"] = True
+            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = **{value}** → 찾는 번호예요!")
+        else:
+            before = hi - lo + 1
+            if target < value:
+                c["hi"] = idx - 1
+                reason = f"{target}이 더 작으니 {idx + 1}번째부터 뒤쪽은 볼 필요가 없어요"
+            else:
+                c["lo"] = idx + 1
+                reason = f"{target}이 더 크니 {idx + 1}번째까지 앞쪽은 볼 필요가 없어요"
+            left = max(0, c["hi"] - c["lo"] + 1)
+            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = **{value}** → {reason}. "
+                            f"후보 {before}칸 → **{left}칸**")
+            if left == 0:
+                c["found"] = False
         st.rerun()
+    if c["probes"] and c["log"]:
+        st.caption("💡 한 번 펼칠 때 후보가 얼마나 줄었는지 보세요. 어디를 펼쳐야 가장 많이 지울 수 있을까요?")
 
 
 def show_play():
@@ -225,12 +254,17 @@ def show_play():
 
     st.divider()
     if c["verdict"] is None:
+        # 감으로 찍지 않도록, 도구 3가지로 모두 확인해야 판정 버튼이 열려요.
+        todo = [name for name, done in (("🔥 열 테스트", c["paper"]), ("✋ 떼기 테스트", c["attach"]),
+                                         ("📒 번호부 찾기", c["found"] is not None)) if not done]
         st.markdown("**판정하기** · 확인한 단서로 골라요.")
+        if todo:
+            st.info("아직 확인하지 않은 단서가 있어요: " + ", ".join(todo) + ". 모두 확인하면 판정할 수 있어요.")
         v1, v2 = st.columns(2)
         verdict = None
-        if v1.button("✅ 진짜 안내서예요", key=f"real{i}", width="stretch"):
+        if v1.button("✅ 진짜 안내서예요", key=f"real{i}", width="stretch", disabled=bool(todo)):
             verdict = "real"
-        if v2.button("🚫 가짜예요 · 떼고 신고", key=f"fake{i}", width="stretch", type="primary"):
+        if v2.button("🚫 가짜예요 · 떼고 신고", key=f"fake{i}", width="stretch", type="primary", disabled=bool(todo)):
             verdict = "fake"
         if verdict:
             c["verdict"] = verdict
@@ -245,9 +279,6 @@ def show_play():
     else:
         st.error(f"아쉬워요. {case['door']} 안내서는 **{answer}**였어요.")
     st.write(case["lesson"])
-    unused = [name for name, used in (("열 테스트", c["paper"]), ("떼기 테스트", c["attach"]), ("번호부 찾기", c["found"] is not None)) if not used]
-    if unused:
-        st.caption("쓰지 않은 도구: " + ", ".join(unused))
     if st.button("다음 현관문으로 ➡️" if i + 1 < len(CASES) else "감별 결과 보기 📋", type="primary", width="stretch"):
         if i + 1 < len(CASES):
             S["i"] += 1
@@ -282,9 +313,14 @@ def show_end():
 
     st.markdown("#### 📒 번호부를 절반씩 줄이면 왜 빠를까? (이진 탐색)")
     if searched:
-        st.write(f"이번에 번호부를 **{probes}번** 펼쳤어요. 처음부터 한 칸씩 넘겼다면 **{linear}번** 봐야 했어요.")
+        near = sum(c["near_mid"] for _, c in searched)
+        within = sum(1 for _, c in searched if c["probes"] <= GOAL)
+        st.write(f"이번에 번호부를 **{probes}번** 펼쳤어요. 처음부터 한 칸씩 넘겼다면 **{linear}번** 봐야 했어요. "
+                 f"{len(searched)}장 중 **{within}장**을 목표({GOAL}번) 안에 끝냈고, 펼친 칸 {probes}개 중 "
+                 f"**{near}개**가 남은 후보의 가운데 근처였어요.")
     st.markdown(
-        "정렬된 64칸에서 가운데를 펼치면, 찾는 번호가 앞쪽인지 뒤쪽인지 알 수 있어서 후보가 절반으로 줄어요. "
+        "가장자리를 펼치면 운이 좋을 때만 많이 지워지고, 대부분은 한두 칸밖에 못 지워요. "
+        "정렬된 64칸에서 **가운데**를 펼치면, 찾는 번호가 앞쪽인지 뒤쪽인지에 상관없이 후보가 항상 절반으로 줄어요. "
         "**64 → 32 → 16 → 8 → 4 → 2 → 1**, 아무리 많아도 **6~7번**이면 끝나요. "
         "한 칸씩 넘기면(순차 탐색) 최대 64번이 걸려요. 번호부가 1,000칸이 되어도 이진 탐색은 10번 정도면 충분해요. "
         "단, 번호 순서대로 **정렬돼 있어야** 쓸 수 있어요."
