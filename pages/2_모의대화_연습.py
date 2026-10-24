@@ -4,7 +4,7 @@ import re
 import time
 
 import streamlit as st
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import show_hero, show_key_question, show_mascot, show_tiles
 from card_ui import show_result_card
 import dotori_data as dd
 from google import genai
@@ -872,6 +872,15 @@ def sparks(icons):
     return "".join(out)
 
 
+show_hero(f"💬 대화 연습 · 사칭 상황 {len(SCENARIOS)}가지", "실제로 받기 전에, 먼저 답해 보기",
+          "상대 메시지에 직접 답하면 코치가 의심 신호와 안전하게 확인하는 방법을 알려 줘요.",
+          colors=("#3730A3", "#4F46E5"))
+show_tiles([
+    ("🎭", "① 상황 고르기", "가족·기관·택배 사칭 등 연습할 상황을 골라요."),
+    ("✍️", "② 직접 답장", "내가 실제로 보낼 말을 그대로 써 봐요."),
+    ("🧑‍🏫", "③ 코치 피드백", "잘한 점과 더 안전한 말을 바로 알려 줘요."),
+    ("📋", "④ 대응 리포트", "연습을 끝내면 결과 카드로 정리해 줘요."),
+])
 show_mascot("suspicious", "익숙한 말투여도, 어떤 행동을 요구하는지 살펴봐요.")
 
 show_key_question(
