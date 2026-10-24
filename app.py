@@ -268,6 +268,15 @@ st.markdown(
         padding-bottom: 0.4rem;
     }
 
+    /* 화면 요소 사이의 빈 간격을 줄여 전체 스크롤을 줄여요. */
+    [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0.6rem;
+    }
+    [data-testid="stMainBlockContainer"] h2, [data-testid="stMainBlockContainer"] h3 {
+        padding-top: 0.4rem;
+        padding-bottom: 0.3rem;
+    }
+
     .route {
         padding: 10px 16px;
         border: 1px solid #CBDAD2;
@@ -581,10 +590,16 @@ def show_home():
                 if k % 2 == 0:
                     card_cols = st.columns(2)
                 _, title, icon, path, steps, description = by_number[number]
+                place_icon, town, place, _ = PLACES[number]
                 with card_cols[k % 2].container(border=True):
+                    st.markdown(
+                        f'<span class="place-tag">{place_icon} {html.escape(town)} · {html.escape(place)}</span>',
+                        unsafe_allow_html=True,
+                    )
                     st.markdown(f"**{icon} {title}**")
                     st.caption(description)
-                    st.page_link(path, label="시작하기", icon="➡️")
+                    st.caption(f"이용 순서 · {steps}")
+                    st.page_link(path, label=f"{title} 시작하기", icon="➡️")
 
     with st.expander("이용 전에 알아두세요"):
         show_mascot(
@@ -648,6 +663,8 @@ with st.sidebar:
     st.markdown(
         """<style>
         [data-testid="stSidebarNav"] {margin-top: 126px;}
+        [data-testid="stNavSectionHeader"] {pointer-events: none;}
+        [data-testid="stNavSectionHeader"] [data-testid="stIconMaterial"] {display: none;}
         .st-key-citizen_top {position: absolute; top: 56px; left: 16px; width: calc(100% - 40px) !important; z-index: 5;
           background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 6px;
           box-sizing: border-box; gap: 2px !important;}
@@ -727,6 +744,20 @@ with st.sidebar:
         )
     st.session_state["last_page"] = current
 
+    # 메뉴 묶음(잠깐!·피해 도움 등)이 접혀서 제목만 보이면 무엇을 눌러야 할지 몰라요.
+    # 그래서 접힌 묶음은 처음 열 때 모두 펼치고, 제목을 눌러도 접히지 않게 해요.
+    if not st.session_state.get("nav_opened"):
+        st.session_state["nav_opened"] = True
+        components.html(
+            "<script>const d = window.parent.document, ls = window.parent.localStorage;"
+            "for (const k of Object.keys(ls)) { if (k.startsWith('stSidebarSectionsState')) {"
+            "const state = JSON.parse(ls.getItem(k) || '{}');"
+            "d.querySelectorAll('[data-testid=stNavSectionHeader]').forEach(h => {"
+            "const name = h.innerText.trim(); if (state[name] === false) h.click(); });"
+            "for (const n of Object.keys(state)) state[n] = true; ls.setItem(k, JSON.stringify(state)); } }</script>",
+            height=0,
+        )
+
     show_mascot(
         "stop",
         "멈추고, 확인하고, 판단하기",
@@ -766,6 +797,49 @@ current = next(
     ),
     None,
 )
+
+# ─────────────────────────────────────
+# 첫 화면(로그인 화면)
+# 처음 들어오면 화면 전체에 시민증 만들기·다시 들어오기를 먼저 보여 줘요.
+# '로그인 없이 둘러보기'도 할 수 있고, 실제 피해 안내(07)는 언제나 바로 열려요.
+# ─────────────────────────────────────
+
+def show_welcome_gate():
+    st.markdown(
+        """<style>
+        .gate {text-align:center;background:linear-gradient(135deg,#FFFBE6,#EAF6F0);border:1.5px solid #E6DDB0;
+          border-radius:24px;padding:18px 16px 12px;margin:0 0 10px;}
+        .gate b {display:block;font-size:1.7rem;font-weight:900;color:#20483F;margin:4px 0;}
+        .gate span {color:#52616B;font-weight:600;word-break:keep-all;}
+        .st-key-gate_guest button {background:transparent !important;border:none !important;color:#52616B !important;
+          text-decoration:none;font-weight:700;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="emergency_link"):  # 홈의 빨간 긴급 안내 버튼과 같은 모양
+        st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 로그인 없이 대처 안내 바로 보기", icon="🚨")
+    try:
+        photo = (f'<img src="data:image/png;base64,{id_photo("ggangji_cream.png")}" alt="깡지 증명사진" '
+                 'style="width:96px;height:85px;object-fit:cover;border:4px solid #fff;border-radius:6px;'
+                 'box-shadow:0 2px 8px rgba(0,0,0,.18);">')
+    except Exception:
+        photo = '<div style="font-size:56px;">🐿️</div>'
+    st.markdown(
+        f'<div class="gate">{photo}<b>✋ 잠깐! 도토리시에 오신 걸 환영해요</b>'
+        '<span>시민증을 만들면 게임 기록이 명예의 전당에 남고, 다음에도 이어서 할 수 있어요.</span></div>',
+        unsafe_allow_html=True,
+    )
+    dd.show_login_forms("gate")
+    st.caption("실제 이름·학번·학교는 닉네임으로 쓰지 마세요. 비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
+    with st.container(key="gate_guest"):
+        if st.button("로그인 없이 둘러보기 → (기록은 남지 않아요)", width="stretch"):
+            st.session_state["guest"] = True
+            st.rerun()
+
+
+if not dd.citizen() and not st.session_state.get("guest") and not (current and current[0] == "07"):
+    show_welcome_gate()
+    st.stop()
 
 if current:
     (
@@ -865,6 +939,9 @@ if current:
 # ─────────────────────────────────────
 
 navigation.run()
+
+# 페이지에서 받은 도장이 있으면, 페이지를 다 그린 뒤 도장 알림과 효과음을 한 번 보여 줘요.
+dd.show_stamp_popup()
 
 
 # ─────────────────────────────────────
