@@ -41,7 +41,7 @@ def _pose_data(pose):
     return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
-def show_mascot(pose, message="", width=130):
+def show_mascot(pose, message="", width=96):
     description = POSES[pose][5]
     try:
         encoded = _pose_data(pose)
@@ -50,17 +50,17 @@ def show_mascot(pose, message="", width=130):
         if message:
             st.caption(message)
         return
-    width = max(64, min(int(width), 240))
+    width = max(56, min(int(width), 110))  # 화면을 덜 차지하게 캐릭터 크기 상한을 낮춰요
     text = html.escape(message)
     label = html.escape(description, quote=True)
     st.markdown(
         f'<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;'
         f'background:#FFFFFF;border:1px solid #E4E9DD;border-radius:20px;'
-        f'padding:8px 14px;margin:4px 0 10px;">'
+        f'padding:4px 12px;margin:2px 0 6px;">'
         f'<img src="data:image/png;base64,{encoded}" alt="{label}" '
         f'style="width:{width}px;max-width:100%;height:auto;flex-shrink:0;">'
         f'<div style="flex:1;min-width:100px;color:#24443B;font-size:1.05rem;'
-        f'font-weight:700;line-height:1.75;word-break:keep-all;">{text}</div></div>',
+        f'font-weight:700;line-height:1.5;word-break:keep-all;">{text}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -102,26 +102,38 @@ def id_photo(filename):
 HERO_CSS = """<style>
 @keyframes jk-pop {0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.03);opacity:1} 100%{transform:scale(1)}}
 @keyframes jk-bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
-.jk-hero {background:linear-gradient(135deg,var(--a,#1F5F55),var(--b,#2E8B78));border-radius:26px;padding:22px 18px;color:#fff;
-  text-align:center;animation:jk-pop .6s ease-out both;box-shadow:0 10px 26px rgba(32,72,63,.22);margin:6px 0 12px;}
-.jk-hero b {display:block;font-size:1.6rem;font-weight:900;margin:6px 0;word-break:keep-all;}
-.jk-hero span {opacity:.92;font-weight:600;word-break:keep-all;}
-.jk-tiles {display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0 14px;}
-.jk-tile {border-radius:18px;padding:12px 10px;text-align:center;animation:jk-pop .5s ease-out both;word-break:keep-all;}
-.jk-tile div {font-size:32px;animation:jk-bounce 2.4s ease-in-out infinite;}
-.jk-tile b {display:block;color:#1E2F2B;margin:2px 0 3px;}
-.jk-tile small {color:#3E5751;font-size:.84rem;line-height:1.45;display:block;}
+.jk-hero {background:linear-gradient(135deg,var(--a,#EAF6F0),var(--b,#F4FAF6));border:1.5px solid var(--line,#CFE6DA);
+  border-radius:20px;padding:12px 16px;color:#3E4A46;text-align:center;animation:jk-pop .6s ease-out both;margin:6px 0 12px;}
+.jk-hero b {display:block;font-size:1.35rem;font-weight:900;margin:2px 0;word-break:keep-all;color:var(--ink,#0F766E);}
+.jk-hero span {font-weight:600;word-break:keep-all;}
+.jk-tiles {display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:4px 0 10px;}
+.jk-tile {border-radius:14px;padding:8px 10px;border:1px solid rgba(0,0,0,.06);text-align:left;
+  display:grid;grid-template-columns:34px 1fr;column-gap:8px;align-items:center;animation:jk-pop .5s ease-out both;word-break:keep-all;}
+.jk-tile div {font-size:26px;grid-row:span 2;text-align:center;animation:jk-bounce 2.4s ease-in-out infinite;}
+.jk-tile b {display:block;color:#1E2F2B;font-size:.95rem;}
+.jk-tile small {color:#3E5751;font-size:.82rem;line-height:1.4;display:block;}
 .jk-hero.sm {padding:12px 16px;border-radius:20px;margin:2px 0 8px;} .jk-hero.sm b {font-size:1.3rem;margin:2px 0;}
 @media (max-width:640px) {.jk-hero b {font-size:1.3rem;} .jk-tiles {grid-template-columns:repeat(2,1fr);}}
 @media (prefers-reduced-motion: reduce) {.jk-hero, .jk-tile, .jk-tile div {animation:none !important;}}
 </style>"""
-TILE_COLORS = ["#FFE7A3", "#D6E4FF", "#FFD6E0", "#D7F2E3", "#FFE2C6", "#E9DDFB"]
+# 연한 색 카드(눈이 편한 파스텔 톤)
+TILE_COLORS = ["#FDECEC", "#FFFBE6", "#EAF6F0", "#EEF4FF", "#F5EEFB", "#FFF3E8"]
 
 
-def show_hero(tag, title, sub, colors=("#1F5F55", "#2E8B78"), small=False):
-    """게임 시작 화면의 큰 배너. small=True면 높이를 줄인 작은 배너예요."""
+# 연한 배너 색 세트: (배경1, 배경2, 테두리, 제목 글씨)
+HERO_TONES = {
+    "pink": ("#FDECEC", "#FFF6F3", "#F6CACA", "#B42318"),
+    "cream": ("#FFFBE6", "#FFF8EC", "#F1DFA6", "#8A5A00"),
+    "mint": ("#EAF6F0", "#F4FAF6", "#CFE6DA", "#0F766E"),
+    "sky": ("#EEF4FF", "#F6F9FF", "#CCDDF5", "#1E4E8C"),
+}
+
+
+def show_hero(tag, title, sub, tone="mint", small=False):
+    """게임 시작 화면의 배너(연한 색). small=True면 높이를 줄인 작은 배너예요."""
+    a, b, line, ink = HERO_TONES.get(tone, HERO_TONES["mint"])
     st.markdown(
-        HERO_CSS + f'<div class="jk-hero{" sm" if small else ""}" style="--a:{colors[0]};--b:{colors[1]}">'
+        HERO_CSS + f'<div class="jk-hero{" sm" if small else ""}" style="--a:{a};--b:{b};--line:{line};--ink:{ink}">'
         f"<span>{html.escape(tag)}</span><b>{html.escape(title)}</b><span>{html.escape(sub)}</span></div>",
         unsafe_allow_html=True,
     )
