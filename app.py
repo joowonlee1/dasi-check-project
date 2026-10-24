@@ -568,22 +568,23 @@ def show_home():
         "원하는 활동부터 시작해도 괜찮아요."
     )
 
-    for number, title, icon, path, steps, description in FEATURES:
-        with st.container(border=True):
-            place_icon, town, place, _ = PLACES[number]
-            st.markdown(
-                f'<span class="place-tag">{place_icon} {html.escape(town)} · {html.escape(place)}</span>',
-                unsafe_allow_html=True,
-            )
-            st.markdown(f"### {icon} {title}")
-            st.write(description)
-            st.caption(steps)
-
-            st.page_link(
-                path,
-                label=f"{title} 시작하기",
-                icon="➡️",
-            )
+    # 활동이 많아져 스크롤이 길어지지 않게, 묶음별 탭 + 두 칸짜리 작은 카드로 보여 줘요.
+    groups = [
+        ("🎮 체험과 연습", ("01", "02", "03", "06", "09", "10", "11", "12", "14", "08")),
+        ("🔎 확인과 학습", ("04", "05", "13")),
+        ("🚨 피해 도움", ("07",)),
+    ]
+    by_number = {row[0]: row for row in FEATURES}
+    for tab, (_, numbers) in zip(st.tabs([name for name, _ in groups]), groups):
+        with tab:
+            for k, number in enumerate(numbers):
+                if k % 2 == 0:
+                    card_cols = st.columns(2)
+                _, title, icon, path, steps, description = by_number[number]
+                with card_cols[k % 2].container(border=True):
+                    st.markdown(f"**{icon} {title}**")
+                    st.caption(description)
+                    st.page_link(path, label="시작하기", icon="➡️")
 
     with st.expander("이용 전에 알아두세요"):
         show_mascot(
