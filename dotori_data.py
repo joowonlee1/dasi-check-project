@@ -8,6 +8,7 @@
 """
 import json
 import time
+from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
@@ -19,6 +20,7 @@ CITIZEN = "dotori_citizen"     # 시민증(로그인) 정보
 ANON = "dotori_anon"           # 로그인하지 않은 사람의 익명 계정(통계 저장용)
 SEEN = "dotori_seen"           # 이미 집계한 결과(새로고침·다시 그리기 때 두 번 세지 않게)
 MY = "dotori_my"               # 이번 방문에서 내가 한 기록
+KST = timezone(timedelta(hours=9))  # 서버 시계(UTC)가 아니라 한국 시간으로 기록해요
 STAMPS = "dotori_stamps"       # 이번 방문에서 모은 장소 도장(저장하지 않아요)
 REFRESH = 60                   # 통계·명예의 전당을 다시 읽는 간격(초)
 
@@ -201,7 +203,7 @@ def once(event_id):
 
 
 def note_mine(game, text):
-    st.session_state.setdefault(MY, []).append((game, text, time.strftime("%H:%M")))
+    st.session_state.setdefault(MY, []).append((game, text, datetime.now(KST).strftime("%H:%M")))
 
 
 def stamp(code, quiet=False):
@@ -210,7 +212,7 @@ def stamp(code, quiet=False):
     got = st.session_state.setdefault(STAMPS, {})
     if code in got or code not in STAMP_PLACES:
         return False
-    got[code] = time.strftime("%H:%M")
+    got[code] = datetime.now(KST).strftime("%H:%M")
     if not quiet:
         icon, place, _ = STAMP_PLACES[code]
         st.toast(f"{place} 도장을 받았어요! ({len(got)}/{len(STAMP_PLACES)})", icon=icon)
