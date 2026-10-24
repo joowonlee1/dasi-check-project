@@ -907,29 +907,44 @@ if STATE_KEY not in st.session_state:
 
 state = get_state()
 
-offline = st.toggle(
-    "📴 오프라인 대본 모드",
-    key="jamkkan_offline_v2",
+# 대화 설정 상자: 오프라인 대본 모드를 언제 쓰는지 바로 보이게 묶어 둬요.
+st.markdown(
+    """<style>
+    .st-key-chat_settings {background:#F5F3FF;border:2px solid #C4B5FD;border-radius:18px;padding:12px 16px;}
+    .st-key-chat_settings [data-testid="stWidgetLabel"] p, .st-key-chat_settings label p {font-size:1.15rem !important;font-weight:900 !important;color:#3730A3;}
+    .st-key-chat_reset button {border:2px solid #4338CA !important;color:#3730A3 !important;background:#FFFFFF !important;}
+    </style>""",
+    unsafe_allow_html=True,
 )
-
-if offline:
-    st.caption(
-        "AI를 호출하지 않고 준비된 교육용 대본으로 응답합니다. "
-        "자유로운 문맥 이해와 상세한 답변에는 한계가 있어요."
+with st.container(key="chat_settings"):
+    offline = st.toggle(
+        "📴 오프라인 대본 모드",
+        key="jamkkan_offline_v2",
     )
-else:
-    st.caption(
-        "첫 인사는 고정 문장이고, 이후 답변은 AI가 생성합니다."
+    st.markdown(
+        "**언제 켜나요?** ① AI 답변이 안 오거나 오류가 날 때 ② AI를 쓰지 않고 연습하고 싶을 때 "
+        "→ 켜면 AI 대신 **미리 준비된 대본**으로 대화해요."
     )
 
-st.button(
-    "대화 처음부터 시작",
-    on_click=reset_chat,
-)
+    if offline:
+        st.caption(
+            "AI를 호출하지 않고 준비된 교육용 대본으로 응답합니다. "
+            "자유로운 문맥 이해와 상세한 답변에는 한계가 있어요."
+        )
+    else:
+        st.caption(
+            "지금은 AI 모드예요. 첫 인사는 고정 문장이고, 이후 답변은 AI가 생성합니다."
+        )
 
-st.caption(
-    "상황 변경이나 처음부터 시작을 누르면 현재 대화가 초기화됩니다."
-)
+    with st.container(key="chat_reset"):
+        st.button(
+            "🔄 대화 처음부터 시작",
+            on_click=reset_chat,
+        )
+
+    st.caption(
+        "상황 변경이나 처음부터 시작을 누르면 현재 대화가 초기화됩니다."
+    )
 
 with st.expander("💡 필요할 때 힌트 보기"):
     st.write(
@@ -1211,7 +1226,7 @@ else:
                 "이 대화에는 준비된 오프라인 대본 응답이 포함되어 있어요."
             )
 
-        if st.button("대화 끝내고 리포트 보기", on_click=finish_chat):
+        if st.button("📝 대화 끝내고 리포트 보기", on_click=finish_chat, type="primary", key="chat_finish_main"):
             try:
                 with st.spinner("대화를 돌아보고 있어요…"):
                     if offline:
