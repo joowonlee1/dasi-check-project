@@ -155,10 +155,7 @@ st.markdown(
     .log{display:flex;flex-direction:column;gap:4px;font-size:.86rem;line-height:1.45;margin-bottom:4px;}
     .log div{background:#F7F7F4;border-left:4px solid #0F766E;border-radius:6px;padding:5px 9px;}
     .tool-res{background:#F4F8F6;border:1.5px solid #D7E2DD;border-radius:12px;padding:8px 12px;margin:4px 0;}
-    
-@media(max-width:640px){.book{grid-template-columns:repeat(4,minmax(0,1fr))}}
-
-</style>""",
+    </style>""",
     unsafe_allow_html=True,
 )
 
