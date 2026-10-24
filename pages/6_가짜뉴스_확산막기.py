@@ -533,7 +533,7 @@ function finish(){
     <div class="barlab">${S.levels.map((_, k) => `<span>${k + 1}</span>`).join('')}</div>` : '<p>처음 단계에서 모두 막았어요!</p>'}
     <p style="font-size:.9rem;color:#52616B">한 단계마다 ‘방금 믿은 사람’의 친구에게 번져요. 컴퓨터가 그래프를 넓게 탐색하는 방식(너비 우선 탐색, BFS)과 같아요.</p></section>
   ${stageMap()}
-  <div class="row"><button onclick="startStage(${G.stage})">↺ 다시 도전</button>
+  <div class="row"><button onclick="startStage(${G.stage})">🔄 다른 방법으로 다시 도전</button>
   <button class="go" onclick="${last ? 'final()' : `startStage(${G.stage + 1})`}">${last ? '🏆 최종 결과' : '다음 단계 ▶'}</button></div>`;
   requestAnimationFrame(() => setTimeout(() => { const m = $('mtr'); if (m) m.style.width = pct + '%'; }, 120));
   toTop();
