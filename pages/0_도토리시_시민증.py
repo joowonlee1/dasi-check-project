@@ -139,6 +139,6 @@ else:
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
 
 # 맨 아래: 관리자만 쓰는 상자(관리자 코드가 Secrets에 있을 때만 보여요)
-from admin_tools import show_admin_box
 
-show_admin_box()
+
+
