@@ -486,7 +486,7 @@ def evidence_html(item):
             f'<div class="frame-pic">{item["image"]}<div class="frame-time">{esc(item["big_time"])}</div></div>'
             f'<div class="frame-cap">{esc(item["caption"])}</div>'
             "</div>"
-            '<details class="meta-table"><summary>🔍 사진 정보 더 보기</summary>'
+            '<details class="meta-table" open><summary>🔍 문제 풀이에 필요한 사진 정보</summary>'
             + "".join(f"<div><span>{esc(a)}</span><b>{esc(b)}</b></div>" for a, b in item["info"])
             + "</details></div>"
         )
@@ -537,6 +537,7 @@ def pressure_messages():
 
 
 def show_status_bar():
+    st.markdown("<style>.lock-banner{padding:18px 20px!important;} .lock-banner .text{font-size:1.2rem!important;line-height:1.7!important;} .lock-banner .from{font-size:1rem!important;}</style>",unsafe_allow_html=True)
     # 위: 게임 속 시각과 남은 시간을 같은 크기 카드로 나란히 / 아래: 잠금화면 알림을 가로 전체로 보여 줘요.
     left, right = st.columns(2)
     with left:
@@ -566,7 +567,7 @@ def hint_panel(stage):
         used = game["hints"][stage]
 
         if used < len(HINTS[stage]):
-            if st.button("힌트 하나 더 보기", key=f"escape_hint_{stage}"):
+            if st.button("힌트 보기" if used == 0 else "힌트 하나 더 보기", key=f"escape_hint_{stage}"):
                 game["hints"][stage] += 1
                 spend("hint")
                 st.rerun()
@@ -582,24 +583,26 @@ def show_feedback():
 
 
 def lock_one():
-    st.subheader("🔒 잠금 1 · 상대는 어떻게 알고 있었을까?")
+    st.subheader("🔒 잠금 1 · 통화 상대는 어떻게 알고 있었을까?")
     st.write(
         "서랍에는 4자리 번호 자물쇠가 달려 있습니다. 자물쇠 옆 쪽지에는 이렇게 적혀 있어요."
     )
     st.info(
-        "“통화에서 상대가 말한 **보리**와 **10시 도서관**. "
-        "누구나 볼 수 있었던 출처를 찾아, 그 글이 작성된 시각의 ‘시’를 통화에 나온 순서대로 적어라.”"
+        "통화 상대가 말한 **보리**와 **10시 도서관**. "
+        "각 정보가 나온 **전체 공개 게시물의 작성 시각**에서 시(HH) 두 자리만 가져와 "
+        "**보리 → 도서관** 순서로 이어 붙이세요. 예를 들어 07:15와 13:40이라면 0713이에요. "
+        "게시물 속 약속 시각이나 분(MM)을 쓰는 문제가 아니에요."
     )
 
     with st.form("escape_source_form"):
         code = st.text_input("자물쇠 번호 (4자리 숫자)", max_chars=12, placeholder="예: 0000")
         unknown = st.radio(
-            "그런데 상대가 몰랐던 것으로 보이는 정보가 하나 있습니다. 무엇일까요?",
+            "공개 게시물과 가족 달력을 대조했을 때, 통화 내용과 다른 점은 무엇일까요?",
             [
-                "통화 첫마디에 부른 민서의 이름",
-                "반려견 보리의 이름",
-                "원래 도서관에 가기로 한 시각",
-                "가족끼리만 공유한, 바뀐 오늘 일정",
+                "공개 글의 작성 시각을 오늘 약속 시각으로 바꾸어 말했다.",
+                "가족 달력에 수정된 새 일정을 통화에서 정확히 말했다.",
+                "공개 글과 가족 달력이 모두 같은 일정을 보여 준다.",
+                "가족끼리만 수정한 일정과 달리, 통화에서는 이전 공개 일정을 말했다.",
             ],
             index=None,
         )
@@ -611,7 +614,8 @@ def lock_one():
         elif digits(code) == "1820" and unknown.startswith("가족끼리만"):
             game["unlocked"] = 1
             game["feedback"] = (
-                "🔓 서랍이 열렸습니다. 상대가 아는 정보는 모두 전체 공개 게시물에 있던 것이었고, "
+                "🔓 서랍이 열렸습니다. ‘방 조사 → 🗄️ 잠긴 서랍’에 새 증거가 추가됐어요. "
+                "통화 상대가 아는 정보는 모두 전체 공개 게시물에 있던 것이었고, "
                 "08:55에 가족끼리 바꾼 일정은 몰랐습니다. 다만 이것만으로 사칭이 ‘확정’되지는 않아요. "
                 "엄마가 깜빡했을 수도 있으니까요. 확인이 더 필요합니다."
             )
@@ -654,7 +658,7 @@ def lock_two():
             game["feedback"] = (
                 "🔓 확인 장치가 켜졌습니다. 액자의 09:03은 ‘보낸’ 시각일 뿐 사진은 전날 찍혔고, "
                 "달력은 계획일 뿐입니다. 통화 화면의 이름과 번호도 조작될 수 있어요(발신번호 변작). "
-                "결국 위치를 알려면 직접 확인하는 수밖에 없습니다. 서랍을 조사해 보세요."
+                "‘방 조사 → 🗄️ 잠긴 서랍’에 전화 확인 장치가 새로 열렸어요. 기존에 알고 있던 연락처로 확인하세요."
             )
             st.rerun()
         elif digits(code) == "40550310":
@@ -727,6 +731,15 @@ def show_dialer():
     st.subheader("📞 확인 장치 · 다이얼")
     st.caption("번호를 직접 입력해 전화를 겁니다. 한 번 걸 때마다 게임 시계가 흐릅니다. 모든 연결은 가상입니다.")
 
+    st.caption("직접 수집한 증거에 등장한 번호예요. 오른쪽 복사 아이콘을 눌러 복사하세요. 목록은 정답 표시가 아니에요.")
+    import re as _phone_re
+    available = []
+    for eid in game["evidence"]:
+        for phone in _phone_re.findall(r"01[0-9]-?\d{3,4}-?\d{4}", str(EVIDENCE.get(eid, {}))):
+            if phone not in available:
+                available.append(phone)
+    for phone in available:
+        st.code(phone, language=None)
     with st.form("escape_dial_form", clear_on_submit=True):
         number = st.text_input("전화번호", max_chars=16, placeholder="010-0000-0000")
         dialed = st.form_submit_button("📞 전화 걸기")
@@ -896,6 +909,15 @@ def show_ending():
     st.success("🚪 잠금 해제! 사건의 확인 경로를 완성했습니다.")
     st.subheader(title)
     st.write(story)
+    st.markdown("#### 사건을 처음부터 연결해 보면")
+    st.markdown(
+        "1. 통화 상대는 공개 게시물의 보리와 이전 도서관 일정을 말하며 가족인 것처럼 접근했어요.\n"
+        "2. 08:55에 가족끼리 수정한 일정은 통화 내용과 달랐어요. 추가 확인이 필요한 이유였어요.\n"
+        "3. 사진 촬영 시각과 전송 시각은 달랐고, 달력도 실제 위치를 증명하지 못했어요.\n"
+        "4. 문자에 새로 적힌 연락처 대신, 이전부터 저장된 이모 번호로 독립 확인했어요.\n"
+        "5. 최초 통화·후속 문자·이모의 확인 결과를 대조해 실제 가족의 요청과 다르다는 결론을 냈어요."
+    )
+    st.caption("휴대전화 해킹 여부나 구체적인 범행 기술까지 입증한 것은 아니에요.")
 
     first, second, third, fourth = st.columns(4)
     first.metric("탈출 시각", clock_text(game["finished_clock"]))
@@ -1319,7 +1341,6 @@ def show_play():
 
     if game["unlocked"] < 3:
         show_status_bar()
-        show_quick_rules()
 
     st.progress(game["unlocked"] / 3)
     st.caption(
