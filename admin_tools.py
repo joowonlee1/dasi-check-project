@@ -1,4 +1,4 @@
-"""관리자 도구: 시민증 페이지 맨 아래 '🔑 관리자이신가요?'에서 관리자 코드를 넣으면 열려요.
+"""관리자 도구: 로그인 화면 '🔑 관리자이신가요?'에서 관리자 코드를 넣으면 열려요.
 
 - 관리자 코드는 Streamlit Secrets의 [admin] code 에만 있어요(코드·GitHub에 없음).
 - 비밀 숫자를 '보는' 기능은 없어요. Firebase가 암호화해 보관해서 누구도 원래 숫자를 볼 수 없어요.
@@ -98,7 +98,7 @@ def _problem(exc):
 
 
 def show_admin_box():
-    """시민증 페이지 맨 아래의 '관리자이신가요?' 상자."""
+    """로그인 화면의 '관리자이신가요?' 상자."""
     code = _admin_code()
     if not code:
         return  # 관리자 코드를 정하지 않았으면 상자를 보여 주지 않아요.
@@ -122,6 +122,10 @@ def show_admin_box():
 
 
 def _admin_tools():
+    if not st.session_state.get(OPEN):
+        return
+    from admin_answers import show_answers
+    show_answers()
     st.success("관리자 모드예요. 창을 닫거나 ‘관리자 모드 끝내기’를 누르면 닫혀요.")
     t_reset, t_people, t_hall = st.tabs(["🔑 비밀 숫자 재설정", "👥 시민 목록·삭제", "🏆 명예의 전당 정리"])
 
