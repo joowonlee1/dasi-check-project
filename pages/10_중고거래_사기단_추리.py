@@ -203,6 +203,9 @@ td.c button.bad{outline:3px solid #E5484D}
 @keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.exrow{grid-template-columns:1fr}.sellers,.pick{grid-template-columns:repeat(5,1fr);gap:4px}.sellers div,.pick button{font-size:.68rem}.pick button em,.sellers div em{font-size:22px}.tabs button{font-size:.85rem;padding:8px 4px}.code{font-size:1.05rem}.digits span{width:36px;height:46px;font-size:1.3rem}.lamp{width:50px}}
+
+@media(max-width:560px){.sellers,.pick{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.sellers div,.pick button{font-size:.9rem}.grids{grid-template-columns:minmax(0,1fr)}.tabs button{overflow-wrap:anywhere}}
+
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
