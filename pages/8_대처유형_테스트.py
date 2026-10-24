@@ -395,6 +395,8 @@ def start():
 
     st.session_state[PREFIX + "step"] = 0
 
+    dd.scroll_top()  # 첫 문항을 맨 위부터 보여 줘요.
+
 def answer(i, value):
 
     st.session_state[PREFIX + str(i)] = value
@@ -422,6 +424,8 @@ def reveal():
     score(answers)
 
     st.session_state[PREFIX + "result"] = tuple(answers)
+
+    dd.scroll_top()  # 결과 카드를 맨 위부터 보여 줘요.
 
     st.session_state[PREFIX + "fresh"] = True
 
@@ -940,4 +944,3 @@ def main():
 if __name__ == "__main__":
 
     main()
-
