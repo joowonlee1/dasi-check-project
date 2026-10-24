@@ -744,10 +744,10 @@ with st.sidebar:
         flex:1.2 1 0!important;
     }
     .st-key-side_citizen button,.st-key-side_logout button {
-        width:100%!important;height:56px!important;min-height:56px!important;
+        width:100%!important;height:44px!important;min-height:44px!important;
         margin:0!important;padding:4px!important;box-sizing:border-box!important;
         display:flex!important;align-items:center!important;justify-content:center!important;
-        border:1.5px solid #20483F!important;border-radius:999px!important;
+        border:1.5px solid #20483F!important;border-radius:10px!important;
     }
     .st-key-side_citizen button {background:#20483F!important;color:#fff!important;}
     .st-key-side_logout button {background:#fff!important;color:#20483F!important;}
