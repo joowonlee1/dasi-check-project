@@ -1296,33 +1296,6 @@ def show_entry():
                     start_game(True)
 
 
-def show_game_controls():
-    """Manage this run only; preserve the signed-in citizen and saved records."""
-    left, right = st.columns(2)
-    if left.button("🔄 처음부터 다시", key="room_restart", width="stretch"):
-        st.session_state["room_pending_action"] = "restart"
-    if right.button("🚪 이번 도전 종료", key="room_exit", width="stretch"):
-        st.session_state["room_pending_action"] = "exit"
-    action = st.session_state.get("room_pending_action")
-    if action:
-        st.warning("현재 진행과 미저장 결과가 지워져요. 시민증 로그인과 이미 저장된 기록은 유지돼요.")
-        yes, no = st.columns(2)
-        if yes.button("확인 · 다시 시작" if action == "restart" else "확인 · 도전 종료",
-                      key="room_confirm", width="stretch"):
-            ranked = bool(st.session_state.get("escape_game", {}).get("rank_uid"))
-            st.session_state.pop("room_pending_action", None)
-            if action == "restart":
-                start_game(ranked)
-            else:
-                for key in list(st.session_state):
-                    if key.startswith("escape_"):
-                        del st.session_state[key]
-                go_to("🚪 시작 안내·입장")
-        if no.button("취소 · 계속하기", key="room_cancel", width="stretch"):
-            st.session_state.pop("room_pending_action", None)
-            st.rerun()
-
-
 def show_play():
     global game
 
@@ -1338,7 +1311,6 @@ def show_play():
         return
 
     game = st.session_state["escape_game"]
-    show_game_controls()
 
     if is_timed_out():
         show_failure()
@@ -1358,11 +1330,8 @@ def show_play():
     if game["unlocked"] == 3:
         show_ending()
 
-        if st.button("🏆 통계청 명예의 전당에서 방탈출 기록 보기"):
-            st.session_state["hall_game"] = "escape"
-            st.session_state["stats_game"] = "escape"
-            st.session_state["open_escape_hall"] = True
-            st.switch_page("pages/13_도토리시_통계청.py")
+        if st.button("🏆 명예의 전당 보기"):
+            go_to("🏆 명예의 전당")
 
     else:
         # '잠금 해제'는 다른 두 탭과 헷갈리지 않게 더 크고 다른 색으로 보여 줘요.
@@ -1458,7 +1427,7 @@ def show_section_menu_style(game_running):
         .st-key-room_section [data-testid="stRadio"] {{ width: 100%; }}
         .st-key-room_section [role="radiogroup"] {{
             display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px; width: 100% !important;
         }}
         .st-key-room_section [role="radiogroup"] > div {{ width: 100%; margin: 0; }}
@@ -1488,11 +1457,13 @@ def show_section_menu_style(game_running):
         }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::before {{ content: "STEP 1"; }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::before {{ content: "STEP 2"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::before {{ content: "STEP 3"; }}
         .st-key-room_section label[data-testid="stRadioOption"]::after {{
             font-size: .82rem; color: #52636B; margin-top: 4px; text-align: center;
         }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::after {{ content: "규칙 확인하고 입장하기"; }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::after {{ content: "증거 모아 잠금 풀기"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::after {{ content: "모두의 기록 보기"; }}
         /* 지금 보고 있는 메뉴 */
         .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"] {{
             background: #0F766E; border-color: #0F766E;
@@ -1526,14 +1497,12 @@ show_section_menu_style(
     and time.time() - _running.get("started", 0) < TIME_LIMIT_MINUTES * 60
 )
 
-if st.session_state.get("room_section") not in (None, "🚪 시작 안내·입장", "🗝️ 게임 진행"):
-    st.session_state["room_section"] = "🚪 시작 안내·입장"
-
 section = st.radio(
     "방탈출 메뉴",
     [
         "🚪 시작 안내·입장",
         "🗝️ 게임 진행",
+        "🏆 명예의 전당",
     ],
     horizontal=True,
     key="room_section",
@@ -1546,3 +1515,27 @@ if section == "🚪 시작 안내·입장":
 
 elif section == "🗝️ 게임 진행":
     show_play()
+
+else:
+    # 예전 '탈출 랭킹'을 도토리시 명예의 전당(방탈출)으로 합쳤어요.
+    st.subheader("🏆 명예의 전당 · 피싱 방탈출")
+    entries = sorted(dd.hall("escape"), key=dd.HALL_SORT["escape"])
+    me = dd.citizen()
+    if entries:
+        medals = ["🥇", "🥈", "🥉"]
+        rows, rank, prev = [], 0, None
+        for i, r in enumerate(entries[:20]):
+            key = dd.HALL_SORT["escape"](r)
+            if key != prev:
+                rank, prev = i + 1, key
+            rows.append({"순위": medals[rank - 1] if rank <= 3 else f"{rank}위",
+                         "닉네임": r.get("nickname", "시민") + ("  ⭐ 나" if me and r["uid"] == me["uid"] else ""),
+                         "기록": dd.HALL_TEXT["escape"](r)})
+        st.dataframe(rows, hide_index=True, width="stretch")
+    else:
+        st.info("아직 명예의 전당에 오른 시민이 없어요. 시민증으로 시작해 첫 주인공이 되어 보세요!")
+    st.caption("순위: 탈출 성공 → 많이 푼 잠금 → 힌트 적은 순 → 재검토 적은 순 → 빠른 순 · 새 기록은 보이기까지 최대 1분쯤 걸릴 수 있어요.")
+    st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 다른 게임 명예의 전당과 예전 탈출 랭킹 보기", icon="📈")
+
+    if st.button("게임으로 돌아가기"):
+        go_to("🗝️ 게임 진행")
