@@ -38,7 +38,7 @@ def show_result_card(card, filename, height=540):
 
 
 TEMPLATE = """
-<div id="result-card-root" style="font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;text-align:center;">
+<div style="font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;text-align:center;">
   <canvas id="c" style="max-width:100%;max-height:440px;width:auto;height:auto;border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.15);"></canvas>
   <div style="margin-top:10px;">
     <button id="save" style="background:#20483F;color:#fff;border:0;border-radius:14px;padding:12px 22px;
@@ -120,8 +120,7 @@ function layout(draw, img){
   }
   // 아래쪽(가로 전체)
   y = Math.max(y + 30, ry + 6);
-  const noteLines = D.note || ['교육용 가상 체험 결과예요.', '실제 피해는 112 · 118에 먼저 연락하세요.'];
-  const footH = Math.max(img ? 180 : 150, 110 + noteLines.length * 34);
+  const footH = img ? 170 : 110;
   if (draw) {
     ctx.fillStyle = '#E4E9DD'; ctx.fillRect(P, y, W - 2 * P, 3);
     if (img) {
@@ -135,19 +134,12 @@ function layout(draw, img){
   }
   return y + footH;
 }
-function fitFrame(){
-  const h=Math.ceil(document.getElementById('result-card-root').getBoundingClientRect().height)+24;
-  try { if(window.frameElement) window.frameElement.style.height=h+'px'; } catch(e){}
-}
-new ResizeObserver(fitFrame).observe(document.getElementById('result-card-root'));
-window.addEventListener('resize',fitFrame);
 function render(img){
   ctx.font = font(700, 32);
   const H = Math.ceil(layout(false, img));
   cv.width = W; cv.height = H;
   ctx.fillStyle = '#FFFEF8'; ctx.fillRect(0, 0, W, H);
   layout(true, img);
-  requestAnimationFrame(fitFrame);
 }
 function start(){
   if (D.mascot) { const img = new Image(); img.onload = () => render(img); img.onerror = () => render(null); img.src = D.mascot; }
@@ -156,9 +148,8 @@ function start(){
 (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start);
 document.getElementById('save').onclick = () => {
   cv.toBlob(b => {
-    if(!b)return;
-    const a = document.createElement('a'); const url=URL.createObjectURL(b); a.href=url; a.download=FILE;
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = FILE;
+    document.body.appendChild(a); a.click(); a.remove();
     document.getElementById('msg').textContent = '저장했어요! 사진첩이나 다운로드 폴더에서 확인하세요.';
   }, 'image/png');
 };
