@@ -199,6 +199,9 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:720px){.cols{grid-template-columns:1fr}.builder{position:static}.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}}
 @media (max-width:480px){.ex,.terms,.twin .pair{grid-template-columns:1fr}.hero b{font-size:1.2rem}.stages small{font-size:.72rem}}
+
+@media(max-width:480px){.stages{grid-template-columns:1fr}.stages small{font-size:.85rem}.matrix{font-size:.85rem;overflow-wrap:anywhere}.cols>*{min-width:0}}
+
 </style></head><body>
 <main class="wrap" id="app"></main>
 <script>
