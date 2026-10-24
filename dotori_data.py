@@ -325,8 +325,9 @@ def stamp(code, quiet=False):
 
 
 @st.cache_data(show_spinner=False)
-def _ding():
-    """도장 효과음 '띵동'(짧은 두 음)을 WAV 소리 파일로 만들어요. 외부 파일 없이 숫자로 만든 소리예요."""
+def _ding(gain=1.0):
+    """도장 효과음 '띵동'(짧은 두 음)을 WAV 소리 파일로 만들어요. 외부 파일 없이 숫자로 만든 소리예요.
+    gain은 음량 배율이에요(1.0이 기본)."""
     import io
     import math
     import struct
@@ -338,7 +339,7 @@ def _ding():
         n = int(rate * length)
         for i in range(n):
             fade = min(1.0, i / 300) * (1 - i / n)  # 딸깍 소리 없이 부드럽게 시작·끝
-            frames += struct.pack("<h", int(9000 * fade * math.sin(2 * math.pi * freq * i / rate)))
+            frames += struct.pack("<h", int(9000 * gain * fade * math.sin(2 * math.pi * freq * i / rate)))
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as w:
         w.setnchannels(1)
@@ -378,8 +379,12 @@ def show_stamp_popup():
         f'<div class="sp-pop"><div class="sp-ring">{icon}</div><div><b>{title}</b><small>{sub}</small></div></div>',
         unsafe_allow_html=True,
     )
-    with st.container(key="stamp_sound"):
-        st.audio(_ding(), format="audio/wav", autoplay=True)
+    # 사이드바에서 효과음을 껐거나 음량이 0이면 소리 없이 도장 알림만 보여 줘요.
+    if st.session_state.get("sound_on", True):
+        volume = st.session_state.get("sound_volume", 60)
+        if volume > 0:
+            with st.container(key="stamp_sound"):
+                st.audio(_ding(min(volume / 60, 1.6)), format="audio/wav", autoplay=True)
 
 
 def stamps():
