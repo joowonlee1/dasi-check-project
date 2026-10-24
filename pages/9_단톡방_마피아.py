@@ -209,17 +209,18 @@ CSS = """
   100%{transform:scale(1) rotate(-12deg);opacity:1}}
 @keyframes mf-shake {0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-10px)} 40%,80%{transform:translateX(10px)}}
 @keyframes mf-burst {0%{transform:translate(0,0) scale(.3);opacity:1} 100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
-.mf-hero {background:linear-gradient(135deg,#1F5F55,#2E8B78);border-radius:26px;padding:22px 18px;color:#fff;text-align:center;
-  animation:mf-pop .6s ease-out both;box-shadow:0 10px 26px rgba(32,72,63,.22);}
-.mf-hero b {display:block;font-size:1.6rem;font-weight:900;margin:6px 0;word-break:keep-all;}
-.mf-hero span {opacity:.9;font-weight:600;}
+/* 다른 게임 시작 화면과 같은 연한 민트색 배너 */
+.mf-hero {background:linear-gradient(135deg,#EAF6F0,#F4FAF6);border:1.5px solid #CFE6DA;border-radius:22px;padding:16px 18px;
+  color:#3E4A46;text-align:center;animation:mf-pop .6s ease-out both;margin:6px 0 14px;}
+.mf-hero b {display:block;font-size:1.5rem;font-weight:900;margin:4px 0;word-break:keep-all;color:#0F766E;}
+.mf-hero span {font-weight:600;}
 .mf-friends {display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;}
 .mf-friend {border-radius:18px;padding:10px 4px;text-align:center;animation:mf-pop .5s ease-out both;word-break:keep-all;}
 .mf-friend div {font-size:34px;animation:mf-bounce 2.4s ease-in-out infinite;}
 .mf-friend b {display:block;color:#1E2F2B;}
 .mf-friend small {color:#3E5751;font-size:.78rem;line-height:1.35;display:block;}
 .mf-chat {background:#DCEAE3;border-radius:24px;padding:14px 12px;margin:8px 0 14px;max-height:620px;overflow-y:auto;}
-.mf-hero-sm {padding:12px 16px;border-radius:20px;}
+.mf-hero-sm {padding:12px 16px;border-radius:20px;margin:6px 0 18px;}
 .mf-hero-sm b {font-size:1.3rem;margin:2px 0;}
 @media (max-width:640px) {.mf-chat {max-height:440px;}}
 .mf-chat-top {text-align:center;font-weight:800;color:#20483F;margin-bottom:8px;}
@@ -293,6 +294,7 @@ def start_game():
     st.session_state[KEY]["phase"] = "play"
     st.session_state[KEY]["scores"] = {n: 0 for n in names}
     st.session_state[KEY]["gid"] = str(time.time())  # 이번 판을 구분해 통계를 한 번만 세요.
+    dd.scroll_top()  # 첫 사건을 맨 위(대화방)부터 보여 줘요.
 
 
 def investigate(friend, kind):
@@ -419,7 +421,7 @@ def show_setup():
         st.markdown(
             "1. 단톡방 대화를 읽어요.\n"
             "2. **조사 3번**: 친구를 골라 👤 프로필 · 💬 1:1 질문 · 📜 이전 대화 중 하나를 확인해요. (모두 15가지 중 3개만!)\n"
-            "3. **투표**: 마피아라고 생각하는 친구를 지목해요.\n"
+            "3. **투표**: 마피아라고 생각하는 친구를 지목해요. 투표는 **조사를 1번 이상 한 뒤**에 열려요.\n"
             "4. 맞히면 100점 + 남은 조사 1번당 20점. 진짜 친구도 수상해 보이는 **함정**이 있어요."
         )
     st.markdown("#### 👥 몇 명이 함께 하나요?")
@@ -473,6 +475,15 @@ def show_play():
 
         player = s["players"][s["voter"]]
         multi = len(s["players"]) > 1
+        if not s["checks"]:
+            # 조사 없이 바로 찍기만 하지 않도록, 조사를 한 번은 해야 투표 칸이 열려요.
+            st.markdown(
+                '<div style="background:#FFF4D6;border:2px dashed #E2A93B;border-radius:16px;padding:12px 14px;'
+                'font-weight:800;color:#7A4B00;text-align:center;word-break:keep-all;">'
+                "🔒 투표는 조사를 1번 이상 한 뒤에 열려요.<br>위에서 친구를 고르고 👤 · 💬 · 📜 중 하나를 확인해 보세요.</div>",
+                unsafe_allow_html=True,
+            )
+            return
         with st.container(border=True):
             st.markdown(f"**🗳️ {'%s님의 ' % escape(player) if multi else ''}투표**")
             if multi:
