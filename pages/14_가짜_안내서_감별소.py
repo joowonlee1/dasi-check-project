@@ -218,6 +218,13 @@ def show_book(c, case):
             st.caption(f"목표({GOAL}번)보다 많이 펼쳤어요. 남은 후보의 가운데를 고르면 어떤 결과가 나와도 절반이 지워져요.")
         return
 
+
+
+def show_book_controls(c, case):
+    """남은 후보와 '몇 번째 칸을 펼칠지' 입력. 안내서 바로 아래(왼쪽)에 둬서 빈 공간 없이 이어지게 해요."""
+    if c["found"] is not None:
+        return
+    target = case["number"]
     # 몇 번째 칸을 펼칠지는 직접 골라요. (어디를 고르느냐가 이진 탐색의 핵심)
     lo, hi = c["lo"], c["hi"]
     st.markdown(
@@ -293,6 +300,8 @@ def show_play():
             st.markdown(f'<div class="tool-res">{PAPER[case["paper"]]}</div>', unsafe_allow_html=True)
         if c["attach"]:
             st.markdown(f'<div class="tool-res">{ATTACH[case["attach"]]}</div>', unsafe_allow_html=True)
+        if c["verdict"] is None:
+            show_book_controls(c, case)
         show_book_log(c)
     with right:
         show_book(c, case)
