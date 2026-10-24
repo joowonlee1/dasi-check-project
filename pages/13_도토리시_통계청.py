@@ -144,15 +144,17 @@ with tab_stats:
                 "그림", "힌트 없이 푼 비율(%)")
 
     elif game == "notice":
-        plays = data.get("plays", 0)
+        plays = data.get("v2_plays", 0)
         if not plays:
             empty()
         else:
             a, b = st.columns(2)
-            a.metric("감별한 사람", f"{plays}명")
-            b.metric("5장 모두 맞힘", f"{dd.pct(data.get('perfect', 0), plays)}%")
-            bar([(name, dd.pct(data.get(f"h{i}_ok", 0), plays)) for i, name in enumerate(NOTICE_DOORS)], "안내서", "맞힌 비율(%)")
-            st.caption("103호처럼 겉모습까지 진짜와 똑같이 만든 가짜를 많이 틀린다면, 번호를 직접 확인하는 습관이 중요하다는 뜻이에요.")
+            a.metric("새 활동 완료 횟수", f"{plays}회")
+            b.metric("3건 모두 판단·근거 일치", f"{dd.pct(data.get('v2_perfect', 0), plays)}%")
+            bar([(name, dd.pct(data.get(f"v2_h{i}_ok", 0), plays))
+                 for i,name in enumerate(["101호 · 정상 확인","102호 · 위조 확인","103호 · 판단 보류"])],
+                "안내서", "판단과 근거 일치 비율(%)")
+        st.caption("새 3건 활동만 집계해요. 이전 5장 활동 기록은 삭제하지 않고 별도로 보존돼요. 명예의 전당은 맞힌 비율로 비교해요.")
 
     st.caption("방금 끝낸 게임의 결과는 여기에 보이기까지 최대 1분쯤 걸릴 수 있어요(1분마다 새로 읽어요). 이름 없이 숫자만 모은 교육용 기록이에요.")
 
