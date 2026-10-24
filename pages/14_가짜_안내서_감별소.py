@@ -133,6 +133,20 @@ st.markdown(
     .bk.mid{background:#FFE7A3;border-color:#E0A800;color:#5A3D00;font-size:.85rem;}
     .bk.hit{background:#0F766E;border-color:#0F766E;color:#fff;}
     .bk.seen{font-size:.8rem;line-height:1.15;padding:3px 0;} .bk small{display:block;font-size:.62rem;font-weight:600;opacity:.75;}
+    .bk-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:4px;}
+    .bk-head b{font-size:1.05rem;margin-right:2px;}
+    .chip{border-radius:999px;padding:3px 12px;font-size:.88rem;font-weight:700;}
+    .chip strong{font-size:1.05rem;}
+    .chip.find{background:#FDECEC;color:#B42318;border:1.5px solid #F2B8B5;}
+    .chip.count{background:#E8F4EC;color:#0F766E;border:1.5px solid #B9D8C6;}
+    .chip.bad{background:#FDECEC;color:#B42318;border:1.5px solid #B42318;}
+    .left-box{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;background:#FFF4D6;border:2px solid #E0A800;
+      border-radius:14px;padding:10px 14px;margin:4px 0 6px;color:#5A3D00;}
+    .left-box span{font-weight:800;} .left-box b{font-size:1.25rem;color:#20483F;}
+    .left-box em{font-style:normal;background:#0F766E;color:#fff;border-radius:999px;padding:1px 10px;font-weight:800;}
+    .left-box small{flex-basis:100%;font-size:.85rem;color:#7A5A1A;}
+    .log{display:flex;flex-direction:column;gap:4px;font-size:.86rem;line-height:1.45;margin-bottom:4px;}
+    .log div{background:#F7F7F4;border-left:4px solid #0F766E;border-radius:6px;padding:5px 9px;}
     .tool-res{background:#F4F8F6;border:1.5px solid #D7E2DD;border-radius:12px;padding:8px 12px;margin:4px 0;}
     </style>""",
     unsafe_allow_html=True,
@@ -165,14 +179,16 @@ def show_intro():
 
 def show_book(c, case):
     target = case["number"]
-    st.markdown(f"**📒 번호부 찾기** · 찾는 번호: **내선 {target}**  ·  펼친 횟수 {c['probes']}번 (목표 {GOAL}번 이내)")
+    over = c["probes"] > GOAL
+    st.markdown(
+        '<div class="bk-head"><b>📒 번호부 찾기</b>'
+        f'<span class="chip find">찾는 번호 <strong>내선 {target}</strong></span>'
+        f'<span class="chip {"bad" if over else "count"}">펼친 횟수 <strong>{c["probes"]}</strong> / 목표 {GOAL}번 이내</span></div>',
+        unsafe_allow_html=True,
+    )
     st.caption("공식 집배원 번호 64개가 작은 번호부터 큰 번호 순서로 꽂혀 있어요. 칸의 숫자는 '몇 번째 칸'인지이고, "
                "펼쳐 본 칸에만 집배원 번호가 보여요. 회색 칸은 답이 있을 수 없어서 지운 칸이에요.")
     st.markdown(book_html(c, target), unsafe_allow_html=True)
-
-    # 지금까지 펼친 기록: 어느 칸을 골랐고, 그 결과 몇 칸을 지울 수 있었는지
-    for line in c["log"]:
-        st.markdown(f"- {line}")
 
     if c["found"] is not None:
         over = c["probes"] > GOAL
@@ -197,10 +213,15 @@ def show_book(c, case):
 
     # 몇 번째 칸을 펼칠지는 직접 골라요. (어디를 고르느냐가 이진 탐색의 핵심)
     lo, hi = c["lo"], c["hi"]
-    st.markdown(f"**남은 후보: {lo + 1}~{hi + 1}번째 ({hi - lo + 1}칸)** · 어느 칸을 펼쳐 볼까요?")
-    pick = st.number_input("펼칠 칸 (몇 번째)", min_value=lo + 1, max_value=hi + 1, value=lo + 1, step=1,
+    st.markdown(
+        f'<div class="left-box"><span>남은 후보</span><b>{lo + 1}~{hi + 1}번째</b>'
+        f'<em>{hi - lo + 1}칸</em><small>어느 칸을 펼쳐 볼까요?</small></div>',
+        unsafe_allow_html=True,
+    )
+    n1, n2 = st.columns([1, 1], vertical_alignment="bottom")
+    pick = n1.number_input("펼칠 칸 (몇 번째)", min_value=lo + 1, max_value=hi + 1, value=lo + 1, step=1,
                            key=f"pick{S['i']}_{c['probes']}")
-    if st.button("📖 이 칸 펼치기", key=f"open{S['i']}", type="primary"):
+    if n2.button("📖 이 칸 펼치기", key=f"open{S['i']}", type="primary", width="stretch"):
         idx, mid = int(pick) - 1, (lo + hi) // 2
         value = BOOK[idx]
         c["probes"] += 1
@@ -210,7 +231,7 @@ def show_book(c, case):
             c["near_mid"] += 1
         if value == target:
             c["found"] = True
-            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = **{value}** → 찾는 번호예요!")
+            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = <b>{value}</b> → 찾는 번호예요!")
         else:
             before = hi - lo + 1
             if target < value:
@@ -220,18 +241,34 @@ def show_book(c, case):
                 c["lo"] = idx + 1
                 reason = f"{target}이 더 크니 {idx + 1}번째까지 앞쪽은 볼 필요가 없어요"
             left = max(0, c["hi"] - c["lo"] + 1)
-            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = **{value}** → {reason}. "
-                            f"후보 {before}칸 → **{left}칸**")
+            c["log"].append(f"{c['probes']}번째: {idx + 1}번째 칸 = <b>{value}</b> → {reason}. "
+                            f"후보 {before}칸 → <b>{left}칸</b>")
             if left == 0:
                 c["found"] = False
         st.rerun()
-    if c["probes"] and c["log"]:
+
+
+def show_book_log(c):
+    """지금까지 펼친 기록: 어느 칸을 골랐고, 그 결과 후보가 몇 칸으로 줄었는지."""
+    if not c["log"]:
+        return
+    st.markdown("**📒 번호부를 펼친 기록**")
+    st.markdown('<div class="log">' + "".join(f"<div>{line}</div>" for line in c["log"]) + "</div>", unsafe_allow_html=True)
+    if c["found"] is None:
         st.caption("💡 한 번 펼칠 때 후보가 얼마나 줄었는지 보세요. 어디를 펼쳐야 가장 많이 지울 수 있을까요?")
 
 
 def show_play():
     i = S["i"]
     case, c = CASES[i], S["cases"][i]
+    # 이전 현관문(첫 문이면 시작 안내)으로 돌아가는 버튼. 이미 판정한 문은 결과를 다시 볼 수 있어요.
+    back = st.button("⬅️ 이전 현관문" if i else "⬅️ 시작 안내로", key=f"back{i}")
+    if back:
+        if i:
+            S["i"] -= 1
+        else:
+            S["step"] = "intro"
+        st.rerun()
     st.markdown(f"### 🚪 {i + 1} / {len(CASES)} · 다람쥐아파트 {case['door']}")
     st.progress(i / len(CASES))
     left, right = st.columns([1, 1], gap="large")
@@ -249,6 +286,7 @@ def show_play():
             st.markdown(f'<div class="tool-res">{PAPER[case["paper"]]}</div>', unsafe_allow_html=True)
         if c["attach"]:
             st.markdown(f'<div class="tool-res">{ATTACH[case["attach"]]}</div>', unsafe_allow_html=True)
+        show_book_log(c)
     with right:
         show_book(c, case)
 
@@ -304,6 +342,9 @@ def show_end():
                              **{f"h{k}_ok": 1 for k, (_, _, ok) in enumerate(results) if ok}})
         dd.note_mine("notice", f"{score}/{len(CASES)} 감별 · 번호부 {probes}번 펼침")
 
+    if st.button("⬅️ 마지막 현관문 다시 보기", key="back_end"):
+        S["step"], S["i"] = "play", len(CASES) - 1
+        st.rerun()
     st.title("📋 감별 결과")
     st.metric("맞힌 안내서", f"{score} / {len(CASES)}")
     st.markdown(
