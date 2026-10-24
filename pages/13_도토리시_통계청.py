@@ -13,6 +13,7 @@ ENDINGS = [("best", "⭐ 든든한 손주"), ("good", "🟢 지켜 냈다"), ("c
 FAKENEWS_STAGES = ["1단계", "2단계", "3단계", "4단계", "5단계"]
 MAFIA_CASES = ["사건 1", "사건 2", "사건 3"]
 NONO_STAGES = ["📱 스마트폰", "🔒 자물쇠", "🔳 QR 코드"]
+NOTICE_DOORS = ["101호 (가짜)", "102호 (진짜)", "103호 (가짜)", "104호 (진짜)", "105호 (가짜)"]
 # 피싱 필터 문자(보낸 곳, 진짜 여부) — 피싱 필터 만들기 페이지의 문자 순서와 같아요.
 FILTER_MSGS = [
     [("도토리택배", "진짜"), ("010-48○○", "가짜"), ("도토리수학학원", "진짜"), ("070 국제택배", "가짜"), ("엄마", "진짜"), ("도토리고 가정통신문", "진짜")],
@@ -129,6 +130,17 @@ with tab_stats:
                 cols[i].metric(name, f"{data.get(f's{i}_clear', 0)}번 복원")
             bar([(name, dd.pct(data.get(f"s{i}_nohint", 0), data.get(f"s{i}_clear", 0))) for i, name in enumerate(NONO_STAGES)],
                 "그림", "힌트 없이 푼 비율(%)")
+
+    elif game == "notice":
+        plays = data.get("plays", 0)
+        if not plays:
+            empty()
+        else:
+            a, b = st.columns(2)
+            a.metric("감별한 사람", f"{plays}명")
+            b.metric("5장 모두 맞힘", f"{dd.pct(data.get('perfect', 0), plays)}%")
+            bar([(name, dd.pct(data.get(f"h{i}_ok", 0), plays)) for i, name in enumerate(NOTICE_DOORS)], "안내서", "맞힌 비율(%)")
+            st.caption("103호처럼 겉모습까지 진짜와 똑같이 만든 가짜를 많이 틀린다면, 번호를 직접 확인하는 습관이 중요하다는 뜻이에요.")
 
     st.caption("통계는 최대 1분 동안 같은 결과를 보여 줘요. 이름 없이 숫자만 모은 교육용 기록이에요.")
 
