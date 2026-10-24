@@ -4,7 +4,7 @@
 카드에는 이름·학번 같은 개인정보를 넣지 않아요(시민증 닉네임만 선택적으로).
 """
 import json
-import time
+from datetime import datetime, timedelta, timezone
 
 import streamlit.components.v1 as components
 
@@ -23,7 +23,7 @@ def show_result_card(card, filename, height=620):
      "nickname": "도토리탐정"(선택), "mascot": "trophy"(선택)}
     """
     data = dict(card)
-    data["date"] = time.strftime("%Y.%m.%d")
+    data["date"] = datetime.now(timezone(timedelta(hours=9))).strftime("%Y.%m.%d")  # 한국 날짜
     pose = data.pop("mascot", None)
     if pose and _pose_data:
         try:
