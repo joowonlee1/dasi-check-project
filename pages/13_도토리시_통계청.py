@@ -55,6 +55,18 @@ with tab_stats:
             bar([(name, dd.pct(data.get(f"end_{k}", 0), plays)) for k, name in ENDINGS], "결말", "비율(%)")
             st.caption("‘송금 완료’ 비율이 높다면, 가족이 속고 있을 때 끼어드는 연습이 더 필요하다는 뜻이에요.")
 
+    elif game == "escape":
+        plays = data.get("plays", 0)
+        if not plays:
+            empty()
+        else:
+            a, b, c = st.columns(3)
+            a.metric("도전 횟수", f"{plays}번")
+            b.metric("탈출 성공", f"{dd.pct(data.get('escaped', 0), plays)}%")
+            c.metric("힌트 없이 탈출", f"{dd.pct(data.get('nohint', 0), plays)}%")
+            bar([(f"🔒 잠금 {k}", dd.pct(data.get(f"lock{k}", 0), plays)) for k in (1, 2, 3)], "잠금", "푼 비율(%)")
+            st.caption("실패한 도전도 함께 세요. 비율이 뚝 떨어지는 잠금이 사람들이 가장 많이 막히는 곳이에요.")
+
     elif game == "fakenews":
         rows = [(name, round(data.get(f"s{i}_pctsum", 0) / data[f"s{i}_plays"]) if data.get(f"s{i}_plays") else 0)
                 for i, name in enumerate(FAKENEWS_STAGES)]
@@ -142,7 +154,7 @@ with tab_stats:
             bar([(name, dd.pct(data.get(f"h{i}_ok", 0), plays)) for i, name in enumerate(NOTICE_DOORS)], "안내서", "맞힌 비율(%)")
             st.caption("103호처럼 겉모습까지 진짜와 똑같이 만든 가짜를 많이 틀린다면, 번호를 직접 확인하는 습관이 중요하다는 뜻이에요.")
 
-    st.caption("통계는 최대 1분 동안 같은 결과를 보여 줘요. 이름 없이 숫자만 모은 교육용 기록이에요.")
+    st.caption("방금 끝낸 게임의 결과는 여기에 보이기까지 최대 1분쯤 걸릴 수 있어요(1분마다 새로 읽어요). 이름 없이 숫자만 모은 교육용 기록이에요.")
 
 with tab_hall:
     hall_game = st.pills("게임 고르기", list(dd.HALL_SORT), default="filter", key="hall_game",
@@ -162,6 +174,20 @@ with tab_hall:
             rows.append({"순위": medals[rank - 1] if rank <= 3 else f"{rank}위", "닉네임": name, "기록": dd.HALL_TEXT[hall_game](r)})
         st.dataframe(rows, hide_index=True, width="stretch")
         st.caption(f"전체 {len(entries)}명 중 상위 20명 · 기록이 같으면 같은 순위예요.")
+    if hall_game == "escape":
+        st.caption("방탈출 순위: 탈출 성공 → 많이 푼 잠금 → 힌트 적은 순 → 재검토 적은 순 → 빠른 순. 실패한 도전도 기록돼요.")
+        # 예전 방탈출 페이지에 있던 '탈출 랭킹' 기록도 지우지 않고 그대로 보여 줘요.
+        with st.expander("📜 예전 방탈출 탈출 랭킹 기록 보기"):
+            try:
+                from firebase_support import config as fb_config, rankings as old_rankings
+                old = old_rankings(fb_config()[1])
+                if old:
+                    st.dataframe(old, hide_index=True, width="stretch")
+                else:
+                    st.caption("예전 기록이 없어요.")
+            except Exception:
+                st.caption("예전 기록을 불러오지 못했어요.")
+    st.caption("🧭 대처유형 테스트는 점수를 겨루는 게임이 아니라서 명예의 전당이 없어요. 결과 분포는 ‘게임별 통계’에서 볼 수 있어요.")
     if not me:
         st.page_link("pages/0_도토리시_시민증.py", label="시민증(닉네임)을 만들면 명예의 전당에 올라갈 수 있어요", icon="🪪")
 
@@ -184,18 +210,8 @@ with tab_how:
     )
     st.markdown("### 🔒 개인정보는 이렇게 지켜요")
     st.markdown(
-        "- **이름·학번·이메일·비밀번호를 받지 않아요.** 통계에는 ‘몇 번 나왔는지’ 숫자만 더해요.\n"
+        "- **이름·학번·이메일은 받지 않아요.** 통계에는 ‘몇 번 나왔는지’ 숫자만 더해요. 시민증의 비밀 숫자는 이 앱이 저장하지 않고 Firebase가 암호화해서 보관해요.\n"
         "- 누가 어떤 답을 했는지는 저장하지 않아요. 예를 들어 대처유형 테스트는 답변 없이 결과 유형 칸만 +1 해요.\n"
-        "- 명예의 전당에는 **시민증 닉네임과 점수만** 올라가요. 실제 이름은 닉네임으로 쓰지 마세요.\n"
+        "- 명예의 전당에는 **시민증 닉네임과 점수만** 올라가요. 닉네임은 누구나 볼 수 있으니 실제 이름을 넣을지는 알고 정해 주세요.\n"
         "- 데이터베이스 규칙으로 ‘숫자를 늘리기만’ 할 수 있게 막고, 남의 명예의 전당 기록은 고칠 수 없게 했어요."
     )
-    st.markdown("### 🗂️ 저장 구조 (정보 과목 연계)")
-    st.code(
-        "stats/                  ← 게임마다 문서 1개\n"
-        "  filter: { s0_runs: 12, s0_clear: 9, s0_m2_wrong: 4, ... }\n"
-        "  grandma: { plays: 30, end_best: 7, end_bad: 5, ... }\n"
-        "halloffame/filter/entries/{익명 번호}: { nickname: \"도토리탐정\", stars: 9, blocks: 9 }\n"
-        "citizens/{닉네임}: { uid: 익명 번호, created_at: 만든 시각 }",
-        language="text",
-    )
-    st.caption("위 숫자는 저장 모양을 보여 주는 예시예요. 실제 통계는 ‘게임별 통계’ 탭에서 확인하세요.")
