@@ -732,12 +732,38 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.markdown("""<style>
-    .st-key-citizen_top [data-testid="stHorizontalBlock"] {align-items:stretch!important;gap:8px!important;}
-    .st-key-citizen_top [data-testid="stHorizontalBlock"] [data-testid="stColumn"] {min-width:0!important;flex:1 1 0!important;}
-    .st-key-side_citizen button,.st-key-side_logout button {height:56px!important;min-height:56px!important;margin:0!important;padding:6px!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-    .st-key-side_citizen button {background:#20483F!important;color:#FFFFFF!important;border:1.5px solid #20483F!important;border-radius:999px!important;}
-    .st-key-side_citizen button p {color:#FFFFFF!important;}
-    .st-key-side_citizen p,.st-key-side_logout p {margin:0!important;font-size:1rem!important;line-height:1.3!important;}
+
+    /* 좁은 사이드바: 버튼 내부 Markdown의 말줄임을 해제합니다. */
+    .st-key-citizen_top [data-testid="stHorizontalBlock"] {
+        align-items:stretch!important;gap:6px!important;flex-wrap:nowrap!important;
+    }
+    .st-key-citizen_top [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        min-width:0!important;flex:1 1 0!important;
+    }
+    .st-key-citizen_top [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:first-child {
+        flex:1.2 1 0!important;
+    }
+    .st-key-side_citizen button,.st-key-side_logout button {
+        width:100%!important;height:56px!important;min-height:56px!important;
+        margin:0!important;padding:4px!important;box-sizing:border-box!important;
+        display:flex!important;align-items:center!important;justify-content:center!important;
+        border:1.5px solid #20483F!important;border-radius:999px!important;
+    }
+    .st-key-side_citizen button {background:#20483F!important;color:#fff!important;}
+    .st-key-side_logout button {background:#fff!important;color:#20483F!important;}
+    .st-key-side_citizen button [data-testid="stMarkdownContainer"],
+    .st-key-side_logout button [data-testid="stMarkdownContainer"],
+    .st-key-side_citizen button p,.st-key-side_logout button p,
+    .st-key-side_citizen button span,.st-key-side_logout button span {
+        min-width:0!important;max-width:100%!important;
+        white-space:normal!important;text-overflow:clip!important;overflow:visible!important;
+        word-break:keep-all!important;overflow-wrap:anywhere!important;
+        -webkit-line-clamp:unset!important;
+    }
+    .st-key-side_citizen button p,.st-key-side_logout button p {
+        margin:0!important;font-size:1rem!important;line-height:1.25!important;
+        font-weight:800!important;text-align:center!important;color:inherit!important;
+    }
     .home-hero .txt {font-size:1.12rem!important;}
     .home-hero .txt h1 {font-size:clamp(2.1rem,4vw,3rem)!important;}
     .home-hero .pic {flex-basis:190px!important;}
