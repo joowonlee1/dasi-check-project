@@ -84,6 +84,12 @@ def request(url, method="GET", payload=None, token=None, form=False):
             "USER_DISABLED",
             "PERMISSION_DENIED",
             "INVALID_ARGUMENT",
+            # 닉네임 + 비밀 숫자 시민증(이메일·비밀번호 방식)에서 쓰는 오류
+            "EMAIL_EXISTS",
+            "EMAIL_NOT_FOUND",
+            "INVALID_PASSWORD",
+            "INVALID_LOGIN_CREDENTIALS",
+            "WEAK_PASSWORD",
         }
 
         try:
