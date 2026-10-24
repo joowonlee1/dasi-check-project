@@ -1,4 +1,5 @@
 import html
+import random
 import time
 
 import streamlit as st
@@ -225,6 +226,7 @@ DOUBT_KEYS = ("reason", "parent", "scold", "snatch", "police")
 REAL_LESSON = {
     "together": "진짜 연락은 확인만 하고 넘어가면 충분해요. 모든 연락을 의심하면 할머니가 지칠 수 있어요.",
     "doubt": "진짜 연락까지 의심하거나 막으면 할머니가 불편해지고, 정작 중요한 순간에 내 말을 덜 믿게 돼요.",
+    "over": "진짜 연락까지 매번 ‘같이 확인하자’고 하면 할머니가 지쳐서, 정작 피싱이 왔을 때 내 말을 덜 들어요. 진짜는 지켜보기만 해도 충분해요.",
 }
 
 ENDINGS = {
@@ -366,10 +368,12 @@ def new_game(started=False):
 
 def start_game():
     st.session_state[KEY] = new_game(started=True)
+    dd.scroll_top()  # 아래쪽 버튼을 눌러 들어와도 첫 연락을 맨 위부터 보여 줘요.
     
 def back_to_intro():
     """다시 도전할 때는 게임 설명 화면부터 다시 보여 줍니다."""
     st.session_state[KEY] = new_game(started=False)
+    dd.scroll_top()
 
 def open_clues():
     st.session_state[KEY]["clue_open"] = True
@@ -437,11 +441,16 @@ def act(key):
     approach = APPROACHES[key]
     real = event["real"]
 
+    over = False
     if real:
         game["trust"] = clamp(game["trust"] + approach["real_trust"])
         stopped = False
         if key == "together":
-            lesson = REAL_LESSON["together"]
+            # 진짜 연락을 '함께 확인'하는 건 한 번까지 괜찮아요. 두 번째부터는 할머니가 지쳐요.
+            over = any(EVENTS[r["step"]]["real"] and r["key"] == "together" for r in game["log"])
+            if over:
+                game["trust"] = clamp(game["trust"] - 10)
+            lesson = REAL_LESSON["over" if over else "together"]
         elif key in DOUBT_KEYS:
             lesson = REAL_LESSON["doubt"]
         else:
@@ -472,6 +481,7 @@ def act(key):
             "said": said,
             "checked": game["clue_open"],
             "stopped": stopped,
+            "over": over,
             "reaction": grandma_reaction(key, game, stopped, real),
             "lesson": lesson,
             "belief": game["belief"],
@@ -489,6 +499,7 @@ def act(key):
     else:
         game["step"] = step + 1
         game["clue_open"] = False
+    dd.scroll_top()  # 다음 연락은 휴대전화 화면(위쪽)부터 보이게 해요.
 
 
 # ─────────────────────────────────────
@@ -499,7 +510,7 @@ def judged_right(record):
     """진짜 연락은 차분히 넘기고, 피싱에는 끼어들었는지 봅니다."""
     real = EVENTS[record["step"]]["real"]
     if real:
-        return record["key"] in ("watch", "together")
+        return record["key"] == "watch" or (record["key"] == "together" and not record.get("over"))
     return record["key"] != "watch"
 
 
@@ -509,6 +520,8 @@ def judgment_text(record):
     if event["real"]:
         if key == "watch":
             return "✅ 진짜 연락을 차분히 넘겼어요."
+        if key == "together" and record.get("over"):
+            return "⚠️ 진짜 연락까지 또 ‘같이 확인하자’고 했어요. 할머니가 지치기 시작했어요."
         if key == "together":
             return "🙂 진짜 연락을 함께 확인했어요. 이 정도는 괜찮아요."
         return "⚠️ 진짜 연락을 의심하거나 막았어요."
@@ -636,7 +649,7 @@ def show_last_feedback(game):
         )
     if not last["lesson"]:
         return
-    if last["key"] in ("scold", "snatch") or (
+    if last["key"] in ("scold", "snatch") or last.get("over") or (
         EVENTS[last["step"]]["real"] and last["key"] in DOUBT_KEYS
     ):
         st.warning(f"💬 {last['lesson']}")
@@ -701,10 +714,19 @@ def show_play(game):
             st.markdown("\n".join(f"- {clue}" for clue in event["clues"]))
             st.caption("단서는 사실만 보여 줘요. 진짜인지 피싱인지는 직접 판단하세요.")
     else:
-        st.button("🔎 단서 살펴보기", on_click=open_clues)
+        # 판단 전에 꼭 눌러 보면 좋은 버튼이라 크고 눈에 띄게 보여 줘요.
+        st.markdown(
+            """<style>.st-key-gp_clue button {background:#FFF4D6 !important;border:2px solid #E2A93B !important;
+            min-height:56px !important;box-shadow:0 3px 10px rgba(226,169,59,.25);}
+            .st-key-gp_clue button p {font-size:1.12rem !important;font-weight:900 !important;color:#7A4B00 !important;}</style>""",
+            unsafe_allow_html=True,
+        )
+        st.button("🔎 단서 살펴보기 (판단 전에 눌러 보세요)", on_click=open_clues, key="gp_clue", width="stretch")
 
     st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
-    options = FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS
+    options = list(FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS)
+    # 선택지 순서를 연락마다 섞어서 '몇 번째만 누르면 되는' 요령이 생기지 않게 해요.
+    random.Random(f"grandma-{step}").shuffle(options)
     for key in options:
         st.button(
             APPROACHES[key]["label"],
@@ -754,12 +776,30 @@ def show_ending(game):
     right = sum(judged_right(r) for r in log)
     checked = sum(1 for r in log if r["checked"])
     harsh = sum(1 for r in log if r["key"] in ("scold", "snatch"))
-    first, second, third, fourth = st.columns(4)
-    first.metric("판단이 맞은 연락", f"{right} / {len(log)}")
-    second.metric("단서를 살펴본 연락", f"{checked}번")
-    third.metric("💛 마지막 신뢰", trust)
-    fourth.metric("다그치거나 몰래 막음", f"{harsh}번")
+    # 결과 숫자를 색깔 카드로 크게 보여 줘요.
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 4px;">'
+        + "".join(
+            f'<div style="background:{bg};border:2px solid {line};border-radius:16px;padding:10px 12px;text-align:center;">'
+            f'<div style="font-weight:800;color:#3E4A46;font-size:.92rem;">{esc(label)}</div>'
+            f'<div style="font-size:1.7rem;font-weight:900;color:{ink};">{esc(value)}</div></div>'
+            for label, value, bg, line, ink in [
+                ("✅ 판단이 맞은 연락", f"{right} / {len(log)}", "#EAF6F0", "#9ED3BC", "#0F766E"),
+                ("🔎 단서를 살펴본 연락", f"{checked}번", "#FFFBE6", "#F1DFA6", "#8A5A00"),
+                ("💛 마지막 신뢰", str(trust), "#FDF0F5", "#F2C3D6", "#A3305F"),
+                ("😠 다그치거나 몰래 막음", f"{harsh}번", "#FDECEC", "#F6CACA", "#B42318"),
+            ]
+        )
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     st.caption("학습 기록이며 실제 대응 능력이나 피해 확률을 나타내지 않아요.")
+    if fresh:
+        st.session_state["grandma_hall"] = dd.save_hall(
+            "grandma", {"right": right, "trust": trust},
+            lambda old, new: (new["right"], new["trust"]) > (old.get("right", 0), old.get("trust", 0)),
+        )
+    dd.show_hall_note(st.session_state.get("grandma_hall"))
 
     st.subheader("📋 그날 오전의 기록")
     st.caption("게임 중에는 알려 주지 않았던, 각 연락이 진짜였는지 피싱이었는지와 확인 방법을 공개해요.")
