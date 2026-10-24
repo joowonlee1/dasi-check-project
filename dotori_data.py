@@ -378,8 +378,8 @@ def show_stamp_popup():
         f'<div class="sp-pop"><div class="sp-ring">{icon}</div><div><b>{title}</b><small>{sub}</small></div></div>',
         unsafe_allow_html=True,
     )
-    from sound_effects import queue_effect
-    queue_effect("stamp")
+    with st.container(key="stamp_sound"):
+        st.audio(_ding(), format="audio/wav", autoplay=True)
 
 
 def stamps():
