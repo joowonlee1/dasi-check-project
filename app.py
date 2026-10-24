@@ -933,9 +933,7 @@ if len(history) >= 2:
     all_pages = {home.url_path: home, citizen_page.url_path: citizen_page}
     all_pages.update({page.url_path: page for page in feature_pages})
     previous = all_pages.get(history[-2])
-    if previous is not None:
-        with st.container(key="back_link"):
-            st.page_link(previous, label=f"이전 페이지 · {previous.title}", icon="⬅️")
+   
 
 if current:
     (
