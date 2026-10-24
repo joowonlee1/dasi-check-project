@@ -18,6 +18,23 @@ show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내
 show_mascot("shield", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
 
 # 조건: L 링크 있음, U 모르는 번호, S 저장된 번호(모르는 번호가 아님), M 돈 요구, R 재촉, P 인증번호·개인정보 요구, A 앱 설치 요구
+VERIFIED = [
+ ["주문 내역의 배송 기록과 일치함", "공식 배송 조회에 해당 반송 요청이 없었고 고객센터가 문자를 부인함",
+  "기존 학원 연락처로 보강 일정을 확인함", "별도로 연락한 배송사가 해당 결제 요청을 부인함",
+  "기존 가족 연락처로 본인의 메시지임을 확인함", "학교 공식 공지에서 같은 안내를 확인함"],
+ ["기존 가족 번호로 확인하니 상품권을 요청한 적이 없었음", "동아리 공지와 기존 총무 연락처로 회비를 확인함",
+  "은행의 공식 고객센터가 해당 설치 요청을 부인함", "직접 연 은행 공식 앱의 이용 내역과 일치함",
+  "별도로 찾은 기관 연락처로 확인하니 해당 요구를 부인함", "기존 연락처로 약속을 확인함",
+  "학교 공식 공지와 일치함", "직접 연 병원 예약 내역과 일치함"],
+ ["공식 배송 고객센터가 해당 주소 수정 요청을 부인함", "기존 아빠 번호로 확인하니 송금을 요청한 적이 없었음",
+  "서연에게 다른 경로로 확인하니 계정을 도용당했다고 함", "민준과 대면해 실제 요청임을 확인함",
+  "학교 공식 공지와 일치함", "병원 공식 예약 내역과 일치함",
+  "직접 연락한 카드사가 해당 정보 입력 요청을 부인함", "기존 가족 연락처로 본인의 메시지임을 확인함",
+  "별도로 찾은 기관 연락처로 확인하니 해당 요구를 부인함", "주문 내역의 배송 기록과 일치함"]
+]
+st.info("이 활동은 제한된 특징으로 필터를 만드는 코딩 실험이에요. 문자만으로 진위를 확정하지 않아요. "
+        "문자별 ‘별도 확인 결과’가 교육용 정답의 근거이며, 필터는 그 정보를 사용하지 못해요. "
+        "실제 상황에서는 저장된 번호나 링크 유무만으로 안전을 보장할 수 없어요.")
 DATA = {
     "conds": {
         "L": "🔗 링크 있음",
@@ -97,6 +114,9 @@ DATA = {
     # 3단계의 '규칙으로는 못 가르는' 두 문자: 서연(계정 도용, 가짜)과 민준(진짜)
     "twins": [2, 3],
 }
+
+for stage, evidence in zip(DATA['stages'], VERIFIED):
+    stage['verified'] = evidence
 
 HTML = r'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -302,7 +322,7 @@ function renderPlay(){
       verdict = verdictHtml(m, r);
     }
     return `<div class="msg ${cls}" id="msg${i}" style="animation-delay:${i * .04}s">
-      <div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
+      <details><summary>📋 별도 확인 결과 · 정답의 근거</summary>${esc(s.verified[i])}</details><div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
       <div class="txt">${esc(m[2])}</div><div class="tags">${tagsHtml(m, hit)}</div><div class="verdict">${verdict}</div></div>`;
   }).join('');
   const hints = s.hints.slice(0, G.hintOpen[st]).map((h, k) => `<div class="hint">💡 힌트 ${k + 1}: ${esc(h)}</div>`).join('');
