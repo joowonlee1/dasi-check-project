@@ -95,3 +95,46 @@ def id_photo(filename):
     buffer = io.BytesIO()
     part.save(buffer, format="PNG", optimize=True)
     return base64.b64encode(buffer.getvalue()).decode()
+
+
+# ───────── 통통 튀는 시작 화면 ─────────
+# 게임 시작 화면을 다른 게임(마피아·가짜뉴스)처럼 큰 배너와 색깔 카드로 보여 주는 공통 도구예요.
+HERO_CSS = """<style>
+@keyframes jk-pop {0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.03);opacity:1} 100%{transform:scale(1)}}
+@keyframes jk-bounce {0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
+.jk-hero {background:linear-gradient(135deg,var(--a,#1F5F55),var(--b,#2E8B78));border-radius:26px;padding:22px 18px;color:#fff;
+  text-align:center;animation:jk-pop .6s ease-out both;box-shadow:0 10px 26px rgba(32,72,63,.22);margin:6px 0 12px;}
+.jk-hero b {display:block;font-size:1.6rem;font-weight:900;margin:6px 0;word-break:keep-all;}
+.jk-hero span {opacity:.92;font-weight:600;word-break:keep-all;}
+.jk-tiles {display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0 14px;}
+.jk-tile {border-radius:18px;padding:12px 10px;text-align:center;animation:jk-pop .5s ease-out both;word-break:keep-all;}
+.jk-tile div {font-size:32px;animation:jk-bounce 2.4s ease-in-out infinite;}
+.jk-tile b {display:block;color:#1E2F2B;margin:2px 0 3px;}
+.jk-tile small {color:#3E5751;font-size:.84rem;line-height:1.45;display:block;}
+.jk-hero.sm {padding:12px 16px;border-radius:20px;margin:2px 0 8px;} .jk-hero.sm b {font-size:1.3rem;margin:2px 0;}
+@media (max-width:640px) {.jk-hero b {font-size:1.3rem;} .jk-tiles {grid-template-columns:repeat(2,1fr);}}
+@media (prefers-reduced-motion: reduce) {.jk-hero, .jk-tile, .jk-tile div {animation:none !important;}}
+</style>"""
+TILE_COLORS = ["#FFE7A3", "#D6E4FF", "#FFD6E0", "#D7F2E3", "#FFE2C6", "#E9DDFB"]
+
+
+def show_hero(tag, title, sub, colors=("#1F5F55", "#2E8B78"), small=False):
+    """게임 시작 화면의 큰 배너. small=True면 높이를 줄인 작은 배너예요."""
+    st.markdown(
+        HERO_CSS + f'<div class="jk-hero{" sm" if small else ""}" style="--a:{colors[0]};--b:{colors[1]}">'
+        f"<span>{html.escape(tag)}</span><b>{html.escape(title)}</b><span>{html.escape(sub)}</span></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def show_tiles(tiles):
+    """(아이콘, 제목, 설명) 카드들을 색깔별로 통통 튀게 보여 줘요."""
+    st.markdown(
+        HERO_CSS + '<div class="jk-tiles">' + "".join(
+            f'<div class="jk-tile" style="background:{TILE_COLORS[i % len(TILE_COLORS)]};animation-delay:{i * .08:.2f}s">'
+            f'<div style="animation-delay:{i * .3:.1f}s">{icon}</div><b>{html.escape(title)}</b>'
+            f"<small>{html.escape(text)}</small></div>"
+            for i, (icon, title, text) in enumerate(tiles)
+        ) + "</div>",
+        unsafe_allow_html=True,
+    )
