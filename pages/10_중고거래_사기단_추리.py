@@ -203,6 +203,7 @@ td.c button.bad{outline:3px solid #E5484D}
 @keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.exrow{grid-template-columns:1fr}.sellers,.pick{grid-template-columns:repeat(5,1fr);gap:4px}.sellers div,.pick button{font-size:.68rem}.pick button em,.sellers div em{font-size:22px}.tabs button{font-size:.85rem;padding:8px 4px}.code{font-size:1.05rem}.digits span{width:36px;height:46px;font-size:1.3rem}.lamp{width:50px}}
+ .toast,.msg-toast{font-size:1.2rem!important;font-weight:900!important;padding:18px!important;line-height:1.6!important;}
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
@@ -226,7 +227,7 @@ function render(){
   <div class="sellhead">🛍️ 연락해 온 판매자 5명 (중고거래 앱 닉네임)</div>
   <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em><small>판매자 ${i + 1}</small>${esc(s)}</div>`).join('')}</div>
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
-  <div class="chips"><span class="hot">📜 해독한 메모 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
+  <div class="chips"><span class="hot">📜 해독한 메모 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
   <div class="tabs">
     <button class="${G.tab === 'memo' ? 'on' : ''}" onclick="go('memo')">① 📜 메모 해독</button>
     <button class="${G.tab === 'grid' ? 'on' : ''}" onclick="go('grid')">② 🧩 추리 표</button>
@@ -272,9 +273,9 @@ function memoTab(){
     <p style="margin:4px 0">${esc(m2.before)}<span class="code">${esc(m2.cipher)}</span>${esc(m2.after)}</p>
     <p style="margin:6px 0">사기단은 숫자를 <b>모두 같은 칸 수만큼 앞으로</b> 밀어 적었어요(9 다음은 0). 몇 칸 되돌려야 가격표의 금액이 될까요?</p>
     ${G.solved[1] ? '' : `<div class="stepper"><button onclick="G.shift=(G.shift+9)%10;render()">◀</button><b>${G.shift}</b><button onclick="G.shift=(G.shift+1)%10;render()">▶</button><span>칸 되돌리기</span></div>`}
-    <div class="digits">${(G.solved[1] ? shiftBack(m2.cipher, m2.shift) : dec2).split('').map((d, i) => `<span style="animation-delay:${i * .04}s">${d}</span>`).join('')}<span style="background:none;color:#20483F;width:auto">원</span></div>
+    <div class="digits">${(G.solved[1] ? shiftBack(m2.cipher, m2.shift) : "??????").split('').map((d, i) => `<span style="animation-delay:${i * .04}s">${d}</span>`).join('')}<span style="background:none;color:#20483F;width:auto">원</span></div>
     <div class="prices">💰 가격표에 있는 금액은 <span>90000</span><span>120000</span><span>140000</span><span>160000</span><span>190000</span>뿐이에요. 되돌린 숫자가 이 중 하나가 되어야 해요.</div>
-    ${G.solved[1] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[1])}</div>` : `<div class="row"><button class="ok" onclick="check2()">이 숫자로 해독 완료!</button><button onclick="hint(1)">💡 힌트</button></div>`}
+    ${G.solved[1] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[1])}</div>` : `<div class="row"><input type="number" aria-label="직접 해독한 금액" placeholder="직접 해독한 금액(원)" value="${esc(G.m2val || '')}" oninput="G.m2val=this.value"><button class="ok" onclick="check2()">해독 결과 확인</button><button onclick="hint(1)">💡 힌트</button></div>`}
     ${G.hints[1] && !G.solved[1] ? '<div class="hint">💡 맨 앞 4가 1이 되려면 몇 칸 되돌려야 할까요? (4 → 3 → 2 → 1)</div>' : ''}
   </section>
 
@@ -338,10 +339,10 @@ function hint(i){ G.hints[i] = true; render(); }
 function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
 function unlock(i){ G.solved[i] = true; toastMsg = '🔓 해독 성공! 추리 표에 새 단서가 열렸어요.'; render(); }
 function check1(){ if (G.k === D.memo1.answer) unlock(0); else { G.wrongMemo++; toast('아직 문장이 안 돼요. 다른 칸 수로 해 보세요.', $('m0')); } }
-function check2(){ if (G.shift === D.memo2.shift) unlock(1); else { G.wrongMemo++; toast('가격표에 없는 금액이에요. 되돌리는 칸 수를 바꿔 보세요.', $('m1')); } }
+function check2(){ if (G.shift === D.memo2.shift && Number(G.m2val) === Number(shiftBack(D.memo2.cipher,D.memo2.shift))) unlock(1); else { G.wrongMemo++; toast('되돌리는 칸 수와 직접 계산한 금액을 함께 확인하세요.', $('m1')); } }
 function check3(){
-  // 전구는 계산을 돕는 도구일 뿐이고, 직접 계산한 값이 맞아야 해독돼요.
-  const ok = parseInt(G.m3val, 10) === D.memo3.answer;
+  // 메모의 비트 위치를 옮기고 직접 계산한 값까지 맞아야 해독돼요.
+  const ok = parseInt(G.m3val, 10) === D.memo3.answer && G.lamps.join("") === D.memo3.bits;
   if (ok) { G.lamps = D.memo3.bits.split('').map(Number); unlock(2); }
   else { G.wrongMemo++; toast('값이 달라요. 1이 적힌 자리를 다시 찾고, 그 자리 값만 더해 보세요.', $('m2')); }
 }
@@ -352,7 +353,7 @@ function gridTab(){
   const clueHtml = D.base.map((t, i) => clueBtn('b' + i, t, false, false))
     .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 메모 ${i + 1}을 해독하면 열려요`, !G.solved[i], true))).join('');
   $('body').innerHTML = `
-  <div class="story">👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
+  <div class="story"><b>판매자 한 명당 연락 방식·요구 사항·가격은 각각 하나씩이에요. 각 항목도 한 사람에게만 대응해요. 한 표의 각 행·열마다 ⭕는 하나예요.</b><br>👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
   ${gridExample()}
   <h3 style="margin:8px 2px">🔎 단서 (${D.base.length + cluesOpen()} / ${D.base.length + 3})</h3>
@@ -421,7 +422,7 @@ function checkGrid(){
   G.bad = {};
   let wrong = 0;
   os.forEach(k => { const [kind, s, v] = k.split('|'); if (D.solution[s][KINDS.indexOf(kind)] !== v) { G.bad[k] = 1; wrong++; } });
-  if (!wrong) { G.gridChecked = true; toastMsg = '🎉 표 완성! 모든 칸이 맞았어요. 이제 진짜 판매자를 지목해요!'; G.tab = 'pick'; render(); }
+  if (!wrong) { try { window.parent.__jamkkanSound?.play('success'); } catch(e) {} G.gridChecked = true; toastMsg = '🎉 표 완성! 모든 칸이 맞았어요. 이제 진짜 판매자를 지목해요!'; G.tab = 'pick'; render(); }
   else { toastMsg = `❌ 빨간 테두리 칸 ${wrong}개가 틀렸어요. 단서를 다시 확인해요.`; render(); }
 }
 
@@ -467,7 +468,7 @@ function final(){
   ④ <b>신분증 사진·상품권 결제</b> 요구는 거절해요.</section>
   <button class="go" style="width:100%" onclick="restart()">🔄 처음부터 다시</button>`;
 }
-function restart(){ fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
+function restart(){ fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
