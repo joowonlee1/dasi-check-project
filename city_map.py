@@ -16,16 +16,16 @@ MAP_PINS = {
     "09": (37, 29, "3반 단톡방"),
     "10": (60, 29, "중고마켓"),
     "04": (83, 31, "사이버 검문소"),
-    "03": (12, 73, "민서네 집"),
-    "14": (22, 87, "관리사무소"),
+    "03": (20, 69, "민서네 집"),
+    "14": (25, 81, "관리사무소"),
     "06": (45, 69, "도토리 광장"),
     "07": (38, 83, "시민안전센터"),
     "12": (56, 85, "공영주차장"),
     "02": (68, 64, "대화 연습실"),
-    "05": (87, 64, "시립도서관"),
+    "05": (82, 62, "시립도서관"),
     "08": (78, 74, "시민 등록소"),
     "11": (68, 87, "우체국 필터실"),
-    "13": (88, 87, "통계청"),
+    "13": (78, 82, "통계청"),
 }
 
 # 동네 이름표: 동네 이름 -> (가로 %, 세로 %, 아이콘)
@@ -98,11 +98,19 @@ def _svg():
         f'<rect x="456" y="268" width="30" height="40" rx="4" transform="rotate(10 471 288)"/></g>'
         f'<path d="M 735,92 L 735,262" stroke="#8A8F94" stroke-width="7" fill="none"/>'
         f'<path d="M 735,92 L 735,262" stroke="#F4F4F2" stroke-width="3" stroke-dasharray="6 8" fill="none"/>'
-        f'<path d="M 560,438 L 772,438" stroke="#F6EBC8" stroke-width="22" stroke-linecap="round" fill="none"/>'
-        f'<path d="M 566,438 L 766,438" stroke="#E2C98A" stroke-width="3" stroke-dasharray="10 10" fill="none"/>'
+        f'<path d="M 560,438 L 700,438" stroke="#F6EBC8" stroke-width="22" stroke-linecap="round" fill="none"/>'
+        f'<path d="M 566,438 L 694,438" stroke="#E2C98A" stroke-width="3" stroke-dasharray="10 10" fill="none"/>'
         f'<ellipse cx="360" cy="414" rx="70" ry="42" fill="#F0E3B8" stroke="#E2C98A" stroke-width="4"/>'
         f'<circle cx="360" cy="414" r="13" fill="#B9E3F5" stroke="#8ECDEB" stroke-width="4"/>'
-        f'{tree_svg}</svg>'
+        f'<g fill="none" stroke="#F5E9C7" stroke-width="12" stroke-linecap="round">'
+        '<path d="M130 185H660 M160 185V255 M300 175V280 M480 175V265 M650 185V250"/>'
+        '<path d="M160 390V480H625V370 M160 430H650 M360 350V500 M480 340V490"/></g>'
+        '<g fill="#FFF5DD" stroke="#A8865D" stroke-width="2">'
+        '<path d="M180 135h28v26h-28z M340 130h32v28h-32z M570 135h30v26h-30z"/>'
+        '<path d="M210 365h30v24h-30z M430 460h30v24h-30z M580 365h30v24h-30z"/></g>'
+        '<g fill="#B97855"><path d="M176 135l18-16 18 16z M336 130l20-16 20 16z M566 135l19-15 19 15z"/>'
+        '<path d="M206 365l19-15 19 15z M426 460l19-15 19 15z M576 365l19-15 19 15z"/></g>'
+        f'{tree_svg}</svg>' 
     )
 
 
@@ -114,8 +122,8 @@ def _svg_b64():
 def city_map_css():
     return (
         "<style>"
-        ".cmap{position:relative;width:100%;aspect-ratio:4/3;border-radius:22px;overflow:hidden;border:2px solid #CDE3EE;background:#CFEAF6;margin:2px 0 6px;}"
-        ".cmap-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;margin:0;}"
+        ".cmap{position:relative;width:100%;max-width:820px;margin-inline:auto;aspect-ratio:4/3;border-radius:22px;overflow:hidden;border:2px solid #CDE3EE;background:#CFEAF6;margin:2px auto 6px;}"
+        ".cmap-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill!important;display:block;margin:0!important;max-width:none!important;max-height:none!important;height:100%!important;width:100%!important;}"
         ".cmap .dlabel{position:absolute;transform:translate(-50%,-50%);font-size:.82rem;font-weight:900;color:#2F4A2E;"
         "background:rgba(255,255,255,.72);border-radius:999px;padding:1px 10px;white-space:nowrap;letter-spacing:-.02em;}"
         ".cmap .cpin{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;}"
@@ -127,7 +135,7 @@ def city_map_css():
         ".cmap .cpin.on i::after{content:\"🏅\";position:absolute;right:-9px;top:-11px;font-size:.8rem;}"
         ".cmap-legend{display:none;}"
         "@media (max-width:640px){"
-        ".cmap{aspect-ratio:4/5;}"
+        ".cmap{aspect-ratio:4/3;}"
         ".cmap .cpin b{display:none;}"
         ".cmap .cpin i{width:30px;height:30px;font-size:.95rem;}"
         ".cmap .dlabel{font-size:.62rem;padding:1px 6px;}"
