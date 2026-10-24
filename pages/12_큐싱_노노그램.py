@@ -131,9 +131,6 @@ table.board{border-collapse:collapse;touch-action:none;user-select:none;-webkit-
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:720px){.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}.exs{grid-template-columns:1fr}}
 @media (max-width:480px){.hero b{font-size:1.2rem}.stages small{font-size:.72rem}.mode button{min-width:0;padding:10px 10px}}
-
-@media(max-width:480px){.stages{grid-template-columns:1fr}.mode{flex-wrap:wrap}.mode button{flex:1 1 120px}.board{max-width:100%;overflow-x:auto}}
-
 </style></head><body>
 <main class="wrap" id="app"></main>
 <script>
