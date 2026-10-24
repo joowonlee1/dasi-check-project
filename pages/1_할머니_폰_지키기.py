@@ -3,7 +3,7 @@ import time
 
 import streamlit as st
 import streamlit.components.v1 as components
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import show_hero, show_key_question, show_mascot, show_tiles
 from card_ui import show_result_card
 import dotori_data as dd
 
@@ -645,24 +645,24 @@ def show_last_feedback(game):
 
 
 def show_intro():
+    show_hero(f"📱 가족 지키기 게임 · 연락 {len(EVENTS)}개", "할머니 휴대폰을 지켜라",
+              "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어와요.")
     show_mascot("phone", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
-    st.markdown("### 🎯 미션: 할머니의 돈을 지켜라")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, key="grandma_start_top", width="stretch")
-    st.caption("처음이라면 아래 설명을 먼저 읽어 보세요.")
-    st.markdown(
-        "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어옵니다.\n\n"
-        "- **진짜 연락**과 **피싱**이 섞여 있어요. 무엇이 피싱인지 직접 판단하세요.\n"
-        "- **🔎 단서 살펴보기**를 누르면 판단에 도움이 되는 사실을 볼 수 있어요. 정답은 알려 주지 않아요.\n"
-        "- 모든 연락에 **같은 선택지**가 나와요. 지켜볼지, 끼어들지, **어떻게 말할지** 골라요.\n"
-        "- **다그치거나 몰래 막거나 진짜 연락까지 막으면** 할머니가 나를 덜 믿게 되고, 내 말이 잘 통하지 않아요.\n"
-        "- 할머니가 한 번 멈춰도 사기범은 다시 연락해요. **마지막 송금까지** 지켜 내야 해요."
-    )
-    st.markdown("#### 게이지 읽는 법")
-    st.markdown(
-        "- 😟 **사기범을 믿는 정도** — 피싱 연락이 올 때마다 올라가요. 설득하면 내려가요.\n"
-        "- 💛 **할머니가 나를 믿는 정도** — 높을수록 같은 말도 더 잘 통해요.\n"
-        "- 💸 **송금까지** — 마지막 단계에서 송금을 막아야 해요."
-    )
+    st.markdown("#### 🎯 미션: 할머니의 돈을 지켜라")
+    show_tiles([
+        ("🔀", "진짜와 피싱이 섞여 있어요", "무엇이 피싱인지 직접 판단해요."),
+        ("🔎", "단서 살펴보기", "판단에 도움이 되는 사실을 보여 줘요. 정답은 알려 주지 않아요."),
+        ("🗣️", "어떻게 말할지가 중요", "모든 연락에 같은 선택지가 나와요. 지켜볼지, 끼어들지, 어떻게 말할지 골라요."),
+        ("💔", "다그치면 안 통해요", "다그치거나 몰래 막거나 진짜 연락까지 막으면 할머니가 나를 덜 믿어요."),
+        ("🔁", "사기범은 다시 와요", "한 번 멈춰도 다시 연락해요. 마지막 송금까지 지켜 내야 해요."),
+    ])
+    st.markdown("#### 📊 게이지 읽는 법")
+    show_tiles([
+        ("😟", "사기범을 믿는 정도", "피싱 연락이 올 때마다 올라가요. 설득하면 내려가요."),
+        ("💛", "할머니가 나를 믿는 정도", "높을수록 같은 말도 더 잘 통해요."),
+        ("💸", "송금까지", "마지막 단계에서 송금을 막아야 해요."),
+    ])
     st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
 
