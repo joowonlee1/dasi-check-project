@@ -1056,6 +1056,7 @@ if state["report"] is not None:
     st.markdown("#### 🖼️ 나의 결과 카드")
     show_result_card(report_card(state["report"], scenario, messages), "jamkkan_chat_card.png")
 
+    st.button("🔄 다른 방법으로 다시 도전", key="chat_retry_report", on_click=reset_chat, width="stretch")
     st.stop()
 
 turns = sum(
@@ -1254,3 +1255,7 @@ else:
                 "리포트 버튼을 다시 누르세요. "
                 "고정된 자기점검 안내를 볼 수 있어요."
             )
+
+
+if state.get("ended"):
+    st.button("🔄 다른 방법으로 다시 도전", key="chat_retry_result", on_click=reset_chat, width="stretch")
