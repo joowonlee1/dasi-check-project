@@ -458,7 +458,8 @@ if submitted:
         st.subheader("🏠 이 주소의 진짜 주인")
         st.code(result["owner"] or result["host"], language=None)  # 누를 수 없게 글자로만 보여 줘요
         st.caption("주소 맨 끝에서 찾은 이름이에요. 그 앞에 붙은 이름은 누구나 마음대로 붙일 수 있어요. "
-                   "이 이름이 내가 아는 회사의 공식 주소와 같은지 먼저 보세요.")
+                   "이 이름이 내가 아는 회사의 공식 주소와 같은지 먼저 보세요. "
+                   "주소 모양으로 나눈 결과라서, 실제 등록 여부·소유자·기관의 신원을 확인한 결과는 아니에요.")
 
         # ② 확인할 점
         findings = result["findings"]
@@ -477,7 +478,8 @@ if submitted:
         # ④ 궁금한 사람만 펼쳐 보는 자세한 내용
         show_structure(result)
         if result["assumed"]:
-            st.caption("주소에 https://가 없어서 분석할 때만 붙였어요.")
+            st.caption("프로토콜이 없어 분석할 때만 https://를 붙였어요. 실제 HTTPS 지원 여부를 확인한 것은 아닙니다.")
+        st.write("문자 속 주소와 별개로, 평소 이용하던 앱이나 직접 확인한 공식 경로에서 관련 내용을 확인해 보세요.")
 
 st.divider()
 
