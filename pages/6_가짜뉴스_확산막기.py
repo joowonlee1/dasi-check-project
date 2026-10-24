@@ -210,6 +210,9 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .node{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.exgrid{gap:5px}.ex{padding:6px 4px}.ex p{font-size:.7rem;line-height:1.4}.extag{font-size:.64rem;padding:2px 6px}.steps{grid-template-columns:1fr;gap:8px}.step{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px}.step .ic{font-size:30px;margin:0}.step .num{flex-shrink:0}.step b{font-size:1rem}.keys{grid-template-columns:repeat(2,1fr)}.hero b{font-size:1.2rem}.map{grid-template-columns:repeat(5,1fr)}.map div{font-size:.7rem}.post .txt{font-size:.98rem}}
+
+@media(max-width:560px){.map{grid-template-columns:repeat(3,minmax(0,1fr))}.map div{font-size:.9rem}.exgrid{grid-template-columns:1fr}.ex p{font-size:.95rem}.extag{font-size:.85rem}}
+
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const DATA = __DATA__;
