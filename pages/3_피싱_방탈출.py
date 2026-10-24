@@ -3,7 +3,7 @@ import re
 import time
 
 import streamlit as st
-from mascot_ui import show_mascot
+from mascot_ui import show_hero, show_mascot
 import dotori_data as dd
 
 from firebase_support import (
@@ -1101,9 +1101,7 @@ def start_game(ranked):
 
 
 def show_entry():
-    show_mascot("detective", "작은 단서도 놓치지 말고, 함께 사건을 풀어봐요.")
-    show_game_guide()
-
+    # 시작 버튼까지 스크롤이 길지 않게, 참여 방법을 먼저 보여 주고 안내서는 바로 아래에 둬요.
     st.subheader("어떻게 참여할까요?")
 
     existing = st.session_state.get("escape_game")
@@ -1134,13 +1132,14 @@ def show_entry():
         unsafe_allow_html=True,
     )
     ready = st.checkbox(
-        "안내서의 ‘⚠️ 꼭 알아야 할 7가지’를 확인했어요.",
+        "아래 안내서의 ‘⚠️ 꼭 알아야 할 7가지’를 확인했어요.",
         key="room_ready",
     )
     st.caption(f"게임을 시작하는 순간 실제 시간 {TIME_LIMIT_MINUTES}분 타이머가 시작돼요.")
     replace_ok = replace_ok and ready
 
-    with st.container(border=True):
+    practice_col, rank_col = st.columns(2)
+    with practice_col.container(border=True):
         st.markdown("### 🌱 연습으로 시작")
 
         st.write(
@@ -1154,7 +1153,7 @@ def show_entry():
         ):
             start_game(False)
 
-    with st.container(border=True):
+    with rank_col.container(border=True):
         st.markdown("### 🏆 시민증으로 랭킹 참여")
 
         st.write(
@@ -1227,6 +1226,10 @@ def show_entry():
                             "연결을 확인하거나 연습 모드를 이용하세요."
                         )
 
+    st.divider()
+    show_mascot("detective", "시작하기 전에 아래 안내서, 특히 04번 ‘꼭 알아야 할 7가지’를 읽어 봐요.", width=100)
+    show_game_guide()
+
 
 def show_play():
     global game
@@ -1297,10 +1300,9 @@ def show_play():
 
 
 st.title("🗝️ 잠깐! · 피싱 방탈출")
-st.subheader("사건 01 — 엄마의 번호, 두 개의 진실")
-st.caption(
-    f"교육용 가상 사건 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 실제 전화나 앱 설치 없음"
-)
+show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "사건 01 — 엄마의 번호, 두 개의 진실",
+          "증거를 모아 진짜를 가려내고 방을 탈출하세요. 실제 전화나 앱 설치는 없어요.",
+          colors=("#7C2D12", "#C2410C"), small=True)
 
 current = st.session_state.get("escape_game")
 
