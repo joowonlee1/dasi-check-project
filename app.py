@@ -2,7 +2,7 @@ import html
 
 import streamlit as st
 import streamlit.components.v1 as components
-from mascot_ui import ID_PHOTOS, id_photo, show_mascot
+from mascot_ui import id_photo, mascot_img, show_mascot
 import dotori_data as dd
 
 
@@ -368,6 +368,36 @@ st.markdown(
         font-weight: 600;
     }
 
+    /* 홈 첫 상자: 왼쪽 글, 오른쪽 큰 깡지 */
+    .home-hero {display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+    .home-hero .txt {flex:1;min-width:220px;}
+    .home-hero .pic {flex:0 0 210px;margin:0 auto;}
+    .home-hero .bubble {display:inline-block;background:#FFF4D6;border:2px solid #E2C98A;border-radius:16px;
+      padding:8px 14px;font-weight:800;color:#6B4A1E;margin:4px 0 6px;word-break:keep-all;}
+
+    /* 도토리시 전체 지도(누르는 곳이 아니라 한눈에 보는 지도) */
+    .citymap {display:grid;gap:10px;padding:10px;background:#EFE6CF;border-radius:22px;border:2px solid #E2D3A8;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      grid-template-areas:"sangsu ttok gaeam station" "daram jung sicheong sicheong";}
+    .town {border-radius:16px;padding:8px 10px 10px;min-width:0;}
+    .town h5 {margin:0 0 6px !important;padding:0 !important;font-size:.95rem !important;font-weight:900;color:#3F4A2E;}
+    .town .pins {display:flex;flex-wrap:wrap;gap:6px;}
+    .pin {background:#FFFFFF;border:1.5px solid rgba(0,0,0,.08);border-radius:999px;padding:3px 10px;font-size:.84rem;
+      font-weight:700;color:#24443B;white-space:nowrap;}
+    .pin.on {border-color:#B42318;background:#FFF8E6;}
+    .pin.on::after {content:" 🏅";}
+    @media (max-width:640px) {
+      .citymap {grid-template-columns:repeat(2,minmax(0,1fr));
+        grid-template-areas:"sangsu ttok" "gaeam station" "daram jung" "sicheong sicheong";}
+      .home-hero .pic {flex-basis:150px;}
+    }
+
+    /* 이전 페이지로 돌아가기 */
+    .st-key-back_link {margin-top: 12px;}
+    .st-key-back_link [data-testid="stPageLink"] a {background:#F1F5F2;border:1.5px solid #CBDAD2;border-radius:999px;
+      min-height:38px !important;padding:4px 14px !important;width:fit-content;}
+    .st-key-back_link [data-testid="stPageLink"] a p {font-weight:800 !important;color:#20483F !important;font-size:.95rem !important;}
+
     .footer-note {
         border-top: 1px solid #CBDAD2;
         margin-top: 32px;
@@ -516,7 +546,7 @@ CITY_INTRO = (
 PLACES = {
     "01": ("🏡", "상수리동", "할머니 댁", "주말 오전, 할머니 댁에 놀러 왔어요. 그런데 할머니 휴대전화가 자꾸 울려요."),
     "02": ("🎙️", "시청로", "시민훈련센터 대화 연습실", "수상한 연락에 어떻게 답할지, 실제로 받기 전에 미리 연습하는 곳이에요."),
-    "03": ("🗝️", "다람쥐동", "민서네 집", "도토리시 사건 파일 01. 같은 엄마 번호로 서로 다른 연락이 왔어요."),
+    "03": ("🗝️", "다람쥐동", "민서네 집", "도토리시 사건 파일: 같은 엄마 번호로 서로 다른 연락이 왔어요."),
     "04": ("🚧", "도토리역 앞", "사이버 검문소", "링크가 도시 안으로 들어오기 전에, 주소부터 꼼꼼히 검문해요."),
     "05": ("📚", "시청로", "도토리 시립도서관", "체험에서 만난 수법의 뜻과 공식 통계를 찾아 읽는 곳이에요."),
     "06": ("⛲", "중앙동", "도토리 광장", "광장에서 시작된 가짜 소식이 이웃을 타고 번지고 있어요."),
@@ -539,18 +569,15 @@ def show_home():
     with st.container(key="emergency_link"):
         st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
     with st.container(border=True):
-        st.title("✋ 잠깐!")
-        st.caption("멈추고 · 확인하고 · 판단하기")
-
-        show_mascot(
-            "stop",
-            "익숙한 연락도, 낯선 링크도 한 번 더 확인해요.",
-            width=120,
-        )
-
-        st.write(
-            "선택하고, 대화하고, 증거를 찾으며 배우는 "
-            "피싱 예방 체험입니다."
+        # 깡지를 오른쪽 여백에 크게 두어 첫 화면에서 바로 눈에 띄게 해요.
+        st.markdown(
+            '<div class="home-hero"><div class="txt">'
+            '<h1 style="margin:0;">✋ 잠깐!</h1>'
+            '<div style="color:#52616B;font-weight:600;">멈추고 · 확인하고 · 판단하기</div>'
+            '<div class="bubble">💬 익숙한 연락도, 낯선 링크도 한 번 더 확인해요.</div>'
+            '<div style="font-weight:600;color:#253F39;word-break:keep-all;">선택하고, 대화하고, 증거를 찾으며 배우는 피싱 예방 체험입니다.</div>'
+            f'</div><div class="pic">{mascot_img("stop", 210)}</div></div>',
+            unsafe_allow_html=True,
         )
 
         st.page_link(
@@ -564,13 +591,25 @@ def show_home():
         f'<div class="city-intro"><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}</div>',
         unsafe_allow_html=True,
     )
-    with st.container(key="dotori_map"):
-        # 두 칸씩 한 줄로 만들어, 휴대폰에서도 같은 순서로 보이게 해요.
-        for i, (number, title, icon, path, steps, description) in enumerate(FEATURES):
-            if i % 2 == 0:
-                map_cols = st.columns(2)
-            place_icon, town, place, _ = PLACES[number]
-            map_cols[i % 2].page_link(path, label=f"{town} · {place}", icon=place_icon, width="stretch")
+    # 장소 버튼 목록 대신, 동네별로 장소가 어디 있는지 한눈에 보는 지도예요(누르는 곳이 아니에요).
+    # 들어가는 버튼은 아래 ‘어떤 활동을 해볼까요?’ 카드에 있어요.
+    got = dd.stamps()
+    towns = [
+        ("sangsu", "상수리동", "🌳", "#E3F1DA"), ("ttok", "떡갈나무동", "🍂", "#FCEBD9"),
+        ("gaeam", "개암골", "🌰", "#F6E7D2"), ("station", "도토리역 앞", "🚉", "#E4ECF7"),
+        ("daram", "다람쥐동", "🐿️", "#F7E9F0"), ("jung", "중앙동", "⛲", "#E2F1EE"),
+        ("sicheong", "시청로", "🏛️", "#FFF6D9"),
+    ]
+    blocks = []
+    for area, town_name, mark, color in towns:
+        pins = "".join(
+            f'<span class="pin{" on" if number in got else ""}">{icon} {html.escape(place)}</span>'
+            for number, (icon, town, place, _) in PLACES.items() if town == town_name
+        )
+        blocks.append(f'<div class="town" style="grid-area:{area};background:{color};"><h5>{mark} {town_name}</h5>'
+                      f'<div class="pins">{pins}</div></div>')
+    st.markdown('<div class="citymap">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
+    st.caption("🏅 표시는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.")
 
     st.subheader("어떤 활동을 해볼까요?")
     st.caption(
@@ -612,7 +651,7 @@ def show_home():
             "- 실제 개인정보나 인증번호는 입력하지 마세요.\n"
             "- 체험은 가상이며 실제 연락이나 송금을 실행하지 않습니다.\n"
             "- URL 확인 결과는 사이트의 안전을 보장하지 않습니다.\n"
-            "- 방탈출 랭킹과 명예의 전당에 참여하려면 "
+            "- 명예의 전당(방탈출 기록 포함)에 참여하려면 "
             "메뉴의 ‘도토리시 시민증’에서 닉네임을 만들어 주세요."
         )
 
@@ -645,8 +684,9 @@ navigation = st.navigation(
     {
         "잠깐!": [home, citizen_page],
         "피해 도움": [page_by_number["07"]],
+        # 개념을 먼저 알고 게임을 하면 이해가 쉬워서 '확인과 학습'(개념과 통계 먼저)을 앞쪽에 둬요.
+        "확인과 학습": [page_by_number[n] for n in ("05", "04", "13")],
         "체험과 연습": [page_by_number[n] for n in ("01", "02", "03", "06", "09", "10", "11", "12", "14", "08")],
-        "확인과 학습": [page_by_number[n] for n in ("04", "05", "13")],
     },
     expanded=True,  # 페이지가 많아져도 'View more'로 접히지 않고 메뉴가 모두 보이게
 )
@@ -663,8 +703,15 @@ with st.sidebar:
     st.markdown(
         """<style>
         [data-testid="stSidebarNav"] {margin-top: 126px;}
-        [data-testid="stNavSectionHeader"] {pointer-events: none;}
-        [data-testid="stNavSectionHeader"] [data-testid="stIconMaterial"] {display: none;}
+        /* 묶음 제목은 눌러서 접고 펼 수 있어요. 누를 수 있다는 게 보이게 버튼처럼 꾸미고 화살표를 보여 줘요. */
+        [data-testid="stNavSectionHeader"] {cursor: pointer; background: #DCEAE4; border: 1px solid #C3D7CF;
+          border-radius: 10px; padding: 4px 10px !important; margin: 8px 0 4px !important;}
+        [data-testid="stNavSectionHeader"]:hover {background: #CFE3DA;}
+        [data-testid="stNavSectionHeader"] span {font-weight: 800 !important; color: #20483F !important;}
+        [data-testid="stNavSectionHeader"] p {font-weight: 800 !important; color: #20483F !important;}
+        /* 화살표(접기·펴기 표시)가 마우스를 올릴 때만 보이지 않고 항상 보이게 해요. */
+        [data-testid="stNavSectionHeader"] > div {opacity: 1 !important; visibility: visible !important;}
+        [data-testid="stNavSectionHeader"] [data-testid="stIconMaterial"] {color: #0F766E !important; font-size: 1.4rem !important;}
         .st-key-citizen_top {position: absolute; top: 56px; left: 16px; width: calc(100% - 40px) !important; z-index: 5;
           background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 6px;
           box-sizing: border-box; gap: 2px !important;}
@@ -675,17 +722,16 @@ with st.sidebar:
         .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 999px; padding: 4px 12px !important;
           min-height: 0 !important; line-height: 1.2 !important; justify-content: center; margin-top: 4px;}
         .st-key-citizen_top [data-testid="stPageLink"] a span, .st-key-citizen_top [data-testid="stPageLink"] a p {color: #fff !important; font-weight: 800; font-size: .86rem !important;}
+        .st-key-citizen_top [data-testid="stHorizontalBlock"] {gap: 6px !important;}
+        .st-key-side_logout button {min-height: 0 !important; padding: 4px 8px !important; margin-top: 4px; border-radius: 999px !important;
+          background: #FFFFFF; border: 1.5px solid #20483F; line-height: 1.2 !important;}
+        .st-key-side_logout button p {font-size: .86rem !important; font-weight: 800 !important; color: #20483F;}
         </style>""",
         unsafe_allow_html=True,
     )
     with st.container(key="citizen_top"):
-        # 시민증 왼쪽 깡지 증명사진: 페이지를 옮길 때마다 표정이 바뀌고, 명예 시민이 되면 활짝 웃는 사진으로 고정돼요.
-        if st.session_state.get("photo_page") != navigation.url_path:
-            st.session_state["photo_page"] = navigation.url_path
-            st.session_state["photo_i"] = st.session_state.get("photo_i", -1) + 1
-        photo = ID_PHOTOS[st.session_state["photo_i"] % len(ID_PHOTOS)]
-        if me and len(dd.stamps()) == len(dd.STAMP_PLACES):
-            photo = "ggangji_cream.png"
+        # 시민증 왼쪽 깡지 증명사진: 한 사람에게는 시민증 페이지와 같은 사진을 항상 보여 줘요.
+        photo = dd.my_photo()
         try:
             pic_html = (
                 f'<img src="data:image/png;base64,{id_photo(photo)}" alt="깡지 증명사진" '
@@ -713,7 +759,11 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
         if me:
-            st.page_link(citizen_page, label="내 시민증 보기", icon="🪪", width="stretch")
+            c1, c2 = st.columns([3, 2], gap="small")
+            c1.page_link(citizen_page, label="내 시민증", icon="🪪", width="stretch")
+            if c2.button("로그아웃", key="side_logout", width="stretch"):
+                dd.logout()
+                st.rerun()
         else:
             st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
 
@@ -740,6 +790,19 @@ with st.sidebar:
             "const b = d.querySelector('[data-testid=stSidebarCollapseButton] button') || d.querySelector('[data-testid=stSidebarCollapseButton]');"
             "if (b) b.click(); }</script>"
             f"<!-- {current} {len(st.session_state.get(dd.MY, []))} -->",
+            height=0,
+        )
+    # 다른 페이지로 가거나, 페이지 안에서 새 화면(게임 시작·다음 단계)으로 넘어가면 본문을 맨 위부터 보여 줘요.
+    # 아래쪽 버튼을 눌러 들어가도 위 내용을 놓치지 않게 해요.
+    scroll_n = st.session_state.get("scroll_top", 0)
+    if st.session_state.get("last_page") not in (None, current) or scroll_n != st.session_state.get("scroll_done", 0):
+        st.session_state["scroll_done"] = scroll_n
+        components.html(
+            "<script>const w = window.parent, d = w.document;"
+            "const up = () => { w.scrollTo(0, 0); for (const q of ['[data-testid=stMain]', '[data-testid=stAppViewContainer]',"
+            " '[data-testid=stAppScrollToBottomContainer]', 'section.main']) { const e = d.querySelector(q); if (e) e.scrollTo(0, 0); } };"
+            "up(); setTimeout(up, 120); setTimeout(up, 450); setTimeout(up, 900);</script>"
+            f"<!-- top {current} {scroll_n} -->",
             height=0,
         )
     st.session_state["last_page"] = current
@@ -811,8 +874,9 @@ def show_welcome_gate():
           border-radius:24px;padding:18px 16px 12px;margin:0 0 10px;}
         .gate b {display:block;font-size:1.7rem;font-weight:900;color:#20483F;margin:4px 0;}
         .gate span {color:#52616B;font-weight:600;word-break:keep-all;}
-        .st-key-gate_guest button {background:transparent !important;border:none !important;color:#52616B !important;
-          text-decoration:none;font-weight:700;}
+        .st-key-gate_guest button {background:#FFFFFF !important;border:2px solid #20483F !important;border-radius:14px !important;
+          color:#20483F !important;min-height:52px;box-shadow:0 3px 10px rgba(32,72,63,.12);}
+        .st-key-gate_guest button p {font-size:1.12rem !important;font-weight:800 !important;}
         </style>""",
         unsafe_allow_html=True,
     )
@@ -830,9 +894,11 @@ def show_welcome_gate():
         unsafe_allow_html=True,
     )
     dd.show_login_forms("gate")
-    st.caption("실제 이름·학번·학교는 닉네임으로 쓰지 마세요. 비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
+    st.info("👀 **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요. "
+            "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
     with st.container(key="gate_guest"):
-        if st.button("로그인 없이 둘러보기 → (기록은 남지 않아요)", width="stretch"):
+        st.markdown("<div style='text-align:center;color:#52616B;font-weight:700;margin:6px 0 2px;'>또는</div>", unsafe_allow_html=True)
+        if st.button("👀 로그인 없이 둘러보기 (기록은 남지 않아요)", width="stretch"):
             st.session_state["guest"] = True
             st.rerun()
 
@@ -840,6 +906,27 @@ def show_welcome_gate():
 if not dd.citizen() and not st.session_state.get("guest") and not (current and current[0] == "07"):
     show_welcome_gate()
     st.stop()
+
+# ─────────────────────────────────────
+# 이전 페이지로 돌아가기 (모든 페이지 맨 위, 게임 중에도)
+# 지나온 페이지를 순서대로 기억해 두고, 바로 전 페이지로 가는 버튼을 보여 줘요.
+# ─────────────────────────────────────
+
+history = st.session_state.setdefault("page_history", [])
+here = navigation.url_path
+if not history or history[-1] != here:
+    if len(history) >= 2 and history[-2] == here:
+        history.pop()  # '이전 페이지'로 돌아온 경우: 왔던 길을 하나 지워요
+    else:
+        history.append(here)
+        del history[:-20]
+if len(history) >= 2:
+    all_pages = {home.url_path: home, citizen_page.url_path: citizen_page}
+    all_pages.update({page.url_path: page for page in feature_pages})
+    previous = all_pages.get(history[-2])
+    if previous is not None:
+        with st.container(key="back_link"):
+            st.page_link(previous, label=f"이전 페이지 · {previous.title}", icon="⬅️")
 
 if current:
     (
@@ -874,7 +961,7 @@ if current:
 
     if number == "03":
         st.info(
-            "📌 **시작 전 필독** · 안내서 04번 ‘꼭 알아야 할 7가지’ 확인 · 증거는 직접 수집 · "
+            "📌 **시작 전 필독** · 안내서 6개 모두 확인(특히 04번 ‘꼭 알아야 할 7가지’) · 증거는 직접 수집 · "
             "게임 중 새로고침 금지 · 시작하면 30분 타이머 작동"
         )
 
