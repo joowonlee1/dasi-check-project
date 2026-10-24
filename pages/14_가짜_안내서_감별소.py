@@ -181,6 +181,7 @@ def show_intro():
     st.caption("모든 기관·번호는 가상이에요. 실제 안내서의 번호로 전화하거나 QR을 찍지 마세요.")
     if st.button("🔍 감별 시작하기", type="primary", width="stretch"):
         S["step"] = "play"
+        dd.scroll_top()
         st.rerun()
 
 
@@ -338,6 +339,7 @@ def show_play():
             S["i"] += 1
         else:
             S["step"] = "end"
+        dd.scroll_top()  # 다음 현관문은 위에서부터 보여 줘요.
         st.rerun()
 
 
@@ -357,12 +359,17 @@ def show_end():
         dd.record("notice", {"plays": 1, "perfect": 1 if score == len(CASES) else 0,
                              **{f"h{k}_ok": 1 for k, (_, _, ok) in enumerate(results) if ok}})
         dd.note_mine("notice", f"{score}/{len(CASES)} 감별 · 번호부 {probes}번 펼침")
+        S["hall"] = dd.save_hall(
+            "notice", {"score": score, "probes": probes},
+            lambda old, new: (new["score"], -new["probes"]) > (old.get("score", 0), -old.get("probes", 10**6)),
+        )
 
     if st.button("⬅️ 마지막 현관문 다시 보기", key="back_end"):
         S["step"], S["i"] = "play", len(CASES) - 1
         st.rerun()
     st.title("📋 감별 결과")
     st.metric("맞힌 안내서", f"{score} / {len(CASES)}")
+    dd.show_hall_note(S.get("hall"))
     st.markdown(
         "".join(f"- {'✅' if ok else '❌'} **{case['door']}** ({'진짜' if case['real'] else '가짜'}) · "
                 f"번호부 {c['probes']}번 펼침\n" for case, c, ok in results)
