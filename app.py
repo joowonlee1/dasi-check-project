@@ -3,6 +3,8 @@ import html
 import streamlit as st
 import streamlit.components.v1 as components
 from mascot_ui import id_photo, mascot_img, show_mascot
+from city_map import city_map_css, city_map_html
+from sound_effects import render_sound_controls
 import dotori_data as dd
 
 
@@ -369,9 +371,9 @@ st.markdown(
     }
 
     /* 홈 첫 상자: 왼쪽 글, 오른쪽 큰 깡지 */
-    .home-hero {display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
-    .home-hero .txt {flex:1;min-width:220px;}
-    .home-hero .pic {flex:0 0 210px;margin:0 auto;}
+    .home-hero {display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;}
+    .home-hero .txt {flex:0 1 440px;min-width:220px;line-height:1.55;}
+    .home-hero .pic {flex:0 0 200px;margin:0;}
     .home-hero .bubble {display:inline-block;background:#FFF4D6;border:2px solid #E2C98A;border-radius:16px;
       padding:8px 14px;font-weight:800;color:#6B4A1E;margin:4px 0 6px;word-break:keep-all;}
 
@@ -389,7 +391,8 @@ st.markdown(
     @media (max-width:640px) {
       .citymap {grid-template-columns:repeat(2,minmax(0,1fr));
         grid-template-areas:"sangsu ttok" "gaeam station" "daram jung" "sicheong sicheong";}
-      .home-hero .pic {flex-basis:150px;}
+      .home-hero .pic {flex-basis:150px;margin:0 auto;}
+      .home-hero {gap:12px;}
     }
 
     /* 이전 페이지로 돌아가기 */
@@ -608,7 +611,9 @@ def show_home():
         )
         blocks.append(f'<div class="town" style="grid-area:{area};background:{color};"><h5>{mark} {town_name}</h5>'
                       f'<div class="pins">{pins}</div></div>')
-    st.markdown('<div class="citymap">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
+    # 실제 지도처럼 섬 위에 장소 핀을 찍어 보여 줘요. 폭이 좁은 휴대폰에서는 핀 이름 대신 아래 동네별 목록을 함께 보여 줘요.
+    st.markdown(city_map_css() + city_map_html(got, PLACES), unsafe_allow_html=True)
+    st.markdown('<div class="citymap cmap-legend">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
     st.caption("🏅 표시는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.")
 
     st.subheader("어떤 활동을 해볼까요?")
@@ -702,7 +707,7 @@ with st.sidebar:
     me = dd.citizen()
     st.markdown(
         """<style>
-        [data-testid="stSidebarNav"] {margin-top: 126px;}
+        [data-testid="stSidebarNav"] {margin-top: 140px;}
         /* 묶음 제목은 눌러서 접고 펼 수 있어요. 누를 수 있다는 게 보이게 버튼처럼 꾸미고 화살표를 보여 줘요. */
         [data-testid="stNavSectionHeader"] {cursor: pointer; background: #DCEAE4; border: 1px solid #C3D7CF;
           border-radius: 10px; padding: 4px 10px !important; margin: 8px 0 4px !important;}
@@ -713,18 +718,19 @@ with st.sidebar:
         [data-testid="stNavSectionHeader"] > div {opacity: 1 !important; visibility: visible !important;}
         [data-testid="stNavSectionHeader"] [data-testid="stIconMaterial"] {color: #0F766E !important; font-size: 1.4rem !important;}
         .st-key-citizen_top {position: absolute; top: 56px; left: 16px; width: calc(100% - 40px) !important; z-index: 5;
-          background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 6px;
+          background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 16px; padding: 10px 12px 12px;
           box-sizing: border-box; gap: 2px !important;}
         .st-key-citizen_top > * {flex-shrink: 0;}
         .st-key-citizen_top [data-testid="stMarkdownContainer"] {margin: 0 !important;}
         .st-key-citizen_top [data-testid="stMarkdown"], .st-key-citizen_top [data-testid="stMarkdown"] > div {height: auto !important; margin: 0 !important;}
         .st-key-citizen_top p {margin: 0;}
-        .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 999px; padding: 4px 12px !important;
-          min-height: 0 !important; line-height: 1.2 !important; justify-content: center; margin-top: 4px;}
+        .st-key-citizen_top [data-testid="stPageLink"] a {background: #20483F; border-radius: 999px; padding: 0 12px !important;
+          min-height: 34px !important; height: 34px; line-height: 1.2 !important; justify-content: center; align-items: center; margin-top: 6px; box-sizing: border-box;}
         .st-key-citizen_top [data-testid="stPageLink"] a span, .st-key-citizen_top [data-testid="stPageLink"] a p {color: #fff !important; font-weight: 800; font-size: .86rem !important;}
         .st-key-citizen_top [data-testid="stHorizontalBlock"] {gap: 6px !important;}
-        .st-key-side_logout button {min-height: 0 !important; padding: 4px 8px !important; margin-top: 4px; border-radius: 999px !important;
-          background: #FFFFFF; border: 1.5px solid #20483F; line-height: 1.2 !important;}
+        .st-key-side_logout button {min-height: 34px !important; height: 34px; padding: 0 8px !important; margin-top: 6px; border-radius: 999px !important;
+          background: #FFFFFF; border: 1.5px solid #20483F; line-height: 1.2 !important; box-sizing: border-box;
+          display: flex; align-items: center; justify-content: center;}
         .st-key-side_logout button p {font-size: .86rem !important; font-weight: 800 !important; color: #20483F;}
         </style>""",
         unsafe_allow_html=True,
@@ -759,7 +765,7 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
         if me:
-            c1, c2 = st.columns([3, 2], gap="small")
+            c1, c2 = st.columns([1, 1], gap="small")
             c1.page_link(citizen_page, label="내 시민증", icon="🪪", width="stretch")
             if c2.button("로그아웃", key="side_logout", width="stretch"):
                 dd.logout()
@@ -779,6 +785,9 @@ with st.sidebar:
             </style>""",
             unsafe_allow_html=True,
         )
+
+    # 효과음 켜기/끄기·음량·미리듣기(사이드바). 끄면 도장 '띵동' 소리도 나지 않아요.
+    render_sound_controls()
 
     # 다른 페이지로 이동하면 사이드바를 맨 위로 올리고, 휴대폰에서는 메뉴를 닫아 바로 내용을 보여 줘요.
     current = navigation.url_path
