@@ -39,12 +39,7 @@ def empty():
     st.info("아직 모인 기록이 없어요. 이 게임을 끝까지 하면 첫 기록이 생겨요!")
 
 
-_hall_first = st.session_state.get("open_escape_hall", False)
-if _hall_first:
-    st.info("방탈출 명예의 전당을 열었어요. 아래에서 기록을 확인하세요.")
-    tab_hall, tab_stats, tab_how = st.tabs(["🏆 명예의 전당", "📊 게임별 통계", "🔒 어떻게 모으나요?"])
-else:
-    tab_stats, tab_hall, tab_how = st.tabs(["📊 게임별 통계", "🏆 명예의 전당", "🔒 어떻게 모으나요?"])
+tab_stats, tab_hall, tab_how = st.tabs(["📊 게임별 통계", "🏆 명예의 전당", "🔒 어떻게 모으나요?"])
 
 with tab_stats:
     game = st.pills("게임 고르기", list(dd.GAMES), default="filter", key="stats_game",
