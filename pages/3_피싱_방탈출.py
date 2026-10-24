@@ -5,15 +5,10 @@ import time
 import streamlit as st
 from mascot_ui import show_hero, show_mascot
 import dotori_data as dd
+from card_ui import show_result_card
 
-from firebase_support import (
-    ConnectionProblem,
-    explain,
-    result_panel,
-    show_ranking,
-    sign_in,
-    user,
-)
+# 예전에는 방탈출만의 '탈출 랭킹'(익명 계정 + 닉네임 예약)을 따로 썼어요.
+# 지금은 시민증 하나로 도토리시 '명예의 전당'에 함께 기록해요. (예전 랭킹 기록은 통계청에서 그대로 볼 수 있어요.)
 
 # 모든 인물, 번호, 기록, 연락 결과는 교육용 가상 자료입니다.
 # 번호는 실제로 쓰이지 않도록 지어낸 가상 번호입니다.
@@ -303,6 +298,16 @@ st.markdown(
     .lock-banner .from {color:#FCA5A5; font-weight:700; font-size:.85rem;}
     .lock-banner .text {font-size:1rem;}
     .clock {font-variant-numeric:tabular-nums; font-weight:900; font-size:1.6rem; color:#B91C1C;}
+    /* 게임 속 시각 · 남은 시간을 같은 모양의 카드로 나란히 */
+    .timebox {background:#FFFFFF; border:2px solid #E5ECE9; border-radius:14px; padding:6px 12px; text-align:center;}
+    .timebox small {display:block; color:#52616B; font-weight:800; font-size:.82rem;}
+    .timebox b {font-variant-numeric:tabular-nums; font-size:1.55rem; font-weight:900;}
+    .quiet {background:#F1F5F9; border:2px dashed #CBD5E1; border-radius:14px; padding:10px 14px; margin:6px 0 10px;
+            font-size:1.1rem; font-weight:800; color:#334155; text-align:center;}
+    /* 증거를 두 칸씩 놓아 스크롤을 절반으로 줄여요 */
+    .st-key-room_places [data-testid="stButton"] button {min-height:52px;}
+    .st-key-room_locks [data-testid="stButton"] button {background:#FFF4F2; border:2px solid #E8A39A; min-height:52px;}
+    .st-key-room_locks [data-testid="stButton"] button p {color:#9A2B1E; font-weight:900;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -328,7 +333,7 @@ def fresh_game(ranked=False):
         if key.startswith("escape_"):
             del st.session_state[key]
 
-    account = user()
+    account = dd.citizen()
 
     st.session_state["escape_game"] = {
         "started": time.time(),
@@ -347,6 +352,7 @@ def fresh_game(ranked=False):
         "rank_uid": account["uid"] if ranked and account else None,
         "rank_nickname": account["nickname"] if ranked and account else None,
         "rank_status": None,
+        "recorded": False,
     }
 
 
@@ -531,23 +537,27 @@ def pressure_messages():
 
 
 def show_status_bar():
-    left, right = st.columns([1, 3])
+    # 위: 게임 속 시각과 남은 시간을 같은 크기 카드로 나란히 / 아래: 잠금화면 알림을 가로 전체로 보여 줘요.
+    left, right = st.columns(2)
     with left:
-        st.markdown(f'<div class="clock">{clock_text(game["clock"])}</div>', unsafe_allow_html=True)
-        st.caption("게임 속 시각")
+        st.markdown(
+            f'<div class="timebox"><small>🕘 게임 속 시각</small><b style="color:#B91C1C;">{clock_text(game["clock"])}</b></div>',
+            unsafe_allow_html=True,
+        )
     with right:
-        messages = pressure_messages()
-        if messages:
-            at, text, _ = messages[-1]
-            st.markdown(
-                '<div class="lock-banner">'
-                f'<div class="from">🔒 잠금화면 알림 · 010-6620-1184 · {clock_text(at)}</div>'
-                f'<div class="text">{html.escape(text)}</div>'
-                "</div>",
-                unsafe_allow_html=True,
-            )
-        else:
-            st.caption("휴대전화가 조용합니다. 아직은.")
+        countdown()
+    messages = pressure_messages()
+    if messages:
+        at, text, _ = messages[-1]
+        st.markdown(
+            '<div class="lock-banner">'
+            f'<div class="from">🔒 잠금화면 알림 · 010-6620-1184 · {clock_text(at)}</div>'
+            f'<div class="text">{html.escape(text)}</div>'
+            "</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown('<div class="quiet">📵 휴대전화가 조용합니다. 아직은.</div>', unsafe_allow_html=True)
 
 
 def hint_panel(stage):
@@ -586,7 +596,7 @@ def lock_one():
         unknown = st.radio(
             "그런데 상대가 몰랐던 것으로 보이는 정보가 하나 있습니다. 무엇일까요?",
             [
-                "민서의 이름",
+                "통화 첫마디에 부른 민서의 이름",
                 "반려견 보리의 이름",
                 "원래 도서관에 가기로 한 시각",
                 "가족끼리만 공유한, 바뀐 오늘 일정",
@@ -763,24 +773,40 @@ def show_drawer():
     show_dialer()
 
 
+def go_place(place):
+    game["place"] = place
+    if place not in game["visited"]:
+        game["visited"].append(place)
+        spend("visit")
+    st.rerun()
+
+
 def show_room():
-    st.write("장소를 눌러 조사하세요. 처음 가는 곳은 게임 시계가 1분 흐릅니다. 모든 자료가 사건과 관련 있는 것은 아니에요.")
+    st.markdown(
+        "장소를 눌러 조사하세요. 처음 가는 곳은 게임 시계가 1분 흐릅니다. "
+        ":orange-background[**⚠️ 사건과 상관없는 자료도 섞여 있어요.**]"
+    )
 
     places = list(PLACES)
-    for start in (0, 3):
-        columns = st.columns(3)
-        for column, place in zip(columns, places[start:start + 3]):
+    # 자료를 읽는 곳(4곳)과 잠금 장치가 있는 곳(서랍·출입문)을 나눠서 헷갈리지 않게 해요.
+    st.markdown("**🔎 조사할 곳**")
+    with st.container(key="room_places"):
+        columns = st.columns(4)
+        for column, place in zip(columns, places[:4]):
             with column:
                 if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
-                    game["place"] = place
-                    if place not in game["visited"]:
-                        game["visited"].append(place)
-                        spend("visit")
-                    st.rerun()
+                    go_place(place)
+    st.markdown("**🔐 잠금 장치가 있는 곳**")
+    with st.container(key="room_locks"):
+        columns = st.columns(2)
+        for column, place in zip(columns, places[4:]):
+            with column:
+                if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
+                    go_place(place)
 
     st.divider()
     place = game["place"]
-    st.subheader(place)
+    st.subheader(f"📍 지금 조사 중: {place}")
 
     if place == "🗄️ 잠긴 서랍":
         show_drawer()
@@ -789,8 +815,15 @@ def show_room():
         st.write("공개 정보의 출처 → 시간의 의미 → 독립 확인")
         st.info("‘잠금 해제’ 탭에서 현재 퍼즐에 도전하세요.")
     else:
-        for evidence_id in PLACES[place]:
-            evidence_card(evidence_id)
+        # 자료를 두 칸씩 놓아 아래로 길게 내려가지 않게 해요.
+        items = PLACES[place]
+        for start in range(0, len(items), 2):
+            columns = st.columns(2)
+            for column, evidence_id in zip(columns, items[start:start + 2]):
+                with column:
+                    evidence_card(evidence_id)
+        if len(items) > 2:
+            st.caption("⬆️ 다른 장소를 보려면 위의 ‘조사할 곳’ 버튼을 눌러요.")
 
 
 def show_inventory():
@@ -826,11 +859,37 @@ def ending():
     )
 
 
+def save_record(escaped):
+    """탈출 성공이든 실패든, 한 게임에 한 번만 통계(+1)와 명예의 전당에 남겨요."""
+    if game.get("recorded"):
+        return
+    game["recorded"] = True
+    hints = sum(game["hints"].values())
+    counts = {"plays": 1, "escaped": int(escaped), "nohint": int(escaped and hints == 0)}
+    counts.update({f"lock{k}": 1 for k in range(1, 4) if game["unlocked"] >= k})
+    dd.record("escape", counts)
+    end = game["finished"] or (game["started"] + TIME_LIMIT_MINUTES * 60)
+    dd.note_mine("escape", "탈출 성공" if escaped else f"탈출 실패 · 잠금 {game['unlocked']}/3")
+    if game.get("rank_uid"):
+        fields = {"escaped": int(escaped), "unlocked": game["unlocked"], "hints": hints,
+                  "mistakes": game["mistakes"], "seconds": max(0, int(end - game["started"]))}
+        game["rank_status"] = dd.save_hall("escape", fields, lambda old, new: dd.HALL_SORT["escape"](new) < dd.HALL_SORT["escape"](old))
+
+
+def show_hall_status():
+    status = game.get("rank_status")
+    if not game.get("rank_uid"):
+        st.info("🌱 연습 모드라서 명예의 전당에는 올리지 않았어요. 시민증으로 시작하면 성공·실패 기록이 모두 올라가요.")
+    else:
+        dd.show_hall_note(status)
+
+
 def show_ending():
     seconds = max(0, int(game["finished"] - game["started"]))
     minutes, remaining = divmod(seconds, 60)
     hint_count = sum(game["hints"].values())
     title, story = ending()
+    save_record(True)
 
     dd.stamp("03")
     show_mascot("escape", "탈출 성공! 근거를 비교하고 직접 확인했어요.", width=160)
@@ -863,27 +922,25 @@ def show_ending():
     st.markdown("\n".join(lessons))
     st.caption("시간과 실패 횟수로 능력을 평가하지 않습니다. 실제 경과 시간은 페이지를 떠난 동안도 포함됩니다.")
 
-    report = (
-        "잠깐! 피싱 방탈출 — 엄마의 번호, 두 개의 진실\n\n"
-        f"엔딩: {title}\n"
-        f"탈출 시각(게임 속): {clock_text(game['finished_clock'])}\n"
-        f"실제 경과 시간: {minutes}분 {remaining}초\n"
-        f"힌트 사용: {hint_count}회\n"
-        f"퍼즐 재검토: {game['mistakes']}회\n\n"
-        "[상대가 쓴 압박 기술]\n"
-        + "\n".join(f"{clock_text(at)} {text} → {tactic}" for at, text, tactic in seen)
-        + "\n\n[배운 것]\n"
-        + "\n".join(lessons)
-        + "\n\n교육용 가상 사건의 결과이며 실제 신원 확인을 보장하지 않는다."
-    )
+    show_hall_status()
 
-    result_panel(game)
-
-    st.download_button(
-        "탈출 기록 내려받기",
-        data=report.encode("utf-8-sig"),
-        file_name="jamkkan_escape_report.txt",
-        mime="text/plain",
+    # 탈출 기록은 글 파일 대신 사진(PNG) 카드로 내려받아요.
+    st.markdown("#### 🖼️ 탈출 기록 카드")
+    icon, _, name = title.partition(" ")
+    me = dd.citizen()
+    show_result_card(
+        {
+            "color": "#0F766E", "place": "다람쥐동 민서네 집", "game": "피싱 방탈출", "emoji": icon or "🗝️",
+            "title": name or title, "subtitle": "탈출 성공!",
+            "stats": [("탈출 시각(게임 속)", clock_text(game["finished_clock"])), ("실제 경과", f"{minutes}분 {remaining}초"),
+                      ("힌트 사용", f"{hint_count}회"), ("퍼즐 재검토", f"{game['mistakes']}회")],
+            "sections": ([("🎯 상대가 쓴 압박 기술", [f"“{text}” → {tactic}" for _, text, tactic in seen[-3:]])] if seen else [])
+            + [("📚 배운 것", [line.split(". ", 1)[-1] for line in lessons])],
+            "nickname": me["nickname"] if me and game.get("rank_uid") else "",
+            "mascot": "escape",
+            "note": ["교육용 가상 사건의 결과이며 실제 신원 확인을 보장하지 않아요.", "실제 피해는 112 · 118에 먼저 연락하세요."],
+        },
+        "jamkkan_escape_card.png",
     )
 
 
@@ -908,13 +965,14 @@ def countdown():
     color = "#B91C1C" if left <= 300 else "#172B3A"
     note = " · 서두르세요!" if left <= 300 else ""
     st.markdown(
-        f'<div style="text-align:right;font-weight:900;font-size:1.25rem;color:{color};'
-        f'font-variant-numeric:tabular-nums;">⏳ 남은 시간 {minutes:02d}:{seconds:02d}{note}</div>',
+        f'<div class="timebox"><small>⏳ 남은 시간 (진짜 타이머){note}</small>'
+        f'<b style="color:{color};">{minutes:02d}:{seconds:02d}</b></div>',
         unsafe_allow_html=True,
     )
 
 
 def show_failure():
+    save_record(False)
     st.error(f"⏰ 제한 시간 {TIME_LIMIT_MINUTES}분이 지났습니다.")
     st.subheader("🔴 배드 엔딩 · 확인이 끝나기 전에")
     st.write(
@@ -937,13 +995,14 @@ def show_failure():
         for at, text, tactic in seen:
             st.markdown(f"- `{clock_text(at)}` “{text}” → **{tactic}**")
 
+    show_hall_status()
     st.button(
         "다시 도전하기",
         type="primary",
         on_click=fresh_game,
         kwargs={"ranked": bool(game.get("rank_uid"))},
     )
-    st.caption("실패한 기록은 공동 랭킹에 저장되지 않습니다.")
+    st.caption("실패한 기록도 통계와 명예의 전당(시민증으로 시작한 경우)에 남아요. 다시 도전해서 더 좋은 기록을 내면 바뀌어요.")
 
 
 MUST_KNOW = [
@@ -952,16 +1011,26 @@ MUST_KNOW = [
     ("🔢 자물쇠는 숫자로 풀어요", "자물쇠 번호는 증거 속 시각·숫자를 조합해 만들어요. 숫자만 입력해도 되고, 하이픈(-)이나 띄어쓰기를 넣어도 괜찮아요."),
     ("🔓 잠금을 풀면 방을 다시 조사하세요", "잠금 해제 탭에는 지금 풀어야 할 잠금 하나만 보여요. 잠금을 풀 때마다 ‘방 조사’ 탭의 🗄️ 잠긴 서랍에 새로운 것이 생겨요."),
     ("🕘 게임 속 시계는 엔딩을 바꿔요", "실패 여부는 진짜 타이머가, 엔딩 등급은 게임 속 시각이 정해요. 조사·수집·오답·힌트·전화를 할 때마다 게임 속 시각이 흘러요."),
-    ("💡 힌트와 오답은 횟수가 남아요", "틀려도 몇 번이든 다시 도전할 수 있어요. 대신 오답은 게임 시계 +2분, 힌트는 +3분이고 둘 다 랭킹에 반영돼요."),
+    ("💡 힌트와 오답은 횟수가 남아요", "틀려도 몇 번이든 다시 도전할 수 있어요. 대신 오답은 게임 시계 +2분, 힌트는 +3분이고 둘 다 명예의 전당 순위에 반영돼요."),
     ("🔄 새로고침하면 진행이 사라져요", "브라우저 새로고침이나 창 닫기를 하면 처음부터 다시 해야 해요. 이동은 화면 안의 탭과 버튼으로만 하세요."),
 ]
 
 
 def show_game_guide():
     started = "escape_game" in st.session_state
-    title = "📖 방탈출 안내서 · 규칙과 주의점 (게임 중에도 언제든 열 수 있어요)" if started else "📖 방탈출 안내서 · 시작 전에 꼭 읽어 주세요"
+    title = "📖 방탈출 안내서 · 규칙과 주의점 (게임 중에도 언제든 열 수 있어요) — 👆 눌러서 열기" if started else "📖 방탈출 안내서 · 시작 전에 꼭 읽어 주세요"
 
-    with st.expander(title, expanded=not started):
+    # 안내서 제목줄이 '누르는 곳'으로 보이게 노란 버튼처럼 꾸며요.
+    st.markdown(
+        """<style>
+        .st-key-room_guide [data-testid="stExpander"] details {border:2px solid #E2A93B !important; border-radius:14px; background:#FFFDF5;}
+        .st-key-room_guide [data-testid="stExpander"] summary {background:#FFF4D6; border-radius:12px; min-height:56px;}
+        .st-key-room_guide [data-testid="stExpander"] summary:hover {background:#FDEBB8;}
+        .st-key-room_guide [data-testid="stExpander"] summary p {font-size:1.08rem !important; font-weight:900 !important; color:#7A4B00;}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="room_guide"), st.expander(title, expanded=not started):
         intro, how, timing, caution, ending_tab, faq = st.tabs(
             [
                 "01 🎬 줄거리",
@@ -975,6 +1044,12 @@ def show_game_guide():
 
         with intro:
             st.markdown("### 당신은 이 연락의 진실을 확인할 조사자입니다")
+            st.markdown(
+                '<div style="background:#FDECEC;border:2px solid #F6CACA;border-radius:14px;padding:10px 14px;'
+                'font-size:1.2rem;font-weight:900;color:#B42318;text-align:center;word-break:keep-all;margin:4px 0 8px;">'
+                "📞 같은 엄마 번호로 서로 다른 연락이 왔어요.</div>",
+                unsafe_allow_html=True,
+            )
             st.write(
                 "오전 09:10, 휴대전화에 ‘엄마’가 뜹니다. 상대는 내 이름도, 강아지 이름도, 오늘 약속도 알고 있어요. "
                 "그런데 “다른 가족한테는 절대 연락하지 마”라고 합니다. 2분 뒤에는 낯선 번호로 앱을 설치하라는 문자가 와요."
@@ -1003,7 +1078,7 @@ def show_game_guide():
             )
             st.markdown("### 진행 순서")
             st.markdown(
-                "1. **방 조사** — 📱 휴대전화, 💻 노트북, 📅 달력, 🖼️ 사진 액자를 눌러 자료를 읽어요. 사건과 상관없는 자료도 섞여 있어요.\n"
+                "1. **방 조사** — 📱 휴대전화, 💻 노트북, 📅 달력, 🖼️ 사진 액자를 눌러 자료를 읽어요. :orange-background[**⚠️ 사건과 상관없는 자료도 섞여 있어요.**]\n"
                 "2. **증거 수집** — 중요해 보이는 자료 아래 ‘증거 보관함에 넣기’를 눌러요.\n"
                 "3. **잠금 1** — 서랍의 4자리 번호 자물쇠를 풀어요.\n"
                 "4. **잠금 2** — 서랍 안 확인 장치의 8자리 시간 자물쇠를 풀어요.\n"
@@ -1058,12 +1133,12 @@ def show_game_guide():
                 f"| 🔴 배드 | 진짜 타이머 {TIME_LIMIT_MINUTES}분 안에 탈출하지 못함 |"
             )
             st.caption("‘안전한 경로’가 무엇인지는 방 안의 증거가 알려 줘요. 그게 이 게임의 핵심 문제예요!")
-            st.markdown("### 공동 랭킹")
+            st.markdown("### 명예의 전당")
             st.markdown(
-                "- **혼자 연습:** 로그인 없이 바로 시작하고, 탈출 후 결과 파일을 받을 수 있어요.\n"
-                "- **랭킹 참여:** 메뉴의 ‘도토리시 시민증’에서 닉네임을 만든 뒤, ‘시작 안내·입장’에서 ‘시민증으로 랭킹 참여 시작’을 누르면 탈출 기록이 자동 저장돼요.\n"
-                "- **이미 연습 중이라면:** ‘시작 안내·입장’에서 새 게임을 랭킹 모드로 시작하세요. 현재 진행은 초기화돼요.\n"
-                "- **순위 기준:** 힌트가 적은 순 → 오답(재검토)이 적은 순이에요. 실패한 기록은 저장되지 않아요."
+                "- **혼자 연습:** 로그인 없이 바로 시작하고, 탈출 후 결과 카드(사진)를 받을 수 있어요.\n"
+                "- **명예의 전당 참여:** 메뉴의 ‘도토리시 시민증’에서 닉네임을 만든 뒤, ‘시작 안내·입장’에서 ‘시민증으로 기록 남기며 시작’을 누르면 결과가 자동 저장돼요.\n"
+                "- **이미 연습 중이라면:** ‘시작 안내·입장’에서 새 게임을 시민증 모드로 시작하세요. 현재 진행은 초기화돼요.\n"
+                "- **순위 기준:** 탈출 성공 → 많이 푼 잠금 → 힌트가 적은 순 → 오답(재검토)이 적은 순 → 빠른 순이에요. 실패한 기록도 저장돼요."
             )
 
         with faq:
@@ -1090,8 +1165,9 @@ def show_quick_rules():
 
 
 def go_to(section):
-    """다음 실행에서 방탈출 내부 메뉴를 변경합니다."""
+    """다음 실행에서 방탈출 내부 메뉴를 변경합니다. 새 화면은 맨 위부터 보여 줘요."""
     st.session_state["room_next_section"] = section
+    dd.scroll_top()
     st.rerun()
 
 
@@ -1138,7 +1214,7 @@ def show_entry():
         unsafe_allow_html=True,
     )
     ready = st.checkbox(
-        "안내서의 ‘⚠️ 꼭 알아야 할 7가지’를 확인했어요.",
+        "안내서 6개(01~06)를 모두 확인했어요.",
         key="room_ready",
     )
     st.caption(f"게임을 시작하는 순간 실제 시간 {TIME_LIMIT_MINUTES}분 타이머가 시작돼요.")
@@ -1153,9 +1229,10 @@ def show_entry():
         )
 
         if not ready:
-            st.caption("👆 위의 ‘꼭 알아야 할 7가지 확인’ 체크칸을 먼저 눌러야 시작 버튼이 켜져요.")
+            st.caption("👆 위의 ‘안내서 6개를 모두 확인했어요’ 체크칸을 먼저 눌러야 시작 버튼이 켜져요.")
+        # 체크하지 않았을 때는 버튼 글자로 무엇을 해야 하는지 바로 알려 줘요.
         if st.button(
-            "🌱 연습으로 시작하기",
+            "🌱 연습으로 시작하기" if ready else "☝️ 먼저 위의 ‘안내서 확인’ 체크칸을 눌러 주세요",
             disabled=not replace_ok,
             type="primary",
             width="stretch",
@@ -1163,17 +1240,16 @@ def show_entry():
             start_game(False)
 
     with st.container(border=True):
-        st.markdown("### 🏆 시민증으로 랭킹 참여")
+        st.markdown("### 🏆 시민증으로 기록 남기며 시작")
 
         st.write(
             "도토리시 시민증의 닉네임으로 게임을 시작해요. "
-            "탈출 완료 시 닉네임과 결과를 공동 랭킹에 자동 저장합니다."
+            "탈출하거나 시간이 다 되면 닉네임과 결과를 도토리시 명예의 전당에 자동 저장합니다."
         )
 
         st.caption(
-            "닉네임·힌트·재검토 횟수·경과 시간·완료 여부·등록 시각이 공개돼요. "
-            "같은 계정의 첫 저장 결과를 유지하며 "
-            "재도전으로 덮어쓰지 않아요."
+            "닉네임·탈출 여부·푼 잠금 수·힌트·재검토 횟수·경과 시간이 공개돼요. "
+            "실패한 기록도 남고, 다시 도전해서 더 좋은 기록이 나오면 그 기록으로 바뀌어요."
         )
 
         citizen = dd.citizen()
@@ -1195,7 +1271,7 @@ def show_entry():
             st.success(f"🪪 시민 {citizen['nickname']} 님으로 참여해요.")
             st.caption(
                 "창을 닫거나 새로고침하면 로그아웃되지만, 시민증 페이지에서 닉네임과 비밀 숫자로 다시 들어올 수 있어요. "
-                "저장된 랭킹 기록은 남고, 로그인한 동안 ‘탈출 랭킹’에서 내 기록을 삭제할 수 있어요."
+                "저장된 기록은 남아요. 기록을 지우고 싶으면 관리자에게 말해 주세요."
             )
 
             with st.form("room_join_start"):
@@ -1204,7 +1280,7 @@ def show_entry():
                 )
 
                 submitted = st.form_submit_button(
-                    "시민증으로 랭킹 참여 시작",
+                    "🏆 시민증으로 기록 남기며 시작" if ready else "☝️ 먼저 위의 ‘안내서 확인’ 체크칸을 눌러 주세요",
                     type="primary",
                     disabled=not replace_ok,
                 )
@@ -1216,26 +1292,8 @@ def show_entry():
                     )
 
                 else:
-                    try:
-                        # 시민증 계정을 방탈출 랭킹 계정으로 그대로 씁니다.
-                        st.session_state["firebase_user"] = citizen
-                        sign_in(citizen["nickname"])
-
-                        start_game(True)
-
-                    except ConnectionProblem as exc:
-                        if exc.reason == "NICKNAME_TAKEN":
-                            st.error(
-                                "예전 방탈출 랭킹에 같은 닉네임이 이미 있어요. "
-                                "시민증을 로그아웃하고 다른 닉네임으로 다시 만들어 주세요."
-                            )
-                        else:
-                            st.error(explain(exc))
-
-                        st.info(
-                            "입장에 실패해 새 게임을 시작하지 않았어요. "
-                            "연결을 확인하거나 연습 모드를 이용하세요."
-                        )
+                    # 시민증 계정 그대로 명예의 전당에 기록해요. (예전처럼 방탈출용 닉네임을 따로 예약하지 않아요.)
+                    start_game(True)
 
 
 def show_play():
@@ -1259,7 +1317,6 @@ def show_play():
         return
 
     if game["unlocked"] < 3:
-        countdown()
         show_status_bar()
         show_quick_rules()
 
@@ -1273,11 +1330,23 @@ def show_play():
     if game["unlocked"] == 3:
         show_ending()
 
-        if st.button("🏆 탈출 랭킹 보기"):
-            go_to("🏆 탈출 랭킹")
+        if st.button("🏆 명예의 전당 보기"):
+            go_to("🏆 명예의 전당")
 
     else:
-        room_tab, inventory_tab, lock_tab = st.tabs(
+        # '잠금 해제'는 다른 두 탭과 헷갈리지 않게 더 크고 다른 색으로 보여 줘요.
+        st.markdown(
+            """<style>
+            .st-key-room_tabs [role="tablist"] [role="tab"]:nth-of-type(3) {background:#FDECEC; border:2px solid #B42318;
+              padding:12px 22px; min-height:58px;}
+            .st-key-room_tabs [role="tablist"] [role="tab"]:nth-of-type(3) p {font-size:1.2rem !important; font-weight:900; color:#B42318;}
+            .st-key-room_tabs [role="tablist"] [role="tab"]:nth-of-type(3)[aria-selected="true"] {background:#B42318;}
+            .st-key-room_tabs [role="tablist"] [role="tab"]:nth-of-type(3)[aria-selected="true"] p {color:#FFFFFF;}
+            </style>""",
+            unsafe_allow_html=True,
+        )
+        tabs_box = st.container(key="room_tabs")
+        room_tab, inventory_tab, lock_tab = tabs_box.tabs(
             ["🔎 방 조사", "📁 증거 보관함", "🔐 잠금 해제"]
         )
 
@@ -1307,7 +1376,7 @@ def show_play():
 
 
 st.title("🗝️ 잠깐! · 피싱 방탈출")
-show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "사건 01 — 엄마의 번호, 두 개의 진실",
+show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "엄마라는 연락, 진짜일까?",
           "증거를 모아 진짜를 가려내고 방을 탈출하세요. 실제 전화나 앱 설치는 없어요.",
           tone="mint", small=True)
 
@@ -1316,8 +1385,8 @@ current = st.session_state.get("escape_game")
 if current:
     if current.get("rank_uid"):
         st.info(
-            f"🏆 {current['rank_nickname']} · 랭킹 참여 모드 "
-            "(계정별 첫 저장 기록 유지)"
+            f"🏆 {current['rank_nickname']} · 시민증 모드 "
+            "(명예의 전당에 최고 기록 저장)"
         )
     else:
         st.info("🌱 연습 모드 · 공개 저장 안 함")
@@ -1394,7 +1463,7 @@ def show_section_menu_style(game_running):
         }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::after {{ content: "규칙 확인하고 입장하기"; }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::after {{ content: "증거 모아 잠금 풀기"; }}
-        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::after {{ content: "기록 확인하기"; }}
+        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::after {{ content: "모두의 기록 보기"; }}
         /* 지금 보고 있는 메뉴 */
         .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"] {{
             background: #0F766E; border-color: #0F766E;
@@ -1433,7 +1502,7 @@ section = st.radio(
     [
         "🚪 시작 안내·입장",
         "🗝️ 게임 진행",
-        "🏆 탈출 랭킹",
+        "🏆 명예의 전당",
     ],
     horizontal=True,
     key="room_section",
@@ -1448,7 +1517,25 @@ elif section == "🗝️ 게임 진행":
     show_play()
 
 else:
-    show_ranking(embedded=True)
+    # 예전 '탈출 랭킹'을 도토리시 명예의 전당(방탈출)으로 합쳤어요.
+    st.subheader("🏆 명예의 전당 · 피싱 방탈출")
+    entries = sorted(dd.hall("escape"), key=dd.HALL_SORT["escape"])
+    me = dd.citizen()
+    if entries:
+        medals = ["🥇", "🥈", "🥉"]
+        rows, rank, prev = [], 0, None
+        for i, r in enumerate(entries[:20]):
+            key = dd.HALL_SORT["escape"](r)
+            if key != prev:
+                rank, prev = i + 1, key
+            rows.append({"순위": medals[rank - 1] if rank <= 3 else f"{rank}위",
+                         "닉네임": r.get("nickname", "시민") + ("  ⭐ 나" if me and r["uid"] == me["uid"] else ""),
+                         "기록": dd.HALL_TEXT["escape"](r)})
+        st.dataframe(rows, hide_index=True, width="stretch")
+    else:
+        st.info("아직 명예의 전당에 오른 시민이 없어요. 시민증으로 시작해 첫 주인공이 되어 보세요!")
+    st.caption("순위: 탈출 성공 → 많이 푼 잠금 → 힌트 적은 순 → 재검토 적은 순 → 빠른 순 · 새 기록은 보이기까지 최대 1분쯤 걸릴 수 있어요.")
+    st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 다른 게임 명예의 전당과 예전 탈출 랭킹 보기", icon="📈")
 
     if st.button("게임으로 돌아가기"):
         go_to("🗝️ 게임 진행")
