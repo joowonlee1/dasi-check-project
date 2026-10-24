@@ -140,6 +140,13 @@ st.markdown(
     .chip.find{background:#FDECEC;color:#B42318;border:1.5px solid #F2B8B5;}
     .chip.count{background:#E8F4EC;color:#0F766E;border:1.5px solid #B9D8C6;}
     .chip.bad{background:#FDECEC;color:#B42318;border:1.5px solid #B42318;}
+    /* 펼칠 칸 입력칸: 지금 해야 할 일이라 눈에 띄게 */
+    [class*="st-key-pick"] label p{font-size:1rem !important;font-weight:800 !important;color:#B4471B !important;}
+    [class*="st-key-pick"] [data-testid="stNumberInputContainer"]{border:2.5px solid #E0A800 !important;border-radius:12px !important;
+      background:#FFFBEA !important;box-shadow:0 0 0 4px rgba(224,168,0,.15);}
+    [class*="st-key-pick"] input{font-size:1.35rem !important;font-weight:900 !important;color:#20483F !important;
+      text-align:center;background:#FFFBEA !important;}
+    [class*="st-key-pick"] button{background:#FFF4D6 !important;color:#5A3D00 !important;}
     .left-box{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;background:#FFF4D6;border:2px solid #E0A800;
       border-radius:14px;padding:10px 14px;margin:4px 0 6px;color:#5A3D00;}
     .left-box span{font-weight:800;} .left-box b{font-size:1.25rem;color:#20483F;}
@@ -219,7 +226,7 @@ def show_book(c, case):
         unsafe_allow_html=True,
     )
     n1, n2 = st.columns([1, 1], vertical_alignment="bottom")
-    pick = n1.number_input("펼칠 칸 (몇 번째)", min_value=lo + 1, max_value=hi + 1, value=lo + 1, step=1,
+    pick = n1.number_input("👉 펼칠 칸 (몇 번째)", min_value=lo + 1, max_value=hi + 1, value=lo + 1, step=1,
                            key=f"pick{S['i']}_{c['probes']}")
     if n2.button("📖 이 칸 펼치기", key=f"open{S['i']}", type="primary", width="stretch"):
         idx, mid = int(pick) - 1, (lo + hi) // 2
