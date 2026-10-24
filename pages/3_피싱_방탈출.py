@@ -1130,6 +1130,10 @@ def show_entry():
         [data-testid="stCheckbox"] label > div:not([data-testid]) {transform: scale(1.7); margin: 0 .9rem 0 .4rem;}
         [data-testid="stCheckbox"] label [data-testid="stMarkdownContainer"] p {font-size: 1.15rem !important; font-weight: 800 !important;}
         .st-key-room_ready {background: #FFF4D6; border: 2px solid #E2C98A; border-radius: 14px; padding: 8px 12px;}
+        .st-key-room_citizen_link [data-testid="stPageLink"] a {background: #20483F; border-radius: 12px; padding: 10px 14px !important;
+          justify-content: center; box-shadow: 0 4px 12px rgba(32,72,63,.25);}
+        .st-key-room_citizen_link [data-testid="stPageLink"] a p, .st-key-room_citizen_link [data-testid="stPageLink"] a span
+          {color: #fff !important; font-weight: 800 !important; font-size: 1.05rem !important;}
         </style>""",
         unsafe_allow_html=True,
     )
@@ -1148,9 +1152,13 @@ def show_entry():
             "이미 입장한 상태여도 이 버튼으로 시작하면 공개 저장하지 않아요."
         )
 
+        if not ready:
+            st.caption("👆 위의 ‘꼭 알아야 할 7가지 확인’ 체크칸을 먼저 눌러야 시작 버튼이 켜져요.")
         if st.button(
-            "연습으로 시작",
+            "🌱 연습으로 시작하기",
             disabled=not replace_ok,
+            type="primary",
+            width="stretch",
         ):
             start_game(False)
 
@@ -1176,15 +1184,17 @@ def show_entry():
                 "랭킹에 참여하려면 먼저 시민증(닉네임)을 만들어 주세요. "
                 "시민증이 없어도 위의 ‘연습으로 시작’은 할 수 있어요."
             )
-            st.page_link(
-                "pages/0_도토리시_시민증.py",
-                label="도토리시 시민증 만들러 가기",
-                icon="🪪",
-            )
+            with st.container(key="room_citizen_link"):
+                st.page_link(
+                    "pages/0_도토리시_시민증.py",
+                    label="도토리시 시민증 만들러 가기",
+                    icon="🪪",
+                    width="stretch",
+                )
         else:
             st.success(f"🪪 시민 {citizen['nickname']} 님으로 참여해요.")
             st.caption(
-                "시민증은 창을 닫거나 새로고침하면 로그아웃돼요. "
+                "창을 닫거나 새로고침하면 로그아웃되지만, 시민증 페이지에서 닉네임과 비밀 숫자로 다시 들어올 수 있어요. "
                 "저장된 랭킹 기록은 남고, 로그인한 동안 ‘탈출 랭킹’에서 내 기록을 삭제할 수 있어요."
             )
 
@@ -1299,7 +1309,7 @@ def show_play():
 st.title("🗝️ 잠깐! · 피싱 방탈출")
 show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "사건 01 — 엄마의 번호, 두 개의 진실",
           "증거를 모아 진짜를 가려내고 방을 탈출하세요. 실제 전화나 앱 설치는 없어요.",
-          colors=("#7C2D12", "#C2410C"), small=True)
+          tone="mint", small=True)
 
 current = st.session_state.get("escape_game")
 
