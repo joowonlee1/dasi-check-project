@@ -50,7 +50,7 @@ def show_mascot(pose, message="", width=96):
         if message:
             st.caption(message)
         return
-    width = max(56, min(int(width), 110))  # 화면을 덜 차지하게 캐릭터 크기 상한을 낮춰요
+    width = max(56, min(int(width), 130))  # 깡지가 눈에 잘 띄되 화면을 너무 차지하지 않게 상한을 둬요
     text = html.escape(message)
     label = html.escape(description, quote=True)
     st.markdown(
@@ -63,6 +63,17 @@ def show_mascot(pose, message="", width=96):
         f'font-weight:700;line-height:1.5;word-break:keep-all;">{text}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+def mascot_img(pose, width=200):
+    """깡지 그림만 크게 보여 줄 때 쓰는 <img> 태그(홈 첫 화면 등). 그림이 없으면 빈 글자."""
+    try:
+        encoded = _pose_data(pose)
+    except Exception:
+        return ""
+    label = html.escape(POSES[pose][5], quote=True)
+    return (f'<img src="data:image/png;base64,{encoded}" alt="{label}" '
+            f'style="width:{int(width)}px;max-width:100%;height:auto;display:block;margin:0 auto;">')
 
 
 def show_key_question(text, icon="💡"):
