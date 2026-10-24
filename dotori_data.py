@@ -7,6 +7,7 @@
 - 저장에 실패해도 게임은 그대로 할 수 있어요.
 """
 import json
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
@@ -142,33 +143,78 @@ def _writer():
     return _fresh(account)
 
 
-def login(nickname):
-    """닉네임으로 시민증을 만들어요. 같은 닉네임은 하루 동안 한 사람만 쓸 수 있어요."""
-    name, canonical = normalize_nickname(nickname)
-    account = st.session_state.get(ANON) or _sign_up()
-    account = _fresh(account)
+def _login_email(canonical):
+    """닉네임을 로그인용 가짜 이메일 주소로 바꿔요(실제 메일은 보내지 않아요).
+    한글 닉네임도 쓸 수 있게 글자를 base32로 바꿔 영어·숫자로만 만들어요."""
+    import base64
+
+    code = base64.b32encode(canonical.encode("utf-8")).decode("ascii").rstrip("=").lower()
+    return f"c{code}@citizen.jamkkan.app"
+
+
+def _auth(action, email, secret):
+    """Firebase 이메일·비밀번호 로그인. 비밀 숫자는 Firebase가 암호화해 보관하고, 이 앱은 저장하지 않아요."""
+    key, _ = config()
+    result = request(
+        f"https://identitytoolkit.googleapis.com/v1/accounts:{action}?" + urlencode({"key": key}),
+        "POST", {"email": email, "password": secret, "returnSecureToken": True},
+    )
+    return {"uid": result["localId"], "token": result["idToken"], "refresh": result["refreshToken"],
+            "expires": time.time() + int(result["expiresIn"])}
+
+
+def _check_secret(secret):
+    if not re.fullmatch(r"[0-9]{6}", secret or ""):
+        raise ConnectionProblem(400, "SECRET_INVALID")
+
+
+def _claim(account, name, canonical):
+    """시민증 문서(citizens/닉네임)에 이 계정을 주인으로 적어요.
+    kind=password는 '비밀 숫자로 지키는 닉네임'이라는 표시라서, 다른 사람이 가져갈 수 없어요(보안 규칙)."""
     path = _root() + "/citizens/" + quote(canonical, safe="")
     write = {
         "update": {"name": path, "fields": {"uid": {"stringValue": account["uid"]},
-                                             "nickname": {"stringValue": name}}},
+                                             "nickname": {"stringValue": name},
+                                             "kind": {"stringValue": "password"}}},
         "updateTransforms": [{"fieldPath": "created_at", "setToServerValue": "REQUEST_TIME"}],
     }
+    request(_url() + ":commit", "POST", {"writes": [write]}, account["token"])
+
+
+def register(nickname, secret):
+    """새 시민증: 닉네임 + 비밀 숫자 6자리. 한 번 만든 닉네임은 그 사람만 계속 쓸 수 있어요."""
+    name, canonical = normalize_nickname(nickname)
+    _check_secret(secret)
     try:
-        request(_url() + ":commit", "POST", {"writes": [dict(write, currentDocument={"exists": False})]},
-                account["token"])
+        account = _auth("signUp", _login_email(canonical), secret)
+    except ConnectionProblem as exc:
+        if exc.reason == "EMAIL_EXISTS":
+            raise ConnectionProblem(409, "NICKNAME_TAKEN") from None
+        raise
+    try:
+        _claim(account, name, canonical)
     except ConnectionProblem:
-        doc = _public_get("https://firestore.googleapis.com/v1/" + quote(path, safe="/"))
-        if not doc:
-            raise
-        owner = doc.get("fields", {}).get("uid", {}).get("stringValue")
-        if owner != account["uid"]:
-            # 하루가 지난 닉네임만 새 사람이 이어받을 수 있어요(보안 규칙에서도 확인).
-            try:
-                request(_url() + ":commit", "POST",
-                        {"writes": [dict(write, currentDocument={"updateTime": doc["updateTime"]})]},
-                        account["token"])
-            except ConnectionProblem:
-                raise ConnectionProblem(409, "NICKNAME_TAKEN") from None
+        # 예전 방식(하루짜리)으로 다른 사람이 오늘 쓰고 있는 닉네임이면 여기서 막혀요.
+        raise ConnectionProblem(409, "NICKNAME_TAKEN") from None
+    return _keep(account, name)
+
+
+def login(nickname, secret):
+    """다시 들어오기: 시민증을 만들 때 정한 닉네임과 비밀 숫자로 같은 시민증을 되찾아요."""
+    name, canonical = normalize_nickname(nickname)
+    _check_secret(secret)
+    try:
+        account = _auth("signInWithPassword", _login_email(canonical), secret)
+    except ConnectionProblem as exc:
+        if exc.reason in ("EMAIL_NOT_FOUND", "INVALID_PASSWORD", "INVALID_LOGIN_CREDENTIALS"):
+            raise ConnectionProblem(401, "LOGIN_FAILED") from None
+        raise
+    doc = _public_get("https://firestore.googleapis.com/v1/" + quote(_root() + "/citizens/" + quote(canonical, safe=""), safe="/"))
+    shown = (doc or {}).get("fields", {}).get("nickname", {}).get("stringValue", name)
+    return _keep(account, shown)
+
+
+def _keep(account, name):
     account["nickname"] = name
     st.session_state[CITIZEN] = account
     st.session_state[ANON] = account
@@ -214,11 +260,68 @@ def stamp(code, quiet=False):
         return False
     got[code] = datetime.now(KST).strftime("%H:%M")
     if not quiet:
-        icon, place, _ = STAMP_PLACES[code]
-        st.toast(f"{place} 도장을 받았어요! ({len(got)}/{len(STAMP_PLACES)})", icon=icon)
-        if len(got) == len(STAMP_PLACES):
-            st.toast(f"{len(STAMP_PLACES)}곳 도장을 모두 모아 명예 시민이 되었어요!", icon="🎖️")
+        # 바로 그리지 않고 '보여 줄 도장'으로 맡겨 둬요. 페이지가 다시 그려져도(st.rerun) 사라지지 않게
+        # app.py가 페이지를 다 그린 뒤 show_stamp_popup()으로 한 번만 보여 줘요.
+        st.session_state["stamp_popup"] = (code, len(got))
     return True
+
+
+@st.cache_data(show_spinner=False)
+def _ding():
+    """도장 효과음 '띵동'(짧은 두 음)을 WAV 소리 파일로 만들어요. 외부 파일 없이 숫자로 만든 소리예요."""
+    import io
+    import math
+    import struct
+    import wave
+
+    rate, notes = 22050, [(1046.5, 0.12), (1318.5, 0.22)]  # 도(C6) → 미(E6)
+    frames = bytearray()
+    for freq, length in notes:
+        n = int(rate * length)
+        for i in range(n):
+            fade = min(1.0, i / 300) * (1 - i / n)  # 딸깍 소리 없이 부드럽게 시작·끝
+            frames += struct.pack("<h", int(9000 * fade * math.sin(2 * math.pi * freq * i / rate)))
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(bytes(frames))
+    return buffer.getvalue()
+
+
+def show_stamp_popup():
+    """맡겨 둔 도장이 있으면 화면 오른쪽 위에 도장이 쾅 찍히는 알림과 '띵동' 소리를 한 번 보여 줘요."""
+    pending = st.session_state.pop("stamp_popup", None)
+    if not pending:
+        return
+    code, count = pending
+    icon, place, _ = STAMP_PLACES[code]
+    total = len(STAMP_PLACES)
+    done = count == total
+    title = "🎖️ 명예 시민 달성!" if done else f"{place} 도장 쾅!"
+    sub = f"{total}곳 도장을 모두 모았어요!" if done else f"도장 {count} / {total}"
+    st.markdown(
+        """<style>
+        @keyframes sp-in {0%{transform:translateY(-20px);opacity:0} 12%{transform:translateY(0);opacity:1}
+          85%{opacity:1} 100%{opacity:0;visibility:hidden}}
+        @keyframes sp-stamp {0%{transform:scale(2.6) rotate(-25deg);opacity:0} 55%{transform:scale(.9) rotate(-10deg);opacity:1}
+          100%{transform:scale(1) rotate(-12deg);opacity:1}}
+        .sp-pop {position:fixed;top:64px;right:20px;z-index:999999;display:flex;align-items:center;gap:12px;
+          background:#FFFBF0;border:2px solid #F1DFA6;border-radius:18px;padding:12px 18px 12px 12px;
+          box-shadow:0 10px 26px rgba(0,0,0,.15);animation:sp-in 3.6s ease-out forwards;pointer-events:none;}
+        .sp-ring {width:58px;height:58px;border-radius:50%;border:3px solid #B42318;display:flex;align-items:center;
+          justify-content:center;font-size:28px;background:#fff;box-shadow:inset 0 0 0 3px #FFFBF0,inset 0 0 0 5px #B42318;
+          animation:sp-stamp .55s .15s ease-out both;}
+        .sp-pop b {display:block;color:#20483F;font-size:1.05rem;} .sp-pop small {color:#B42318;font-weight:800;}
+        .st-key-stamp_sound {position:absolute !important;width:1px;height:1px;overflow:hidden;opacity:0;}
+        @media (prefers-reduced-motion: reduce) {.sp-pop,.sp-ring {animation:none !important;}}
+        </style>"""
+        f'<div class="sp-pop"><div class="sp-ring">{icon}</div><div><b>{title}</b><small>{sub}</small></div></div>',
+        unsafe_allow_html=True,
+    )
+    with st.container(key="stamp_sound"):
+        st.audio(_ding(), format="audio/wav", autoplay=True)
 
 
 def stamps():
@@ -346,3 +449,54 @@ def show_hall_note(status=None):
         st.warning("🏆 명예의 전당 저장에 실패했어요. 게임 기록은 그대로예요.")
     elif not account:
         st.page_link("pages/0_도토리시_시민증.py", label="시민증(닉네임)을 만들면 명예의 전당에 기록이 올라가요", icon="🪪")
+
+# ───────── 시민증 만들기·다시 들어오기 화면 ─────────
+
+def show_login_forms(prefix):
+    """시민증 페이지와 첫 화면(로그인 화면)에서 함께 쓰는 '새 시민증 만들기 / 다시 들어오기' 입력 상자."""
+    from firebase_support import explain
+
+    # 처음이면 '새 시민증 만들기', 전에 만든 적이 있으면 '다시 들어오기'
+    new_tab, back_tab = st.tabs(["🪪 새 시민증 만들기", "🔑 다시 들어오기"])
+    with new_tab:
+        with st.form(f"dotori_register_{prefix}"):
+            nickname = st.text_input("닉네임 (한글·영문·숫자·밑줄 2~12자)", max_chars=12, placeholder="예: 도토리탐정", key=f"new_nick_{prefix}")
+            secret = st.text_input("비밀 숫자 6자리 (다시 들어올 때 필요해요)", max_chars=6, type="password", placeholder="숫자 6개", key=f"new_secret_{prefix}")
+            again = st.text_input("비밀 숫자 한 번 더", max_chars=6, type="password", key=f"new_again_{prefix}")
+            ok = st.form_submit_button("🪪 시민증 만들기", type="primary", width="stretch")
+        if ok:
+            if secret != again:
+                st.error("두 비밀 숫자가 서로 달라요. 다시 입력해 주세요.")
+            else:
+                try:
+                    with st.spinner("시민증을 만들고 있어요…"):
+                        name = register(nickname, secret)
+                    st.success(f"환영해요, {name}님! 닉네임과 비밀 숫자를 기억해 두면 다음에도 같은 시민증으로 들어올 수 있어요.")
+                    st.rerun()
+                except ConnectionProblem as exc:
+                    if exc.reason == "NICKNAME_TAKEN":
+                        st.error("이미 다른 시민이 쓰고 있는 닉네임이에요. 내 닉네임이라면 ‘다시 들어오기’를 눌러 주세요.")
+                    elif exc.reason == "SECRET_INVALID":
+                        st.error("비밀 숫자는 숫자 6개로 입력해 주세요.")
+                    else:
+                        st.error(explain(exc))
+    with back_tab:
+        with st.form(f"dotori_login_{prefix}"):
+            nickname = st.text_input("닉네임", max_chars=12, key=f"back_nick_{prefix}")
+            secret = st.text_input("비밀 숫자 6자리", max_chars=6, type="password", key=f"back_secret_{prefix}")
+            ok = st.form_submit_button("🔑 내 시민증으로 들어가기", type="primary", width="stretch")
+        if ok:
+            try:
+                with st.spinner("시민증을 찾고 있어요…"):
+                    name = login(nickname, secret)
+                st.success(f"다시 만나서 반가워요, {name}님!")
+                st.rerun()
+            except ConnectionProblem as exc:
+                if exc.reason == "LOGIN_FAILED":
+                    st.error("닉네임이나 비밀 숫자가 맞지 않아요.")
+                elif exc.reason == "SECRET_INVALID":
+                    st.error("비밀 숫자는 숫자 6개로 입력해 주세요.")
+                elif exc.reason == "TOO_MANY_ATTEMPTS_TRY_LATER":
+                    st.error("여러 번 틀려서 잠시 막혔어요. 조금 뒤에 다시 시도해 주세요.")
+                else:
+                    st.error(explain(exc))
