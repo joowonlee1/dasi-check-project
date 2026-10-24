@@ -15,7 +15,7 @@ show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당
 
 
 def show_stamps():
-    """시민증 도장판: 도토리시 13곳에서 받은 도장(이번 방문 기준)."""
+    """시민증 도장판: 도토리시 곳곳에서 받은 도장(이번 방문 기준)."""
     got = dd.stamps()
     total = len(dd.STAMP_PLACES)
     st.subheader(f"🏅 시민증 도장판  {len(got)}/{total}")
@@ -49,19 +49,19 @@ def show_stamps():
         .stp-done{background:linear-gradient(135deg,#FFF4D6,#E8F4EC);border:3px solid #B42318;border-radius:20px;
           padding:14px;text-align:center;font-weight:900;color:#20483F;font-size:1.2rem;margin-bottom:10px;}
         </style>"""
-        + ('<div class="stp-done">🎖️ 13곳 도장 완성! 도토리시 명예 시민이에요.</div>' if len(got) == total else "")
+        + (f'<div class="stp-done">🎖️ {total}곳 도장 완성! 도토리시 명예 시민이에요.</div>' if len(got) == total else "")
         + '<div class="stpgrid">' + "".join(cells) + "</div>",
         unsafe_allow_html=True,
     )
     st.caption("도장은 시민증이 없어도 모을 수 있어요. 저장하지 않아서 창을 닫으면 처음부터 다시 모아요.")
     if len(got) == total:
-        # 13곳을 모두 모으면 깡지와 함께하는 명예 시민증 카드를 사진으로 저장할 수 있어요.
+        # 모든 곳을 모으면 깡지와 함께하는 명예 시민증 카드를 사진으로 저장할 수 있어요.
         me = dd.citizen()
         st.markdown("#### 🎖️ 명예 시민증")
         show_result_card(
             {
                 "color": "#B7791F", "place": "시민 등록소", "game": "명예 시민증", "emoji": "🎖️",
-                "title": "도토리시 명예 시민", "subtitle": "13곳 완주!",
+                "title": "도토리시 명예 시민", "subtitle": f"{total}곳 완주!",
                 "stats": [("모은 도장", f"{len(got)} / {total}"), ("완주한 시각", max(got.values()))],
                 "sections": [("🏅 다녀온 곳", [" · ".join(place for _, place, _ in dd.STAMP_PLACES.values())])],
                 "nickname": me["nickname"] if me else "", "mascot": "trophy",
