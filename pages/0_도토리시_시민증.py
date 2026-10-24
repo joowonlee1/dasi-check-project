@@ -15,7 +15,7 @@ show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당
 
 
 def show_stamps():
-    """시민증 도장판: 도토리시 곳곳에서 받은 도장(이번 방문 기준)."""
+    """시민증 도장판: 도토리시 곳곳에서 받은 도장(시민증이 있으면 저장돼요)."""
     got = dd.stamps()
     total = len(dd.STAMP_PLACES)
     st.subheader(f"🏅 시민증 도장판  {len(got)}/{total}")
@@ -25,7 +25,7 @@ def show_stamps():
         if code in got:
             cells.append(
                 f'<div class="stp on"><div class="ring">{icon}</div><b>{escape(place)}</b>'
-                f'<small>{got[code]} 받음</small></div>'
+                f'<small>{escape(dd.stamp_time(got[code]))} 받음</small></div>'
             )
         else:
             cells.append(
@@ -34,13 +34,15 @@ def show_stamps():
             )
     st.markdown(
         """<style>
-        .stpgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:8px 0 12px;}
-        .stp{background:#F7F7F4;border:2px dashed #C9CFCB;border-radius:18px;padding:12px 8px;text-align:center;
-          word-break:keep-all;line-height:1.35;color:#6B7280;}
-        .stp .ring{width:62px;height:62px;margin:0 auto 6px;border-radius:50%;border:3px dashed #C9CFCB;
-          display:flex;align-items:center;justify-content:center;font-size:30px;filter:grayscale(1);opacity:.45;}
-        .stp b{display:block;font-size:.95rem;color:#52616B;}
-        .stp small{display:block;font-size:.8rem;margin-top:3px;}
+        /* 14곳을 7칸 × 2줄로 꽉 채워 빈 곳이 남지 않게 해요(휴대폰은 4칸씩). */
+        .stpgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:8px 0 12px;}
+        .stp{background:#F7F7F4;border:2px dashed #C9CFCB;border-radius:16px;padding:10px 4px;text-align:center;
+          word-break:keep-all;line-height:1.3;color:#6B7280;min-width:0;}
+        .stp .ring{width:52px;height:52px;margin:0 auto 5px;border-radius:50%;border:3px dashed #C9CFCB;
+          display:flex;align-items:center;justify-content:center;font-size:25px;filter:grayscale(1);opacity:.45;}
+        .stp b{display:block;font-size:.86rem;color:#52616B;}
+        .stp small{display:block;font-size:.74rem;margin-top:3px;}
+        @media (max-width:760px){.stpgrid{grid-template-columns:repeat(4,minmax(0,1fr));}}
         .stp.on{background:#FFF8E6;border:2px solid #E2C98A;color:#6B4A1E;}
         .stp.on .ring{border:3px solid #B42318;color:#B42318;filter:none;opacity:1;transform:rotate(-8deg);
           box-shadow:inset 0 0 0 3px #FFF8E6,inset 0 0 0 5px #B42318;background:#FFF;}
@@ -53,7 +55,10 @@ def show_stamps():
         + '<div class="stpgrid">' + "".join(cells) + "</div>",
         unsafe_allow_html=True,
     )
-    st.caption("도장은 시민증이 없어도 모을 수 있어요. 저장하지 않아서 창을 닫으면 처음부터 다시 모아요.")
+    if dd.citizen():
+        st.caption("도장은 시민증에 저장돼요. 창을 닫았다가 닉네임과 비밀 숫자로 다시 들어오면 이어서 모을 수 있어요.")
+    else:
+        st.caption("도장은 시민증이 없어도 모을 수 있어요. 다만 저장되지 않아서 창을 닫으면 처음부터 다시 모아야 해요. 시민증을 만들면 지금까지 모은 도장도 함께 저장돼요.")
     if len(got) == total:
         # 모든 곳을 모으면 깡지와 함께하는 명예 시민증 카드를 사진으로 저장할 수 있어요.
         me = dd.citizen()
@@ -62,7 +67,7 @@ def show_stamps():
             {
                 "color": "#B7791F", "place": "시민 등록소", "game": "명예 시민증", "emoji": "🎖️",
                 "title": "도토리시 명예 시민", "subtitle": f"{total}곳 완주!",
-                "stats": [("모은 도장", f"{len(got)} / {total}"), ("완주한 시각", max(got.values()))],
+                "stats": [("모은 도장", f"{len(got)} / {total}"), ("완주한 날", max(str(v) for v in got.values()))],
                 "sections": [("🏅 다녀온 곳", [" · ".join(place for _, place, _ in dd.STAMP_PLACES.values())])],
                 "nickname": me["nickname"] if me else "", "mascot": "trophy",
             },
@@ -73,10 +78,10 @@ def show_stamps():
 account = dd.citizen()
 
 if account:
-    # 시민증 사진 자리에 깡지 증명사진을 넣어요. (사진 파일이 없으면 다람쥐 그림으로 대신해요.)
+    # 시민증 사진 자리에 깡지 증명사진을 넣어요. 사이드바와 같은 사진이에요. (사진 파일이 없으면 다람쥐 그림으로 대신해요.)
     try:
         photo_html = (
-            f'<img src="data:image/png;base64,{id_photo("ggangji_cream.png")}" alt="깡지 증명사진" '
+            f'<img src="data:image/png;base64,{id_photo(dd.my_photo())}" alt="깡지 증명사진" '
             'style="width:116px;height:102px;object-fit:cover;border:4px solid #fff;border-radius:6px;'
             'box-shadow:0 2px 8px rgba(0,0,0,.2);">'
         )
@@ -102,7 +107,7 @@ if account:
         icon, name = dd.GAMES[game]
         rows.append({"게임": f"{icon} {name}", "내 순위": f"{mine + 1}위 / {len(entries)}명" if mine is not None else "아직 기록 없음"})
     st.dataframe(rows, hide_index=True, width="stretch")
-    st.caption("기록은 최대 1분 동안 같은 결과를 보여 줘요.")
+    st.caption("방금 끝낸 게임의 순위는 여기에 보이기까지 최대 1분쯤 걸릴 수 있어요. (데이터베이스 사용량을 아끼려고 1분마다 새로 읽어요.)")
 
     st.subheader("📒 이번 방문에서 한 기록")
     mine = st.session_state.get(dd.MY, [])
@@ -122,13 +127,18 @@ else:
 
     st.markdown("#### 알아 두세요")
     st.markdown(
-        "- **실제 이름·학번·학교는 닉네임으로 쓰지 마세요.** 명예의 전당에 공개돼요.\n"
+        "- **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요.\n"
         "- 한 번 만든 닉네임은 **그 사람만 계속** 쓸 수 있어요. 창을 닫았다가 와도 **닉네임 + 비밀 숫자**로 다시 들어오면 돼요.\n"
         "- 비밀 숫자는 이 앱이 저장하지 않고 Firebase가 암호화해서 보관해요. **다른 곳에서 쓰는 비밀번호나 생일은 쓰지 마세요.**\n"
-        "- 비밀 숫자를 잊으면 되찾을 수 없어요. 그때는 새 닉네임으로 다시 만들어 주세요.\n"
+        "- 비밀 숫자를 잊으면 원래 숫자는 누구도 볼 수 없어요. 관리자에게 말하면 새 비밀 숫자로 바꿔 줄 수 있어요.\n"
         "- 다른 사람이 불쾌할 수 있는 닉네임은 쓰지 않아요."
     )
 
     show_stamps()
 
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
+
+# 맨 아래: 관리자만 쓰는 상자(관리자 코드가 Secrets에 있을 때만 보여요)
+from admin_tools import show_admin_box
+
+show_admin_box()
