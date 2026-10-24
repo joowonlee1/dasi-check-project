@@ -583,11 +583,7 @@ def show_home():
             unsafe_allow_html=True,
         )
 
-        st.page_link(
-            FEATURES[0][3],
-            label="처음이라면 · 할머니 폰 지키기 시작",
-            icon="📱",
-        )
+
 
     st.subheader("🌰 도토리시 지도")
     st.markdown(
@@ -735,6 +731,18 @@ with st.sidebar:
         </style>""",
         unsafe_allow_html=True,
     )
+    st.markdown("""<style>
+    .st-key-citizen_top [data-testid="stHorizontalBlock"] {align-items:stretch!important;gap:8px!important;}
+    .st-key-citizen_top [data-testid="stHorizontalBlock"] [data-testid="stColumn"] {min-width:0!important;flex:1 1 0!important;}
+    .st-key-side_citizen button,.st-key-side_logout button {height:56px!important;min-height:56px!important;margin:0!important;padding:6px!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+    .st-key-side_citizen button {background:#20483F!important;color:#FFFFFF!important;border:1.5px solid #20483F!important;border-radius:999px!important;}
+    .st-key-side_citizen button p {color:#FFFFFF!important;}
+    .st-key-side_citizen p,.st-key-side_logout p {margin:0!important;font-size:1rem!important;line-height:1.3!important;}
+    .home-hero .txt {font-size:1.12rem!important;}
+    .home-hero .txt h1 {font-size:clamp(2.1rem,4vw,3rem)!important;}
+    .home-hero .pic {flex-basis:190px!important;}
+    .home-hero .pic img {max-width:190px!important;}
+    </style>""",unsafe_allow_html=True)
     with st.container(key="citizen_top"):
         # 시민증 왼쪽 깡지 증명사진: 한 사람에게는 시민증 페이지와 같은 사진을 항상 보여 줘요.
         photo = dd.my_photo()
@@ -766,7 +774,8 @@ with st.sidebar:
         )
         if me:
             c1, c2 = st.columns([1, 1], gap="small")
-            c1.page_link(citizen_page, label="내 시민증", icon="🪪", width="stretch")
+            if c1.button("🪪 내 시민증", key="side_citizen", width="stretch"):
+                st.switch_page(citizen_page)
             if c2.button("로그아웃", key="side_logout", width="stretch"):
                 dd.logout()
                 st.rerun()
@@ -902,6 +911,8 @@ def show_welcome_gate():
         '<span>시민증을 만들면 게임 기록이 명예의 전당에 남고, 다음에도 이어서 할 수 있어요.</span></div>',
         unsafe_allow_html=True,
     )
+    from admin_tools import show_admin_box
+    show_admin_box()
     dd.show_login_forms("gate")
     st.info("👀 **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요. "
             "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
