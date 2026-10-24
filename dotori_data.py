@@ -22,11 +22,12 @@ ANON = "dotori_anon"           # 로그인하지 않은 사람의 익명 계정(
 SEEN = "dotori_seen"           # 이미 집계한 결과(새로고침·다시 그리기 때 두 번 세지 않게)
 MY = "dotori_my"               # 이번 방문에서 내가 한 기록
 KST = timezone(timedelta(hours=9))  # 서버 시계(UTC)가 아니라 한국 시간으로 기록해요
-STAMPS = "dotori_stamps"       # 이번 방문에서 모은 장소 도장(저장하지 않아요)
+STAMPS = "dotori_stamps"       # 모은 장소 도장(시민증이 있으면 시민증 문서에 저장해요)
 REFRESH = 60                   # 통계·명예의 전당을 다시 읽는 간격(초)
 
 GAMES = {
     "grandma": ("📱", "할머니 폰 지키기"),
+    "escape": ("🗝️", "피싱 방탈출"),
     "fakenews": ("🌐", "가짜뉴스 확산 막기"),
     "coping": ("🧭", "대처유형 테스트"),
     "mafia": ("🕵️", "단톡방 마피아"),
@@ -56,6 +57,9 @@ STAMP_PLACES = {
 
 # 명예의 전당: 정렬 기준(앞이 작을수록 높은 순위)과 기록 글자
 HALL_SORT = {
+    "escape": lambda r: (-r.get("escaped", 0), -r.get("unlocked", 0), r.get("hints", 0), r.get("mistakes", 0), r.get("seconds", 0)),
+    "grandma": lambda r: (-r.get("right", 0), -r.get("trust", 0)),
+    "notice": lambda r: (-r.get("score", 0), r.get("probes", 0)),
     "filter": lambda r: (-r.get("stars", 0), r.get("blocks", 0)),
     "nono": lambda r: (-r.get("stars", 0), r.get("hints", 0)),
     "memo": lambda r: (-r.get("stars", 0), r.get("hints", 0), r.get("wrong", 0)),
@@ -63,6 +67,10 @@ HALL_SORT = {
     "mafia": lambda r: (-r.get("score", 0),),
 }
 HALL_TEXT = {
+    "escape": lambda r: (("🔓 탈출 성공" if r.get("escaped") else f"⏳ 탈출 실패 · 잠금 {r.get('unlocked', 0)}/3")
+                         + f" · 힌트 {r.get('hints', 0)}번 · 재검토 {r.get('mistakes', 0)}번 · {r.get('seconds', 0) // 60}분 {r.get('seconds', 0) % 60}초"),
+    "grandma": lambda r: f"맞은 판단 {r.get('right', 0)}/7 · 마지막 신뢰 {r.get('trust', 0)}",
+    "notice": lambda r: f"맞힌 안내서 {r.get('score', 0)}/5 · 번호부 {r.get('probes', 0)}번 펼침",
     "filter": lambda r: f"⭐ {r.get('stars', 0)}/9 · 블록 {r.get('blocks', 0)}개",
     "nono": lambda r: f"⭐ {r.get('stars', 0)}/9 · 힌트 {r.get('hints', 0)}번",
     "memo": lambda r: f"⭐ {r.get('stars', 0)}/3 · 힌트 {r.get('hints', 0)}번 · 잘못 지목 {r.get('wrong', 0)}번",
@@ -196,7 +204,7 @@ def register(nickname, secret):
     except ConnectionProblem:
         # 예전 방식(하루짜리)으로 다른 사람이 오늘 쓰고 있는 닉네임이면 여기서 막혀요.
         raise ConnectionProblem(409, "NICKNAME_TAKEN") from None
-    return _keep(account, name)
+    return _keep(account, name, canonical)
 
 
 def login(nickname, secret):
@@ -211,19 +219,67 @@ def login(nickname, secret):
         raise
     doc = _public_get("https://firestore.googleapis.com/v1/" + quote(_root() + "/citizens/" + quote(canonical, safe=""), safe="/"))
     shown = (doc or {}).get("fields", {}).get("nickname", {}).get("stringValue", name)
-    return _keep(account, shown)
+    saved = (doc or {}).get("fields", {}).get("stamps", {}).get("mapValue", {}).get("fields", {})
+    return _keep(account, shown, canonical, {k: _value(v) for k, v in saved.items() if k in STAMP_PLACES})
 
 
-def _keep(account, name):
+def _keep(account, name, canonical, saved=None):
     account["nickname"] = name
+    account["canonical"] = canonical
     st.session_state[CITIZEN] = account
     st.session_state[ANON] = account
+    # 시민증에 저장해 둔 도장과, 로그인 전에 이번 창에서 모은 도장을 합쳐요.
+    got = st.session_state.setdefault(STAMPS, {})
+    for code, when in (saved or {}).items():
+        got.setdefault(code, when)
+    if len(got) > len(saved or {}):
+        _save_stamps()
     return name
 
 
 def logout():
     st.session_state.pop(CITIZEN, None)
     st.session_state.pop(ANON, None)
+    # 다음 사람이 같은 창을 쓸 때 앞사람의 도장이 보이지 않게 지워요(시민증에는 그대로 저장돼 있어요).
+    st.session_state.pop(STAMPS, None)
+    st.session_state.pop(MY, None)
+
+
+def _save_stamps():
+    """시민증 문서(citizens/닉네임)의 stamps 칸에만 도장을 저장해요. 실패해도 게임은 계속돼요."""
+    account = citizen()
+    if not account or not account.get("canonical"):
+        return False
+    try:
+        account = _fresh(account)
+        path = _root() + "/citizens/" + quote(account["canonical"], safe="")
+        fields = {k: {"stringValue": str(v)} for k, v in stamps().items()}
+        request(_url() + ":commit", "POST",
+                {"writes": [{"update": {"name": path, "fields": {"stamps": {"mapValue": {"fields": fields}}}},
+                             "updateMask": {"fieldPaths": ["stamps"]}}]},
+                account["token"])
+        return True
+    except ConnectionProblem:
+        return False
+
+
+def my_photo():
+    """한 사람에게는 항상 같은 깡지 증명사진을 보여 줘요(닉네임으로 4장 중 하나를 골라요).
+    시민증이 없으면 기본 사진, 도장을 다 모은 명예 시민은 활짝 웃는 사진이에요."""
+    import zlib
+    from mascot_ui import ID_PHOTOS
+
+    me = citizen()
+    if not me:
+        return ID_PHOTOS[0]
+    if len(stamps()) == len(STAMP_PLACES):
+        return "ggangji_cream.png"
+    return ID_PHOTOS[zlib.crc32(me["nickname"].lower().encode("utf-8")) % len(ID_PHOTOS)]
+
+
+def scroll_top():
+    """새 화면(게임 시작·다음 단계 등)으로 넘어갈 때 맨 위부터 보이게 표시해 둬요. app.py가 페이지를 다 그린 뒤 올려 줘요."""
+    st.session_state["scroll_top"] = st.session_state.get("scroll_top", 0) + 1
 
 
 # ───────── 결과 받기 ─────────
@@ -254,11 +310,13 @@ def note_mine(game, text):
 
 def stamp(code, quiet=False):
     """그 장소의 도장을 찍어요. 이미 있으면 그대로 두고, 처음 받을 때만 알림을 띄워요.
-    도장은 이번 방문(창)에만 있고 데이터베이스에는 저장하지 않아요."""
+    시민증이 있으면 시민증 문서에 저장해서 다음에 다시 들어와도 이어서 모을 수 있어요.
+    시민증이 없으면 이번 방문(창)에만 있어요."""
     got = st.session_state.setdefault(STAMPS, {})
     if code in got or code not in STAMP_PLACES:
         return False
-    got[code] = datetime.now(KST).strftime("%H:%M")
+    got[code] = datetime.now(KST).strftime("%m/%d %H:%M")
+    _save_stamps()
     if not quiet:
         # 바로 그리지 않고 '보여 줄 도장'으로 맡겨 둬요. 페이지가 다시 그려져도(st.rerun) 사라지지 않게
         # app.py가 페이지를 다 그린 뒤 show_stamp_popup()으로 한 번만 보여 줘요.
@@ -326,6 +384,15 @@ def show_stamp_popup():
 
 def stamps():
     return st.session_state.get(STAMPS, {})
+
+
+def stamp_time(text):
+    """도장 받은 시각: 오늘 받은 건 시:분만, 예전에 받은 건 월/일만 보여 줘요."""
+    text = str(text)
+    if " " not in text:
+        return text
+    day, clock = text.split(" ", 1)
+    return clock if day == datetime.now(KST).strftime("%m/%d") else day
 
 
 # ───────── 통계(+1) ─────────
