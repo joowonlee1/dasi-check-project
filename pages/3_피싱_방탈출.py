@@ -1138,6 +1138,7 @@ def show_game_guide():
                 "- **혼자 연습:** 로그인 없이 바로 시작하고, 탈출 후 결과 카드(사진)를 받을 수 있어요.\n"
                 "- **명예의 전당 참여:** 메뉴의 ‘도토리시 시민증’에서 닉네임을 만든 뒤, ‘시작 안내·입장’에서 ‘시민증으로 기록 남기며 시작’을 누르면 결과가 자동 저장돼요.\n"
                 "- **이미 연습 중이라면:** ‘시작 안내·입장’에서 새 게임을 시민증 모드로 시작하세요. 현재 진행은 초기화돼요.\n"
+                "- **기록 보는 곳:** 방탈출 안에는 순위표가 없어요. 메뉴의 ‘도토리시 통계청’ → ‘🏆 명예의 전당’ 탭에서 보세요.\n"
                 "- **순위 기준:** 탈출 성공 → 많이 푼 잠금 → 힌트가 적은 순 → 오답(재검토)이 적은 순 → 빠른 순이에요. 실패한 기록도 저장돼요."
             )
 
@@ -1330,8 +1331,13 @@ def show_play():
     if game["unlocked"] == 3:
         show_ending()
 
-        if st.button("🏆 명예의 전당 보기"):
-            go_to("🏆 명예의 전당")
+        # 방탈출 안의 명예의 전당 칸은 없애고, 모든 게임의 기록은 통계청에서 모아 봐요.
+        st.page_link(
+            "pages/13_도토리시_통계청.py",
+            label="통계청 명예의 전당에서 방탈출 기록 보기",
+            icon="🏆",
+        )
+        st.caption("통계청의 ‘🏆 명예의 전당’ 탭에서 🗝️ 피싱 방탈출을 고르면 순위가 보여요.")
 
     else:
         # '잠금 해제'는 다른 두 탭과 헷갈리지 않게 더 크고 다른 색으로 보여 줘요.
@@ -1427,7 +1433,7 @@ def show_section_menu_style(game_running):
         .st-key-room_section [data-testid="stRadio"] {{ width: 100%; }}
         .st-key-room_section [role="radiogroup"] {{
             display: grid !important;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px; width: 100% !important;
         }}
         .st-key-room_section [role="radiogroup"] > div {{ width: 100%; margin: 0; }}
@@ -1457,13 +1463,11 @@ def show_section_menu_style(game_running):
         }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::before {{ content: "STEP 1"; }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::before {{ content: "STEP 2"; }}
-        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::before {{ content: "STEP 3"; }}
         .st-key-room_section label[data-testid="stRadioOption"]::after {{
             font-size: .82rem; color: #52636B; margin-top: 4px; text-align: center;
         }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(1) label::after {{ content: "규칙 확인하고 입장하기"; }}
         .st-key-room_section [role="radiogroup"] > div:nth-child(2) label::after {{ content: "증거 모아 잠금 풀기"; }}
-        .st-key-room_section [role="radiogroup"] > div:nth-child(3) label::after {{ content: "모두의 기록 보기"; }}
         /* 지금 보고 있는 메뉴 */
         .st-key-room_section label[data-testid="stRadioOption"][data-selected="true"] {{
             background: #0F766E; border-color: #0F766E;
@@ -1497,13 +1501,14 @@ show_section_menu_style(
     and time.time() - _running.get("started", 0) < TIME_LIMIT_MINUTES * 60
 )
 
+ROOM_SECTIONS = ["🚪 시작 안내·입장", "🗝️ 게임 진행"]
+# 예전에 '명예의 전당' 칸을 골라 둔 방문자의 값이 남아 있어도 오류가 나지 않게 돌려놓아요.
+if st.session_state.get("room_section") not in ROOM_SECTIONS:
+    st.session_state["room_section"] = ROOM_SECTIONS[0]
+
 section = st.radio(
     "방탈출 메뉴",
-    [
-        "🚪 시작 안내·입장",
-        "🗝️ 게임 진행",
-        "🏆 명예의 전당",
-    ],
+    ROOM_SECTIONS,
     horizontal=True,
     key="room_section",
     label_visibility="collapsed",
@@ -1513,29 +1518,5 @@ section = st.radio(
 if section == "🚪 시작 안내·입장":
     show_entry()
 
-elif section == "🗝️ 게임 진행":
-    show_play()
-
 else:
-    # 예전 '탈출 랭킹'을 도토리시 명예의 전당(방탈출)으로 합쳤어요.
-    st.subheader("🏆 명예의 전당 · 피싱 방탈출")
-    entries = sorted(dd.hall("escape"), key=dd.HALL_SORT["escape"])
-    me = dd.citizen()
-    if entries:
-        medals = ["🥇", "🥈", "🥉"]
-        rows, rank, prev = [], 0, None
-        for i, r in enumerate(entries[:20]):
-            key = dd.HALL_SORT["escape"](r)
-            if key != prev:
-                rank, prev = i + 1, key
-            rows.append({"순위": medals[rank - 1] if rank <= 3 else f"{rank}위",
-                         "닉네임": r.get("nickname", "시민") + ("  ⭐ 나" if me and r["uid"] == me["uid"] else ""),
-                         "기록": dd.HALL_TEXT["escape"](r)})
-        st.dataframe(rows, hide_index=True, width="stretch")
-    else:
-        st.info("아직 명예의 전당에 오른 시민이 없어요. 시민증으로 시작해 첫 주인공이 되어 보세요!")
-    st.caption("순위: 탈출 성공 → 많이 푼 잠금 → 힌트 적은 순 → 재검토 적은 순 → 빠른 순 · 새 기록은 보이기까지 최대 1분쯤 걸릴 수 있어요.")
-    st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 다른 게임 명예의 전당과 예전 탈출 랭킹 보기", icon="📈")
-
-    if st.button("게임으로 돌아가기"):
-        go_to("🗝️ 게임 진행")
+    show_play()
