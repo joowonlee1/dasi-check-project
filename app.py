@@ -565,6 +565,9 @@ PLACES = {
 # 홈
 # ─────────────────────────────────────
 
+from responsive_ui import apply_layout, show_city_map
+apply_layout()
+
 def show_home():
     with st.container(key="emergency_link"):
         st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
@@ -580,35 +583,19 @@ def show_home():
             unsafe_allow_html=True,
         )
 
-        st.page_link(
-            FEATURES[0][3],
-            label="처음이라면 · 할머니 폰 지키기 시작",
-            icon="📱",
-        )
+        with st.container(key="home_start"):
+            st.page_link(
+                FEATURES[0][3],
+                label="처음이라면 · 할머니 폰 지키기 시작",
+                icon="📱",
+            )
 
     st.subheader("🌰 도토리시 지도")
     st.markdown(
         f'<div class="city-intro"><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}</div>',
         unsafe_allow_html=True,
     )
-    # 장소 버튼 목록 대신, 동네별로 장소가 어디 있는지 한눈에 보는 지도예요(누르는 곳이 아니에요).
-    # 들어가는 버튼은 아래 ‘어떤 활동을 해볼까요?’ 카드에 있어요.
-    got = dd.stamps()
-    towns = [
-        ("sangsu", "상수리동", "🌳", "#E3F1DA"), ("ttok", "떡갈나무동", "🍂", "#FCEBD9"),
-        ("gaeam", "개암골", "🌰", "#F6E7D2"), ("station", "도토리역 앞", "🚉", "#E4ECF7"),
-        ("daram", "다람쥐동", "🐿️", "#F7E9F0"), ("jung", "중앙동", "⛲", "#E2F1EE"),
-        ("sicheong", "시청로", "🏛️", "#FFF6D9"),
-    ]
-    blocks = []
-    for area, town_name, mark, color in towns:
-        pins = "".join(
-            f'<span class="pin{" on" if number in got else ""}">{icon} {html.escape(place)}</span>'
-            for number, (icon, town, place, _) in PLACES.items() if town == town_name
-        )
-        blocks.append(f'<div class="town" style="grid-area:{area};background:{color};"><h5>{mark} {town_name}</h5>'
-                      f'<div class="pins">{pins}</div></div>')
-    st.markdown('<div class="citymap">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
+    show_city_map(PLACES, dd.stamps())
     st.caption("🏅 표시는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.")
 
     st.subheader("어떤 활동을 해볼까요?")
@@ -702,7 +689,7 @@ with st.sidebar:
     me = dd.citizen()
     st.markdown(
         """<style>
-        [data-testid="stSidebarNav"] {margin-top: 126px;}
+        [data-testid="stSidebarNav"] {margin-top: 200px;}
         /* 묶음 제목은 눌러서 접고 펼 수 있어요. 누를 수 있다는 게 보이게 버튼처럼 꾸미고 화살표를 보여 줘요. */
         [data-testid="stNavSectionHeader"] {cursor: pointer; background: #DCEAE4; border: 1px solid #C3D7CF;
           border-radius: 10px; padding: 4px 10px !important; margin: 8px 0 4px !important;}
@@ -754,18 +741,22 @@ with st.sidebar:
             f'<div style="display:flex;align-items:center;gap:10px;">{pic_html}'
             f'<div style="line-height:1.3;min-width:0;word-break:keep-all;">'
             f'<div style="font-size:.74rem;font-weight:800;color:#B7791F;">{label}</div>'
-            f'<div style="font-size:1.05rem;font-weight:900;color:#20483F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{line1}</div>'
-            f'<div style="font-size:.76rem;font-weight:700;color:#52616B;white-space:nowrap;">{line2}</div></div></div>',
+            f'<div style="font-size:1.05rem;font-weight:900;color:#20483F;overflow-wrap:anywhere;">{line1}</div>'
+            f'<div style="font-size:.76rem;font-weight:700;color:#52616B;white-space:normal;">{line2}</div></div></div>',
             unsafe_allow_html=True,
         )
-        if me:
-            c1, c2 = st.columns([3, 2], gap="small")
-            c1.page_link(citizen_page, label="내 시민증", icon="🪪", width="stretch")
-            if c2.button("로그아웃", key="side_logout", width="stretch"):
-                dd.logout()
-                st.rerun()
-        else:
-            st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
+        with st.container(key="side_actions"):
+            c1, c2 = st.columns([1, 1], gap="small")
+            if me:
+                c1.page_link(citizen_page, label="내 시민증", icon="🪪", width="stretch")
+                if c2.button("로그아웃", key="side_logout", width="stretch"):
+                    dd.logout()
+                    st.rerun()
+            else:
+                c1.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
+                if c2.button("처음 화면", key="side_first", width="stretch"):
+                    st.session_state.pop("guest", None)
+                    st.rerun()
 
     # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
     big_text = st.toggle("🔠 큰 글씨로 보기", key="big_text", help="본문 글씨와 버튼을 크게 보여 줘요.")
@@ -897,7 +888,7 @@ def show_welcome_gate():
     st.info("👀 **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요. "
             "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
     with st.container(key="gate_guest"):
-        st.markdown("<div style='text-align:center;color:#52616B;font-weight:700;margin:6px 0 2px;'>또는</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center;color:#52616B;font-weight:700;margin:12px 0;'>또는</div>", unsafe_allow_html=True)
         if st.button("👀 로그인 없이 둘러보기 (기록은 남지 않아요)", width="stretch"):
             st.session_state["guest"] = True
             st.rerun()
@@ -1025,10 +1016,14 @@ if current:
 # 선택한 기존 페이지 실행
 # ─────────────────────────────────────
 
+from sound_effects import render_sound_controls, flush_effect
+render_sound_controls()
+
 navigation.run()
 
 # 페이지에서 받은 도장이 있으면, 페이지를 다 그린 뒤 도장 알림과 효과음을 한 번 보여 줘요.
 dd.show_stamp_popup()
+flush_effect()
 
 
 # ─────────────────────────────────────
