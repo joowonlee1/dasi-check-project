@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """피싱 필터 만들기: 조건 블록(그리고·또는)을 조립해 문자를 거르는 규칙을 만드는 코딩 퍼즐.
 
 - 규칙 한 줄 = 조건 1~2개를 '그리고(AND)'로 묶음, 규칙 줄끼리는 '또는(OR)'
@@ -13,9 +14,10 @@ import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from filter_component_ui import create_filter_component
 
-st.title("🤖 피싱 필터 만들기")
-show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
-show_mascot("shield", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
+with intro("11", suffix=""):
+    st.title("🤖 피싱 필터 만들기")
+    show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
+    show_mascot("shield", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
 
 # 조건: L 링크 있음, U 모르는 번호, S 저장된 번호(모르는 번호가 아님), M 돈 요구, R 재촉, P 인증번호·개인정보 요구, A 앱 설치 요구
 VERIFIED = [
@@ -249,6 +251,7 @@ function tagsHtml(msg, hitSet){
 }
 
 function render(){
+  setPlayActive(G.screen !== 'intro');
   const app = $('app');
   app.classList.toggle('still', !fresh); fresh = false;
   if (G.screen === 'intro') return renderIntro();
@@ -491,7 +494,7 @@ render();
 </script></body></html>
 '''
 
-page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(HTML, "11").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None, stats=dd.stats("filter"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
