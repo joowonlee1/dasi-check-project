@@ -11,6 +11,11 @@ from firebase_support import ConnectionProblem, explain
 
 
 st.title("🪪 도토리시 시민증")
+if st.session_state.get("admin_open"):
+    from admin_ui import card, tools_button
+    card()
+    tools_button("citizen")
+    st.stop()
 show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당**에 내 최고 기록이 올라가요.", "🪪")
 
 
