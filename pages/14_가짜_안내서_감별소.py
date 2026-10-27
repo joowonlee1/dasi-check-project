@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """안내서 3건의 주장과 별도 공식 확인 결과를 대조하는 교육용 가상 활동."""
 import streamlit as st
 import dotori_data as dd
@@ -34,9 +35,10 @@ VERDICTS = ["안내 내용 정상 확인","안내 내용 위조 확인","판단 
 def fresh():
     return {"i":0,"checks":{},"answers":{},"recorded":False,"done":False}
 S=st.session_state.setdefault(KEY,fresh())
-st.title("📬 가짜 안내서 감별소")
-show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
-st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
+with intro("14", suffix=""):
+    st.title("📬 가짜 안내서 감별소")
+    show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
+    st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
 
 if not S["done"]:
     i=S["i"]; case=CASES[i]
