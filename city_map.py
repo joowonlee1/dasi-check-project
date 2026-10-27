@@ -22,11 +22,12 @@ MAP_PINS = {
     "06": (45, 69, "도토리 광장"),
     "07": (38, 83, "시민안전센터"),
     "12": (56, 85, "공영주차장"),
-    "02": (68, 64, "대화 연습실"),
-    "05": (82, 62, "시립도서관"),
-    "08": (78, 74, "시민 등록소"),
-    "11": (68, 87, "우체국 필터실"),
-    "13": (82, 88, "통계청"),  # 시민 등록소와 겹치지 않게 아래·왼쪽으로 옮겼어요.
+    "02": (66, 63, "대화 연습실"),
+    "05": (81, 60, "시립도서관"),
+    "08": (80, 71, "시민 등록소"),
+    # 아래쪽 가장자리는 모래사장(해변)이라, 관공서는 섬 안쪽 초록 땅으로 올렸어요.
+    "11": (65, 77, "우체국 필터실"),
+    "13": (77, 81, "통계청"),
 }
 
 # 동네 이름표: 동네 이름 -> (가로 %, 세로 %, 아이콘)
@@ -98,7 +99,7 @@ def _free(x, y, pins, margin=12, pin_box=(62, 52)):
         return False
     if any(abs(x - tx * MAP_W / 100) < 56 and abs(y - ty * MAP_H / 100) < 20 for tx, ty, _ in MAP_TOWNS.values()):
         return False
-    return not (722 < x < 750 and 80 < y < 270)
+    return True  # (예전에는 철길 자리를 비워 뒀는데, 철길을 빼서 이제 나무를 심어도 돼요)
 
 
 def _house(x, y, w=30, h=24, wall="#FFF5DD", roof="#B97855"):
@@ -231,10 +232,8 @@ def _svg():
         f'<path d="{road_d}" stroke="#E2C98A" stroke-width="2" stroke-dasharray="8 9" fill="none"/>'
         + "".join(_bridge(x) for x in _BRIDGE_X) + pond + plaza +
         f'<rect x="388" y="486" width="120" height="52" rx="8" fill="#DDD9CE" stroke="#B5B0A0" stroke-width="3"/>{lot_lines}{cars}'
-        f'<path d="M735 92L735 262" stroke="#8A8F94" stroke-width="7" fill="none"/>{sleepers}'
-        '<path d="M732 92V262M738 92V262" stroke="#C9CDD1" stroke-width="1.5"/>'
-        f'{station}{train}'
-        '<path d="M720 178V164" stroke="#6B4423" stroke-width="2"/><circle cx="720" cy="162" r="3.5" fill="#E5484D"/><circle cx="720" cy="170" r="3.5" fill="#F2B134"/>'
+        # 철길·기차·신호등은 지도에서 뺐어요(역 건물만 남겨요).
+        f'{station}'
         f'{houses}{school}{apt}{garden}{tree_svg}{compass}{boat}</svg>'
     )
 
