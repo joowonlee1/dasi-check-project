@@ -557,6 +557,9 @@ def act(key, typed=None, quality=None, reply="", feedback=""):
             "checked": game["clue_open"],
             "stopped": stopped,
             "over": over,
+            "typed": bool(typed),          # 내가 직접 쓴 말인지
+            "quality": quality,            # AI 채점 점수(0~2, 진짜 연락은 None)
+            "feedback": feedback,          # AI 피드백 한 문장
             "reaction": reply if (reply and not stopped and not real) else grandma_reaction(key, game, stopped, real),
             "lesson": lesson,
             "belief": game["belief"],
@@ -826,8 +829,18 @@ def show_play(game):
         log = game["log"]
         prev = log[-1]["reaction"] if log else None
         belief = game["belief"]
-        mood = face_svg(grandma_mood(log[-1], game)[0] if log else
-                        ("anxious" if belief > 45 else "puzzled" if belief > STOP_LINE else "calm"), 130)
+        # 오른쪽 얼굴은 '지금 하는 말'(새 연락을 받은 할머니)에 맞춰요. 내 행동에 대한 반응은 큰 창에서 보여 줘요.
+        if event["real"]:
+            current = "calm"
+        elif belief > 70:
+            current = "terrified"
+        elif belief > 45:
+            current = "anxious"
+        elif belief > STOP_LINE:
+            current = "puzzled"
+        else:
+            current = "neutral"
+        mood = face_svg(current, 130)
         now = event["grandma_alert"] if (game["alert"] and not event["real"]) else event["grandma"]
         bubble = f'<div class="say prev">{esc(prev)}</div>' if prev else ""
         st.markdown(
@@ -973,6 +986,28 @@ def show_ending(game):
             lambda old, new: (new["right"], new["trust"]) > (old.get("right", 0), old.get("trust", 0)),
         )
     dd.show_hall_note(st.session_state.get("grandma_hall"))
+
+    # 내가 직접 쓴 말을 한곳에 모아, 점수·피드백과 '이렇게도 말할 수 있어요' 예시를 함께 보여 줘요.
+    typed_logs = [r for r in log if r.get("typed")]
+    if typed_logs:
+        st.subheader("✍️ 내가 직접 쓴 말 돌아보기")
+        scored = [r["quality"] for r in typed_logs if r.get("quality") is not None]
+        if scored:
+            st.caption(f"피싱 연락에서 직접 쓴 말 {len(scored)}개 · 평균 {sum(scored) / len(scored):.1f}점 / 2점")
+        for r in typed_logs:
+            event = EVENTS[r["step"]]
+            with st.container(border=True):
+                kind = "💡 수상한 점 짚기" if r["key"] == "reason" else "🤝 함께 확인하자고 하기"
+                st.markdown(f"**{event['time']} · {esc(event['sender'])}** — {kind}")
+                st.markdown(f"🙋 **내가 쓴 말:** “{esc(r['said'])}”")
+                if r.get("quality") is None:
+                    st.caption("진짜 연락이라 채점하지 않았어요. 진짜 연락은 지켜보기만 해도 충분해요.")
+                else:
+                    star = "⭐" * r["quality"] + "☆" * (2 - r["quality"])
+                    st.markdown(f"**점수 {star} ({r['quality']}/2)** · {esc(r.get('feedback') or '')}")
+                    example = event.get(r["key"])
+                    if example:
+                        st.markdown(f"💬 **이렇게도 말할 수 있어요:** “{esc(example)}”")
 
     st.subheader("📋 그날 오전의 기록")
     st.caption("게임 중에는 알려 주지 않았던, 각 연락이 진짜였는지 피싱이었는지와 확인 방법을 공개해요.")
