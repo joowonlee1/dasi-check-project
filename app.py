@@ -388,7 +388,7 @@ st.markdown(
     .pin {background:#FFFFFF;border:1.5px solid rgba(0,0,0,.08);border-radius:999px;padding:3px 10px;font-size:.84rem;
       font-weight:700;color:#24443B;white-space:nowrap;}
     .pin.on {border-color:#B42318;background:#FFF8E6;}
-    .pin.on::after {content:" 🏅";}
+    .pin.on::after {content:" ✓";color:#15803D;font-weight:900;}
     @media (max-width:640px) {
       .citymap {grid-template-columns:repeat(2,minmax(0,1fr));
         grid-template-areas:"sangsu ttok" "gaeam station" "daram jung" "sicheong sicheong";}
@@ -585,6 +585,18 @@ def show_home():
             f'</div><div class="pic">{mascot_img("stop", 210)}</div></div>',
             unsafe_allow_html=True,
         )
+        # 노트북·컴퓨터 이용자에게 화면을 넓게 보는 방법을 알려 줘요(휴대폰에서는 숨겨요).
+        st.markdown(
+            "<style>.zoom-tip{background:#EEF4FF;border:1.5px solid #CCDDF5;border-radius:14px;padding:8px 14px;"
+            "margin:4px 0 2px;font-weight:600;color:#1E3A5F;word-break:keep-all;line-height:1.7;}"
+            ".zoom-tip kbd{background:#fff;border:1px solid #9FB4D6;border-bottom-width:3px;border-radius:6px;"
+            "padding:0 6px;font-family:inherit;font-weight:800;color:#1E3A5F;}"
+            "@media (max-width:640px){.zoom-tip{display:none;}}</style>"
+            '<div class="zoom-tip">💻 <b>노트북·컴퓨터라면</b> <kbd>Ctrl</kbd>을 누른 채 마우스 휠을 <b>아래로</b> 내리면 '
+            "화면이 작아져서 <b>한눈에 더 넓게</b> 볼 수 있어요. "
+            "(맥은 <kbd>⌘</kbd> + <kbd>-</kbd> · 원래 크기로: <kbd>Ctrl</kbd> + <kbd>0</kbd>)</div>",
+            unsafe_allow_html=True,
+        )
 
 
 
@@ -613,7 +625,15 @@ def show_home():
     # 실제 지도처럼 섬 위에 장소 핀을 찍어 보여 줘요. 폭이 좁은 휴대폰에서는 핀 이름 대신 아래 동네별 목록을 함께 보여 줘요.
     st.markdown(city_map_css() + city_map_html(got, PLACES), unsafe_allow_html=True)
     st.markdown('<div class="citymap cmap-legend">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
-    st.caption("🏅 표시는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.")
+    # 지도 핀에 붙는 것과 똑같은 빨간 동그라미 ✓ 표시로 안내해요.
+    st.markdown(
+        '<div style="color:#52616B;font-size:.94rem;line-height:1.7;margin-top:4px;">'
+        '<span style="display:inline-flex;width:21px;height:21px;border-radius:50%;background:#D92D20;color:#fff;'
+        'font-weight:900;font-size:.78rem;align-items:center;justify-content:center;border:2px solid #fff;'
+        'box-shadow:0 1px 3px rgba(0,0,0,.35);vertical-align:middle;">✓</span> '
+        "표시(노란 테두리)는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>",
+        unsafe_allow_html=True,
+    )
 
     st.subheader("어떤 활동을 해볼까요?")
     st.caption(
@@ -1091,6 +1111,8 @@ navigation.run()
 
 # 페이지에서 받은 도장이 있으면, 페이지를 다 그린 뒤 도장 알림과 효과음을 한 번 보여 줘요.
 dd.show_stamp_popup()
+from sound_effects import flush_effect
+flush_effect()  # 페이지에서 예약한 효과음(queue_effect)을 들려줘요. (전에는 이 줄이 없어 예약한 소리가 나지 않았어요)
 if dd.citizen() and st.session_state.get(dd.PENDING_STAMPS):
     st.warning("아직 계정에 저장되지 않은 도장이 있어요. 새로고침하지 말고 다른 메뉴로 이동한 뒤, 사이드바의 ‘도장 저장 다시 시도’를 눌러 주세요.")
 
