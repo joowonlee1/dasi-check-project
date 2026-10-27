@@ -124,7 +124,8 @@ HERO_CSS = """<style>
 .jk-tile b {display:block;color:#1E2F2B;font-size:.95rem;}
 .jk-tile small {color:#3E5751;font-size:.82rem;line-height:1.4;display:block;}
 .jk-hero.sm {padding:12px 16px;border-radius:20px;margin:2px 0 8px;} .jk-hero.sm b {font-size:1.3rem;margin:2px 0;}
-@media (max-width:640px) {.jk-hero b {font-size:1.3rem;} .jk-tiles {grid-template-columns:repeat(2,1fr);}}
+.jk-tiles.even {grid-template-columns:repeat(var(--cols),minmax(0,1fr));}
+@media (max-width:640px) {.jk-hero b {font-size:1.3rem;} .jk-tiles, .jk-tiles.even {grid-template-columns:repeat(2,1fr);}}
 @media (prefers-reduced-motion: reduce) {.jk-hero, .jk-tile, .jk-tile div {animation:none !important;}}
 </style>"""
 # 연한 색 카드(눈이 편한 파스텔 톤)
@@ -150,10 +151,16 @@ def show_hero(tag, title, sub, tone="mint", small=False):
     )
 
 
+def _tile_cols(n):
+    """카드 n장을 넓은 화면에서 몇 칸씩 놓을지: 빈칸이나 한 장짜리 줄이 생기지 않게 골라요."""
+    return {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 3, 7: 4, 8: 4, 9: 3, 10: 5}.get(n, 4)
+
+
 def show_tiles(tiles):
     """(아이콘, 제목, 설명) 카드들을 색깔별로 통통 튀게 보여 줘요."""
     st.markdown(
-        HERO_CSS + '<div class="jk-tiles">' + "".join(
+        # 카드 수에 맞춰 줄마다 같은 개수로 나눠요(예: 6장 → 3장씩 2줄). 한 장만 아래로 떨어지지 않게 해요.
+        HERO_CSS + f'<div class="jk-tiles even" style="--cols:{_tile_cols(len(tiles))}">' + "".join(
             f'<div class="jk-tile" style="background:{TILE_COLORS[i % len(TILE_COLORS)]};animation-delay:{i * .08:.2f}s">'
             f'<div style="animation-delay:{i * .3:.1f}s">{icon}</div><b>{html.escape(title)}</b>'
             f"<small>{html.escape(text)}</small></div>"
