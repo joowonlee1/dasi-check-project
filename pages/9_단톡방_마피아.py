@@ -442,6 +442,9 @@ def show_setup():
 def show_play():
     s = state()
     case = CASES[s["case"]]
+    # 게임 중에도 언제든 그만두고 처음 화면(게임 설명)으로 돌아갈 수 있어요.
+    st.button("⏹️ 그만하고 처음 화면으로", on_click=restart, key=KEY + "_quit",
+              help="지금 수사를 멈추고 처음 화면으로 돌아가요. 지금까지의 점수는 지워져요.")
     st.progress(s["case"] / len(CASES), text=f"사건 {s['case'] + 1} / {len(CASES)}")
     st.markdown(
         f'<div class="mf-hero mf-hero-sm"><span>난이도 {case["stars"]}</span><b>{case["title"]}</b>'
