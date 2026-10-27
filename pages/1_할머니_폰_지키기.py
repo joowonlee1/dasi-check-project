@@ -459,7 +459,14 @@ def act(key):
             lesson = ""
     else:
         # 나를 믿는 정도가 높을수록 같은 말도 더 잘 통합니다.
-        effect = round(approach["base"] * game["trust"] / START_TRUST)
+        effect = approach["base"] * game["trust"] / START_TRUST
+        # 단서를 보고 말하면 근거가 있어서 1.5배 더 잘 통하고, 안 보고 말하면 덜 통해요.
+        persuade = key in ("together", "reason", "parent")
+        if persuade and game["clue_open"]:
+            effect *= 1.5
+        elif persuade:
+            effect *= 0.7
+        effect = round(effect)
         if key == "police":
             effect = 100
         game["belief"] = clamp(game["belief"] - effect)
@@ -468,6 +475,10 @@ def act(key):
             game["counter"] = True
         stopped = game["belief"] <= STOP_LINE
         lesson = approach.get("lesson", "")
+        if persuade and game["clue_open"]:
+            lesson = "🔎 단서를 보고 근거를 들어 말해서 더 잘 통했어요. " + lesson
+        elif persuade:
+            lesson = "🔎 단서를 보지 않고 말해서 근거가 약했어요. 할머니가 덜 믿었어요. " + lesson
 
     if key == "reason" and not real:
         said = event["reason"]
@@ -669,7 +680,7 @@ def show_intro():
     st.markdown("#### 🎯 미션: 할머니의 돈을 지켜라")
     show_tiles([
         ("🔀", "진짜와 피싱이 섞여 있어요", "무엇이 피싱인지 직접 판단해요."),
-        ("🔎", "단서 살펴보기", "판단에 도움이 되는 사실을 보여 줘요. 정답은 알려 주지 않아요."),
+        ("🔎", "단서 살펴보기", "판단에 도움이 되는 사실을 보여 줘요. 정답은 알려 주지 않아요. 단서를 보고 말하면 설득이 더 잘 통해요."),
         ("🗣️", "어떻게 말할지가 중요", "모든 연락에 같은 선택지가 나와요. 지켜볼지, 끼어들지, 어떻게 말할지 골라요."),
         ("💔", "다그치면 안 통해요", "다그치거나 몰래 막거나 진짜 연락까지 막으면 할머니가 나를 덜 믿어요."),
         ("🔁", "사기범은 다시 와요", "한 번 멈춰도 다시 연락해요. 마지막 송금까지 지켜 내야 해요."),
@@ -779,17 +790,21 @@ def show_play(game):
             unsafe_allow_html=True,
         )
         st.button("🔎 단서 살펴보기 (판단 전에 눌러 보세요)", on_click=open_clues, key="gp_clue", width="stretch")
+        st.caption("단서를 보고 말하면 설득이 1.5배 더 잘 통해요. ‘수상한 점을 하나 짚어 준다’는 단서를 봐야 고를 수 있어요.")
 
     st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
     options = list(FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS)
     # 선택지 순서를 연락마다 섞어서 '몇 번째만 누르면 되는' 요령이 생기지 않게 해요.
     random.Random(f"grandma-{step}").shuffle(options)
     for key in options:
+        # 수상한 점은 단서를 봐야 알 수 있으니, 단서를 보기 전에는 이 선택지를 잠가 둬요.
+        locked = key == "reason" and not game["clue_open"]
         st.button(
-            APPROACHES[key]["label"],
+            APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else ""),
             key=f"gp3_btn_{step}_{key}",
             on_click=act,
             args=(key,),
+            disabled=locked,
             use_container_width=True,
         )
 
