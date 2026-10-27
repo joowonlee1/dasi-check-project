@@ -434,8 +434,64 @@ def grandma_reaction(key, game, stopped, real):
     return "그래도… 진짜 수사관 같던데. 조금만 더 생각해 볼게."
 
 
-def act(key):
+TYPED_KEYS = ("reason", "together")  # 직접 말을 써서 하는 선택지(나머지는 버튼만)
+QUALITY_POWER = {2: 1.8, 1: 1.0, 0: 0.4}  # 쓴 말이 단서에 딱 맞을수록 더 잘 통해요
+
+
+def grade_words(event, key, text):
+    """내가 쓴 말이 이 연락의 단서와 맞는지 AI(Gemini)가 0~2점으로 채점해요.
+    AI에 연결할 수 없으면 단서 속 낱말이 얼마나 들어 있는지로 대신 채점해요.
+    돌려주는 값: (점수, 할머니 반응 한 문장, 짧은 피드백)"""
+    import json as _json
+    import re as _re
+
+    goal = "어디가 수상한지 짚어 주기" if key == "reason" else "공식 경로로 어떻게 함께 확인할지 말하기"
+    facts = "\n".join(event["clues"]) + "\n안전한 확인 방법: " + event["route"]
+    try:
+        from google import genai
+        from google.genai import types
+
+        api_key = str(st.secrets.get("GEMINI_API_KEY", "")).strip()
+        if not api_key:
+            raise RuntimeError("no_key")
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=20000))
+        prompt = (
+            "피싱 예방 교육 게임이에요. 손주가 사기 연락을 받은 할머니를 설득하려고 말을 했어요.\n"
+            f"[손주가 해야 할 일] {goal}\n[연락 내용] {' / '.join(event['lines'] + event.get('call_lines', []))}\n"
+            f"[단서와 사실] {facts}\n[손주가 한 말] {text}\n\n"
+            "손주의 말이 단서에 맞고 구체적이면 2, 맞지만 막연하면 1, 단서와 관계없거나 틀리면 0점이에요. "
+            "다그치거나 무시하는 말투면 1점을 넘지 않아요. "
+            'JSON 한 줄로만 답해요: {"score":0~2,"reply":"할머니가 손주 말에 하는 반응 한 문장(존댓말 아님, 할머니 말투)",'
+            '"feedback":"손주에게 주는 한 문장 피드백(해요체)"}'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite", contents=prompt,
+            config=types.GenerateContentConfig(max_output_tokens=300, response_mime_type="application/json"),
+        )
+        data = _json.loads(_re.search(r"\{.*\}", response.text or "", _re.S).group(0))
+        score = max(0, min(2, int(data.get("score", 0))))
+        return score, str(data.get("reply", ""))[:120], str(data.get("feedback", ""))[:160]
+    except Exception:
+        # 대신 채점: 단서·확인 방법에 나오는 2글자 이상 낱말이 내 말에 몇 개 들어 있는지
+        words = {w for w in _re.findall(r"[가-힣A-Za-z0-9]{2,}", facts + " " + event.get(key, "")) if len(w) >= 2}
+        hit = sum(1 for w in words if w in text)
+        score = 2 if hit >= 3 else 1 if hit >= 1 else 0
+        feedback = {2: "단서를 잘 짚어서 말했어요.", 1: "방향은 맞지만 조금 더 구체적으로 말하면 좋아요.",
+                    0: "단서와 관계있는 내용을 넣어 말해 보세요."}[score]
+        return score, "", feedback + " (AI 연결이 어려워 낱말로 채점했어요)"
+
+
+def start_typing(key):
+    st.session_state[KEY]["typing"] = key
+
+
+def stop_typing():
+    st.session_state[KEY].pop("typing", None)
+
+
+def act(key, typed=None, quality=None, reply="", feedback=""):
     game = st.session_state[KEY]
+    game.pop("typing", None)
     if game["result"]:
         return  # 결과 화면이 열리는 중에 남아 있던 버튼을 또 눌러도 기록이 늘지 않게 해요.
     step = game["step"]
@@ -461,8 +517,10 @@ def act(key):
         # 나를 믿는 정도가 높을수록 같은 말도 더 잘 통합니다.
         effect = approach["base"] * game["trust"] / START_TRUST
         # 단서를 보고 말하면 근거가 있어서 1.5배 더 잘 통하고, 안 보고 말하면 덜 통해요.
-        persuade = key in ("together", "reason", "parent")
-        if persuade and game["clue_open"]:
+        persuade = key in ("together", "reason", "parent") and quality is None
+        if quality is not None:
+            effect *= QUALITY_POWER[quality]  # 직접 쓴 말은 AI 채점 점수로 효과가 정해져요
+        elif persuade and game["clue_open"]:
             effect *= 1.5
         elif persuade:
             effect *= 0.7
@@ -479,8 +537,12 @@ def act(key):
             lesson = "🔎 단서를 보고 근거를 들어 말해서 더 잘 통했어요. " + lesson
         elif persuade:
             lesson = "🔎 단서를 보지 않고 말해서 근거가 약했어요. 할머니가 덜 믿었어요. " + lesson
+        if quality is not None:
+            lesson = f"✍️ 내 말 점수 {quality}/2 · {feedback} " + approach.get("lesson", "")
 
-    if key == "reason" and not real:
+    if typed:
+        said = typed
+    elif key == "reason" and not real:
         said = event["reason"]
     elif key == "together" and not real:
         said = event["together"]
@@ -495,7 +557,7 @@ def act(key):
             "checked": game["clue_open"],
             "stopped": stopped,
             "over": over,
-            "reaction": grandma_reaction(key, game, stopped, real),
+            "reaction": reply if (reply and not stopped and not real) else grandma_reaction(key, game, stopped, real),
             "lesson": lesson,
             "belief": game["belief"],
             "trust": game["trust"],
@@ -682,6 +744,7 @@ def show_intro():
         ("🔀", "진짜와 피싱이 섞여 있어요", "무엇이 피싱인지 직접 판단해요."),
         ("🔎", "단서 살펴보기", "판단에 도움이 되는 사실을 보여 줘요. 정답은 알려 주지 않아요. 단서를 보고 말하면 설득이 더 잘 통해요."),
         ("🗣️", "어떻게 말할지가 중요", "모든 연락에 같은 선택지가 나와요. 지켜볼지, 끼어들지, 어떻게 말할지 골라요."),
+        ("✍️", "내 말로 직접 설득하기", "‘수상한 점 짚기’와 ‘함께 확인하자고 하기’는 내 말로 직접 써요. AI가 단서와 맞는지 0~2점으로 채점하고, 잘 맞을수록 할머니가 더 잘 설득돼요."),
         ("💔", "다그치면 안 통해요", "다그치거나 몰래 막거나 진짜 연락까지 막으면 할머니가 나를 덜 믿어요."),
         ("🔁", "사기범은 다시 와요", "한 번 멈춰도 다시 연락해요. 마지막 송금까지 지켜 내야 해요."),
     ])
@@ -796,17 +859,55 @@ def show_play(game):
     options = list(FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS)
     # 선택지 순서를 연락마다 섞어서 '몇 번째만 누르면 되는' 요령이 생기지 않게 해요.
     random.Random(f"grandma-{step}").shuffle(options)
+    typing = game.get("typing")
+    if typing:
+        show_typing_box(game, event, typing)
+        return
     for key in options:
         # 수상한 점은 단서를 봐야 알 수 있으니, 단서를 보기 전에는 이 선택지를 잠가 둬요.
         locked = key == "reason" and not game["clue_open"]
+        typed = key in TYPED_KEYS
         st.button(
-            APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else ""),
+            APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else " · ✍️ 직접 말하기" if typed else ""),
             key=f"gp3_btn_{step}_{key}",
-            on_click=act,
+            on_click=start_typing if typed else act,
             args=(key,),
             disabled=locked,
             use_container_width=True,
         )
+
+
+def show_typing_box(game, event, key):
+    """수상한 점 짚기·함께 확인하기는 단서를 보고 내 말로 직접 써요. AI가 단서와 맞는지 채점해요."""
+    guide = ("단서를 보고 **어디가 수상한지** 할머니께 말해 보세요. 예: “검찰은 앱 설치를 시키지 않아요.”"
+             if key == "reason" else
+             "할머니를 안심시키고 **어디로, 어떻게 함께 확인할지** 말해 보세요. 예: “같이 은행 앱에서 직접 확인해 봐요.”")
+    with st.container(border=True):
+        st.markdown(f"**{APPROACHES[key]['label']}**")
+        st.markdown(guide)
+        st.caption("🔒 실제 이름·전화번호·계좌번호 같은 개인정보는 쓰지 마세요. 쓴 문장은 채점을 위해 AI(Gemini)로 보내져요.")
+        with st.form(f"gp_type_{game['step']}_{key}"):
+            text = st.text_area("할머니께 할 말", max_chars=120, height=90, placeholder="여기에 내 말로 써 보세요")
+            send, cancel = st.columns([2, 1])
+            ok = send.form_submit_button("👵 할머니께 말하기", type="primary", width="stretch")
+            back = cancel.form_submit_button("다른 방법 고르기", width="stretch")
+    if back:
+        stop_typing()
+        st.rerun()
+    if ok:
+        text = text.strip()
+        if len(text) < 5:
+            st.warning("조금 더 구체적으로 써 주세요.")
+        elif __import__("re").search(r"\d{6,}", text.replace("-", "").replace(" ", "")):
+            st.warning("🔒 긴 숫자는 개인정보일 수 있어서 보내지 않았어요. 숫자 없이 써 주세요.")
+        else:
+            if event["real"]:
+                quality, reply, feedback = None, "", ""  # 진짜 연락은 채점 없이 원래 규칙대로
+            else:
+                with st.spinner("할머니가 듣고 있어요…"):
+                    quality, reply, feedback = grade_words(event, key, text)
+            act(key, typed=text, quality=quality, reply=reply, feedback=feedback)
+            st.rerun()
 
 
 def show_ending(game):
