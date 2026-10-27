@@ -1060,6 +1060,8 @@ if state["report"] is not None:
     show_result_card(report_card(state["report"], scenario, messages), "jamkkan_chat_card.png")
 
     st.button("🔄 다른 방법으로 다시 도전", key="chat_retry_report", on_click=reset_chat, width="stretch")
+    # 아래 st.stop() 때문에 app.py 마무리(도장 알림·효과음)가 실행되지 않아서, 여기서 먼저 보여 줘요.
+    dd.show_stamp_popup()
     st.stop()
 
 turns = sum(
