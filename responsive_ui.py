@@ -61,7 +61,7 @@ def map_html(places, got):
             f'<div class="city-location{ " visited" if awarded else ""}" style="left:{x}px;top:{y}px" '
             f'aria-label="{escape(town+" "+place+(" 도장 획득" if awarded else ""),quote=True)}">'
             f'<span class="city-marker">{icon}</span><span class="city-name">{escape(place)}</span>'
-            f'{"<span aria-label=\"도장 획득\">🏅</span>" if awarded else ""}</div>')
+            + ('<span aria-label="도장 획득">🏅</span>' if awarded else "") + '</div>')
     background = """<svg viewBox="0 0 1120 735" width="1120" height="735" aria-hidden="true">
 <rect width="1120" height="735" rx="22" fill="#ecf1df"/>
 <path d="M0 208 Q260 135 530 230 T1120 205" fill="none" stroke="#8ac8d4" stroke-width="72"/>
