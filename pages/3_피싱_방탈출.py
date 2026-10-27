@@ -197,14 +197,22 @@ PLACES = {
 }
 
 # 상대가 보내는 압박 메시지와, 엔딩에서 해설할 수법
+# 실제 사칭 문자처럼 짧게 여러 번 끊어 보내며 점점 몰아붙여요. 시간이 지날수록 '나의 폰'에 계속 쌓여요.
+# (시각, 문자, 노린 심리) — 모두 교육용 가상 문자예요.
 PRESSURE = [
-    (16, "왜 답 안 해? 새 번호로 확인했어?", "재촉 · 생각할 시간 빼앗기"),
-    (21, "다른 가족한테 말하면 엄마 진짜 곤란해져. 엄마만 믿어.", "고립 · 확인 경로 끊기"),
-    (27, "앱 설치 아직이야? 10분 안에 안 하면 오늘 해결 못 해.", "긴급성 · 마감 시간 만들기"),
-    (33, "엄마 지금 큰일 났어. 너 때문에 더 늦어지고 있어.", "공포·죄책감 · 감정 흔들기"),
-    (40, "마지막이야. 지금 안 하면 나중에 엄마 원망하지 마.", "최후통첩 · 압박 극대화"),
+    (15, "민서야 문자 봤어?", "재촉 · 바로 답하게 만들기"),
+    (17, "왜 답이 없어. 엄마 지금 급하다니까", "재촉 · 생각할 시간 빼앗기"),
+    (19, "아까 보낸 링크 눌러서 앱만 깔면 돼. 금방 끝나", "쉬워 보이게 하기 · 경계 낮추기"),
+    (21, "아빠한테는 절대 말하지 마. 알면 일 더 커져", "고립 · 확인 경로 끊기"),
+    (24, "엄마 폰 고장 났다고 했잖아. 이 번호로만 연락해", "확인 경로 바꾸기 · 새 번호 믿게 하기"),
+    (27, "10분 안에 안 깔면 오늘 처리 못 한대. 진짜 급해", "긴급성 · 마감 시간 만들기"),
+    (30, "민서야 제발… 엄마 지금 너무 무서워", "공포 · 감정 흔들기"),
+    (33, "너 때문에 계속 늦어지잖아. 엄마 어떻게 돼도 괜찮아?", "죄책감 · 감정 흔들기"),
+    (36, "전화는 하지 마. 지금 통화 못 하는 상황이야", "확인 막기 · 목소리 확인 피하기"),
+    (40, "마지막으로 말할게. 지금 안 하면 엄마 진짜 큰일 나", "최후통첩 · 압박 극대화"),
+    (44, "…읽었으면서 왜 답을 안 해", "압박 · 계속 지켜보는 척하기"),
 ]
-SCAM_REPLY = (0, "그래, 그 번호 맞아. 이모가 확인해 줬지? 이제 앱만 깔면 돼.", "신뢰 확인 흉내 · 스스로 만든 확인 경로")
+SCAM_REPLY = (0, "어 그 번호 맞아. 이모랑 통화했지? 이제 앱만 깔면 돼", "신뢰 확인 흉내 · 스스로 만든 확인 경로")
 
 HINTS = {
     1: [
@@ -540,14 +548,22 @@ def pressure_messages():
 def show_status_bar():
     st.markdown("<style>.lock-banner{padding:18px 20px!important;} .lock-banner .text{font-size:1.2rem!important;line-height:1.7!important;} .lock-banner .from{font-size:1rem!important;}</style>",unsafe_allow_html=True)
     # 위: 게임 속 시각과 남은 시간을 같은 크기 카드로 나란히 / 아래: 잠금화면 알림을 가로 전체로 보여 줘요.
-    left, right = st.columns(2)
-    with left:
-        st.markdown(
-            f'<div class="timebox"><small>🕘 게임 속 시각</small><b style="color:#B91C1C;">{clock_text(game["clock"])}</b></div>',
-            unsafe_allow_html=True,
-        )
-    with right:
-        countdown()
+    # 스크롤을 내려도 단계 메뉴 대신 두 시계가 화면 위에 붙어 있어서, 남은 시간을 계속 볼 수 있어요.
+    st.markdown(
+        # 고정은 바깥 껍데기(stLayoutWrapper)에 걸어야 스크롤을 따라와요(안쪽 상자에 걸면 높이가 같아서 안 붙어요).
+        "<style>[data-testid=stLayoutWrapper]:has(> .st-key-room_timebar){position:sticky;top:3.2rem;z-index:20;}"
+        ".st-key-room_timebar{background:#FFFEF8;padding:6px 0 8px;border-bottom:1px solid #E5ECE9;}</style>",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="room_timebar"):
+        left, right = st.columns(2)
+        with left:
+            st.markdown(
+                f'<div class="timebox"><small>🕘 게임 속 시각</small><b style="color:#B91C1C;">{clock_text(game["clock"])}</b></div>',
+                unsafe_allow_html=True,
+            )
+        with right:
+            countdown()
     from game_phone import show_phone
     show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text)
 
@@ -1445,7 +1461,7 @@ def show_section_menu_style(game_running):
             margin: 6px 0 4px; letter-spacing: -0.01em;
         }}
         .st-key-room_section {{
-            position: sticky; top: 3.2rem; z-index: 20;
+            position: static;
             width: 100% !important; background: #FFFEF8; padding: 6px 0 12px;
             border-bottom: 1px solid #E5ECE9;
         }}
