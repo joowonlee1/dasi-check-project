@@ -40,8 +40,14 @@ with intro("14", suffix=""):
     show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
     st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
 
+def _quit_notice():
+    st.session_state[KEY]=fresh()
+
 if not S["done"]:
     i=S["i"]; case=CASES[i]
+    # 감별 중에도 언제든 그만두고 처음(1번 안내서)으로 돌아갈 수 있어요.
+    st.button("⏹️ 그만하고 처음 화면으로", on_click=_quit_notice, key="nv_quit",
+              help="지금 감별을 멈추고 처음으로 돌아가요. 지금까지의 판단은 지워져요.")
     st.progress(i/len(CASES))
     st.subheader(f"{i+1}/3 · 다람쥐아파트 {case['door']}")
     with st.container(border=True):
