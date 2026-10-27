@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """중고거래 사기단 추리: 압수한 사기단 메모를 해독해 단서를 얻고, 논리 표로 진짜 판매자를 찾는 퍼즐.
 
 - 메모 1: 전치 암호(칸 수를 맞춰 다시 배열)
@@ -13,9 +14,10 @@ import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from puzzle_component_ui import create_puzzle_component
 
-st.title("🔐 중고거래 사기단 추리")
-show_key_question("판매자 5명 중 **진짜는 단 1명**. 사기단 메모를 **해독**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
-show_mascot("detective", "메모를 하나 풀 때마다 결정적인 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
+with intro("10", suffix=""):
+    st.title("🔐 중고거래 사기단 추리")
+    show_key_question("판매자 5명 중 **진짜는 단 1명**. 사기단 메모를 **해독**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
+    show_mascot("detective", "메모를 하나 풀 때마다 결정적인 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
 
 DATA = {
     "sellers": ["한정판러", "급처분해요", "새상품만", "운동화왕", "동네이웃"],
@@ -217,7 +219,10 @@ let fresh = true;  // 탭을 처음 열 때만 튀어나오는 효과를 보여 
 
 function cluesOpen(){ return G.solved.filter(Boolean).length; }
 
+let hasInteracted=false;
+document.addEventListener('click',e=>{if(e.target.closest('button')){hasInteracted=true;setPlayActive(true);}},true);
 function render(){
+  setPlayActive(hasInteracted);
   const app = $('app');
   if (G.done) return;
   app.classList.toggle('still', !fresh); fresh = false;
@@ -534,7 +539,7 @@ def ask_ai(question, snap):
 
 
 answers = st.session_state.setdefault(AI_KEY, [])
-page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(HTML, "10").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"),
                                       ai={"answers": answers, "left": AI_MAX - len(answers)})
 
