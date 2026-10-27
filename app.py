@@ -627,18 +627,23 @@ def show_home():
     st.markdown('<div class="citymap cmap-legend">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
     # 지도 핀에 붙는 것과 똑같은 빨간 동그라미 ✓ 표시로 안내해요.
     st.markdown(
-        '<div style="color:#52616B;font-size:.94rem;line-height:1.7;margin-top:4px;">'
-        '<span style="display:inline-flex;width:21px;height:21px;border-radius:50%;background:#D92D20;color:#fff;'
-        'font-weight:900;font-size:.78rem;align-items:center;justify-content:center;border:2px solid #fff;'
+        # 아래 '어떤 활동을 해볼까요?'와 붙어 보이지 않게 아래쪽 여백을 넉넉히 줘요.
+        '<div style="color:#3E4A46;font-size:1.08rem;font-weight:700;line-height:1.7;margin-top:6px;">'
+        '<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:#D92D20;color:#fff;'
+        'font-weight:900;font-size:.95rem;align-items:center;justify-content:center;border:2px solid #fff;'
         'box-shadow:0 1px 3px rgba(0,0,0,.35);vertical-align:middle;">✓</span> '
         "표시(노란 테두리)는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>",
         unsafe_allow_html=True,
     )
 
-    st.subheader("어떤 활동을 해볼까요?")
-    st.caption(
-        "원하는 활동부터 시작해도 괜찮아요."
-    )
+    # 위의 지도 설명과 붙어 보이지 않게 제목 묶음 위에 여백을 줘요.
+    st.markdown("<style>.st-key-activity_head{padding-top:1.4rem;border-top:1px dashed #E4E9DD;margin-top:.4rem;}</style>",
+                unsafe_allow_html=True)
+    with st.container(key="activity_head"):
+        st.subheader("어떤 활동을 해볼까요?")
+        st.caption(
+            "원하는 활동부터 시작해도 괜찮아요."
+        )
 
     # 활동이 많아져 스크롤이 길어지지 않게, 묶음별 탭 + 두 칸짜리 작은 카드로 보여 줘요.
     groups = [
