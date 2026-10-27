@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """큐싱 노노그램: 숫자 단서로 칸을 칠해 사기단이 붙인 가짜 QR 스티커 그림을 복원하는 퍼즐.
 
 - 1단계 5×5(스마트폰), 2단계 8×8(자물쇠), 3단계 10×10(QR 코드 모양)
@@ -12,17 +13,18 @@ import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from nonogram_component_ui import create_nonogram_component
 
-st.title("🧩 큐싱 노노그램")
-show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림이 완성되면 **사기단의 수법**이 드러나요.", "🧩")
-show_mascot("detective", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
+with intro("12", suffix=""):
+    st.title("🧩 큐싱 노노그램")
+    show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림이 완성되면 **사기단의 수법**이 드러나요.", "🧩")
+    show_mascot("detective", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
 
-st.info("이번 활동은 ‘그림 복원’과 ‘안전성 판단’을 구별하는 연습이에요. 숫자로 그림을 정확히 복원해도 QR의 목적지가 안전하다는 뜻은 아니에요.")
-with st.expander("그림을 숫자로 표현하는 RLE 먼저 알아보기", expanded=True):
-    st.markdown("**RLE(런 길이 부호화)**는 같은 값이 연속되는 길이를 적는 방법이에요. "
-                "예: **■■■□□■■ → 검정부터 3, 2, 2**. 시작 색과 빈칸 길이까지 알면 원래 줄을 복원할 수 있어요.")
-    st.markdown("노노그램 단서 **3, 2**는 칠한 구간만 알려 줘요. 빈칸 길이가 빠져 있어서 "
-                "가로·세로 단서를 함께 비교해야 해요. 일반 RLE와 정보량이 같지는 않아요.")
-    st.caption("복원하는 것은 교육용 그림이며, 실제 QR 데이터를 해독하는 과정은 아니에요.")
+    st.info("이번 활동은 ‘그림 복원’과 ‘안전성 판단’을 구별하는 연습이에요. 숫자로 그림을 정확히 복원해도 QR의 목적지가 안전하다는 뜻은 아니에요.")
+    with st.expander("그림을 숫자로 표현하는 RLE 먼저 알아보기", expanded=True):
+        st.markdown("**RLE(런 길이 부호화)**는 같은 값이 연속되는 길이를 적는 방법이에요. "
+                    "예: **■■■□□■■ → 검정부터 3, 2, 2**. 시작 색과 빈칸 길이까지 알면 원래 줄을 복원할 수 있어요.")
+        st.markdown("노노그램 단서 **3, 2**는 칠한 구간만 알려 줘요. 빈칸 길이가 빠져 있어서 "
+                    "가로·세로 단서를 함께 비교해야 해요. 일반 RLE와 정보량이 같지는 않아요.")
+        st.caption("복원하는 것은 교육용 그림이며, 실제 QR 데이터를 해독하는 과정은 아니에요.")
 
 DATA = {
     "stages": [
@@ -153,6 +155,7 @@ const G = {screen: 'intro', stage: 0, mode: 1, grid: blank(), solved: [false, fa
 let fresh = true;
 
 function render(){
+  setPlayActive(G.screen !== 'intro');
   const app = $('app'); app.classList.toggle('still', !fresh); fresh = false;
   if (G.screen === 'intro') return renderIntro();
   if (G.screen === 'final') return renderFinal();
@@ -393,7 +396,7 @@ render();
 </script></body></html>
 '''
 
-page = HTML.replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(HTML, "12").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_nonogram_component(page)(key="jamkkan_qr_nonogram_v1", default=None, stats=dd.stats("nono"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
