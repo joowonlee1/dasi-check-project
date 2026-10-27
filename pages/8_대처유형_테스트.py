@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """12문항, 4개 축, 16가지 교육용 대처 유형. 답변은 저장하지 않고, 결과 유형만 이름 없이 숫자로 통계에 더합니다."""
 
 import base64
@@ -915,7 +916,8 @@ def main():
 
     st.markdown(CSS, unsafe_allow_html=True)
 
-    st.title("🧭 나의 피싱 대처유형")
+    with intro("08"):
+        st.title("🧭 나의 피싱 대처유형")
 
     if PREFIX + "result" in st.session_state:
 
