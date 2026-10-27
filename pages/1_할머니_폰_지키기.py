@@ -410,9 +410,9 @@ def grandma_reaction(key, game, stopped, real):
         if key == "watch":
             return "(할머니가 문자를 한 번 보고 휴대전화를 내려놓는다.)"
         if key == "together":
-            return "그래, 같이 보자. …이건 맨날 오는 거야. 너무 걱정 말렴."
+            return "그래, 같이 보자. …이건 늘 오던 연락이야. 너무 걱정 말렴."
         if key == "reason":
-            return "이게 뭐가 이상해? 할머니가 방금 한 건데."
+            return "이게 뭐가 이상해? 평소에 오던 연락인데."
         if key == "parent":
             return "엄마까지 부를 일이니? 이건 진짜야."
         return "이건 진짜야! 너 왜 이래, 할머니가 그것도 모를까 봐?"
@@ -436,6 +436,12 @@ def grandma_reaction(key, game, stopped, real):
 
 TYPED_KEYS = ("reason", "together")  # 직접 말을 써서 하는 선택지(나머지는 버튼만)
 QUALITY_POWER = {2: 1.8, 1: 1.0, 0: 0.4}  # 쓴 말이 단서에 딱 맞을수록 더 잘 통해요
+# AI 대답이 없거나 이상할 때 쓰는, 점수에 맞는 할머니 대답
+SCORE_REPLY = {
+    2: "듣고 보니 네 말이 맞는 것 같구나. 그렇게 해 보자.",
+    1: "그런가… 그래도 혹시 진짜면 어쩌나 싶어.",
+    0: "무슨 말인지 잘 모르겠다. 수사관이 급하다던데…",
+}
 
 
 def grade_words(event, key, text):
@@ -460,8 +466,13 @@ def grade_words(event, key, text):
             f"[손주가 해야 할 일] {goal}\n[연락 내용] {' / '.join(event['lines'] + event.get('call_lines', []))}\n"
             f"[단서와 사실] {facts}\n[손주가 한 말] {text}\n\n"
             "손주의 말이 단서에 맞고 구체적이면 2, 맞지만 막연하면 1, 단서와 관계없거나 틀리면 0점이에요. "
-            "다그치거나 무시하는 말투면 1점을 넘지 않아요. "
-            'JSON 한 줄로만 답해요: {"score":0~2,"reply":"할머니가 손주 말에 하는 반응 한 문장(존댓말 아님, 할머니 말투)",'
+            "다그치거나 무시하는 말투면 1점을 넘지 않아요.\n"
+            "[할머니 반응 규칙] 할머니는 사기 연락을 받고 겁먹은 상태이고, 아직 아무것도 직접 확인하지 않았어요. "
+            "손주가 한 말을 듣고 하는 대답 한 문장이에요. 점수가 2면 마음이 움직여 손주 말을 따라 보려 하고, "
+            "1이면 반신반의하며 망설이고, 0이면 여전히 사기범 말이 더 걱정돼요. "
+            "손주의 말을 되묻거나 반박하는 이상한 말, 확인했다는 말, 새로운 사실은 넣지 마요. "
+            "할머니가 손주에게 하는 자연스러운 반말로, 25자 안팎으로 짧게 써요.\n"
+            'JSON 한 줄로만 답해요: {"score":0~2,"reply":"할머니 대답 한 문장",'
             '"feedback":"손주에게 주는 한 문장 피드백(해요체)"}'
         )
         response = client.models.generate_content(
@@ -470,7 +481,8 @@ def grade_words(event, key, text):
         )
         data = _json.loads(_re.search(r"\{.*\}", response.text or "", _re.S).group(0))
         score = max(0, min(2, int(data.get("score", 0))))
-        return score, str(data.get("reply", ""))[:120], str(data.get("feedback", ""))[:160]
+        reply = str(data.get("reply", "")).strip().strip('"“”')[:60]
+        return score, reply or SCORE_REPLY[score], str(data.get("feedback", ""))[:160]
     except Exception:
         # 대신 채점: 단서·확인 방법에 나오는 2글자 이상 낱말이 내 말에 몇 개 들어 있는지
         words = {w for w in _re.findall(r"[가-힣A-Za-z0-9]{2,}", facts + " " + event.get(key, "")) if len(w) >= 2}
@@ -478,7 +490,51 @@ def grade_words(event, key, text):
         score = 2 if hit >= 3 else 1 if hit >= 1 else 0
         feedback = {2: "단서를 잘 짚어서 말했어요.", 1: "방향은 맞지만 조금 더 구체적으로 말하면 좋아요.",
                     0: "단서와 관계있는 내용을 넣어 말해 보세요."}[score]
-        return score, "", feedback + " (AI 연결이 어려워 낱말로 채점했어요)"
+        return score, SCORE_REPLY[score], feedback + " (AI 연결이 어려워 낱말로 채점했어요)"
+
+
+DOUBT_WORDS = ("사기", "피싱", "수상", "의심", "이상", "가짜", "확인", "속", "조심", "차단", "신고")
+
+
+def read_real_words(event, text):
+    """진짜 연락에 내가 쓴 말이 '의심하는 말'인지 '괜찮다고 하는 말'인지 보고, 할머니 대답을 만들어요.
+    돌려주는 값: (의심했는지, 할머니 대답 한 문장)"""
+    import json as _json
+    import re as _re
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        api_key = str(st.secrets.get("GEMINI_API_KEY", "")).strip()
+        if not api_key:
+            raise RuntimeError("no_key")
+        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=20000))
+        prompt = (
+            "피싱 예방 교육 게임이에요. 할머니가 받은 연락은 진짜(정상) 연락이에요.\n"
+            f"[연락 내용] {' / '.join(event['lines'])}\n[할머니가 한 말] {event['grandma']}\n[손주가 한 말] {text}\n\n"
+            "손주가 이 연락을 의심하거나 확인·차단하자고 하면 doubt=true, 정상이라고 하거나 맞장구치면 doubt=false예요. "
+            "reply는 손주 말에 대한 할머니의 자연스러운 대답 한 문장(손주에게 하는 반말, 25자 안팎)이에요. "
+            "손주 말을 그대로 받아서 대답하고, 걱정한 적 없는 일을 걱정했다고 하거나 새 사실을 지어내지 마요.\n"
+            'JSON 한 줄로만 답해요: {"doubt":true/false,"reply":"할머니 대답"}'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite", contents=prompt,
+            config=types.GenerateContentConfig(max_output_tokens=200, response_mime_type="application/json"),
+        )
+        data = _json.loads(_re.search(r"\{.*\}", response.text or "", _re.S).group(0))
+        doubt = bool(data.get("doubt"))
+        reply = str(data.get("reply", "")).strip().strip('"“”')[:60]
+        return doubt, reply or (REAL_REPLY["doubt"] if doubt else REAL_REPLY["fine"])
+    except Exception:
+        doubt = any(w in text for w in DOUBT_WORDS)
+        return doubt, REAL_REPLY["doubt"] if doubt else REAL_REPLY["fine"]
+
+
+REAL_REPLY = {
+    "fine": "그렇지? 할머니도 그렇게 생각했어.",
+    "doubt": "이건 늘 오던 연락이야. 너무 걱정 말렴.",
+}
 
 
 def start_typing(key):
@@ -489,7 +545,7 @@ def stop_typing():
     st.session_state[KEY].pop("typing", None)
 
 
-def act(key, typed=None, quality=None, reply="", feedback=""):
+def act(key, typed=None, quality=None, reply="", feedback="", real_fine=False):
     game = st.session_state[KEY]
     game.pop("typing", None)
     if game["result"]:
@@ -500,7 +556,11 @@ def act(key, typed=None, quality=None, reply="", feedback=""):
     real = event["real"]
 
     over = False
-    if real:
+    if real and real_fine:
+        # 진짜 연락에 '괜찮다'고 내 말로 말했어요: 의심한 게 아니니 할머니 마음이 상하지 않아요.
+        stopped = False
+        lesson = "진짜 연락을 알아보고 차분하게 말했어요. 진짜 연락은 이렇게 넘기면 충분해요."
+    elif real:
         game["trust"] = clamp(game["trust"] + approach["real_trust"])
         stopped = False
         if key == "together":
@@ -560,7 +620,8 @@ def act(key, typed=None, quality=None, reply="", feedback=""):
             "typed": bool(typed),          # 내가 직접 쓴 말인지
             "quality": quality,            # AI 채점 점수(0~2, 진짜 연락은 None)
             "feedback": feedback,          # AI 피드백 한 문장
-            "reaction": reply if (reply and not stopped and not real) else grandma_reaction(key, game, stopped, real),
+            "fine": real_fine,             # 진짜 연락에 괜찮다고 말했는지
+            "reaction": reply if (reply and not stopped) else grandma_reaction(key, game, stopped, real),
             "lesson": lesson,
             "belief": game["belief"],
             "trust": game["trust"],
@@ -589,7 +650,8 @@ def judged_right(record):
     """진짜 연락은 차분히 넘기고, 피싱에는 끼어들었는지 봅니다."""
     real = EVENTS[record["step"]]["real"]
     if real:
-        return record["key"] == "watch" or (record["key"] == "together" and not record.get("over"))
+        return (record["key"] == "watch" or record.get("fine")
+                or (record["key"] == "together" and not record.get("over")))
     return record["key"] != "watch"
 
 
@@ -599,6 +661,8 @@ def judgment_text(record):
     if event["real"]:
         if key == "watch":
             return "✅ 진짜 연락을 차분히 넘겼어요."
+        if record.get("fine"):
+            return "✅ 진짜 연락임을 알아보고 차분하게 말했어요."
         if key == "together" and record.get("over"):
             return "⚠️ 진짜 연락까지 또 ‘같이 확인하자’고 했어요. 할머니가 지치기 시작했어요."
         if key == "together":
@@ -774,6 +838,8 @@ def grandma_mood(last, game):
     if key == "snatch":
         return "huffy", "무시당한 것 같아 언짢아요", "#B42318"
     if real:
+        if last.get("fine"):
+            return "calm", "맞장구에 마음이 편해요", "#0F766E"
         if last.get("over"):
             return "tired", "자꾸 확인하자니 지쳤어요", "#8A5A00"
         if key in DOUBT_KEYS:
@@ -819,7 +885,11 @@ def show_play(game):
     step = game["step"]
     event = EVENTS[step]
 
-    st.caption(f"연락 {step + 1} / {len(EVENTS)}")
+    # 게임 중에도 언제든 그만두고 처음 화면(게임 설명)으로 돌아갈 수 있어요. 진행 기록은 지워져요.
+    top_left, top_right = st.columns([3, 1.3], vertical_alignment="center")
+    top_left.caption(f"연락 {step + 1} / {len(EVENTS)}")
+    top_right.button("⏹️ 그만하고 처음 화면으로", on_click=back_to_intro, key="gp_quit", width="stretch",
+                     help="지금 게임을 멈추고 게임 설명 화면으로 돌아가요. 지금까지의 진행은 지워져요.")
     show_last_feedback(game)
 
     phone_col, side_col = st.columns([1.1, 1])
@@ -915,7 +985,11 @@ def show_typing_box(game, event, key):
             st.warning("🔒 긴 숫자는 개인정보일 수 있어서 보내지 않았어요. 숫자 없이 써 주세요.")
         else:
             if event["real"]:
-                quality, reply, feedback = None, "", ""  # 진짜 연락은 채점 없이 원래 규칙대로
+                quality, feedback = None, ""  # 진짜 연락은 점수 대신, 의심했는지만 봐요
+                with st.spinner("할머니가 듣고 있어요…"):
+                    doubt, reply = read_real_words(event, text)
+                act(key, typed=text, reply=reply, real_fine=not doubt)
+                st.rerun()
             else:
                 with st.spinner("할머니가 듣고 있어요…"):
                     quality, reply, feedback = grade_words(event, key, text)
@@ -1000,8 +1074,10 @@ def show_ending(game):
                 kind = "💡 수상한 점 짚기" if r["key"] == "reason" else "🤝 함께 확인하자고 하기"
                 st.markdown(f"**{event['time']} · {esc(event['sender'])}** — {kind}")
                 st.markdown(f"🙋 **내가 쓴 말:** “{esc(r['said'])}”")
-                if r.get("quality") is None:
-                    st.caption("진짜 연락이라 채점하지 않았어요. 진짜 연락은 지켜보기만 해도 충분해요.")
+                if r.get("quality") is None and r.get("fine"):
+                    st.caption("✅ 진짜 연락임을 알아보고 차분하게 말했어요. 진짜 연락은 이렇게 넘기면 충분해요.")
+                elif r.get("quality") is None:
+                    st.caption("진짜 연락인데 의심하는 말을 했어요. 진짜 연락은 지켜보기만 해도 충분해요.")
                 else:
                     star = "⭐" * r["quality"] + "☆" * (2 - r["quality"])
                     st.markdown(f"**점수 {star} ({r['quality']}/2)** · {esc(r.get('feedback') or '')}")
