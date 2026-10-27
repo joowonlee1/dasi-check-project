@@ -578,8 +578,29 @@ def show_login_forms(prefix):
     from firebase_support import explain
 
     # 처음이면 '새 시민증 만들기', 전에 만든 적이 있으면 '다시 들어오기'
-    new_tab, back_tab = st.tabs(["🪪 새 시민증 만들기", "🔑 다시 들어오기"])
-    with new_tab:
+    mode_key = f"login_mode_{prefix}"
+    mode = st.session_state.get(mode_key, "new")
+    with st.container(key=f"login_choices_{prefix}"):
+        st.markdown("""<style>
+        [class*="st-key-login_choices_"] button{min-height:58px!important;border-radius:12px!important;}
+        [class*="st-key-login_choices_"] button p{white-space:normal!important;font-weight:800!important;}
+        @media(max-width:640px){[class*="st-key-login_choices_"] [data-testid="stHorizontalBlock"]{flex-direction:column!important;}
+        [class*="st-key-login_choices_"] [data-testid="stColumn"]{width:100%!important;flex:1 1 auto!important;}}
+        </style>""",unsafe_allow_html=True)
+        first, second, third = st.columns(3)
+        if first.button("🪪 새 시민증 만들기",key=f"choose_new_{prefix}",width="stretch",type="primary" if mode=="new" else "secondary"):
+            st.session_state[mode_key]="new"
+            st.rerun()
+        if second.button("🔑 다시 들어오기",key=f"choose_back_{prefix}",width="stretch",type="primary" if mode=="back" else "secondary"):
+            st.session_state[mode_key]="back"
+            st.rerun()
+        if third.button("👀 로그인 없이 둘러보기",key=f"choose_guest_{prefix}",width="stretch"):
+            st.session_state["guest"]=True
+            st.session_state["guest_go_home"]=True
+            st.rerun()
+        third.caption("기록은 저장되지 않아요")
+
+    if mode == "new":
         with st.form(f"dotori_register_{prefix}"):
             nickname = st.text_input("닉네임 (한글·영문·숫자·밑줄 2~12자)", max_chars=12, placeholder="예: 도토리탐정", key=f"new_nick_{prefix}")
             secret = st.text_input("비밀 숫자 6자리 (다시 들어올 때 필요해요)", max_chars=6, type="password", placeholder="숫자 6개", key=f"new_secret_{prefix}")
@@ -601,7 +622,7 @@ def show_login_forms(prefix):
                         st.error("비밀 숫자는 숫자 6개로 입력해 주세요.")
                     else:
                         st.error(explain(exc))
-    with back_tab:
+    if mode == "back":
         with st.form(f"dotori_login_{prefix}"):
             nickname = st.text_input("닉네임", max_chars=12, key=f"back_nick_{prefix}")
             secret = st.text_input("비밀 숫자 6자리", max_chars=6, type="password", key=f"back_secret_{prefix}")
