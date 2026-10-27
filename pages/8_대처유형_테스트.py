@@ -522,6 +522,10 @@ def show_question(i):
 
     done = sum(a is not None for a in answers)
 
+    # 테스트 중에도 언제든 그만두고 처음 화면으로 돌아갈 수 있어요.
+    st.button("⏹️ 그만하고 처음 화면으로", on_click=reset, key=PREFIX + "quit",
+              help="지금 테스트를 멈추고 처음 화면으로 돌아가요. 고른 답은 지워져요.")
+
     st.progress(done / 12, text=f"{done} / 12 완료")
 
     st.markdown(
