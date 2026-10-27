@@ -49,10 +49,11 @@ if(!state.root||!state.root.isConnected){
  const originalPath=W.location.pathname;
  // 방탈출 게임 화면(자리표 game_phone_anchor)이 사라지면 '나의 폰'도 바로 없애요.
  // 다른 페이지로 가거나, 방탈출 안에서 시작 안내로 돌아가면 다른 화면에 남지 않아요.
- const gone=()=>W.location.pathname!==originalPath||!D.querySelector('.st-key-game_phone_anchor');
- const observer=new W.MutationObserver(()=>{if(gone())state.remove();});
+ // 방탈출 페이지에 있는 동안은 계속 떠 있고, 다른 페이지로 가면 바로 없어져요.
+ // (게임이 끝나거나 시간이 다 되면 app.py의 clear_phone()이 없애요.)
+ const observer=new W.MutationObserver(()=>{if(W.location.pathname!==originalPath)state.remove();});
  observer.observe(D,{childList:true,subtree:true});
- const timer=W.setInterval(()=>{if(gone())state.remove();},800);
+ const timer=W.setInterval(()=>{if(W.location.pathname!==originalPath)state.remove();},800);
  state.remove=()=>{observer.disconnect();W.clearInterval(timer);state.open=false;root.remove();};  // 읽은 문자 기록(seen)은 남겨서, 다시 들어와도 같은 문자로 또 알리지 않아요.
 }
 const fresh=state.messages.filter(m=>!state.seen.has(m.id));
@@ -97,7 +98,10 @@ def show_phone(session, messages, sender, clock_text):
     with st.container(key="game_phone_anchor"):
         # 부모 문서에서 실행해 iframe이 교체돼도 버튼 콜백이 살아 있도록 합니다.
         script_json=json.dumps(source,ensure_ascii=False).replace("<","\\u003c")
-        components.html("<script>const d=parent.document;const s=d.createElement('script');s.textContent="+script_json+";d.head.appendChild(s);s.remove();</script>",height=0)
+        # 매번 내용이 조금씩 달라야 다시 실행돼요. 그래야 폰이 사라졌을 때 다음 화면에서 다시 나타나요.
+        st.session_state["_phone_draw_n"] = st.session_state.get("_phone_draw_n", 0) + 1
+        components.html("<script>const d=parent.document;const s=d.createElement('script');s.textContent="+script_json+";d.head.appendChild(s);s.remove();</script>"
+                        f"<!-- {st.session_state['_phone_draw_n']} -->", height=0)
 
 def copy_numbers(numbers):
     source=_COPY_JS.replace("__PHONES__",json.dumps(numbers,ensure_ascii=False).replace("<","\\u003c"))
