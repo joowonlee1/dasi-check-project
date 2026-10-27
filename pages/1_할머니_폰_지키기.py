@@ -762,7 +762,7 @@ def show_gauges(game):
     st.progress(game["belief"] / 100)
     st.markdown(f"**💛 할머니가 나를 믿는 정도 {game['trust']}**")
     st.progress(game["trust"] / 100)
-    st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**")
+    st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**" + (" · ⚠️ 지금이 송금 직전이에요!" if stage == TOTAL_STAGES else ""))
     st.progress(stage / TOTAL_STAGES)
     st.caption(
         f"사기범을 믿는 정도가 {STOP_LINE} 이하로 내려가면 할머니가 스스로 멈춰요. "
@@ -819,7 +819,7 @@ def show_intro():
     show_tiles([
         ("😟", "사기범을 믿는 정도", "피싱 연락이 올 때마다 올라가요. 설득하면 내려가요."),
         ("💛", "할머니가 나를 믿는 정도", "높을수록 같은 말도 더 잘 통해요."),
-        ("💸", "송금까지", "마지막 단계에서 송금을 막아야 해요."),
+        ("💸", "송금까지", "피싱 연락이 올 때마다 1단계씩 올라가요. 4단계는 송금 직전! 1~2단계에서 일찍 멈추게 할수록 좋은 결말이 나와요."),
     ])
     st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
