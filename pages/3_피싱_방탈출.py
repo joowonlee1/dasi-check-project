@@ -1552,6 +1552,13 @@ section = st.radio(
 # 선택한 화면만 실행해 랭킹 조회 중 게임 저장이 실행되지 않게 합니다.
 if section == "🚪 시작 안내·입장":
     show_entry()
+    # 게임이 진행 중이면 시작 안내 화면에서도 '나의 폰'은 계속 떠 있어요(연락은 계속 오니까요).
+    _running_game = st.session_state.get("escape_game")
+    if (_running_game and _running_game["unlocked"] < 3
+            and time.time() - _running_game["started"] < TIME_LIMIT_MINUTES * 60):
+        game = _running_game
+        from game_phone import show_phone
+        show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text)
 
 else:
     show_play()
