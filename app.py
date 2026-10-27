@@ -1,4 +1,5 @@
 from play_ui import intro, is_playing
+import time
 import html
 
 import streamlit as st
@@ -981,7 +982,10 @@ def show_welcome_gate():
             "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
 
 
-if not (current and current[0] == "03" and is_playing("03")):
+# 방탈출 게임이 진행 중(탈출 전·시간 안)이면 방탈출 페이지 어느 화면에서든 '나의 폰'을 남겨 두고, 아니면 없애요.
+_escape = st.session_state.get("escape_game")
+_escape_running = bool(_escape and _escape.get("unlocked", 0) < 3 and time.time() - _escape.get("started", 0) < 30 * 60)
+if not (current and current[0] == "03" and _escape_running):
     from game_phone import clear_phone
     clear_phone()
 
