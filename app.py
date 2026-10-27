@@ -1,3 +1,4 @@
+from play_ui import intro, is_playing
 import html
 
 import streamlit as st
@@ -822,6 +823,9 @@ with st.sidebar:
         )
 
     # 효과음 켜기/끄기·음량·미리듣기(사이드바). 끄면 도장 '띵동' 소리도 나지 않아요.
+    if st.session_state.get("admin_open"):
+        st.caption("🔑 관리자 · 시민증 없이 게임 이용 가능")
+        st.toggle("관리자 정답·관리 도구", key="admin_panel_view")
     render_sound_controls()
     dd.show_stamp_sync_status()
 
@@ -950,8 +954,17 @@ def show_welcome_gate():
             st.rerun()
 
 
-if not dd.citizen() and not st.session_state.get("guest") and not (current and current[0] == "07"):
+if not (current and current[0] == "03" and is_playing("03")) or (st.session_state.get("admin_open") and st.session_state.get("admin_panel_view")):
+    from game_phone import clear_phone
+    clear_phone()
+
+if not dd.citizen() and not st.session_state.get("guest") and not st.session_state.get("admin_open") and not (current and current[0] == "07"):
     show_welcome_gate()
+    st.stop()
+
+if st.session_state.get("admin_open") and st.session_state.get("admin_panel_view"):
+    from admin_tools import show_admin_box
+    show_admin_box()
     st.stop()
 
 # ─────────────────────────────────────
@@ -974,96 +987,97 @@ if len(history) >= 2:
    
 
 if current:
-    (
-        number,
-        title,
-        icon,
-        path,
-        steps,
-        description,
-    ) = current
-
-    place_icon, town, place, place_line = PLACES[number]
-    # 실제 피해 안내(07)는 급한 사람이 바로 읽도록 세계관 문구를 붙이지 않아요.
-    place_html = (
-        ""
-        if number == "07"
-        else f'<span class="place">{place_icon} 도토리시 {html.escape(town)} · {html.escape(place)}</span>'
-        f'<p class="place-line">{html.escape(place_line)}</p>'
-    )
-    st.markdown(
+    with intro(current[0], route=True):
         (
-            '<div class="route">'
-            f"{place_html}"
-            # 번호는 보여 주지 않고, 긴급 안내(07)만 표시를 붙입니다.
-            f"<strong>{'🚨 긴급 안내 · ' if number == '07' else ''}"
-            f"{html.escape(title)} 이용 순서</strong>"
-            f"<p>{html.escape(steps)}</p>"
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
+            number,
+            title,
+            icon,
+            path,
+            steps,
+            description,
+        ) = current
 
-    if number == "03":
-        st.info(
-            "📌 **시작 전 필독** · 안내서 6개 모두 확인(특히 04번 ‘꼭 알아야 할 7가지’) · 증거는 직접 수집 · "
-            "게임 중 새로고침 금지 · 시작하면 30분 타이머 작동"
+        place_icon, town, place, place_line = PLACES[number]
+        # 실제 피해 안내(07)는 급한 사람이 바로 읽도록 세계관 문구를 붙이지 않아요.
+        place_html = (
+            ""
+            if number == "07"
+            else f'<span class="place">{place_icon} 도토리시 {html.escape(town)} · {html.escape(place)}</span>'
+            f'<p class="place-line">{html.escape(place_line)}</p>'
         )
-
-        # 방탈출의 6개 안내 탭 중 네 번째를 강조합니다.
         st.markdown(
-            """
-            <style>
-            [data-testid="stTabs"] [role="tablist"]
-            :is([role="tab"]) {
-                scroll-margin-inline: 12px;
-            }
-
-            [data-testid="stTabs"] [role="tablist"]
-            :is([role="tab"]):focus-visible {
-                outline-offset: -3px;
-            }
-
-            [data-testid="stTabs"] [role="tablist"]
-            :is([role="tab"]):nth-of-type(4) {
-                scroll-margin-inline: 12px;
-            }
-
-            [data-testid="stTabs"] [role="tablist"]:has(
-                > [role="tab"]:nth-of-type(6)
-            ) > [role="tab"]:nth-of-type(4) {
-                background: #FFF0C7;
-                border: 2px solid #986500;
-            }
-
-            [data-testid="stTabs"] [role="tablist"]:has(
-                > [role="tab"]:nth-of-type(6)
-            ) > [role="tab"]:nth-of-type(4)::after {
-                content: "필독";
-                font-size: 0.8rem;
-                font-weight: 800;
-                background: #785000;
-                color: white;
-                padding: 2px 6px;
-                border-radius: 5px;
-            }
-            </style>
-            """,
+            (
+                '<div class="route">'
+                f"{place_html}"
+                # 번호는 보여 주지 않고, 긴급 안내(07)만 표시를 붙입니다.
+                f"<strong>{'🚨 긴급 안내 · ' if number == '07' else ''}"
+                f"{html.escape(title)} 이용 순서</strong>"
+                f"<p>{html.escape(steps)}</p>"
+                "</div>"
+            ),
             unsafe_allow_html=True,
         )
 
-    elif number == "04":
-        st.info(
-            "**확인 범위** · 주소의 특징을 설명하는 도구입니다. "
-            "‘특징 없음’이 ‘안전함’을 뜻하지는 않습니다."
-        )
+        if number == "03":
+            st.info(
+                "📌 **시작 전 필독** · 안내서 6개 모두 확인(특히 04번 ‘꼭 알아야 할 7가지’) · 증거는 직접 수집 · "
+                "게임 중 새로고침 금지 · 시작하면 30분 타이머 작동"
+            )
 
-    elif number == "05":
-        st.info(
-            "**자료 읽기** · 통계의 기준 연도와 출처를 "
-            "함께 확인하세요. 현재 자료는 "
-            "실시간 자동 갱신 통계가 아닙니다."
-        )
+            # 방탈출의 6개 안내 탭 중 네 번째를 강조합니다.
+            st.markdown(
+                """
+                <style>
+                [data-testid="stTabs"] [role="tablist"]
+                :is([role="tab"]) {
+                    scroll-margin-inline: 12px;
+                }
+
+                [data-testid="stTabs"] [role="tablist"]
+                :is([role="tab"]):focus-visible {
+                    outline-offset: -3px;
+                }
+
+                [data-testid="stTabs"] [role="tablist"]
+                :is([role="tab"]):nth-of-type(4) {
+                    scroll-margin-inline: 12px;
+                }
+
+                [data-testid="stTabs"] [role="tablist"]:has(
+                    > [role="tab"]:nth-of-type(6)
+                ) > [role="tab"]:nth-of-type(4) {
+                    background: #FFF0C7;
+                    border: 2px solid #986500;
+                }
+
+                [data-testid="stTabs"] [role="tablist"]:has(
+                    > [role="tab"]:nth-of-type(6)
+                ) > [role="tab"]:nth-of-type(4)::after {
+                    content: "필독";
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                    background: #785000;
+                    color: white;
+                    padding: 2px 6px;
+                    border-radius: 5px;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        elif number == "04":
+            st.info(
+                "**확인 범위** · 주소의 특징을 설명하는 도구입니다. "
+                "‘특징 없음’이 ‘안전함’을 뜻하지는 않습니다."
+            )
+
+        elif number == "05":
+            st.info(
+                "**자료 읽기** · 통계의 기준 연도와 출처를 "
+                "함께 확인하세요. 현재 자료는 "
+                "실시간 자동 갱신 통계가 아닙니다."
+            )
 
 
 # ─────────────────────────────────────
