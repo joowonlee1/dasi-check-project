@@ -23,6 +23,7 @@ SEEN = "dotori_seen"           # 이미 집계한 결과(새로고침·다시 �
 MY = "dotori_my"               # 이번 방문에서 내가 한 기록
 KST = timezone(timedelta(hours=9))  # 서버 시계(UTC)가 아니라 한국 시간으로 기록해요
 STAMPS = "dotori_stamps"       # 모은 장소 도장(시민증이 있으면 시민증 문서에 저장해요)
+PENDING_STAMPS = "dotori_pending_stamps"
 REFRESH = 60                   # 통계·명예의 전당을 다시 읽는 간격(초)
 
 GAMES = {
@@ -52,7 +53,7 @@ STAMP_PLACES = {
     "11": ("📮", "우체국 필터실", "필터 한 번 실행하기"),
     "12": ("🅿️", "공영주차장", "노노그램 그림 하나 복원하기"),
     "13": ("🏛️", "통계청", "통계청 둘러보기"),
-    "14": ("🏢", "아파트 관리사무소", "안내서 하나 판정하기"),
+    "14": ("🏢", "아파트 관리사무소", "안내서 3건 판단 완료하기"),
 }
 
 # 명예의 전당: 정렬 기준(앞이 작을수록 높은 순위)과 기록 글자
@@ -217,50 +218,91 @@ def login(nickname, secret):
         if exc.reason in ("EMAIL_NOT_FOUND", "INVALID_PASSWORD", "INVALID_LOGIN_CREDENTIALS"):
             raise ConnectionProblem(401, "LOGIN_FAILED") from None
         raise
-    doc = _public_get("https://firestore.googleapis.com/v1/" + quote(_root() + "/citizens/" + quote(canonical, safe=""), safe="/"))
+    doc = request("https://firestore.googleapis.com/v1/" + quote(_root() + "/citizens/" + quote(canonical, safe=""), safe="/"), token=account["token"])
     shown = (doc or {}).get("fields", {}).get("nickname", {}).get("stringValue", name)
     saved = (doc or {}).get("fields", {}).get("stamps", {}).get("mapValue", {}).get("fields", {})
     return _keep(account, shown, canonical, {k: _value(v) for k, v in saved.items() if k in STAMP_PLACES})
 
 
 def _keep(account, name, canonical, saved=None):
+    previous = citizen()
+    if previous and previous.get("uid") != account["uid"]:
+        if not logout():
+            raise ConnectionProblem(409, "UNSAVED_STAMPS")
     account["nickname"] = name
     account["canonical"] = canonical
     st.session_state[CITIZEN] = account
     st.session_state[ANON] = account
-    # 시민증에 저장해 둔 도장과, 로그인 전에 이번 창에서 모은 도장을 합쳐요.
+    saved = saved or {}
     got = st.session_state.setdefault(STAMPS, {})
-    for code, when in (saved or {}).items():
-        got.setdefault(code, when)
-    if len(got) > len(saved or {}):
+    pending = {k: v for k, v in got.items() if k in STAMP_PLACES and k not in saved}
+    # 서버에 있던 도장은 서버 시각을 유지하고, 이번 창의 새 도장만 추가해요.
+    got.update(saved)
+    st.session_state[PENDING_STAMPS] = pending
+    if pending:
         _save_stamps()
     return name
 
 
-def logout():
-    st.session_state.pop(CITIZEN, None)
-    st.session_state.pop(ANON, None)
-    # 다음 사람이 같은 창을 쓸 때 앞사람의 도장이 보이지 않게 지워요(시민증에는 그대로 저장돼 있어요).
-    st.session_state.pop(STAMPS, None)
-    st.session_state.pop(MY, None)
+def logout(discard=False):
+    # 저장하지 못한 도장이 있으면 먼저 재시도하고, 실패 시 선택권을 보여 줘요.
+    if citizen() and st.session_state.get(PENDING_STAMPS) and not discard:
+        if not _save_stamps():
+            st.session_state["stamp_logout_blocked"] = True
+            return False
+    preferences = {"sound_on", "sound_volume", "big_text"}
+    # 이미 그린 설정 위젯은 다시 대입하지 않고 그대로 두어요.
+    # 게임 결과, 컴포넌트 이벤트, 관리자 권한은 다음 이용자에게 넘기지 않아요.
+    for key in list(st.session_state):
+        if key not in preferences:
+            del st.session_state[key]
+    return True
 
 
 def _save_stamps():
-    """시민증 문서(citizens/닉네임)의 stamps 칸에만 도장을 저장해요. 실패해도 게임은 계속돼요."""
+    """이번 창에서 새로 받은 도장만 저장해 다른 기기의 도장을 보존해요."""
     account = citizen()
     if not account or not account.get("canonical"):
         return False
+    pending = dict(st.session_state.get(PENDING_STAMPS, {}))
+    pending = {k: v for k, v in pending.items() if k in STAMP_PLACES}
+    if not pending:
+        return True
     try:
         account = _fresh(account)
         path = _root() + "/citizens/" + quote(account["canonical"], safe="")
-        fields = {k: {"stringValue": str(v)} for k, v in stamps().items()}
+        fields = {k: {"stringValue": str(v)} for k, v in pending.items()}
         request(_url() + ":commit", "POST",
                 {"writes": [{"update": {"name": path, "fields": {"stamps": {"mapValue": {"fields": fields}}}},
-                             "updateMask": {"fieldPaths": ["stamps"]}}]},
+                             "updateMask": {"fieldPaths": [f"stamps.`{k}`" for k in pending]},
+                             "currentDocument": {"exists": True}}]},
                 account["token"])
-        return True
     except ConnectionProblem:
         return False
+    waiting = st.session_state.setdefault(PENDING_STAMPS, {})
+    for code, when in pending.items():
+        if waiting.get(code) == when:
+            waiting.pop(code, None)
+    st.session_state.pop("stamp_logout_blocked", None)
+    return True
+
+
+def show_stamp_sync_status():
+    """페이지가 중간에 종료돼도 보이도록 사이드바에서 호출해요."""
+    if not citizen() or not st.session_state.get(PENDING_STAMPS):
+        return
+    count = len(st.session_state[PENDING_STAMPS])
+    st.warning(f"도장 {count}개가 아직 계정에 저장되지 않았어요. 저장 전에는 새로고침하거나 창을 닫지 마세요.")
+    if st.button("도장 저장 다시 시도", key="stamp_retry", width="stretch"):
+        if _save_stamps():
+            st.rerun()
+        else:
+            st.error("아직 저장하지 못했어요. 인터넷 연결과 저장 권한을 확인해 주세요.")
+    if st.session_state.get("stamp_logout_blocked"):
+        st.info("저장에 실패해 로그아웃을 잠시 멈췄어요. 다시 저장하거나, 미저장 도장을 버리고 나갈 수 있어요.")
+        if st.button("미저장 도장을 버리고 로그아웃", key="stamp_discard_logout", width="stretch"):
+            logout(discard=True)
+            st.rerun()
 
 
 def my_photo():
@@ -313,10 +355,15 @@ def stamp(code, quiet=False):
     시민증이 있으면 시민증 문서에 저장해서 다음에 다시 들어와도 이어서 모을 수 있어요.
     시민증이 없으면 이번 방문(창)에만 있어요."""
     got = st.session_state.setdefault(STAMPS, {})
-    if code in got or code not in STAMP_PLACES:
+    if code not in STAMP_PLACES:
+        return False
+    if code in got:
         return False
     got[code] = datetime.now(KST).strftime("%m/%d %H:%M")
-    _save_stamps()
+    if citizen():
+        st.session_state.setdefault(PENDING_STAMPS, {})[code] = got[code]
+        if not _save_stamps():
+            st.warning("도장을 계정에 저장하지 못했어요. 새로고침하지 말고, 다른 메뉴로 이동한 뒤 사이드바에서 다시 저장해 주세요.")
     if not quiet:
         # 바로 그리지 않고 '보여 줄 도장'으로 맡겨 둬요. 페이지가 다시 그려져도(st.rerun) 사라지지 않게
         # app.py가 페이지를 다 그린 뒤 show_stamp_popup()으로 한 번만 보여 줘요.
@@ -360,6 +407,8 @@ def show_stamp_popup():
     done = count == total
     title = "🎖️ 명예 시민 달성!" if done else f"{place} 도장 쾅!"
     sub = f"{total}곳 도장을 모두 모았어요!" if done else f"도장 {count} / {total}"
+    if citizen() and code in st.session_state.get(PENDING_STAMPS, {}):
+        sub += " · 계정 저장 대기 중"
     st.markdown(
         """<style>
         @keyframes sp-in {0%{transform:translateY(-20px);opacity:0} 12%{transform:translateY(0);opacity:1}
