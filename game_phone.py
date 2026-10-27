@@ -16,18 +16,21 @@ if(!state||state.session!==key){
 state.messages=payload.messages;
 if(!state.root||!state.root.isConnected){
  state.open=false;
- const root=D.createElement('div');root.id='dotori-phone-ui';
- root.innerHTML='<style>#dotori-phone-ui{font-family:system-ui,sans-serif;color:#17212b}#dotori-phone-ui button{font:inherit;cursor:pointer;border-radius:12px;min-height:44px;padding:10px 16px;font-weight:800}#dotori-phone-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#fff4c9;color:#173f35;border:3px solid #b88720;font-size:18px;box-shadow:0 4px 18px #0005}#dotori-phone-cover{position:fixed;inset:0;background:#0009;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}#dotori-phone-panel{background:#fffdf5;border-radius:22px;border:3px solid #d8be77;width:min(680px,100%);max-height:88dvh;overflow:auto;padding:22px;box-sizing:border-box}#dotori-phone-panel h2{font-size:1.5rem;margin:0 0 18px}#dotori-phone-list article{background:#eef5f2;border-radius:12px;padding:16px;margin:12px 0;overflow-wrap:anywhere}#dotori-phone-list p{font-size:1.15rem;line-height:1.7;margin:8px 0}#dotori-phone-close{background:#20483f;color:white;border:0;width:100%}@media(max-width:600px){#dotori-phone-launch{right:12px;bottom:92px;max-width:calc(100vw - 24px);font-size:16px}#dotori-phone-panel{padding:16px}}</style><button id="dotori-phone-launch" type="button">📱 나의 폰</button><div id="dotori-phone-cover"><section id="dotori-phone-panel" role="dialog" aria-modal="true" aria-labelledby="dotori-phone-title" tabindex="-1"><h2 id="dotori-phone-title">📱 나의 폰</h2><div id="dotori-phone-list"></div><button type="button" id="dotori-phone-close">확인하고 닫기</button></section></div>';
+ const root=D.createElement('div');root.id='dotori-phone-ui';root.setAttribute('translate','no');root.setAttribute('lang','ko');root.className='notranslate';
+ root.innerHTML='<style>#dotori-phone-ui{font-family:system-ui,sans-serif;color:#17212b}#dotori-phone-ui button{font:inherit;cursor:pointer;border-radius:12px;min-height:44px;padding:10px 16px;font-weight:800}#dotori-phone-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#fff4c9;color:#173f35;border:3px solid #b88720;font-size:22px!important;min-height:62px!important;padding:14px 24px!important;border-radius:18px!important;box-shadow:0 4px 18px #0005}#dotori-phone-cover{position:fixed;inset:0;background:#0009;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}#dotori-phone-panel{background:#fffdf5;border-radius:22px;border:3px solid #d8be77;width:min(680px,100%);max-height:88dvh;overflow:auto;padding:22px;box-sizing:border-box}#dotori-phone-panel h2{font-size:1.5rem;margin:0 0 18px}#dotori-phone-list{background:#e9eef2;border-radius:14px;padding:12px;max-height:52dvh;overflow:auto}#dotori-phone-from{font-weight:800;margin:-6px 0 10px;color:#b42318}#dotori-phone-list article{background:#fff;border-radius:4px 16px 16px 16px;padding:10px 14px;margin:10px 40px 2px 0;overflow-wrap:anywhere;box-shadow:0 1px 2px #0002}#dotori-phone-list article.new{border:2px solid #b42318;animation:dp-in .35s ease-out}#dotori-phone-list small{display:block;color:#5b6770;font-size:.82rem;margin:0 0 6px 4px}#dotori-phone-list p{font-size:1.15rem;line-height:1.6;margin:0}@keyframes dp-in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}@keyframes dp-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}#dotori-phone-launch.ring{animation:dp-shake .5s ease-in-out 3}#dotori-phone-close{background:#20483f;color:white;border:0;width:100%}@media(max-width:600px){#dotori-phone-launch{right:12px;bottom:92px;max-width:calc(100vw - 24px);font-size:19px!important;min-height:54px!important;padding:10px 16px!important}#dotori-phone-panel{padding:16px}}</style><button id="dotori-phone-launch" type="button">📱 나의 폰</button><div id="dotori-phone-cover"><section id="dotori-phone-panel" role="dialog" aria-modal="true" aria-labelledby="dotori-phone-title" tabindex="-1"><h2 id="dotori-phone-title">📱 나의 폰 · 문자</h2><div id="dotori-phone-from">010-6620-1184 · 저장되지 않은 번호</div><div id="dotori-phone-list"></div><button type="button" id="dotori-phone-close">확인하고 닫기</button></section></div>';
  D.body.appendChild(root);state.root=root;
  const cover=root.querySelector('#dotori-phone-cover'), panel=root.querySelector('#dotori-phone-panel'), list=root.querySelector('#dotori-phone-list'),launch=root.querySelector('#dotori-phone-launch'),close=root.querySelector('#dotori-phone-close');
  state.draw=()=>{
   list.replaceChildren();
   if(!state.messages.length){const p=D.createElement('p');p.textContent='아직 도착한 문자가 없어요.';list.appendChild(p);}
-  for(const m of [...state.messages].reverse()){
-   const card=D.createElement('article'),head=D.createElement('strong'),body=D.createElement('p');
-   head.textContent=m.sender+' · '+m.time;body.textContent=m.text;
-   card.append(head,body);list.appendChild(card);
+  // 메신저처럼 오래된 문자가 위, 새 문자가 아래로 계속 쌓여요.
+  for(const m of state.messages){
+   const card=D.createElement('article'),body=D.createElement('p'),when=D.createElement('small');
+   body.textContent=m.text;when.textContent=m.time;
+   if(state.fresh&&state.fresh.has(m.id))card.className='new';
+   card.append(body);list.append(card,when);
   }
+  list.scrollTop=list.scrollHeight;
  };
  state.show=()=>{
   state.focus=D.activeElement;state.draw();state.open=true;cover.style.display='flex';close.focus({preventScroll:true});
@@ -44,18 +47,22 @@ if(!state.root||!state.root.isConnected){
   if(e.key==='Tab'){e.preventDefault();close.focus();}
  });
  const originalPath=W.location.pathname;
- const observer=new W.MutationObserver(()=>{
-  if(W.location.pathname!==originalPath){state.remove();}
- });
+ // 방탈출 게임 화면(자리표 game_phone_anchor)이 사라지면 '나의 폰'도 바로 없애요.
+ // 다른 페이지로 가거나, 방탈출 안에서 시작 안내로 돌아가면 다른 화면에 남지 않아요.
+ const gone=()=>W.location.pathname!==originalPath||!D.querySelector('.st-key-game_phone_anchor');
+ const observer=new W.MutationObserver(()=>{if(gone())state.remove();});
  observer.observe(D,{childList:true,subtree:true});
- state.remove=()=>{observer.disconnect();state.open=false;root.remove();};
+ const timer=W.setInterval(()=>{if(gone())state.remove();},800);
+ state.remove=()=>{observer.disconnect();W.clearInterval(timer);state.open=false;root.remove();};  // 읽은 문자 기록(seen)은 남겨서, 다시 들어와도 같은 문자로 또 알리지 않아요.
 }
 const fresh=state.messages.filter(m=>!state.seen.has(m.id));
 const phoneButton=state.root.querySelector('#dotori-phone-launch');
 phoneButton.textContent=state.messages.length?'📱 나의 폰 · 받은 문자 '+state.messages.length:'📱 나의 폰 · 새 문자 없음';
 if(fresh.length){
  // 확인 전 재실행돼도 같은 문자를 반복 알림하지 않습니다.
+ state.fresh=new Set(fresh.map(m=>m.id));
  fresh.forEach(m=>state.seen.add(m.id));
+ phoneButton.classList.remove('ring');void phoneButton.offsetWidth;phoneButton.classList.add('ring');
  phoneButton.innerHTML='📱 나의 폰 <span style="display:inline-block;background:#b42318;color:white;border-radius:8px;padding:3px 8px;margin-left:5px">새 문자 '+fresh.length+'</span>';
  if(!state.open)state.show();else state.draw();
  const h=W.__jamkkanSound;
@@ -106,4 +113,8 @@ button{min-height:44px;padding:8px 12px;background:#20483f;color:white;border:2p
 </style><div id="numbers"></div><script>"""+source+"</script></html>",height=len(numbers)*78+12,scrolling=True)
 
 def clear_phone():
-    components.html("<script>try{const s=parent.__dotoriPhone;if(s&&s.remove)s.remove();}catch(e){}</script>",height=0)
+    # 매번 내용이 달라야 브라우저가 다시 실행해요(같은 내용이면 이전 것을 재사용해서 지우기가 안 될 수 있어요).
+    st.session_state["_phone_clear_n"] = st.session_state.get("_phone_clear_n", 0) + 1
+    components.html("<script>try{const s=parent.__dotoriPhone;if(s&&s.remove)s.remove();"
+                    "const r=parent.document.getElementById('dotori-phone-ui');if(r)r.remove();}catch(e){}</script>"
+                    f"<!-- {st.session_state['_phone_clear_n']} -->", height=0)
