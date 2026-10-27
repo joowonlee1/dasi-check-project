@@ -593,7 +593,7 @@ def show_home():
             "padding:0 6px;font-family:inherit;font-weight:800;color:#1E3A5F;}"
             "@media (max-width:640px){.zoom-tip{display:none;}}</style>"
             '<div class="zoom-tip">💻 <b>노트북·컴퓨터라면</b> <kbd>Ctrl</kbd>을 누른 채 마우스 휠을 <b>아래로</b> 내리면 '
-            "화면이 작아져서 <b>한눈에 더 넓게</b> 볼 수 있어요. ",
+            "화면이 작아져서 <b>한눈에 더 넓게</b> 볼 수 있어요.</div>",
             unsafe_allow_html=True,
         )
 
