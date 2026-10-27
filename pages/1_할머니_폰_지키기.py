@@ -8,6 +8,7 @@ import streamlit.components.v1 as components
 from mascot_ui import show_hero, show_key_question, show_mascot, show_tiles
 from card_ui import show_result_card
 import dotori_data as dd
+from grandma_face import face_svg
 
 
 # 모든 인물·기관명·번호·링크·확인 결과는 교육용 가상 자료입니다.
@@ -500,6 +501,7 @@ def act(key):
     else:
         game["step"] = step + 1
         game["clue_open"] = False
+        game["show_reaction"] = True  # 다음 화면에서 할머니 반응을 화면 가운데 큰 창으로 먼저 보여 줘요.
     dd.scroll_top()  # 다음 연락은 휴대전화 화면(위쪽)부터 보이게 해요.
 
 
@@ -682,7 +684,60 @@ def show_intro():
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
 
 
+def grandma_mood(last, game):
+    """방금 상황에 맞는 할머니 표정(grandma_face의 이름)과 마음 상태 한마디, 글자색을 골라요."""
+    real = EVENTS[last["step"]]["real"]
+    key, belief, trust = last["key"], last["belief"], last["trust"]
+    if last["stopped"]:
+        return ("grateful", "고마워하며 안심했어요", "#15803D") if trust >= 70 else ("relieved", "한숨 돌렸어요", "#15803D")
+    if key == "police":
+        return "shocked", "깜짝 놀랐어요", "#B42318"
+    if key == "scold":
+        return ("hurt", "서운하고 겁이 났어요", "#B42318") if trust < 50 else ("angry", "꾸중 들은 것 같아 화났어요", "#B42318")
+    if key == "snatch":
+        return "huffy", "무시당한 것 같아 언짢아요", "#B42318"
+    if real:
+        if last.get("over"):
+            return "tired", "자꾸 확인하자니 지쳤어요", "#8A5A00"
+        if key in DOUBT_KEYS:
+            return "annoyed", "괜한 의심에 불편해요", "#8A5A00"
+        return "calm", "평소처럼 편안해요", "#0F766E"
+    if trust < 40:
+        return "down", "내 말을 잘 안 믿으려 해요", "#8A5A00"
+    if belief > 70:
+        return "terrified", "사기범 말에 완전히 겁먹었어요", "#B42318"
+    if belief > 45:
+        return "anxious", "불안해서 사기범 말을 믿고 있어요", "#B42318"
+    if belief > STOP_LINE:
+        return "puzzled", "긴가민가 흔들리고 있어요", "#8A5A00"
+    return "neutral", "조금 이상하다고 느끼기 시작했어요", "#0F766E"
+
+
+@st.dialog("👵 할머니 반응", width="large")
+def reaction_popup(game):
+    """방금 내 말·행동에 할머니가 어떻게 반응했는지 화면 가운데 큰 창으로 보여 줘요."""
+    last = game["log"][-1]
+    mood, feeling, color = grandma_mood(last, game)
+    st.markdown(
+        f'<div style="display:flex;justify-content:center;">{face_svg(mood, 230)}</div>'
+        f'<div style="text-align:center;font-weight:900;color:{color};font-size:1.05rem;margin-top:2px;">{esc(feeling)}</div>'
+        f'<div style="background:#FFF7ED;border:2px solid #FED7AA;border-radius:18px;padding:16px 18px;margin:8px 0 10px;'
+        f'font-size:1.35rem;font-weight:800;color:#172B3A;line-height:1.6;word-break:keep-all;text-align:center;">'
+        f'“{esc(last["reaction"])}”</div>'
+        f'<div style="color:#52616B;font-weight:700;text-align:center;">🙋 내가 한 말 · {esc(last["said"])}</div>',
+        unsafe_allow_html=True,
+    )
+    if last["stopped"]:
+        st.success("🛑 할머니가 연락을 멈췄어요! 하지만 사기범은 다시 연락할 수 있어요.")
+    elif last["lesson"]:
+        (st.warning if (last["key"] in ("scold", "snatch") or last.get("over")) else st.info)(f"💬 {last['lesson']}")
+    if st.button("다음 연락 보기 ▶", type="primary", width="stretch", key="gp_reaction_ok"):
+        st.rerun()
+
+
 def show_play(game):
+    if game.pop("show_reaction", False) and game["log"]:
+        reaction_popup(game)
     enter_event(game)
     step = game["step"]
     event = EVENTS[step]
@@ -697,7 +752,8 @@ def show_play(game):
         log = game["log"]
         prev = log[-1]["reaction"] if log else None
         belief = game["belief"]
-        mood = "😰" if belief > 45 else "🤔" if belief > STOP_LINE else "👵"
+        mood = face_svg(grandma_mood(log[-1], game)[0] if log else
+                        ("anxious" if belief > 45 else "puzzled" if belief > STOP_LINE else "calm"), 130)
         now = event["grandma_alert"] if (game["alert"] and not event["real"]) else event["grandma"]
         bubble = f'<div class="say prev">{esc(prev)}</div>' if prev else ""
         st.markdown(
