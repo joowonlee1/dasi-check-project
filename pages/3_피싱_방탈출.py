@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 import html
 import re
 import time
@@ -547,18 +548,8 @@ def show_status_bar():
         )
     with right:
         countdown()
-    messages = pressure_messages()
-    if messages:
-        at, text, _ = messages[-1]
-        st.markdown(
-            '<div class="lock-banner">'
-            f'<div class="from">🔒 잠금화면 알림 · 010-6620-1184 · {clock_text(at)}</div>'
-            f'<div class="text">{html.escape(text)}</div>'
-            "</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown('<div class="quiet">📵 휴대전화가 조용합니다. 아직은.</div>', unsafe_allow_html=True)
+    from game_phone import show_phone
+    show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text)
 
 
 def hint_panel(stage):
@@ -686,10 +677,15 @@ def lock_three():
             ],
             index=None,
         )
+        st.info("자료를 읽기만 해서는 선택할 수 없어요. ‘방 조사’에서 필요한 자료의 ‘증거 보관함에 넣기’를 누른 뒤, 여기에서 증거 3개를 선택하세요.")
+        if not game["evidence"]:
+            st.warning("아직 선택할 증거가 없어요. 먼저 장소를 조사해 증거를 수집하세요.")
         proof = st.multiselect(
             "② 최초 요청과 독립 확인 결과를 대조할 핵심 증거 3개",
             game["evidence"],
             format_func=evidence_name,
+            placeholder="보관함의 증거 중 3개 선택" if game["evidence"] else "먼저 증거 보관함에 자료를 넣어 주세요",
+            disabled=not game["evidence"],
         )
         block = st.text_input("③ 차단하고 신고할 번호 (하이픈 있어도 괜찮아요)", max_chars=16)
         action = st.radio(
@@ -731,15 +727,15 @@ def show_dialer():
     st.subheader("📞 확인 장치 · 다이얼")
     st.caption("번호를 직접 입력해 전화를 겁니다. 한 번 걸 때마다 게임 시계가 흐릅니다. 모든 연결은 가상입니다.")
 
-    st.caption("직접 수집한 증거에 등장한 번호예요. 오른쪽 복사 아이콘을 눌러 복사하세요. 목록은 정답 표시가 아니에요.")
+    st.caption("직접 수집한 증거에 등장한 번호예요. 번호 바로 옆 ‘📋 복사’를 눌러 복사하세요. 목록은 정답 표시가 아니에요.")
     import re as _phone_re
     available = []
     for eid in game["evidence"]:
         for phone in _phone_re.findall(r"01[0-9]-?\d{3,4}-?\d{4}", str(EVIDENCE.get(eid, {}))):
             if phone not in available:
                 available.append(phone)
-    for phone in available:
-        st.code(phone, language=None)
+    from game_phone import copy_numbers
+    copy_numbers(available)
     with st.form("escape_dial_form", clear_on_submit=True):
         number = st.text_input("전화번호", max_chars=16, placeholder="010-0000-0000")
         dialed = st.form_submit_button("📞 전화 걸기")
@@ -1402,10 +1398,11 @@ def show_play():
     )
 
 
-st.title("🗝️ 잠깐! · 피싱 방탈출")
-show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "엄마라는 연락, 진짜일까?",
-          "증거를 모아 진짜를 가려내고 방을 탈출하세요. 실제 전화나 앱 설치는 없어요.",
-          tone="mint", small=True)
+with intro("03", suffix=""):
+    st.title("🗝️ 잠깐! · 피싱 방탈출")
+    show_hero(f"🗝️ 방탈출 · 제한 시간 {TIME_LIMIT_MINUTES}분 · 교육용 가상 사건", "엄마라는 연락, 진짜일까?",
+              "증거를 모아 진짜를 가려내고 방을 탈출하세요. 실제 전화나 앱 설치는 없어요.",
+              tone="mint", small=True)
 
 current = st.session_state.get("escape_game")
 
