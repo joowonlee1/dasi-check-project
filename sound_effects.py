@@ -153,7 +153,7 @@ if(!W.__jamkkanSound){
   return 'tap';
  };
  H.attach=doc=>{
-  if(H.docs.has(doc))return;H.docs.add(doc);
+  if(!doc||doc.nodeType!==9||H.docs.has(doc))return;H.docs.add(doc);
   doc.addEventListener('click',e=>{
    const el=e.target.closest?e.target.closest(CLICKABLE):null;
    if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
@@ -192,7 +192,7 @@ if(!W.__jamkkanSound){
     if(!H.frames.has(frame)){H.frames.add(frame);frame.addEventListener('load',connect);}connect();
    });
   };
-  new W.MutationObserver(()=>{if(!pending){pending=true;W.setTimeout(scan,120);}}).observe(doc.documentElement,{childList:true,subtree:true});scan();
+  new W.MutationObserver(()=>{if(!pending){pending=true;W.setTimeout(scan,120);}}).observe(doc,{childList:true,subtree:true});scan();
  };
  H.docs.add(document);H.attach(W.document);
 }
