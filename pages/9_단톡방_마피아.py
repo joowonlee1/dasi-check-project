@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """단톡방 마피아: 친구 5명 중 마피아(사칭 계정) 1명을 조사 3번으로 찾아내는 추리 게임.
 
 모든 인물·대화·링크는 교육용 가상 내용입니다. 실제 접속·송금·인증은 일어나지 않습니다.
@@ -600,8 +601,9 @@ def show_final():
 # ───────── 실행 ─────────
 
 st.markdown(CSS, unsafe_allow_html=True)
-st.title("🕵️ 단톡방 마피아")
-show_key_question("친구 5명 중 **한 명은 마피아(사칭범)**예요. 말투·질문·프로필로 **마피아**를 찾아내세요.", "🕵️")
+with intro("09", suffix=""):
+    st.title("🕵️ 단톡방 마피아")
+    show_key_question("친구 5명 중 **한 명은 마피아(사칭범)**예요. 말투·질문·프로필로 **마피아**를 찾아내세요.", "🕵️")
 
 move_up = state().pop("scroll", False)
 if move_up:
