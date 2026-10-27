@@ -575,15 +575,15 @@ def show_home():
     tools_button("home")
     with st.container(key="emergency_link"):
         st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
-    with st.container(border=True):
-        # 깡지를 오른쪽 여백에 크게 두어 첫 화면에서 바로 눈에 띄게 해요.
+    with st.container(border=True, key="home_hero_box"):
+        # 깡지를 왼쪽에 크게, 글을 오른쪽에 붙여 가운데로 모아요(빈 공간 줄이기).
         st.markdown(
-            '<div class="home-hero"><div class="txt">'
+            f'<div class="home-hero"><div class="pic">{mascot_img("stop", 260)}</div><div class="txt">'
             '<h1 style="margin:0;">✋ 잠깐!</h1>'
             '<div style="color:#52616B;font-weight:600;">멈추고 · 확인하고 · 판단하기</div>'
             '<div class="bubble">💬 익숙한 연락도, 낯선 링크도 한 번 더 확인해요.</div>'
             '<div style="font-weight:600;color:#253F39;word-break:keep-all;">선택하고, 대화하고, 증거를 찾으며 배우는 피싱 예방 체험입니다.</div>'
-            f'</div><div class="pic">{mascot_img("stop", 210)}</div></div>',
+            '</div></div>',
             unsafe_allow_html=True,
         )
         # 노트북·컴퓨터 이용자에게 화면을 넓게 보는 방법을 알려 줘요(휴대폰에서는 숨겨요).
@@ -792,8 +792,17 @@ with st.sidebar:
     }
     .home-hero .txt {font-size:1.12rem!important;}
     .home-hero .txt h1 {font-size:clamp(2.1rem,4vw,3rem)!important;}
-    .home-hero .pic {flex-basis:190px!important;}
-    .home-hero .pic img {max-width:190px!important;}
+    /* 홈 첫 상자: 깡지 왼쪽(크게) + 글 오른쪽, 연한 노랑→민트 배경 */
+    .st-key-home_hero_box {background:linear-gradient(135deg,#FFFBE6,#EAF6F0)!important;border-color:#F1DFA6!important;}
+    .home-hero {gap:36px!important;}
+    .home-hero .pic {flex:0 0 260px!important;}
+    .home-hero .pic img {width:260px!important;max-width:260px!important;}
+    .home-hero .txt {flex:0 1 560px!important;}
+    @media (max-width:640px) {
+      .home-hero {gap:10px!important;}
+      .home-hero .pic {flex-basis:180px!important;}
+      .home-hero .pic img {width:180px!important;max-width:180px!important;}
+    }
     </style>""",unsafe_allow_html=True)
     with st.container(key="citizen_top"):
         # 시민증 왼쪽 깡지 증명사진: 한 사람에게는 시민증 페이지와 같은 사진을 항상 보여 줘요.
