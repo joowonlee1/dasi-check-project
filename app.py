@@ -570,6 +570,8 @@ PLACES = {
 # ─────────────────────────────────────
 
 def show_home():
+    from admin_ui import tools_button
+    tools_button("home")
     with st.container(key="emergency_link"):
         st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 대처 안내 바로 보기", icon="🚨")
     with st.container(border=True):
@@ -698,6 +700,9 @@ navigation = st.navigation(
 # 사이드바
 # ─────────────────────────────────────
 
+if st.session_state.pop("guest_go_home", False):
+    st.switch_page(home)
+
 with st.sidebar:
     # 시민증 상태를 메뉴 맨 위에 보여 줘요. 없으면 시민증 만들기로 먼저 안내해요.
     # (사이드바 메뉴보다 위에 두려고 CSS로 자리를 옮겨요.)
@@ -781,6 +786,9 @@ with st.sidebar:
             )
         except Exception:
             pic_html = '<div style="font-size:40px;">🐿️</div>'
+        if st.session_state.get("admin_open"):
+            from admin_ui import card
+            card(compact=True)
         if me:
             stamps = len(dd.stamps())
             records = len(st.session_state.get(dd.MY, []))
@@ -791,23 +799,31 @@ with st.sidebar:
             label = "🪪 도토리시 시민증"
             line1 = "아직 없어요"
             line2 = "만들면 기록이 남아요!"
-        st.markdown(
-            f'<div style="display:flex;align-items:center;gap:10px;">{pic_html}'
-            f'<div style="line-height:1.3;min-width:0;word-break:keep-all;">'
-            f'<div style="font-size:.74rem;font-weight:800;color:#B7791F;">{label}</div>'
-            f'<div style="font-size:1.05rem;font-weight:900;color:#20483F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{line1}</div>'
-            f'<div style="font-size:.76rem;font-weight:700;color:#52616B;white-space:nowrap;">{line2}</div></div></div>',
-            unsafe_allow_html=True,
-        )
-        if me:
-            c1, c2 = st.columns([1, 1], gap="small")
-            if c1.button("🪪 내 시민증", key="side_citizen", width="stretch"):
+        if st.session_state.get("admin_open"):
+            c1,c2=st.columns(2,gap="small")
+            if c1.button("내 관리자증",key="side_citizen",width="stretch"):
                 st.switch_page(citizen_page)
-            if c2.button("로그아웃", key="side_logout", width="stretch"):
+            if c2.button("로그아웃",key="side_logout",width="stretch"):
                 dd.logout()
                 st.rerun()
         else:
-            st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
+            st.markdown(
+                f'<div style="display:flex;align-items:center;gap:10px;">{pic_html}'
+                f'<div style="line-height:1.3;min-width:0;word-break:keep-all;">'
+                f'<div style="font-size:.74rem;font-weight:800;color:#B7791F;">{label}</div>'
+                f'<div style="font-size:1.05rem;font-weight:900;color:#20483F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{line1}</div>'
+                f'<div style="font-size:.76rem;font-weight:700;color:#52616B;white-space:nowrap;">{line2}</div></div></div>',
+                unsafe_allow_html=True,
+            )
+            if me:
+                c1, c2 = st.columns([1, 1], gap="small")
+                if c1.button("🪪 내 시민증", key="side_citizen", width="stretch"):
+                    st.switch_page(citizen_page)
+                if c2.button("로그아웃", key="side_logout", width="stretch"):
+                    dd.logout()
+                    st.rerun()
+            else:
+                st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
 
     # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
     big_text = st.toggle("🔠 큰 글씨로 보기", key="big_text", help="본문 글씨와 버튼을 크게 보여 줘요.")
@@ -823,9 +839,6 @@ with st.sidebar:
         )
 
     # 효과음 켜기/끄기·음량·미리듣기(사이드바). 끄면 도장 '띵동' 소리도 나지 않아요.
-    if st.session_state.get("admin_open"):
-        st.caption("🔑 관리자 · 시민증 없이 게임 이용 가능")
-        st.toggle("관리자 정답·관리 도구", key="admin_panel_view")
     render_sound_controls()
     dd.show_stamp_sync_status()
 
@@ -947,24 +960,14 @@ def show_welcome_gate():
     dd.show_login_forms("gate")
     st.info("👀 **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요. "
             "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
-    with st.container(key="gate_guest"):
-        st.markdown("<div style='text-align:center;color:#52616B;font-weight:700;margin:6px 0 2px;'>또는</div>", unsafe_allow_html=True)
-        if st.button("👀 로그인 없이 둘러보기 (기록은 남지 않아요)", width="stretch"):
-            st.session_state["guest"] = True
-            st.rerun()
 
 
-if not (current and current[0] == "03" and is_playing("03")) or (st.session_state.get("admin_open") and st.session_state.get("admin_panel_view")):
+if not (current and current[0] == "03" and is_playing("03")):
     from game_phone import clear_phone
     clear_phone()
 
 if not dd.citizen() and not st.session_state.get("guest") and not st.session_state.get("admin_open") and not (current and current[0] == "07"):
     show_welcome_gate()
-    st.stop()
-
-if st.session_state.get("admin_open") and st.session_state.get("admin_panel_view"):
-    from admin_tools import show_admin_box
-    show_admin_box()
     st.stop()
 
 # ─────────────────────────────────────
