@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 """가짜뉴스 확산 막기: 주민 연결망(그래프) 위에서 퍼지는 가짜 소식을 카드로 막는 전략 게임.
 
 - 퍼지는 방식은 너비 우선 탐색(BFS)처럼 한 단계씩 이웃에게 번집니다.
@@ -11,8 +12,9 @@ import dotori_data as dd
 from mascot_ui import show_key_question, show_mascot
 from river_component_ui import create_river_component
 
-st.title("🌐 가짜뉴스 확산 막기")
-show_key_question("가짜 소식은 **사람과 사람 사이를 타고** 번져요. 카드 몇 장으로 **누구를 먼저 지킬지** 골라 보세요.", "🌐")
+with intro("06", suffix=""):
+    st.title("🌐 가짜뉴스 확산 막기")
+    show_key_question("가짜 소식은 **사람과 사람 사이를 타고** 번져요. 카드 몇 장으로 **누구를 먼저 지킬지** 골라 보세요.", "🌐")
 
 # 단계: 수법, 마을 크기, 카드 수, 퍼지는 간격(ms), 처음 올린 계정 수, 가짜 소식, 진실, 수법 공개, 정정 문구 퀴즈
 STAGES = [
@@ -78,7 +80,8 @@ STAGES = [
     },
 ]
 
-show_mascot("hint", "연결선이 많은 사람이 막히면 소문이 크게 막혀요. 처음 1명은 퍼지기 전에 미리 알려 줄 수 있어요!", width=100)
+with intro("06", suffix="_hint"):
+    show_mascot("hint", "연결선이 많은 사람이 막히면 소문이 크게 막혀요. 처음 1명은 퍼지기 전에 미리 알려 줄 수 있어요!", width=100)
 
 HTML = r'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -312,6 +315,7 @@ function exampleHtml(){
 }
 
 function intro(){
+  setPlayActive(false);
   $('app').innerHTML = `
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
@@ -354,6 +358,7 @@ function counts(){
 }
 
 function render(){
+  setPlayActive(true);
   const st = S.st, c = counts(), n = st.n;
   const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}단계` : '';
   $('app').innerHTML = `
@@ -590,7 +595,7 @@ intro();
 </script></body></html>
 '''
 
-page = HTML.replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(HTML, "06").replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
 spread_component = create_river_component(page)
 value = spread_component(key="jamkkan_spread_v1", default=None, stats=dd.stats("fakenews"))
 
