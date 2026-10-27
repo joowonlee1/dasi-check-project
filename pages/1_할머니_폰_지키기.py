@@ -1,3 +1,4 @@
+from play_ui import intro, bridge
 import html
 import random
 import time
@@ -865,9 +866,10 @@ def show_ending(game):
 # 화면
 # ─────────────────────────────────────
 
-st.title("✋ 잠깐! · 할머니 폰 지키기")
-show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
-st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
+with intro("01", suffix=""):
+    st.title("✋ 잠깐! · 할머니 폰 지키기")
+    show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
+    st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
 if KEY not in st.session_state:
     st.session_state[KEY] = new_game()
