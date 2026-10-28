@@ -807,6 +807,7 @@ def go_place(place):
 
 
 def show_room():
+    st.info("📌 보고서에 사용할 자료라면 ‘증거 보관함에 넣기’를 눌러 주세요.")
     st.markdown(
         "장소를 눌러 조사하세요. 처음 가는 곳은 게임 시계가 1분 흐릅니다. "
         ":orange-background[**⚠️ 사건과 상관없는 자료도 섞여 있어요.**]"
@@ -1213,6 +1214,8 @@ def start_game(ranked):
 
 
 def show_entry():
+    st.warning("📂 읽기만 하면 증거로 사용할 수 없어요! 필요한 자료는 반드시 ‘증거 보관함에 넣기’를 눌러 주세요. 마지막 보고서에서는 보관함에 넣은 증거만 선택할 수 있어요.")
+
     show_mascot("detective", "작은 단서도 놓치지 말고, 함께 사건을 풀어봐요.", width=100)
     show_game_guide()
 
