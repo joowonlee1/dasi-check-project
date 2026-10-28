@@ -17,7 +17,7 @@ from nonogram_component_ui import create_nonogram_component
 with intro("12", suffix=""):
     st.title("🧩 큐싱 노노그램")
     show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림을 복원한 뒤 **출처·목적지·요구를 조사**하세요.", "🧩")
-    show_mascot("detective", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
+    show_mascot("puzzle", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
 
     st.info("이번 활동은 ‘그림 복원’과 ‘안전성 판단’을 구별하는 연습이에요. 숫자로 그림을 정확히 복원해도 QR의 목적지가 안전하다는 뜻은 아니에요.")
     with st.expander("그림을 숫자로 표현하는 RLE 먼저 알아보기", expanded=True):
