@@ -126,12 +126,13 @@ def _admin_tools():
         return
     from admin_answers import show_answers
     # 관리 메뉴(탭)가 '관리자이신가요?' 바로 아래에 오도록, 게임 정답은 맨 위가 아니라 네 번째 탭에 넣어요.
-    st.caption("🔑 관리자 모드예요. 창을 닫거나 맨 아래 ‘관리자 모드 끝내기’를 누르면 닫혀요.")
-    from mascot_ui import show_mascot
-    show_mascot("badge", "관리자 모드예요! 정답 확인·시민 관리·기록 정리를 할 수 있어요.", width=120)
-    st.info("🎖️ **관리자 공용 도장판** · 관리자 모드로 게임을 하면 도장이 개인 시민증이 아니라 관리자 전용 도장판 하나에 서버로 저장돼요. "
-            "같은 관리자 코드로 들어온 사람끼리 이 도장판을 함께 써요. 학생들 시민증 도장과는 따로 저장돼요.")
     t_reset, t_people, t_hall, t_answers = st.tabs(["🔑 비밀 숫자 재설정", "👥 시민 목록·삭제", "🏆 명예의 전당 정리", "📋 게임 정답"])
+    with st.expander("관리자 이용 안내", expanded=False):
+        st.caption("🔑 관리자 모드예요. 창을 닫거나 맨 아래 ‘관리자 모드 끝내기’를 누르면 닫혀요.")
+        from mascot_ui import show_mascot
+        show_mascot("badge", "관리자 모드예요! 정답 확인·시민 관리·기록 정리를 할 수 있어요.", width=120)
+        st.info("🎖️ **관리자 공용 도장판** · 관리자 모드로 게임을 하면 도장이 개인 시민증이 아니라 관리자 전용 도장판 하나에 서버로 저장돼요. "
+                "같은 관리자 코드로 들어온 사람끼리 이 도장판을 함께 써요. 학생들 시민증 도장과는 따로 저장돼요.")
     with t_answers:
         show_answers()
 
