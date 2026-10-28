@@ -81,7 +81,7 @@ STAGES = [
 ]
 
 with intro("06", suffix="_hint"):
-    show_mascot("hint", "연결선이 많은 사람이 막히면 소문이 크게 막혀요. 처음 1명은 퍼지기 전에 미리 알려 줄 수 있어요!", width=100)
+    show_mascot("megaphone", "연결선이 많은 사람이 막히면 소문이 크게 막혀요. 처음 1명은 퍼지기 전에 미리 알려 줄 수 있어요!", width=100)
 
 HTML = r'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
