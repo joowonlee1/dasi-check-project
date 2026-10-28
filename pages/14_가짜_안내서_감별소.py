@@ -15,7 +15,7 @@ CASES = [
   "answer":"안내 내용 정상 확인",
   "reason":"수취 주소·방문 시각·후속 절차가 별도로 확인한 기록과 일치한다.",
   "options":["종이가 구겨졌지만 기관 로고가 있으므로 정상이다.","수취 주소·방문 시각·후속 절차가 별도로 확인한 기록과 일치한다.","실제 우편물이 하나라도 있으면 모든 추가 요구가 안전하다."],
-  "lesson":"종이 상태만으로 위조라고 단정하지 않아요. 이 사례에서는 안내 내용까지 독립 확인했기 때문에 정상으로 판단했어요."},
+  "lesson":"종이 상태만으로 위조라고 단정하지 않아요. 이 사례에서는 안내 내용까지 공식 경로로 따로 확인했기 때문에 정상으로 판단했어요."},
  {"door":"102호", "claim":"등기가 도착했습니다. 재배달하려면 이 QR에서 계정 비밀번호와 문자 인증번호를 입력하세요.",
   "looks":"깨끗한 종이이며 흔적 없이 떨어져요. 실제 등기번호가 적혀 있어요.", "reference":"A-205",
   "official":"별도로 연 공식 조회에 A-205 등기는 실제로 있어요. 하지만 공식 고객센터는 해당 QR과 비밀번호·인증번호 입력 요구를 자신들이 보낸 것이 아니라고 확인했어요. 정식 재배달 절차도 따로 안내했어요.",
@@ -29,7 +29,7 @@ CASES = [
   "answer":"판단 보류",
   "reason":"조회 실패는 위조 증거가 아니며, 현재 확인된 정보만으로는 결론을 낼 수 없다.",
   "options":["조회되지 않으니 무조건 위조다.","접착 흔적이 있으므로 위조가 확정됐다.","조회 실패는 위조 증거가 아니며, 현재 확인된 정보만으로는 결론을 낼 수 없다."],
-  "lesson":"모르는 것을 안다고 단정하지 않는 것도 판단이에요. 안내서 속 경로로 이동하지 말고 독립적인 공식 경로에서 재확인해요."}
+  "lesson":"모르는 것을 안다고 단정하지 않는 것도 판단이에요. 안내서 속 경로로 이동하지 말고 내가 직접 찾은 공식 경로에서 따로 다시 확인해요."}
 ]
 ROUTES = ["안내서에 적힌 번호나 QR로 확인", "안내서와 별도로 찾은 공식 홈페이지·고객센터에서 확인"]
 VERDICTS = ["안내 내용 정상 확인","안내 내용 위조 확인","판단 보류"]
@@ -50,7 +50,7 @@ with intro("14", suffix=""):
     # 시작 전 설명: 안내서에 무엇이 적혀 있고, 무엇으로 확인하고, 어떻게 판정하는지 미리 알려 줘요.
     st.markdown("""<div style="border:2.5px solid #C7D2FE;background:#F5F7FF;border-radius:16px;padding:14px 16px;margin:.2rem 0 .8rem;line-height:1.7;word-break:keep-all">
 <b style="font-size:1.1rem;color:#1E3A8A">🧭 시작하기 전에 · 이렇게 감별해요</b>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px">
+<div class="nv-how" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px">
 <div style="background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid #E0E7FF"><b>① 안내서 읽기</b><br>
 <b>🔖 참조번호</b>는 안내서에 적힌 <b>등기번호</b>예요. 공식 조회에서 이 번호로 우편물을 찾아 <b>주소·방문 시각이 안내서와 같은지</b> 맞춰 봐요.<br>
 <b>👀 겉모습</b>(구겨짐·테이프·흐린 글씨)은 참고만 해요. 겉모습만으로는 진짜·가짜를 정할 수 없어요.</div>
@@ -67,6 +67,7 @@ with intro("14", suffix=""):
 <b style="color:#B45309">판단 보류</b> · 조회가 안 돼서 아직 알 수 없어요<br>
 판정·이유·근거 기록·다음 행동을 함께 골라 제출해요.</div>
 </div>
+<style>@media (max-width:1100px){.nv-how{grid-template-columns:repeat(2,1fr)!important}}@media (max-width:640px){.nv-how{grid-template-columns:1fr!important}}</style>
 <div style="margin-top:8px;font-size:.95rem;color:#374151">🚪 101호 → 102호 → 103호, 안내서 3장을 차례로 감별해요. <b>처음 제출에서 맞힌 개수</b>가 점수예요. 필요한 기록을 다 모은 뒤에 제출하세요.</div>
 </div>""", unsafe_allow_html=True)
     st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
@@ -89,7 +90,7 @@ NV_CSS = """<style>
 .nv-doors{display:flex;gap:10px;margin:.3rem 0 .8rem}
 .nv-doors div{flex:1;text-align:center;border-radius:12px;padding:8px 4px;font-weight:800;border:2px solid #E5E7EB;background:#F9FAFB;color:#6B7280}
 .nv-doors .now{border-color:#B45309;background:#FFF7ED;color:#9A3412}.nv-doors .ok{border-color:#16A34A;background:#F0FDF4;color:#166534}
-.nv-scene{display:flex;justify-content:center;background:linear-gradient(#EDE7DB,#E2D9C8);border-radius:18px;padding:18px 10px 0;margin-bottom:.6rem}
+.nv-scene{display:flex;justify-content:center;align-items:flex-end;gap:22px;flex-wrap:wrap;background:linear-gradient(#EDE7DB,#E2D9C8);border-radius:18px;padding:18px 14px 0;margin-bottom:.6rem}.nv-clues{flex:1 1 260px;max-width:380px;align-self:center;margin-bottom:18px;display:flex;flex-direction:column;gap:10px}.nv-clues .t{font-weight:900;color:#374151;font-size:1.05rem}.nv-clue{border-radius:12px;padding:10px 14px;font-size:1.02rem;line-height:1.6;box-shadow:0 3px 8px #0002}@media (max-width:640px){.nv-clues{max-width:none;margin-bottom:12px}}
 .nv-door{position:relative;width:min(100%,430px);background:linear-gradient(90deg,#8B5E3C,#A47148 50%,#8B5E3C);border:6px solid #6B4429;border-bottom:0;border-radius:10px 10px 0 0;padding:16px 18px 26px}
 .nv-plate{display:inline-block;background:#F5E6C8;color:#4A3420;font-weight:900;border-radius:6px;padding:2px 12px;margin-bottom:12px;box-shadow:0 2px 0 #0003}
 .nv-knob{position:absolute;right:12px;top:55%;width:16px;height:16px;border-radius:50%;background:radial-gradient(#F7D774,#B8860B)}
@@ -113,7 +114,7 @@ def door_strip(i):
             cells.append(f'<div>🚪 {c["door"]}</div>')
     st.markdown('<div class="nv-doors">' + "".join(cells) + "</div>", unsafe_allow_html=True)
 
-def door_scene(i, stamp=None):
+def door_scene(i, stamp=None, clues=False):
     case, look = CASES[i], PAPER[i]
     claim = _esc(case["claim"])
     extra = ""
@@ -134,7 +135,11 @@ def door_scene(i, stamp=None):
         f'<div class="nv-scene"><div class="nv-door"><span class="nv-plate">다람쥐아파트 {case["door"]}</span><span class="nv-knob"></span>'
         f'<div class="nv-paper" style="transform:rotate({look["rot"]}deg);background:{look["bg"]}">{tape}'
         f'<h4>📮 등기 우편물 안내</h4><div>{claim}</div>{extra}'
-        f'<div style="margin-top:6px;font-size:.9rem;color:#6B7280">참조번호 {case["reference"]}</div>{stamp_html}</div></div></div>',
+        f'<div style="margin-top:6px;font-size:.9rem;color:#6B7280">참조번호 {case["reference"]}</div>{stamp_html}</div></div>'
+        + (('<div class="nv-clues"><div class="t">🔎 안내서에서 보이는 단서</div>'
+            f'<div class="nv-clue" style="background:#FFE08A;color:#6B4300"><b>🔖 참조번호(등기번호)</b><br>{case["reference"]}</div>'
+            f'<div class="nv-clue" style="background:#EEF4FF;color:#1F3A68"><b>👀 겉모습</b><br>{_esc(case["looks"])}</div></div>') if clues else '')
+        + '</div>',
         unsafe_allow_html=True)
 
 def record_card(q, text):
@@ -160,14 +165,7 @@ if not S["done"]:
     door_strip(i)
     st.subheader(f"{i+1}/3 · 다람쥐아파트 {case['door']} 문 앞")
     # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
-    door_scene(i, case["answer"] if i in S["answers"] else None)
-    with st.container(border=True):
-        # 참조번호·겉모습은 감별 단서라서 작은 회색 글씨 대신 눈에 띄는 칸으로 보여 줘요.
-        st.markdown(
-            '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:1.02rem;line-height:1.6">'
-            f'<span style="background:#FFE08A;color:#6B4300;font-weight:900;padding:6px 12px;border-radius:10px">🔖 참조번호 {case["reference"]}</span>'
-            f'<span style="background:#EEF4FF;color:#1F3A68;font-weight:700;padding:6px 12px;border-radius:10px">👀 겉모습: {case["looks"]}</span>'
-            '</div>', unsafe_allow_html=True)
+    door_scene(i, case["answer"] if i in S["answers"] else None, clues=True)
 
     st.info("안내서의 주장을 검증할 질문을 직접 고르세요. 등기가 있다는 사실과 추가 요구의 정당성은 다른 항목이에요.")
     checked=S["checks"].setdefault(i,{})
@@ -240,7 +238,7 @@ else:
     st.info("현실에서는 안내서 속 연락처·QR 대신 별도로 확인한 공식 경로를 이용하세요. 조회가 안 되는 이유를 확인하고, 확인 전에는 안내서가 요구하는 결제나 정보 전달을 보류하세요.")
     me=dd.citizen()
     show_result_card({"color":"#9A3412","place":"다람쥐아파트 관리사무소","game":"가짜 안내서 감별소","emoji":"📬",
-        "title":"독립 확인 완료","subtitle":f"첫 제출 정확도 {score}/3",
+        "title":"따로 확인 완료","subtitle":f"첫 제출 정확도 {score}/3",
         "stats":[("첫 제출 정확도",f"{score}/3"),("사례 수","3")],
         "sections":[("확인 습관",["겉모습으로 단정하지 않기","우편물 존재와 추가 요구를 구분하기","근거가 부족하면 판단 보류"])],
         "nickname":me["nickname"] if me else "","mascot":"trophy" if score==3 else "retry"},
