@@ -13,7 +13,7 @@ def is_playing(number):
     if number == "08": return bool(s.get("coping_v1_started") or s.get("coping_v1_result"))
     if number == "09": return s.get("mafia_v1", {}).get("phase", "setup") != "setup"
     if number == "14":
-        game = s.get("notice_verify_v2", {})
+        game = s.get("notice_verify_v3", {})
         return bool(game.get("checks") or game.get("answers") or game.get("done"))
     return False
 
