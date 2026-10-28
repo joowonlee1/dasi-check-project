@@ -11,7 +11,7 @@ from puzzle_component_ui import create_puzzle_component
 with intro("10", suffix=""):
     st.title("🔐 중고거래 사기단 추리")
     show_key_question("판매자 5명 중 **진짜는 단 1명**. 거래 기록을 **비교**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
-    show_mascot("detective", "거래 기록을 연결할 때마다 새 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
+    show_mascot("sneaker", "거래 기록을 연결할 때마다 새 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
 
 DATA = {
     "sellers": ["한정판러", "급처분해요", "새상품만", "운동화왕", "동네이웃"],
