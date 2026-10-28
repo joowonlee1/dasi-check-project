@@ -153,7 +153,7 @@ def door_scene(i, stamp=None, clues=False, say=None):
         + (('<div class="nv-clues"><div class="t">🔎 안내서에서 보이는 단서</div>'
             f'<div class="nv-clue" style="background:#FFE08A;color:#6B4300"><b>🔖 참조번호(등기번호)</b><br>{case["reference"]}</div>'
             f'<div class="nv-clue" style="background:#EEF4FF;color:#1F3A68"><b>👀 겉모습</b><br>{_esc(case["looks"])}</div>'
-            + (kkangji_say(say[0], say[1], 84) if say else '') + '</div>') if clues else '')
+            + (kkangji_say(say[0], say[1], 120) if say else '') + '</div>') if clues else '')
         + '</div>',
         unsafe_allow_html=True)
 
@@ -193,12 +193,12 @@ TOOL_VIEW = {
 @st.dialog("🧰 조사 결과", width="medium")
 def tool_popup(i, kind, q):
     if kind == "trap":
-        st.markdown(kkangji_say("stop", "잠깐! 안내서에 있는 QR로 확인하면, 안내서를 만든 사람에게 묻는 셈이야!", 130), unsafe_allow_html=True)
+        st.markdown(kkangji_say("stop", "잠깐! 안내서에 있는 QR로 확인하면, 안내서를 만든 사람에게 묻는 셈이야!", 170), unsafe_allow_html=True)
         st.markdown('<div style="margin-top:10px;background:#FEF2F2;border:3px solid #FCA5A5;border-radius:16px;padding:14px 18px;font-size:1.1rem;line-height:1.7;font-weight:700;color:#7F1D1D">'
                     '🚫 확인 실패 · 이 방법으로는 안내서가 진짜인지 알 수 없어요.<br>'
                     '👉 <b>🏛️ 내가 직접 찾은 공식 경로</b>의 도구로 같은 내용을 확인해 보세요.</div>', unsafe_allow_html=True)
     elif kind == "blocked":
-        st.markdown(kkangji_say("think", "고객센터에 묻기 전에, 먼저 공식 조회에서 이 등기번호부터 찾아보자!", 130), unsafe_allow_html=True)
+        st.markdown(kkangji_say("think", "고객센터에 묻기 전에, 먼저 공식 조회에서 이 등기번호부터 찾아보자!", 170), unsafe_allow_html=True)
         st.info("📦 ‘공식 조회에서 등기번호·주소·방문 시각 찾기’를 먼저 눌러 주세요. 어떤 우편물인지 알아야 절차를 물을 수 있어요.")
     else:
         title, pose, line, view = TOOL_VIEW[q]
@@ -220,7 +220,7 @@ def tool_popup(i, kind, q):
                             'background:repeating-linear-gradient(115deg,#FFFDF6 0 22px,#F3EEDF 22px 24px);display:flex;align-items:center;justify-content:center;'
                             f'padding:34px;box-shadow:0 10px 24px #0004;text-align:center;font-size:1.05rem;line-height:1.6;font-weight:700">{text}</div>', unsafe_allow_html=True)
         with right:
-            st.markdown(f'<div style="text-align:center">{mascot_img(pose, 150)}</div>'
+            st.markdown(f'<div style="text-align:center">{mascot_img(pose, 190)}</div>'
                         f'<div style="background:#fff;border:2.5px solid #F1C96B;border-radius:16px;padding:10px 14px;margin-top:8px;'
                         f'font-weight:800;color:#5B4300;line-height:1.55;word-break:keep-all">💬 {line}</div>'
                         '<div style="margin-top:8px;background:#ECFDF3;border:2px solid #86EFAC;border-radius:12px;padding:8px 12px;'
@@ -238,7 +238,7 @@ def stamp_popup(i):
                     f'padding:10px 22px;font-size:2rem;font-weight:900;transform:rotate(-10deg);background:#fff;animation:nv-stamp .5s ease-out both">{label}</span></div>'
                     "<style>@keyframes nv-stamp{0%{transform:scale(2.4) rotate(-20deg);opacity:0}60%{transform:scale(.92) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-10deg);opacity:1}}</style>",
                     unsafe_allow_html=True)
-        st.markdown(mascot_img("hold" if case["answer"]=="판단 보류" else "stamp", 170), unsafe_allow_html=True)
+        st.markdown(mascot_img("hold" if case["answer"]=="판단 보류" else "stamp", 210), unsafe_allow_html=True)
     with right:
         st.markdown(f'<div style="font-size:1.25rem;font-weight:900;color:{color};margin-bottom:6px">다람쥐아파트 {case["door"]} 감별 완료!</div>'
                     f'<div style="font-size:1.08rem;line-height:1.75">{_esc(case["lesson"])}</div>'
@@ -348,7 +348,7 @@ if not S["done"]:
                 st.rerun()
             else:
                 queue_effect("notice")
-                st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 기록 보관함을 한 번 더 살펴봐.",90), unsafe_allow_html=True)
+                st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 기록 보관함을 한 번 더 살펴봐.",130), unsafe_allow_html=True)
                 st.warning("아직 자료와 결론이 충분히 연결되지 않았어요. 같은 번호·주소·시각인지, 조회가 완료됐는지, 추가 요구까지 확인했는지 다시 살펴보세요.")
     if S.get("stamp_pop")==i and not S.get("popup"):
         S.pop("stamp_pop")
