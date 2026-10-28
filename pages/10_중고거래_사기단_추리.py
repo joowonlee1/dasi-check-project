@@ -1,13 +1,7 @@
 from play_ui import intro, bridge
-"""중고거래 사기단 추리: 압수한 사기단 메모를 해독해 단서를 얻고, 논리 표로 진짜 판매자를 찾는 퍼즐.
-
-- 메모 1: 전치 암호(칸 수를 맞춰 다시 배열)
-- 메모 2: 숫자 밀기 암호(시저 암호)
-- 메모 3: 2진수
-- 논리 표: 단서 10개를 모두 써야 답이 하나로 정해지도록 설계했습니다.
-모든 인물·닉네임·메모는 교육용 가상 내용입니다.
-"""
+"""거래 기록 세 묶음의 근거를 연결한 뒤 기존 논리 표로 판매자를 찾는 교육용 게임."""
 import json
+from investigation_ui import attach
 
 import streamlit as st
 import dotori_data as dd
@@ -16,8 +10,8 @@ from puzzle_component_ui import create_puzzle_component
 
 with intro("10", suffix=""):
     st.title("🔐 중고거래 사기단 추리")
-    show_key_question("판매자 5명 중 **진짜는 단 1명**. 사기단 메모를 **해독**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
-    show_mascot("detective", "메모를 하나 풀 때마다 결정적인 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
+    show_key_question("판매자 5명 중 **진짜는 단 1명**. 거래 기록을 **비교**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
+    show_mascot("detective", "거래 기록을 연결할 때마다 새 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
 
 DATA = {
     "sellers": ["한정판러", "급처분해요", "새상품만", "운동화왕", "동네이웃"],
@@ -50,19 +44,19 @@ DATA = {
         "📜 선입금 이체를 요구한 판매자의 가격은 12만 원이다.",
         "📜 오픈채팅으로 연락한 판매자의 가격은 14만 원이다.",
     ],
-    # 메모 1: 4칸으로 가로로 쓴 문장을 세로로 읽어 만든 전치 암호
+    # 조사 1: 4칸으로 가로로 쓴 문장을 세로로 읽어 만든 전치 암호
     "memo1": {"cipher": "외저자자결를부로던가제보메옮판가링냈신기매짜크다", "answer": 4, "options": [2, 3, 4, 6, 8]},
-    # 메모 2: 숫자마다 3칸씩 앞으로 민 시저 암호 (120000 → 453333)
+    # 조사 2: 숫자마다 3칸씩 앞으로 민 시저 암호 (120000 → 453333)
     "memo2": {"before": "선입금 이체를 요구한 판매자의 가격: ", "cipher": "453333", "after": "원", "shift": 3},
-    # 메모 3: 2진수 01110 = 14
+    # 조사 3: 2진수 01110 = 14
     "memo3": {"before": "오픈채팅 판매자의 가격(만 원): ", "bits": "01110", "answer": 14},
     # 추리 표에서 막혔을 때 한 단계씩 보여 주는 힌트(정답 표를 바로 알려 주지 않음)
     "steps": [
         "먼저 ‘누가 무엇’이 바로 적힌 단서 4개를 표에 ⭕로 옮겨요: 동네이웃=앱 채팅, 새상품만=문자, 운동화왕=상품권, 급처분해요=9만 원.",
         "‘전화 = 19만 원’과 ‘신분증 사진 = 가장 비쌈(19만 원)’을 이어 보세요. 전화로 연락한 판매자와 신분증 사진을 요구한 판매자는 같은 사람이에요.",
-        "남은 연락 방식은 외부 메신저·전화·오픈채팅이고, 남은 사람은 한정판러·급처분해요·운동화왕이에요. 상품권을 요구한 운동화왕은 전화(신분증)도, 외부 메신저(가짜 링크, 메모 1)도 아니에요.",
-        "운동화왕이 오픈채팅이면 메모 3에 따라 가격이 정해져요. 급처분해요는 9만 원이라 19만 원인 전화가 될 수 없어요.",
-        "마지막으로 앱 안전결제와 선입금 이체 중 누가 무엇인지 정해요. ‘앱 안전결제 판매자는 문자로 연락하지 않았다’와 메모 2를 써 보세요.",
+        "남은 연락 방식은 외부 메신저·전화·오픈채팅이고, 남은 사람은 한정판러·급처분해요·운동화왕이에요. 상품권을 요구한 운동화왕은 전화(신분증)도, 외부 메신저(가짜 링크, 조사 1)도 아니에요.",
+        "운동화왕이 오픈채팅이면 조사 3에 따라 가격이 정해져요. 급처분해요는 9만 원이라 19만 원인 전화가 될 수 없어요.",
+        "마지막으로 앱 안전결제와 선입금 이체 중 누가 무엇인지 정해요. ‘앱 안전결제 판매자는 문자로 연락하지 않았다’와 조사 2를 써 보세요.",
     ],
     "tactics": {
         "한정판러": "📞 전화로 친근하게 다가와 ‘본인 확인’이라며 신분증 사진을 요구했어요. 신분증 사진은 명의 도용에 쓰일 수 있어요. 가격도 정가(18만 원)보다 비쌌죠.",
@@ -227,14 +221,14 @@ function render(){
   if (G.done) return;
   app.classList.toggle('still', !fresh); fresh = false;
   app.innerHTML = `
-  <section class="hero"><span>🔐 추리 퍼즐 · 메모 해독 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
+  <section class="hero"><span>🔐 추리 퍼즐 · 거래 기록 조사 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
   <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요.</span></section>
   <div class="sellhead">🛍️ 연락해 온 판매자 5명 (중고거래 앱 닉네임)</div>
   <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em><small>판매자 ${i + 1}</small>${esc(s)}</div>`).join('')}</div>
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
-  <div class="chips"><span class="hot">📜 해독한 메모 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
+  <div class="chips"><span class="hot">📜 검증한 거래 기록 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
   <div class="tabs">
-    <button class="${G.tab === 'memo' ? 'on' : ''}" onclick="go('memo')">① 📜 메모 해독</button>
+    <button class="${G.tab === 'memo' ? 'on' : ''}" onclick="go('memo')">① 📜 거래 기록 조사</button>
     <button class="${G.tab === 'grid' ? 'on' : ''}" onclick="go('grid')">② 🧩 추리 표</button>
     <button class="${G.tab === 'pick' ? 'on' : ''}" onclick="go('pick')">③ 🏁 진짜 지목</button>
   </div>
@@ -246,55 +240,16 @@ function render(){
 function go(t){ G.tab = t; fresh = true; render(); }
 function toast(t, el){ const x = $('toast'); if (x) x.textContent = t; if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
 
-// ───── ① 메모 해독 ─────
+// ───── ① 거래 기록 조사 ─────
 function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 0; i < k; i++) cols.push(ct.slice(i * r, (i + 1) * r)); let out = ''; for (let i = 0; i < r; i++) for (let c = 0; c < k; c++) out += cols[c][i]; return {out, cols, r}; }
 function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
-  const m1 = D.memo1, m2 = D.memo2, m3 = D.memo3;
-  const {out, cols, r} = decodeColumns(m1.cipher, G.k);
-  let gridHtml = '';
-  for (let i = 0; i < r; i++) for (let c = 0; c < G.k; c++) gridHtml += `<span style="animation-delay:${(i * G.k + c) * .015}s">${cols[c][i]}</span>`;
-  const dec2 = shiftBack(m2.cipher, G.shift);
-  const sum = G.lamps.reduce((a, v, i) => a + (v ? [16, 8, 4, 2, 1][i] : 0), 0);
-  $('body').innerHTML = `
-  <div class="story">🚓 경찰 사이버수사대가 중고거래 사기단에게서 <b>작업 메모 3장</b>을 압수했어요. 메모는 암호로 적혀 있어요. 하나씩 풀면 <b>추리 표에 쓸 단서</b>가 열려요.</div>
-  ${memoExample()}
-
-  <section class="memo ${G.solved[0] ? 'done' : ''}" id="m0"><span class="tag">${G.solved[0] ? '해독 완료 ✔' : '메모 1 · 자리 바꾸기'}</span>
-    <h3>📜 메모 1 · 글자 순서가 뒤섞인 메모</h3>
-    <div class="code">${esc(m1.cipher)}</div>
-    <p style="margin:6px 0">사기단은 문장을 <b>몇 칸짜리 줄</b>에 가로로 쓴 뒤, <b>세로로</b> 읽어 옮겨 적었어요. 칸 수를 맞히면 문장이 돼요.</p>
-    ${G.solved[0] ? '' : `<div class="optlabel">👆 칸 수를 눌러 바꿔 보세요 · 지금 고른 칸: <b>${G.k}칸</b></div>
-    <div class="opts">${m1.options.map(k => `<button class="${k === G.k ? 'on' : ''}" onclick="G.k=${k};render()">${k === G.k ? '✔ ' : ''}${k}칸</button>`).join('')}</div>
-    <div class="tgrid" style="grid-template-columns:repeat(${G.k},1fr);max-width:${G.k * 52}px">${gridHtml}</div>`}
-    <div class="read ${G.solved[0] ? 'good' : ''}">가로로 읽으면 → ${esc(G.solved[0] ? decodeColumns(m1.cipher, m1.answer).out : out)}</div>
-    ${G.solved[0] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[0])}</div>` : `<div class="row"><button class="ok" onclick="check1()">이 칸 수로 해독 완료!</button><button onclick="hint(0)">💡 힌트</button></div>`}
-    ${G.hints[0] && !G.solved[0] ? '<div class="hint">💡 메모 귀퉁이에 ■■■■ 네모 4개가 그려져 있어요.</div>' : ''}
-  </section>
-
-  <section class="memo ${G.solved[1] ? 'done' : ''}" id="m1"><span class="tag">${G.solved[1] ? '해독 완료 ✔' : '메모 2 · 숫자 밀기'}</span>
-    <h3>📜 메모 2 · 숫자가 이상한 메모</h3>
-    <p style="margin:4px 0">${esc(m2.before)}<span class="code">${esc(m2.cipher)}</span>${esc(m2.after)}</p>
-    <p style="margin:6px 0">사기단은 숫자를 <b>모두 같은 칸 수만큼 앞으로</b> 밀어 적었어요(9 다음은 0). 몇 칸 되돌려야 가격표의 금액이 될까요?</p>
-    ${G.solved[1] ? '' : `<div class="stepper"><button onclick="G.shift=(G.shift+9)%10;render()">◀</button><b>${G.shift}</b><button onclick="G.shift=(G.shift+1)%10;render()">▶</button><span>칸 되돌리기</span></div>`}
-    <div class="digits">${(G.solved[1] ? shiftBack(m2.cipher, m2.shift) : "??????").split('').map((d, i) => `<span style="animation-delay:${i * .04}s">${d}</span>`).join('')}<span style="background:none;color:#20483F;width:auto">원</span></div>
-    <div class="prices">💰 가격표에 있는 금액은 <span>90000</span><span>120000</span><span>140000</span><span>160000</span><span>190000</span>뿐이에요. 되돌린 숫자가 이 중 하나가 되어야 해요.</div>
-    ${G.solved[1] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[1])}</div>` : `<div class="row"><input type="number" aria-label="직접 해독한 금액" placeholder="직접 해독한 금액(원)" value="${esc(G.m2val || '')}" oninput="G.m2val=this.value"><button class="ok" onclick="check2()">해독 결과 확인</button><button onclick="hint(1)">💡 힌트</button></div>`}
-    ${G.hints[1] && !G.solved[1] ? '<div class="hint">💡 맨 앞 4가 1이 되려면 몇 칸 되돌려야 할까요? (4 → 3 → 2 → 1)</div>' : ''}
-  </section>
-
-  <section class="memo ${G.solved[2] ? 'done' : ''}" id="m2"><span class="tag">${G.solved[2] ? '해독 완료 ✔' : '메모 3 · 0과 1'}</span>
-    <h3>📜 메모 3 · 0과 1로만 적힌 메모</h3>
-    <p style="margin:4px 0">${esc(m3.before)}<span class="code">${esc(m3.bits)}</span></p>
-    <p style="margin:6px 0">2진수예요. 각 자리는 왼쪽부터 <b>16 · 8 · 4 · 2 · 1</b>을 뜻해요. 메모의 숫자를 보고 <b>어느 자리에 1이 있는지 직접 찾아</b> 전구를 켠 뒤, <b>합을 직접 계산</b>해서 적어 보세요.</p>
-    <div class="lamps">${[16, 8, 4, 2, 1].map((v, i) => `<div class="lamp ${G.lamps[i] ? 'on' : ''}" role="button" tabindex="0" onclick="lamp(${i})" onkeydown="if(event.key==='Enter')lamp(${i})"><div class="v">${v}</div><div class="bit">?</div>${G.lamps[i] ? '💡' : '⚫'}</div>`).join('')}</div>
-    <div class="sum">켠 전구 ${G.lamps.filter(Boolean).length}개 · 합은 직접 더해 보세요</div>
-    ${G.solved[2] ? `<div class="got">🔓 새 단서: ${esc(D.cipher_clues[2])}</div>` : `<div class="row" style="align-items:center"><span style="font-weight:800">가격 =</span><input class="ansin" type="number" min="0" max="31" value="${esc(G.m3val || '')}" oninput="G.m3val=this.value" aria-label="2진수를 바꾼 값"><span style="font-weight:800">만 원</span><button class="ok" onclick="check3()">해독 완료!</button><button onclick="hint(2)">💡 힌트</button></div>`}
-    ${G.hints[2] && !G.solved[2] ? '<div class="hint">💡 01110을 한 자리씩 16 · 8 · 4 · 2 · 1 아래에 맞춰 써 보세요. 1이 있는 자리의 값만 더해요.</div>' : ''}
-  </section>
-  ${cluesOpen() === 3 ? `<button class="go" style="width:100%" onclick="go('grid')">🧩 단서 3개 확보! 추리 표로 가기 ▶</button>` : ''}`;
+ $('body').innerHTML='<p class="story">거래 기록을 조사해 단서 세 개를 확보하세요. 자료의 거래번호와 마지막 합의를 연결한 뒤 추리 표를 완성해요.</p>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
 }
+function iqComplete(i){unlock(i);}
+function iqHintUsed(i){G.hints[i]=true;}
+function iqWrong(i){G.wrongMemo++;}
 function memoExample(){
   return `<section class="ex"><h3>👀 먼저 예시로 볼까요? 암호 3가지 푸는 법</h3>
   <div class="exrow">
@@ -342,7 +297,7 @@ function gridExample(){
 }
 function hint(i){ G.hints[i] = true; render(); }
 function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
-function unlock(i){ G.solved[i] = true; toastMsg = '🔓 해독 성공! 추리 표에 새 단서가 열렸어요.'; render(); }
+function unlock(i){ G.solved[i] = true; toastMsg = '🔓 조사 완료! 추리 표에 새 단서가 열렸어요.'; render(); }
 function check1(){ if (G.k === D.memo1.answer) unlock(0); else { G.wrongMemo++; toast('아직 문장이 안 돼요. 다른 칸 수로 해 보세요.', $('m0')); } }
 function check2(){ if (G.shift === D.memo2.shift && Number(G.m2val) === Number(shiftBack(D.memo2.cipher,D.memo2.shift))) unlock(1); else { G.wrongMemo++; toast('되돌리는 칸 수와 직접 계산한 금액을 함께 확인하세요.', $('m1')); } }
 function check3(){
@@ -356,7 +311,7 @@ function check3(){
 function cellKey(kind, s, v){ return kind + '|' + s + '|' + v; }
 function gridTab(){
   const clueHtml = D.base.map((t, i) => clueBtn('b' + i, t, false, false))
-    .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 메모 ${i + 1}을 해독하면 열려요`, !G.solved[i], true))).join('');
+    .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 메모 ${i + 1}의 근거를 연결하면 열려요`, !G.solved[i], true))).join('');
   $('body').innerHTML = `
   <div class="story"><b>판매자 한 명당 연락 방식·요구 사항·가격은 각각 하나씩이에요. 각 항목도 한 사람에게만 대응해요. 한 표의 각 행·열마다 ⭕는 하나예요.</b><br>👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
@@ -422,6 +377,7 @@ function cell(kind, s, v){
 }
 function resetGrid(){ G.grid = {}; G.bad = {}; render(); }
 function checkGrid(){
+  if(!G.solved.every(Boolean)){toast("먼저 거래 기록 3건의 근거 연결을 완료하세요.");return;}
   const os = Object.entries(G.grid).filter(([, v]) => v === 2).map(([k]) => k);
   if (os.length < 15) { toast(`⭕가 ${os.length}개예요. 판매자마다 연락 방식·요구·가격을 하나씩, 모두 15개를 채워요.`); return; }
   G.bad = {};
@@ -436,10 +392,11 @@ function pickTab(){
   $('body').innerHTML = `
   <div class="story">🏁 진짜 판매자라고 생각하는 사람을 골라요. <b>앱 밖으로 나가자고 하지 않고, 안전하게 거래하는 판매자</b>는 누구였을까요?</div>
   <div class="pick" id="pk">${D.sellers.map((s, i) => `<button class="${G.pick === s ? 'on' : ''}" onclick="G.pick='${esc(s)}';render()"><em>${D.emoji[i]}</em>${esc(s)}</button>`).join('')}</div>
-  <button class="go" style="width:100%" ${G.pick ? '' : 'disabled'} onclick="answer()">🔍 이 판매자가 진짜예요!</button>
-  ${G.gridChecked ? '' : '<p style="font-size:.88rem;color:#52616B">표를 다 채우지 않아도 지목할 수 있어요. 대신 표까지 완성하면 별을 더 받아요.</p>'}`;
+  <button class="go" style="width:100%" ${G.pick && G.gridChecked && G.solved.every(Boolean) ? '' : 'disabled'} onclick="answer()">🔍 이 판매자가 진짜예요!</button>
+  ${G.gridChecked ? '' : '<p style="font-size:.88rem;color:#52616B">거래 기록 3건을 조사하고 추리표를 완성해야 최종 지목할 수 있어요.</p>'}`;
 }
 function answer(){
+  if(!G.solved.every(Boolean)||!G.gridChecked){toast("거래 기록 3건과 추리표를 완성한 뒤 지목하세요.");return;}
   if (G.pick !== D.real) { G.wrongPick++; toast(`${G.pick}의 요구를 다시 떠올려 봐요. 표를 확인하고 다시 골라요!`, $('pk')); return; }
   G.done = true;
   const box = $('app');
@@ -451,7 +408,7 @@ function answer(){
 }
 function final(){
   const allMemo = G.solved.every(Boolean);
-  const stars = 1 + (allMemo && G.gridChecked ? 1 : 0) + (G.hints.every(h => !h) && G.stepHint === 0 && G.wrongPick === 0 ? 1 : 0);
+  const stars = 1 + (allMemo && G.gridChecked ? 1 : 0) + (G.hints.every(h => !h) && G.stepHint === 0 && G.wrongPick === 0 && G.wrongMemo === 0 ? 1 : 0);
   const hintsUsed = G.hints.filter(Boolean).length + G.stepHint;
   sendResult({game: 'memo', type: 'finish', stars, hints: hintsUsed, wrong: G.wrongPick});
   const plays = STATS.plays || 0;
@@ -462,7 +419,7 @@ function final(){
   <section class="result win"><div class="big">🏡</div><b>진짜 판매자는 ‘동네이웃’이었어요!</b>
   <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
   <span class="stamp">사기단 검거!</span>${sp}</section>
-  <p style="text-align:center;font-size:.9rem;color:#52616B">⭐ 정답 · ⭐ 메모 3장 해독 + 표 완성 · ⭐ 힌트 없이 한 번에 지목</p>
+  <p style="text-align:center;font-size:.9rem;color:#52616B">⭐ 정답 · ⭐ 거래 기록 3건 조사 + 표 완성 · ⭐ 힌트 없이 한 번에 지목</p>
   ${others}
   <h3>📢 판매자별 수법 공개</h3>
   <div class="tact">${D.sellers.map((s, i) => `<div class="${s === D.real ? 'real' : ''}" style="animation-delay:${i * .08}s"><b>${D.emoji[i]} ${esc(s)} · ${esc(D.solution[s].join(' · '))}</b>${esc(D.tactics[s])}</div>`).join('')}</div>
@@ -473,7 +430,7 @@ function final(){
   ④ <b>신분증 사진·상품권 결제</b> 요구는 거절해요.</section>
   <button class="go" style="width:100%" onclick="restart()">🔄 처음부터 다시</button>`;
 }
-function restart(){ fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
+function restart(){ iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
@@ -512,7 +469,7 @@ def ask_ai(question, snap):
     secret = "; ".join(f"{name}: {' / '.join(vals)}" for name, vals in DATA["solution"].items())
     prompt = (
         "[퍼즐 단서 - 학생이 볼 수 있는 것]\n" + "\n".join(clues)
-        + f"\n[해독한 메모 수] {sum(map(bool, solved))} / 3"
+        + f"\n[검증한 거래 기록 수] {sum(map(bool, solved))} / 3"
         + "\n[학생이 표에 ⭕로 표시한 칸] " + (", ".join(marks) or "없음")
         + "\n[정답 - 학생에게 직접 말하지 말 것] " + secret
         + "\n[학생 질문] " + question
@@ -539,7 +496,7 @@ def ask_ai(question, snap):
 
 
 answers = st.session_state.setdefault(AI_KEY, [])
-page = bridge(HTML, "10").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(attach(HTML), "10").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"),
                                       ai={"answers": answers, "left": AI_MAX - len(answers)})
 
@@ -566,10 +523,5 @@ elif event and event.get("type") == "finish":
 dd.show_hall_note(st.session_state.get("memo_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
-    st.markdown(
-        "- **AI 힌트**: 정해진 힌트 대신 내가 궁금한 걸 AI(Gemini)에게 5번까지 물어볼 수 있어요. 질문 글과 표에 표시한 ⭕만 보내고, 이름 같은 개인정보는 보내지 않아요.\n"
-        "- **암호화와 복호화**: 메모 1은 글자 자리를 바꾸는 전치 암호, 메모 2는 숫자를 같은 칸만큼 미는 시저 암호예요. 열쇠(칸 수)를 알면 거꾸로 풀 수 있어요.\n"
-        "- **2진수**: 메모 3의 01110은 각 자리가 16·8·4·2·1을 뜻해서 8 + 4 + 2 = 14가 돼요.\n"
-        "- **제약 조건과 완전 탐색**: 논리 표는 가능한 172만 8천 가지 경우를 모두 검사해서, 단서 10개를 다 쓰면 답이 딱 하나만 남도록 만들었어요."
-    )
+    st.markdown("- 거래번호로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
 st.caption("교육용 가상 이야기입니다. 실제 거래 앱·판매자와 관계없으며, 진행은 새로고침하면 초기화됩니다.")
