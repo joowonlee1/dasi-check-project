@@ -341,6 +341,8 @@ function intro(){
   <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚀 ${G.stage + 1}단계 시작 · ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>`;
 }
 
+// 단계 화면에서 바로 전 화면(단계 설명)으로 돌아가요. 퍼지던 시뮬레이션은 멈춰요.
+function backIntro(){ clearInterval(timer); clearTimeout(timer); timer = null; closeQuiz(); intro(); toTop(); }
 function startStage(idx){
   clearInterval(timer); clearTimeout(timer); timer = null;
   G.stage = idx;
@@ -362,6 +364,7 @@ function render(){
   const st = S.st, c = counts(), n = st.n;
   const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}단계` : '';
   $('app').innerHTML = `
+  <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="backIntro()">← 이전 화면으로</button>
   <section class="hero"><span>${G.stage + 1}단계 · 수법 ${esc(st.icon + ' ' + st.tactic)}</span><b>${S.phase === 'prep' ? '이 소식이 곧 퍼지려고 해요! 먼저 1명을 지켜요' : '소식이 마을에 퍼지고 있어요!'}</b></section>
   <div class="post"><div class="ava">📢</div><div><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div></div>
   <div class="hud"><span class="cards">🃏 남은 카드 ${S.cards}장 (1장 = 1명 지키기·정정)</span><span>🔴 속은 사람 ${c.I}명</span><span>🛡️ 지킨 사람 ${c.R}명</span><span>💬 정정한 사람 ${c.C}명</span><span>⚪ 아직 모르는 사람 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
