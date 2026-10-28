@@ -20,8 +20,48 @@ POSES = {
     "hint": ("mascot_six.png", 17, 505, 524, 947, "전구와 함께 힌트를 알려주는 캐릭터"),
     "retry": ("mascot_six.png", 579, 564, 970, 951, "다시 도전을 응원하는 캐릭터"),
     "trophy": ("mascot_six.png", 1012, 559, 1512, 947, "트로피를 들고 축하하는 캐릭터"),
+    # 새로 받은 깡지 17가지 (assets/mascot_more.png · 투명 배경으로 정리한 시트)
+    "letter": ("mascot_more.png", 34, 28, 266, 272, "우편물을 들고 갸웃하는 캐릭터"),
+    "stamp": ("mascot_more.png", 339, 36, 560, 264, "도장을 찍는 캐릭터"),
+    "app": ("mascot_more.png", 639, 46, 860, 254, "휴대폰 화면을 보는 캐릭터"),
+    "postman": ("mascot_more.png", 939, 24, 1160, 275, "우체국 모자를 쓰고 편지를 분류하는 캐릭터"),
+    "puzzle": ("mascot_more.png", 1226, 44, 1474, 256, "퍼즐 조각을 든 캐릭터"),
+    "megaphone": ("mascot_more.png", 1532, 39, 1768, 260, "확성기로 외치는 캐릭터"),
+    "headset": ("mascot_more.png", 27, 349, 272, 550, "헤드셋으로 상담 전화를 하는 캐릭터"),
+    "hold": ("mascot_more.png", 332, 333, 568, 566, "팔짱을 끼고 고민하는 캐릭터"),
+    "shock": ("mascot_more.png", 627, 337, 872, 562, "문자를 보고 놀란 캐릭터"),
+    "vote": ("mascot_more.png", 945, 334, 1155, 566, "투표하는 캐릭터"),
+    "sneaker": ("mascot_more.png", 1244, 331, 1456, 568, "운동화를 살펴보는 캐릭터"),
+    "chart": ("mascot_more.png", 1525, 354, 1774, 545, "그래프를 가리키는 캐릭터"),
+    "unlock": ("mascot_more.png", 38, 637, 261, 863, "서랍 자물쇠를 여는 캐릭터"),
+    "panic": ("mascot_more.png", 338, 642, 562, 857, "시계를 보며 허둥지둥하는 캐릭터"),
+    "hooray": ("mascot_more.png", 630, 639, 869, 861, "꽃가루 속에서 만세하는 캐릭터"),
+    "call112": ("mascot_more.png", 948, 642, 1152, 858, "112에 전화하는 캐릭터"),
+    "think": ("mascot_more.png", 1243, 638, 1457, 862, "골똘히 생각하는 캐릭터"),
 }
 PAD = 14  # 테두리 선이 가장자리에 붙지 않도록 남기는 여백(px)
+
+
+def _clear_white_background(part):
+    """가장자리와 이어진 흰 바탕만 투명하게 바꿔요(눈·얼굴 속 흰색은 그대로). 어느 배경 위에서도 깡지가 똑같이 보여요."""
+    from PIL import Image, ImageDraw
+
+    rgba = part.convert("RGBA")
+    r, g, b, a = rgba.split()
+    near_white = Image.eval(Image.merge("RGB", (r, g, b)).convert("L"), lambda v: 255 if v >= 236 else 0)
+    w, h = near_white.size
+    for x in range(0, w, 4):
+        for y in (0, h - 1):
+            if near_white.getpixel((x, y)) == 255:
+                ImageDraw.floodfill(near_white, (x, y), 128)
+    for y in range(0, h, 4):
+        for x in (0, w - 1):
+            if near_white.getpixel((x, y)) == 255:
+                ImageDraw.floodfill(near_white, (x, y), 128)
+    background = near_white.point(lambda v: 255 if v == 128 else 0)
+    alpha = Image.composite(Image.new("L", rgba.size, 0), a, background)
+    rgba.putalpha(alpha)
+    return rgba
 
 
 @lru_cache(maxsize=16)
@@ -35,6 +75,7 @@ def _pose_data(pose):
         w, h = image.size
         box = (max(0, x1 - PAD), max(0, y1 - PAD), min(w, x2 + PAD), min(h, y2 + PAD))
         part = image.convert("RGBA").crop(box)
+    part = _clear_white_background(part)
     part.thumbnail((480, 480))  # 화면 표시용으로 줄여 전송량을 줄입니다.
     buffer = io.BytesIO()
     part.save(buffer, format="PNG", optimize=True)
