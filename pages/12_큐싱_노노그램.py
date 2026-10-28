@@ -146,6 +146,20 @@ table.board{border-collapse:collapse;touch-action:none;user-select:none;-webkit-
 <main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
+const IQ_THEME = 'lab';
+// 증거 복원실 감식 보드(코르크판) 모양의 큰 창 (큐싱 노노그램 전용)
+function boardPop(o, then){
+  jkOverlay(`<div class="jk-panel" style="background:#C8A06A;background-image:radial-gradient(#B8905A 1px,transparent 1.5px);background-size:9px 9px;border:10px solid #7C5A34;border-radius:14px;padding:18px;box-shadow:0 20px 50px #0007">
+   <div style="position:relative;background:#FFFDF5;border-radius:4px;padding:18px 18px 14px;box-shadow:0 6px 14px #0003;transform:rotate(-.8deg)">
+    <span style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:1.6rem">📌</span>
+    <div style="font-size:.85rem;font-weight:900;color:#92400E;letter-spacing:.08em">🅿️ 도토리 공영주차장 · 증거 복원실 ${o.tag?'· '+o.tag:''}</div>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:8px">${jkImg(o.mascot,145)}
+     <div style="flex:1"><div style="font-size:1.4rem;font-weight:900;color:#3F2A12">${o.title}</div>
+     <div style="margin-top:6px;line-height:1.7;color:#1F2937">${o.body}</div></div></div>
+    ${o.extra||''}
+    <button data-close style="margin-top:14px;width:100%;min-height:50px;border:0;border-radius:10px;background:#7C5A34;color:#FFF7E6;font:800 1.05rem system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div></div>`, then);
+}
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const SOL = D.stages.map(s => s.pic.map(row => row.split('').map(ch => ch === '#' ? 1 : 0)));
@@ -294,6 +308,11 @@ function checkSolved(){
   render();
   const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
   G.justSolved = false;
+  const s = D.stages[st];
+  boardPop({mascot:'puzzle', tag:s.name, title:`🧩 ${esc(s.title)} 복원 완료!`, body:esc(s.lesson),
+    // 큰 창은 게임 화면 밖이라 그림을 칸마다 직접 색칠해서 보여 줘요.
+    extra:`<div style="display:flex;justify-content:center;margin-top:10px"><div style="display:grid;grid-template-columns:repeat(${s.pic.length},${s.pic.length>8?14:20}px);gap:2px;background:#fff;padding:8px;border:2px solid #3F2A12;border-radius:6px">${s.pic.join('').split('').map(ch=>`<i style="display:block;aspect-ratio:1;background:${ch==='#'?'#1F2937':'#F1F5F9'}"></i>`).join('')}</div></div>`,
+    button:'이제 사실을 조사하러 가기 ▶'});
 }
 
 function hint(){
@@ -347,6 +366,9 @@ function iqComplete(i){
  const st=i-3;
  G.stars[st]=1+(G.hints[st]===0?1:0)+(G.checks[st]===0?1:0);
  sendResult({game:'nono',type:'clear',stage:st,stars:G.stars[st],hints:G.hints[st]});render();
+ boardPop({mascot:st===2?'hooray':'detective', tag:'감식 보고서', title:`🔎 ${esc(IQ_CASES[i].title.split('·')[0].trim())} 조사 완료`,
+   body:esc(IQ_CASES[i].lesson)+`<br><b style="font-size:1.2rem">${'⭐'.repeat(G.stars[st])}${'☆'.repeat(3-G.stars[st])}</b>`,
+   button: st<2 ? '다음 증거 조각으로 ▶' : '최종 결과 보기 ▶'});
 }
 function iqHintUsed(i){G.hints[i-3]++;}
 function iqWrong(i){G.checks[i-3]++;}
