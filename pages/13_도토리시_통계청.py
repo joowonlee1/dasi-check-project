@@ -30,9 +30,38 @@ show_mascot("chart", "숫자는 처음엔 0이에요. 누군가 게임을 끝낼
 dd.stamp("13")
 
 
+# 숫자 카드(st.metric)를 색 있는 카드로 꾸며요.
+st.markdown("""<style>
+[data-testid=stMetric]{background:linear-gradient(135deg,#F0FDFA,#FFFFFF);border:2px solid #99F6E4;border-radius:16px;padding:12px 16px}
+[data-testid=stMetricLabel] p{font-weight:800!important;color:#115E59!important}
+[data-testid=stMetricValue]{font-size:2rem!important;font-weight:900!important;color:#0F766E!important}
+.sb-row{display:grid;grid-template-columns:minmax(120px,38%) 1fr 64px;gap:10px;align-items:center;margin:7px 0}
+.sb-label{font-weight:700;color:#1F2937;line-height:1.35;word-break:keep-all;font-size:.95rem}
+.sb-track{height:24px;background:#EEF2F1;border-radius:999px;overflow:hidden}
+.sb-fill{height:100%;border-radius:999px;min-width:6px;transition:width .6s}
+.sb-val{font-weight:900;text-align:right;color:#0F766E}
+.sb-box{background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:10px 16px;margin:6px 0 4px}
+@media (max-width:640px){.sb-row{grid-template-columns:1fr 54px}.sb-label{grid-column:1/3}}
+</style>""", unsafe_allow_html=True)
+
+
 def bar(rows, label, value, unit="%"):
-    df = pd.DataFrame(rows, columns=[label, value])
-    st.bar_chart(df, x=label, y=value, horizontal=True, color=GREEN, height=max(160, 46 * len(rows)))
+    """막대그래프: 이름을 자르지 않고 다 보여 주고, 막대 끝에 숫자를 붙여요. 가장 높은 막대는 주황색으로 강조해요."""
+    rows = list(rows)
+    if not rows:
+        return
+    top = max(v for _, v in rows)
+    scale = 100 if unit == "%" else max(top, 1)
+    html_rows = []
+    for name, v in rows:
+        color = "#F97316" if top > 0 and v == top else GREEN
+        width = 0 if not v else max(3, min(100, v / scale * 100))
+        html_rows.append(f'<div class="sb-row"><div class="sb-label">{escape(str(name))}</div>'
+                         f'<div class="sb-track"><div class="sb-fill" style="width:{width:.1f}%;background:{color}"></div></div>'
+                         f'<div class="sb-val">{v:g}{unit}</div></div>')
+    note = "" if top > 0 else '<div style="color:#64748B;font-size:.9rem;margin-top:4px">👏 아직 모두 0이에요. 기록이 쌓이면 막대가 자라요.</div>'
+    st.markdown(f'<div class="sb-box"><div style="font-size:.85rem;color:#64748B;font-weight:700">{escape(value)}</div>'
+                + "".join(html_rows) + note + "</div>", unsafe_allow_html=True)
 
 
 def empty():
@@ -65,6 +94,10 @@ with tab_stats:
             b.metric("탈출 성공", f"{dd.pct(data.get('escaped', 0), plays)}%")
             c.metric("힌트 없이 탈출", f"{dd.pct(data.get('nohint', 0), plays)}%")
             bar([(f"🔒 잠금 {k}", dd.pct(data.get(f"lock{k}", 0), plays)) for k in (1, 2, 3)], "잠금", "푼 비율(%)")
+            # 결말 나누기: 포기와 시간 초과 실패를 따로 세요.
+            gave = data.get("gaveup", 0)
+            bar([("🔓 탈출 성공", dd.pct(data.get("escaped", 0), plays)), ("🏳️ 포기", dd.pct(gave, plays)),
+                 ("⏳ 시간 초과", dd.pct(max(0, plays - data.get("escaped", 0) - gave), plays))], "결말", "결말 비율(%)")
             st.caption("실패한 도전도 함께 세요. 비율이 뚝 떨어지는 잠금이 사람들이 가장 많이 막히는 곳이에요.")
 
     elif game == "fakenews":
@@ -184,7 +217,7 @@ with tab_hall:
         st.dataframe(rows, hide_index=True, width="stretch")
         st.caption(f"전체 {len(entries)}명 중 상위 20명 · 기록이 같으면 같은 순위예요.")
     if hall_game == "escape":
-        st.caption("방탈출 순위: 탈출 성공 → 많이 푼 잠금 → 힌트 적은 순 → 재검토 적은 순 → 빠른 순. 실패한 도전도 기록돼요.")
+        st.caption("방탈출 순위: 탈출 성공 → 많이 푼 잠금 → (같으면 포기보다 시간 초과가 위) → 힌트 적은 순 → 재검토 적은 순 → 빠른 순. 실패한 도전도 기록돼요.")
         # 예전 방탈출 페이지에 있던 '탈출 랭킹' 기록도 지우지 않고 그대로 보여 줘요.
         with st.expander("📜 예전 방탈출 탈출 랭킹 기록 보기"):
             try:
