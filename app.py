@@ -1024,6 +1024,10 @@ if len(history) >= 2:
     all_pages = {home.url_path: home, citizen_page.url_path: citizen_page}
     all_pages.update({page.url_path: page for page in feature_pages})
     previous = all_pages.get(history[-2])
+    # 다른 페이지를 보다가 시민증 페이지에서 로그인(또는 둘러보기)하면, 보던 페이지로 바로 돌아가요.
+    if st.session_state.pop("login_return", False) and here == citizen_page.url_path and previous is not None:
+        st.switch_page(previous)
+st.session_state.pop("login_return", None)
    
 
 if current:
