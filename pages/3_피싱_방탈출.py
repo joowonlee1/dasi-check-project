@@ -565,18 +565,20 @@ def show_status_bar():
         with right:
             countdown()
     from game_phone import show_phone
-    show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text)
+    show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False))
 
 
 def hint_panel(stage):
     with st.expander("💡 막혔을 때 힌트 (힌트 하나당 게임 시계 +3분)"):
         show_mascot("hint", "필요할 때 한 단계씩 확인해요. 힌트 버튼을 누르면 사용 횟수가 늘어요.", width=90)
+        st.caption("힌트를 보는 동안 게임 시계가 흘러서 재촉 문자가 올 수 있어요. 그때는 창이 저절로 뜨지 않고 ‘📱 나의 폰’ 버튼에 새 문자로 표시돼요.")
         used = game["hints"][stage]
 
         if used < len(HINTS[stage]):
             if st.button("힌트 보기" if used == 0 else "힌트 하나 더 보기", key=f"escape_hint_{stage}"):
                 game["hints"][stage] += 1
                 spend("hint")
+                game["phone_quiet"] = True  # 힌트를 읽는 중이니 새 문자가 와도 폰 창은 저절로 열지 않아요.
                 st.rerun()
 
         for text in HINTS[stage][:game["hints"][stage]]:
@@ -905,9 +907,32 @@ def save_record(escaped):
 def show_hall_status():
     status = game.get("rank_status")
     if not game.get("rank_uid"):
-        st.info("🌱 연습 모드라서 명예의 전당에는 올리지 않았어요. 시민증으로 시작하면 성공·실패 기록이 모두 올라가요.")
+        if st.session_state.get("admin_open") and not dd.citizen():
+            st.info("🌱 관리자 모드는 연습 모드로만 플레이돼서 명예의 전당에는 올리지 않았어요.")
+        else:
+            st.info("🌱 연습 모드라서 명예의 전당에는 올리지 않았어요. 시민증으로 시작하면 성공·실패 기록이 모두 올라가요.")
     else:
         dd.show_hall_note(status)
+
+
+def show_number_compare():
+    """사칭 번호와 저장된 이모 번호를 나란히 놓고, 뒤바뀐 끝 두 자리를 색으로 짚어 줘요(성공·실패 엔딩 공통)."""
+    def row(icon, label, number, color, bg):
+        head, tail = number[:-2], number[-2:]
+        return (f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:{bg};border-radius:12px;padding:10px 14px;margin:6px 0">'
+                f'<span style="font-weight:800;min-width:9.5em">{icon} {label}</span>'
+                f'<span style="font-size:1.6rem;font-weight:900;letter-spacing:.06em;font-family:ui-monospace,Consolas,monospace">{head}'
+                f'<span style="background:{color};color:#fff;border-radius:8px;padding:0 6px;margin-left:2px">{tail}</span></span></div>')
+    st.markdown(
+        '<div style="border:3px solid #F59E0B;border-radius:18px;padding:14px 16px;margin:.8rem 0;background:#FFFBEB">'
+        '<div style="font-size:1.15rem;font-weight:900;margin-bottom:4px">🔍 사실 두 번호는 일부러 비슷하게 만들었어요</div>'
+        + row("📩", "문자 속 사칭 번호", "010-6620-1184", "#DC2626", "#FEE2E2")
+        + row("📒", "저장된 이모 번호", "010-6620-1148", "#16A34A", "#DCFCE7")
+        + '<div style="margin-top:8px;line-height:1.65">끝 두 자리 <b>84 ↔ 48</b>만 바꾼 교육용 장치예요. 얼핏 보면 같은 번호 같지만, '
+        '원래 저장된 연락처와 <b>한 자리씩 비교</b>하면 달라요. 다만 번호가 다르다는 사실만으로 사기를 확정하는 것은 아니에요. '
+        '<b>원래 저장된 번호로 직접 확인</b>하는 게 핵심이에요.</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def show_ending():
@@ -930,7 +955,7 @@ def show_ending():
         "4. 문자에 새로 적힌 연락처 대신, 이전부터 저장된 이모 번호로 따로 사실을 확인했어요.\n"
         "5. 최초 통화·후속 문자·이모의 확인 결과를 대조해 실제 가족의 요청과 다르다는 결론을 냈어요."
     )
-    st.info("문자 속 사칭 번호와 저장된 이모 번호는 끝 두 자리를 바꿔 비슷하게 만든 교육용 장치예요. 얼핏 같은 번호라고 믿지 않고 원래 저장된 연락처와 비교하는 연습이에요. 번호가 다르다는 사실만으로 사기를 확정하는 것은 아니에요.")
+    show_number_compare()
     st.caption("휴대전화 해킹 여부나 구체적인 범행 기술까지 입증한 것은 아니에요.")
 
     first, second, third, fourth = st.columns(4)
@@ -1019,6 +1044,7 @@ def show_failure():
         "그래도 기억할 것: 실제 상황에는 제한 시간이 없습니다. 상대가 아무리 재촉해도 "
         "요구를 멈추고, 원래 저장된 번호로 직접 확인하는 데 시간을 써도 괜찮아요."
     )
+    show_number_compare()
 
     first, second, third = st.columns(3)
     first.metric("해제한 잠금", f"{game['unlocked']} / 3")
@@ -1293,7 +1319,10 @@ def show_entry():
 
         citizen = dd.citizen()
 
-        if not citizen:
+        if not citizen and st.session_state.get("admin_open"):
+            # 관리자 모드는 시민증이 아니라서 랭킹에 참여하지 않아요.
+            st.info("🔑 관리자 모드는 연습 모드로만 플레이돼요. 명예의 전당 기록은 남지 않아요. 기록을 남기려면 시민증 닉네임으로 로그인해 주세요. 위의 ‘연습으로 시작’으로 플레이해 주세요.")
+        elif not citizen:
             # 로그인은 시민증 한 곳에서만 해요. 방탈출 안에서 따로 닉네임을 만들지 않아요.
             st.info(
                 "랭킹에 참여하려면 먼저 시민증(닉네임)을 만들어 주세요. "
@@ -1561,7 +1590,7 @@ if section == "🚪 시작 안내·입장":
             and time.time() - _running_game["started"] < TIME_LIMIT_MINUTES * 60):
         game = _running_game
         from game_phone import show_phone
-        show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text)
+        show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False))
 
 else:
     show_play()
