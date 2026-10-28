@@ -398,6 +398,15 @@ def start():
 
     dd.scroll_top()  # 첫 문항을 맨 위부터 보여 줘요.
 
+def back_step():
+    # 바로 전 화면으로: 앞 문항으로 돌아가요(고른 답은 남아요). 첫 문항이면 처음 화면으로 가요.
+    step = st.session_state.get(PREFIX + "step", 0)
+    if step > 0:
+        st.session_state[PREFIX + "step"] = min(step, 12) - 1
+        st.session_state[PREFIX + "review"] = True  # 되돌아가 고치는 중이면, 답한 뒤 바로 다음 문항으로 가요.
+    else:
+        reset()
+
 def answer(i, value):
 
     st.session_state[PREFIX + str(i)] = value
@@ -413,6 +422,8 @@ def answer(i, value):
     earlier = [n for n in range(12) if answers[n] is None]
 
     st.session_state[PREFIX + "step"] = (later or earlier or [12])[0]
+    if not later and not earlier and st.session_state.get(PREFIX + "review"):
+        st.session_state[PREFIX + "step"] = i + 1
 
 def go_to(step):
 
@@ -523,8 +534,8 @@ def show_question(i):
     done = sum(a is not None for a in answers)
 
     # 테스트 중에도 언제든 그만두고 처음 화면으로 돌아갈 수 있어요.
-    st.button("⏹️ 그만하고 처음 화면으로", on_click=reset, key=PREFIX + "quit",
-              help="지금 테스트를 멈추고 처음 화면으로 돌아가요. 고른 답은 지워져요.")
+    st.button("← 이전 화면으로", on_click=back_step, key=PREFIX + "quit",
+              help="앞 문항으로 돌아가요. 고른 답은 그대로 남아요. 첫 문항이면 처음 화면으로 가요.")
 
     st.progress(done / 12, text=f"{done} / 12 완료")
 
@@ -589,6 +600,7 @@ def show_ready():
     )
 
     st.button("✨ 짠! 결과 열기", key=PREFIX + "reveal", type="primary", width="stretch", on_click=reveal)
+    st.button("← 이전 화면으로", on_click=back_step, key=PREFIX + "ready_back", help="12번 문항으로 돌아가요. 고른 답은 그대로 남아요.")
 
     st.button("◀ 답 고치기", on_click=go_to, args=(11,), width="stretch")
 
