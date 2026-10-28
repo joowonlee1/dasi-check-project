@@ -17,7 +17,7 @@ state.messages=payload.messages;
 if(!state.root||!state.root.isConnected){
  state.open=false;
  const root=D.createElement('div');root.id='dotori-phone-ui';root.setAttribute('translate','no');root.setAttribute('lang','ko');root.className='notranslate';
- root.innerHTML='<style>#dotori-phone-ui{font-family:system-ui,sans-serif;color:#17212b}#dotori-phone-ui button{font:inherit;cursor:pointer;border-radius:12px;min-height:44px;padding:10px 16px;font-weight:800}#dotori-phone-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#fff4c9;color:#173f35;border:3px solid #b88720;font-size:22px!important;min-height:62px!important;padding:14px 24px!important;border-radius:18px!important;box-shadow:0 4px 18px #0005}#dotori-phone-cover{position:fixed;inset:0;background:#0009;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}#dotori-phone-panel{background:#fffdf5;border-radius:22px;border:3px solid #d8be77;width:min(680px,100%);max-height:88dvh;overflow:auto;padding:22px;box-sizing:border-box}#dotori-phone-panel h2{font-size:1.5rem;margin:0 0 18px}#dotori-phone-list{background:#e9eef2;border-radius:14px;padding:12px;max-height:52dvh;overflow:auto}#dotori-phone-from{font-weight:800;margin:-6px 0 10px;color:#b42318}#dotori-phone-list article{background:#fff;border-radius:4px 16px 16px 16px;padding:10px 14px;margin:10px 40px 2px 0;overflow-wrap:anywhere;box-shadow:0 1px 2px #0002}#dotori-phone-list article.new{border:2px solid #b42318;animation:dp-in .35s ease-out}#dotori-phone-list small{display:block;color:#5b6770;font-size:.82rem;margin:0 0 6px 4px}#dotori-phone-list p{font-size:1.15rem;line-height:1.6;margin:0}@keyframes dp-in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}@keyframes dp-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}#dotori-phone-launch.ring{animation:dp-shake .5s ease-in-out 3}#dotori-phone-close{background:#20483f;color:white;border:0;width:100%}@media(max-width:600px){#dotori-phone-launch{right:12px;bottom:92px;max-width:calc(100vw - 24px);font-size:19px!important;min-height:54px!important;padding:10px 16px!important}#dotori-phone-panel{padding:16px}}</style><button id="dotori-phone-launch" type="button">📱 나의 폰</button><div id="dotori-phone-cover"><section id="dotori-phone-panel" role="dialog" aria-modal="true" aria-labelledby="dotori-phone-title" tabindex="-1"><h2 id="dotori-phone-title">📱 나의 폰 · 문자</h2><div id="dotori-phone-from">010-6620-1184 · 저장되지 않은 번호</div><div id="dotori-phone-list"></div><button type="button" id="dotori-phone-close">확인하고 닫기</button></section></div>';
+ root.innerHTML='<style>#dotori-phone-ui{font-family:system-ui,sans-serif;color:#17212b}#dotori-phone-ui button{font:inherit;cursor:pointer;border-radius:12px;min-height:44px;padding:10px 16px;font-weight:800}#dotori-phone-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#fff4c9;color:#173f35;border:3px solid #b88720;font-size:22px!important;min-height:62px!important;padding:14px 24px!important;border-radius:18px!important;box-shadow:0 4px 18px #0005}#dotori-phone-cover{position:fixed;inset:0;background:#0009;z-index:999999;display:none;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}#dotori-phone-panel{background:#fffdf5;border-radius:22px;border:3px solid #d8be77;width:min(680px,100%);max-height:88dvh;overflow:auto;padding:22px;box-sizing:border-box}#dotori-phone-panel h2{font-size:1.5rem;margin:0 0 18px}#dotori-phone-list{background:#e9eef2;border-radius:14px;padding:12px;max-height:52dvh;overflow:auto}#dotori-phone-from{font-weight:800;margin:-6px 0 10px;color:#b42318}#dotori-phone-list article{background:#fff;border-radius:4px 16px 16px 16px;padding:10px 14px;margin:10px 40px 2px 0;overflow-wrap:anywhere;box-shadow:0 1px 2px #0002}#dotori-phone-list article.new{border:2px solid #b42318;animation:dp-in .35s ease-out}#dotori-phone-list small{display:block;color:#5b6770;font-size:.82rem;margin:0 0 6px 4px}#dotori-phone-list p{font-size:1.15rem;line-height:1.6;margin:0}@keyframes dp-in{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}@keyframes dp-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}#dotori-phone-launch.ring{animation:dp-shake .5s ease-in-out 3}@keyframes dp-alarm{0%,100%{transform:rotate(0) scale(1)}10%{transform:rotate(-14deg) scale(1.15)}20%{transform:rotate(12deg) scale(1.15)}30%{transform:rotate(-12deg) scale(1.15)}40%{transform:rotate(10deg) scale(1.12)}50%{transform:rotate(-8deg) scale(1.1)}60%{transform:rotate(6deg) scale(1.06)}70%{transform:rotate(0) scale(1)}}@keyframes dp-glow{0%,100%{box-shadow:0 0 0 0 #dc262699,0 4px 18px #0005}50%{box-shadow:0 0 0 14px #dc262600,0 4px 18px #0005}}#dotori-phone-ui .alarm{animation:dp-alarm .9s ease-in-out 4,dp-glow 1.2s ease-out 3.6s infinite;background:#ffe1e1!important;border-color:#dc2626!important}#dotori-phone-close{background:#20483f;color:white;border:0;width:100%}@media(max-width:600px){#dotori-phone-launch{right:12px;bottom:92px;max-width:calc(100vw - 24px);font-size:19px!important;min-height:54px!important;padding:10px 16px!important}#dotori-phone-panel{padding:16px}}</style><button id="dotori-phone-launch" type="button">📱 나의 폰</button><div id="dotori-phone-cover"><section id="dotori-phone-panel" role="dialog" aria-modal="true" aria-labelledby="dotori-phone-title" tabindex="-1"><h2 id="dotori-phone-title">📱 나의 폰 · 문자</h2><div id="dotori-phone-from">010-6620-1184 · 저장되지 않은 번호</div><div id="dotori-phone-list"></div><button type="button" id="dotori-phone-close">확인하고 닫기</button></section></div>';
  D.body.appendChild(root);state.root=root;
  const cover=root.querySelector('#dotori-phone-cover'), panel=root.querySelector('#dotori-phone-panel'), list=root.querySelector('#dotori-phone-list'),launch=root.querySelector('#dotori-phone-launch'),close=root.querySelector('#dotori-phone-close');
  state.draw=()=>{
@@ -41,7 +41,7 @@ if(!state.root||!state.root.isConnected){
   launch.textContent=state.messages.length?'📱 나의 폰 · 받은 문자 '+state.messages.length:'📱 나의 폰 · 새 문자 없음';
   if(state.focus&&state.focus.isConnected)state.focus.focus({preventScroll:true});
  };
- launch.onclick=()=>state.show();close.onclick=()=>state.hide();
+ launch.onclick=()=>{launch.classList.remove('alarm');state.show();};close.onclick=()=>state.hide();
  cover.addEventListener('keydown',e=>{
   if(e.key==='Escape'){e.preventDefault();state.hide();}
   if(e.key==='Tab'){e.preventDefault();close.focus();}
@@ -65,9 +65,15 @@ if(fresh.length){
  fresh.forEach(m=>state.seen.add(m.id));
  phoneButton.classList.remove('ring');void phoneButton.offsetWidth;phoneButton.classList.add('ring');
  phoneButton.innerHTML='📱 나의 폰 <span style="display:inline-block;background:#b42318;color:white;border-radius:8px;padding:3px 8px;margin-left:5px">새 문자 '+fresh.length+'</span>';
- if(!state.open)state.show();else state.draw();
+ // 힌트를 본 직후(pop=false)에는 창을 저절로 열지 않고, 버튼 흔들림·새 문자 표시만 해요.
  const h=W.__jamkkanSound;
- if(h&&h.want)h.play('message');
+ if(!state.open&&payload.pop){state.show();if(h&&h.want)h.play('message');}
+ else if(state.open){state.draw();if(h&&h.want)h.play('message');}
+ else{
+  // 창을 열지 않을 때는 버튼을 크게 흔들고 빨갛게 깜빡이며 알람 소리로 알려요(누르면 멈춰요).
+  phoneButton.classList.remove('alarm');void phoneButton.offsetWidth;phoneButton.classList.add('alarm');
+  if(h&&h.want){h.play('warn');W.setTimeout(()=>h.play('warn'),700);}
+ }
 }else if(state.open){state.draw();}
 })();
 '''
@@ -92,8 +98,8 @@ phones.forEach(phone=>{
 });
 '''
 
-def show_phone(session, messages, sender, clock_text):
-    payload={"session":session,"messages":[{"id":str(at)+"|"+text,"sender":sender,"time":clock_text(at),"text":text} for at,text,*_ in messages]}
+def show_phone(session, messages, sender, clock_text, pop=True):
+    payload={"session":session,"pop":bool(pop),"messages":[{"id":str(at)+"|"+text,"sender":sender,"time":clock_text(at),"text":text} for at,text,*_ in messages]}
     source=_PHONE_JS.replace("__PAYLOAD__",json.dumps(payload,ensure_ascii=False).replace("<","\\u003c"))
     with st.container(key="game_phone_anchor"):
         # 부모 문서에서 실행해 iframe이 교체돼도 버튼 콜백이 살아 있도록 합니다.
