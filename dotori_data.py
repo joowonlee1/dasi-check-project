@@ -71,7 +71,7 @@ HALL_TEXT = {
     "escape": lambda r: (("🔓 탈출 성공" if r.get("escaped") else f"⏳ 탈출 실패 · 잠금 {r.get('unlocked', 0)}/3")
                          + f" · 힌트 {r.get('hints', 0)}번 · 재검토 {r.get('mistakes', 0)}번 · {r.get('seconds', 0) // 60}분 {r.get('seconds', 0) % 60}초"),
     "grandma": lambda r: f"맞은 판단 {r.get('right', 0)}/7 · 마지막 신뢰 {r.get('trust', 0)}",
-    "notice": lambda r: f"맞힌 안내서 {r.get('score', 0)}/{r.get('total', 5)}" + (" · 독립 확인" if r.get("version") == 2 else f" · 이전 번호부 활동 {r.get('probes', 0)}번"),
+    "notice": lambda r: (f"첫 제출 정확도 {r.get('score',0)}/{r.get('total',3)} · 자료 조사" if r.get("version")==3 else f"맞힌 안내서 {r.get('score', 0)}/{r.get('total', 5)}" + (" · 독립 확인" if r.get("version") == 2 else f" · 이전 번호부 활동 {r.get('probes', 0)}번")),
     "filter": lambda r: f"⭐ {r.get('stars', 0)}/9 · 블록 {r.get('blocks', 0)}개",
     "nono": lambda r: f"⭐ {r.get('stars', 0)}/9 · 힌트 {r.get('hints', 0)}번",
     "memo": lambda r: f"⭐ {r.get('stars', 0)}/3 · 힌트 {r.get('hints', 0)}번 · 잘못 지목 {r.get('wrong', 0)}번",
@@ -245,6 +245,12 @@ def _keep(account, name, canonical, saved=None):
 
 
 def logout(discard=False):
+    from admin_progress import active, sync, PENDING as ADMIN_PENDING
+    if active() and st.session_state.get(ADMIN_PENDING) and not discard:
+        if not sync():
+            st.session_state["stamp_logout_blocked"]=True
+            return False
+
     # 저장하지 못한 도장이 있으면 먼저 재시도하고, 실패 시 선택권을 보여 줘요.
     if citizen() and st.session_state.get(PENDING_STAMPS) and not discard:
         if not _save_stamps():
@@ -288,6 +294,11 @@ def _save_stamps():
 
 
 def show_stamp_sync_status():
+    from admin_progress import active, status
+    if active():
+        status()
+        return
+
     """페이지가 중간에 종료돼도 보이도록 사이드바에서 호출해요."""
     if not citizen() or not st.session_state.get(PENDING_STAMPS):
         return
@@ -351,6 +362,9 @@ def note_mine(game, text):
 
 
 def stamp(code, quiet=False):
+    from admin_progress import active, award
+    if active():return award(code,quiet)
+
     """그 장소의 도장을 찍어요. 이미 있으면 그대로 두고, 처음 받을 때만 알림을 띄워요.
     시민증이 있으면 시민증 문서에 저장해서 다음에 다시 들어와도 이어서 모을 수 있어요.
     시민증이 없으면 이번 방문(창)에만 있어요."""
@@ -409,6 +423,8 @@ def show_stamp_popup():
     sub = f"{total}곳 도장을 모두 모았어요!" if done else f"도장 {count} / {total}"
     if citizen() and code in st.session_state.get(PENDING_STAMPS, {}):
         sub += " · 계정 저장 대기 중"
+    if st.session_state.get("admin_open") and code in st.session_state.get("admin_progress_pending", {}):
+        sub += " · 관리자 저장 대기 중"
     st.markdown(
         """<style>
         @keyframes sp-in {0%{transform:translateY(-20px);opacity:0} 12%{transform:translateY(0);opacity:1}
@@ -437,6 +453,9 @@ def show_stamp_popup():
 
 
 def stamps():
+    from admin_progress import active, load
+    if active():return load()
+
     return st.session_state.get(STAMPS, {})
 
 
