@@ -587,6 +587,8 @@ def show_hall_note(status=None):
         st.info("🏆 명예의 전당에 있는 예전 기록이 더 좋아서 그대로 두었어요.")
     elif status == "failed":
         st.warning("🏆 명예의 전당 저장에 실패했어요. 게임 기록은 그대로예요.")
+    elif not account and st.session_state.get("admin_open"):
+        st.info("🔑 관리자 모드는 연습 모드로만 플레이돼요. 명예의 전당 기록은 남지 않아요. 기록을 남기려면 시민증 닉네임으로 로그인해 주세요.")
     elif not account:
         st.page_link("pages/0_도토리시_시민증.py", label="시민증(닉네임)을 만들면 명예의 전당에 기록이 올라가요", icon="🪪")
 
