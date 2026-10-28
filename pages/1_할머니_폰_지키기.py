@@ -967,7 +967,7 @@ def show_play(game):
         locked = key == "reason" and not game["clue_open"]
         typed = key in TYPED_KEYS
         st.button(
-            APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else " · ✍️ 직접 말하기" if typed else ""),
+            ("✍️ 직접 말하기 · " if typed else "") + APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else ""),
             key=f"gp3_btn_{step}_{key}",
             on_click=start_typing if typed else act,
             args=(key,),
