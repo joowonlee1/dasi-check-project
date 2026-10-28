@@ -8,6 +8,7 @@ from play_ui import intro, bridge
 모든 번호·이름·기관·링크는 교육용 가상 내용입니다.
 """
 import json
+from filter_trials import HOLDOUT
 
 import streamlit as st
 import dotori_data as dd
@@ -54,10 +55,10 @@ DATA = {
             "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
             "intro": "규칙 한 줄 안에 조건을 2개까지 넣을 수 있어요. ‘그리고’로 묶으면 두 조건이 모두 맞는 문자만 걸려요.",
             "best": 0,
-            "par": 2,
+            "par": 4,
             "hints": [
                 "진짜 문자 중에도 링크가 있는 게 있어요. ‘링크 있음’ 하나만으로는 진짜도 막혀요.",
-                "링크가 있으면서 ‘어떤 번호’에서 왔는지 같이 보세요. 블록 2개면 충분해요.",
+                "링크가 있으면서 ‘어떤 번호’에서 왔는지 같이 보세요. 새 문자에도 맞는지 시험해 보세요.",
             ],
             "msgs": [
                 ["도토리택배", "S", "[도토리택배] 주문하신 상품 배송 완료! 문 앞 사진 보기 ▶ (가상 링크)", "L", False],
@@ -73,10 +74,10 @@ DATA = {
             "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
             "intro": "🆕 가짜 문자의 종류가 다양해졌어요. 한 줄로 다 막기 어렵다면 ‘➕ 규칙 줄 추가’로 줄을 늘려요. 줄이 여러 개면 그중 하나에만 걸려도 막혀요(또는).",
             "best": 0,
-            "par": 4,
+            "par": 5,
             "hints": [
                 "가짜 문자 4개는 모두 ‘모르는 번호’예요. 하지만 모르는 번호 중에도 진짜가 있어요.",
-                "규칙 줄을 2개 써 보세요. ‘모르는 번호 그리고 ○○’ 또는 ‘모르는 번호 그리고 △△’.",
+                "돈 요구와 재촉, 앱 설치 요구와 번호, 인증정보 요구를 나눠 비교해 보세요.",
             ],
             "msgs": [
                 ["010-73○○-○○○○", "U", "엄마야~ 폰 액정 깨져서 임시 번호야. 급하게 상품권 좀 사서 번호 보내 줄래?", "MR", True],
@@ -94,7 +95,7 @@ DATA = {
             "goal": "틀리는 문자를 최대한 줄이기",
             "intro": "문자가 10개로 늘었어요. 그리고·또는을 모두 써서 틀리는 문자를 최대한 줄여 보세요.",
             "best": 1,
-            "par": 3,
+            "par": 5,
             "hints": [
                 "이번에는 완벽한 필터를 만들 수 없을지도 몰라요. 특징 태그가 똑같은 두 문자가 있는지 찾아보세요.",
                 "‘인증번호·개인정보 요구’가 있는 진짜 문자는 하나도 없어요.",
@@ -228,23 +229,25 @@ const D = __DATA__;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const KEYS = Object.keys(D.conds);
-const G = {screen: 'intro', stage: 0, rules: [[['', '']], [['', '']], [['', '']]], best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]};
+const HOLD=__HOLDOUT__;
+const G = {ops:[[],[],[]],hold:[null,null,null],review:[],reviewRoute:'',screen: 'intro', stage: 0, rules: [[['', '']], [['', '']], [['', '']]], best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]};
 let fresh = true;
 
 // 문자 하나가 조건을 만족하는지: S(저장된 번호)는 '모르는 번호가 아님'
 function has(msg, c){ if (c === 'U') return msg[1] === 'U'; if (c === 'S') return msg[1] === 'S'; return msg[3].includes(c); }
 function cleanRules(st){ return G.rules[st].map(r => r.filter(c => c)).filter(r => r.length); }
 function blocks(st){ return cleanRules(st).reduce((a, r) => a + r.length, 0); }
-function flagged(st, msg){ return cleanRules(st).some(r => r.every(c => has(msg, c))); }
+
+function matches(st,ri,msg){const r=G.rules[st][ri].filter(Boolean);return r.length>0&&(G.ops[st][ri]==='or'?r.some(c=>has(msg,c)):r.every(c=>has(msg,c)));}
+function flagged(st,msg){return G.rules[st].some((r,i)=>matches(st,i,msg));}
+function setOp(ri,v){G.ops[G.stage][ri]=v;G.last=null;G.hold[G.stage]=null;render();}
+
 function starsFor(st, res){ const s = D.stages[st]; if (res.errors > s.best) return 0; return res.blocks <= s.par ? 3 : res.blocks <= s.par + 2 ? 2 : 1; }
 
 function codeView(st){
-  const rs = cleanRules(st);
-  if (!rs.length) return '<span class="c"># 아직 규칙이 없어요. 아래에서 조건을 골라 보세요.</span>\n<span class="k">결과</span> = "통과"';
-  const parts = rs.map(r => (r.length > 1 ? '(' : '') + r.map(c => D.code[c]).join(' <span class="k">and</span> ') + (r.length > 1 ? ')' : ''));
-  return `<span class="k">if</span> ${parts.join(' <span class="k">or</span> ')}:\n    <span class="k">결과</span> = "🚫 의심"\n<span class="k">else</span>:\n    <span class="k">결과</span> = "✅ 통과"`;
+ const parts=G.rules[st].map((rule,ri)=>{const r=rule.filter(Boolean);return r.length?'('+r.map(c=>D.code[c]).join(G.ops[st][ri]==='or'?' or ':' and ')+')':'';}).filter(Boolean);
+ return esc(parts.length?'if '+parts.join(' or ')+': 의심 분류\nelse: 통과 분류':'조건을 선택하세요.');
 }
-
 function tagsHtml(msg, hitSet){
   const list = [msg[1]].concat(msg[3].split('').filter(Boolean));
   return list.map(c => `<span class="tag ${hitSet && hitSet.has(c) ? 'hit' : ''}">${esc(D.conds[c])}</span>`).join('');
@@ -273,7 +276,7 @@ function renderIntro(){
       <div><b>문자 A</b> · 🔗 링크 있음 · ❓ 모르는 번호<br>두 조건이 <b>모두</b> 맞아요 → <b style="color:#B42318">🚫 의심</b></div>
       <div><b>문자 B</b> · 🔗 링크 있음 · 📇 저장된 번호<br>하나만 맞아요 → <b style="color:#0B655B">✅ 통과</b></div>
     </div>
-    <p style="margin:10px 0 0">👉 <b>그리고</b>는 한 줄 안의 조건이 <b>모두</b> 맞아야 걸려요.</p>
+    <p style="margin:10px 0 0">👉 <b>그리고</b>는 한 줄 안의 조건이 <b>모두</b> 맞아야 걸려요. 연결을 ‘또는’으로 바꾸면 하나 이상 맞을 때 걸려요.</p>
     <div class="ex2"><b>규칙 줄이 2개라면? (또는)</b><br>
       <span class="r">규칙 1 · 💸 돈 요구 <span class="kw and">그리고</span> ❓ 모르는 번호</span> <b style="color:#B4471B">또는</b>
       <span class="r">규칙 2 · 🔑 인증번호·개인정보 요구</span><br>
@@ -293,7 +296,7 @@ function renderIntro(){
   <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🤖 필터실 입장하기</button>`;
 }
 
-function startStage(i){ G.screen = 'play'; G.stage = i; G.last = null; fresh = true; render(); window.scrollTo(0, 0); }
+function startStage(i){if(i>0&&!G.best[i-1])return; G.screen = 'play'; G.stage = i; G.last = null; fresh = true; render(); window.scrollTo(0, 0); }
 
 function stageButtons(){
   return `<div class="stages">${D.stages.map((s, i) => {
@@ -309,7 +312,7 @@ function ruleHtml(st, ri){
       <option value="">${ci === 0 ? '조건 고르기 ▾' : '(추가 조건 없음) ▾'}</option>
       ${KEYS.map(k => `<option value="${k}" ${r[ci] === k ? 'selected' : ''}>${esc(D.conds[k])}</option>`).join('')}</select>`;
   return `<div class="rule"><div class="head">🧩 규칙 ${ri + 1}${G.rules[st].length > 1 ? `<button onclick="delRule(${ri})" ${G.running ? 'disabled' : ''}>🗑 빼기</button>` : ''}</div>
-    <div class="line"><span class="kw">만약</span>${sel(0)}<span class="kw and">그리고</span>${sel(1)}<span class="kw then">→ 🚫 의심</span></div></div>`;
+    <div class="line"><span class="kw">만약</span>${sel(0)}<select aria-label="규칙 ${ri+1} 연결" onchange="setOp(${ri},this.value)" ${G.running?'disabled':''}><option value="and">그리고 (모두)</option><option value="or" ${G.ops[st][ri]==='or'?'selected':''}>또는 (하나 이상)</option></select>${sel(1)}<span class="kw then">→ 🚫 의심</span></div></div>`;
 }
 
 function renderPlay(){
@@ -325,7 +328,7 @@ function renderPlay(){
       verdict = verdictHtml(m, r);
     }
     return `<div class="msg ${cls}" id="msg${i}" style="animation-delay:${i * .04}s">
-      <details><summary>📋 별도 확인 결과 · 정답의 근거</summary>${esc(s.verified[i])}</details><div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
+      ${res ? '<details><summary>📋 시험 후 확인한 근거</summary>'+esc(s.verified[i])+'</details>' : '<small>별도 확인 근거는 필터 시험 후 공개돼요.</small>'}<div class="who"><span>${m[1] === 'S' ? '📇' : '❓'} ${esc(m[0])}</span><span>문자 ${i + 1}</span></div>
       <div class="txt">${esc(m[2])}</div><div class="tags">${tagsHtml(m, hit)}</div><div class="verdict">${verdict}</div></div>`;
   }).join('');
   const hints = s.hints.slice(0, G.hintOpen[st]).map((h, k) => `<div class="hint">💡 힌트 ${k + 1}: ${esc(h)}</div>`).join('');
@@ -338,7 +341,7 @@ function renderPlay(){
   <div class="cols">
     <div><h3 style="margin:6px 0">📥 들어온 문자 ${s.msgs.length}개</h3><div class="inbox">${msgs}</div></div>
     <div class="builder"><h3 style="margin:6px 0">🧩 내 필터 규칙</h3>
-      <div class="guide">📘 <b>읽는 법</b> · 한 줄 안은 <b>그리고</b>: 조건이 <b>모두</b> 맞아야 걸려요.<br>줄과 줄 사이는 <b>또는</b>: <b>한 줄에만</b> 걸려도 막혀요.</div>
+      <div class="guide">📘 <b>읽는 법</b> · 한 줄에서 <b>그리고 / 또는</b>를 선택해요. 그리고는 모두, 또는은 하나 이상 맞으면 걸려요.<br>줄과 줄 사이는 <b>또는</b>: <b>한 줄에만</b> 걸려도 막혀요.</div>
       ${rules}
       ${G.rules[st].length < 3 ? `<button style="width:100%;margin-top:8px;background:#fff;border:2px dashed #9DBFB2" onclick="addRule()" ${G.running ? 'disabled' : ''}>➕ 규칙 줄 추가 (또는)</button>` : ''}
       <div class="meta"><span>📦 사용한 블록 <span class="blocks ${b > s.par ? 'over' : ''}">${b}개</span></span><span>목표 ${s.par}개 이하</span></div>
@@ -367,10 +370,10 @@ function resultHtml(st, res){
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 최고 기록이에요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
   const twins = s.best > 0 ? twinHtml(st) : '';
-  const next = st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
+  const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">처음 보는 문자로 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
   return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${s.best > 0 ? '이게 규칙으로 할 수 있는 최선이에요!' : '필터 완성!'}</b>
     <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
-    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${othersHtml(st)}${next}</section>`;
+    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${othersHtml(st)}${holdHtml(st)}${next}</section>`;
 }
 
 function twinHtml(st){
@@ -416,9 +419,9 @@ function whyHtml(st, res){
   return items.length ? `<div class="why"><b>🔎 무엇이 틀렸을까요?</b><ul style="margin:6px 0 0;padding-left:18px">${items.join('')}</ul></div>` : '';
 }
 
-function setCond(ri, ci, v){ G.rules[G.stage][ri][ci] = v; G.last = null; render(); }
-function addRule(){ G.rules[G.stage].push(['', '']); G.last = null; render(); }
-function delRule(ri){ G.rules[G.stage].splice(ri, 1); G.last = null; render(); }
+function setCond(ri, ci, v){ G.rules[G.stage][ri][ci] = v; G.last = null; G.hold[G.stage]=null; render(); }
+function addRule(){ G.rules[G.stage].push(['', '']); G.last = null; G.hold[G.stage]=null; render(); }
+function delRule(ri){ G.rules[G.stage].splice(ri, 1);G.ops[G.stage].splice(ri,1); G.last = null; G.hold[G.stage]=null; render(); }
 function openHint(){ G.hintOpen[G.stage]++; render(); }
 
 function run(){
@@ -427,7 +430,7 @@ function run(){
   G.running = true; G.last = null; render();
   const rows = s.msgs.map(m => {
     const fired = [], hit = new Set();
-    G.rules[st].forEach((r, ri) => { const conds = r.filter(c => c); if (conds.length && conds.every(c => has(m, c))) { fired.push(ri + 1); conds.forEach(c => hit.add(c)); } });
+    G.rules[st].forEach((r, ri) => { const conds = r.filter(c => c); if (matches(st,ri,m)) { fired.push(ri + 1); conds.forEach(c => hit.add(c)); } });
     return {flag: fired.length > 0, hit, fired};
   });
   // 문자가 하나씩 필터를 지나가는 모습
@@ -448,15 +451,34 @@ function run(){
     const res = {rows, tp, tn, fp, fn, errors: fp + fn, blocks: blocks(st), fresh: true};
     G.tries[st]++;
     const stars = starsFor(st, res);
-    if (stars && (!G.best[st] || stars > G.best[st].stars)) G.best[st] = {stars, blocks: res.blocks};
+    G.hold[st]=null;
     G.running = false; G.last = res; fresh = false; render();
-    sendResult({game: 'filter', type: 'run', stage: st, clear: stars > 0, stars, blocks: res.blocks,
+    sendResult({game: 'filter', type: 'run', stage: st, clear: false, stars, blocks: res.blocks,
       wrong: res.rows.map((r, i) => r.flag !== s.msgs[i][4] ? i : -1).filter(i => i >= 0)});
     const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
   }, s.msgs.length * 260 + 500);
 }
 
+
+function holdHtml(st){
+ const h=G.hold[st];if(!h)return '<p>현재 규칙으로 새 문자 시험도 마쳐야 해요.</p>';
+ return '<section class="box"><h3>새 문자 시험</h3>'+h.rows.map(x=>'<p>'+esc(x.text)+'<br><b>'+(x.flag?'의심':'통과')+' · '+(x.flag===x.answer?'일치':'오차단·누락')+'</b><br>'+esc(x.proof)+'</p>').join('')+'<p>'+h.errors+'개 오차. '+(h.ok?'시험 통과':'규칙을 고치고 연습과 새 문자 시험을 다시 실행하세요.')+'</p></section>';
+}
+function runHoldout(){
+ const st=G.stage;if(!G.last||!starsFor(st,G.last))return;
+ const rows=HOLD[st].map(m=>({text:m[2],flag:flagged(st,m),answer:m[4],proof:m[4]?'별도로 연락한 당사자·기관이 해당 요구를 부인한 교육용 사례':'기존 연락처나 직접 연 공식 기록에서 요청을 확인한 교육용 사례'}));
+ const errors=rows.filter(x=>x.flag!==x.answer).length;G.hold[st]={rows,errors,ok:errors===0};
+ if(!errors)G.best[st]={stars:starsFor(st,G.last),blocks:blocks(st)};
+ sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
+ render();
+}
 function toFinal(){
+ if(!G.best.every(Boolean))return;
+ if(!G.review.includes(2)||!G.review.includes(3)||G.review.length!==2||G.reviewRoute!=='separate'){
+  G.review=[];G.reviewRoute='';
+  $('app').innerHTML='<section class="box"><h3>마지막 확인: 태그만으로 구별할 수 없는 두 문자</h3><p>3단계에서 특징이 같지만 실제 결과가 다른 두 문자를 고르고 확인 방법을 선택하세요.</p>'+D.stages[2].msgs.map((m,i)=>'<label style="display:block;padding:8px"><input type="checkbox" onchange="G.review=G.review.filter(x=>x!=='+i+');if(this.checked)G.review.push('+i+')">'+(i+1)+'. '+esc(m[0])+' · '+esc(m[2])+'</label>').join('')+'<select aria-label="추가 확인 경로" onchange="G.reviewRoute=this.value"><option value="">확인 경로</option><option value="reply">받은 메시지에 답장해서 확인</option><option value="separate">기존 연락처나 대면으로 별도 확인</option></select><button onclick="toFinal()">확인 제출</button><p>완료되지 않으면 두 문자의 태그와 확인 경로를 다시 비교하세요.</p></section>';return;
+ }
+
   sendResult({game: 'filter', type: 'final', stars: G.best.reduce((a, b) => a + (b ? b.stars : 0), 0), blocks: G.best.reduce((a, b) => a + (b ? b.blocks : 0), 0)});
   G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0);
 }
@@ -477,7 +499,7 @@ function renderFinal(){
   <div class="row"><button onclick="startStage(0)">🔁 1단계부터 다시 줄여 보기</button><button class="go" onclick="restart()">🔄 처음부터 다시</button></div>`;
 }
 
-function restart(){ Object.assign(G, {screen: 'intro', stage: 0, best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]}); G.rules = [[['', '']], [['', '']], [['', '']]]; fresh = true; render(); }
+function restart(){ Object.assign(G, {ops:[[],[],[]],hold:[null,null,null],review:[],reviewRoute:'',screen: 'intro', stage: 0, best: [null, null, null], hintOpen: [0, 0, 0], last: null, running: false, tries: [0, 0, 0]}); G.rules = [[['', '']], [['', '']], [['', '']]]; fresh = true; render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
@@ -494,7 +516,7 @@ render();
 </script></body></html>
 '''
 
-page = bridge(HTML, "11").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(HTML, "11").replace("__HOLDOUT__",json.dumps(HOLDOUT,ensure_ascii=False).replace("<","\\u003c")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None, stats=dd.stats("filter"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
@@ -504,10 +526,11 @@ if event and event.get("type") == "run" and event.get("stage") in (0, 1, 2):
     counts = {f"s{s}_runs": 1, f"s{s}_clear": 1 if event.get("clear") else 0}
     counts.update({f"s{s}_m{int(i)}_wrong": 1 for i in event.get("wrong", []) if 0 <= int(i) < 12})
     dd.record("filter", counts)
-    dd.stamp("11")
+
 elif event and event.get("type") == "final":
     stars, blocks = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("blocks", 0)))
     dd.record("filter", {"finals": 1})
+    dd.stamp("11")
     dd.note_mine("filter", f"별 {stars}/9 · 블록 {blocks}개")
     st.session_state["filter_hall"] = dd.save_hall(
         "filter", {"stars": stars, "blocks": blocks},
@@ -519,6 +542,6 @@ with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
         "- **조건문과 논리 연산**: 규칙 한 줄은 `and`, 규칙 줄끼리는 `or`로 이어진 `if` 문이에요. 오른쪽 코드 창에서 내가 만든 규칙이 코드로 바뀌는 걸 볼 수 있어요.\n"
         "- **오탐·미탐과 혼동 행렬**: 결과 표는 실제 스팸 필터와 인공지능 분류 모델을 평가할 때 쓰는 2×2 표와 같아요.\n"
-        "- **완전 탐색**: 단계마다 가능한 규칙 조합을 모두 검사해서, 가장 적은 블록 수(목표)와 3단계에서 1개는 꼭 틀릴 수밖에 없다는 사실을 확인했어요."
+        "- **새 자료 시험**: 같은 규칙을 연습 문자와 새 문자에 적용해요. 목표 블록 수는 권장 목표이며, 3단계 동일 태그 두 문자는 별도 확인이 필요해요."
     )
 st.caption("교육용 가상 문자입니다. 실제 번호·기관·링크와 관계없으며, 진행은 새로고침하면 초기화됩니다.")
