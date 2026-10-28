@@ -54,7 +54,12 @@ if not S["done"]:
     with st.container(border=True):
         st.markdown("**안내서에 적힌 내용**")
         st.write(case["claim"])
-        st.caption(f"참조번호: {case['reference']} · 겉모습: {case['looks']}")
+        # 참조번호·겉모습은 감별 단서라서 작은 회색 글씨 대신 눈에 띄는 칸으로 보여 줘요.
+        st.markdown(
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:1.02rem;line-height:1.6">'
+            f'<span style="background:#FFE08A;color:#6B4300;font-weight:900;padding:6px 12px;border-radius:10px">🔖 참조번호 {case["reference"]}</span>'
+            f'<span style="background:#EEF4FF;color:#1F3A68;font-weight:700;padding:6px 12px;border-radius:10px">👀 겉모습: {case["looks"]}</span>'
+            '</div>', unsafe_allow_html=True)
 
     st.info("안내서의 주장을 검증할 질문을 직접 고르세요. 등기가 있다는 사실과 추가 요구의 정당성은 다른 항목이에요.")
     checked=S["checks"].setdefault(i,{})
