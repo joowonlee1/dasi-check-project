@@ -58,7 +58,8 @@ if(!state.root||!state.root.isConnected){
   state.focus=D.activeElement;state.draw();state.open=true;cover.style.display='flex';close.focus({preventScroll:true});
  };
  state.hide=()=>{
-  state.open=false;state.tab='sms';  // 닫으면 다음에 열 때는 문자 탭부터 보여요(전화는 ‘나의 폰에서 전화 걸기’로 바로 열려요)cover.style.display='none';
+  state.open=fal  // 닫으면 다음에 열 때는 문자 탭부터 보여요(전화는 ‘나의 폰에서 전화 걸기’로 바로 열려요)
+  state.open=false;state.tab='sms';cover.style.display='none';
   for(const m of state.messages)state.seen.add(m.id);
   launch.textContent=state.messages.length?'📱 나의 폰 · 받은 문자 '+state.messages.length:'📱 나의 폰 · 새 문자 없음';
   if(state.focus&&state.focus.isConnected)state.focus.focus({preventScroll:true});
