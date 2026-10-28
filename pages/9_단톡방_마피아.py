@@ -433,7 +433,7 @@ def show_setup():
         unsafe_allow_html=True,
     )
     st.markdown(friends_html(), unsafe_allow_html=True)
-    show_mascot("detective", "조사는 사건마다 딱 3번! 누구를, 어떻게 조사할지가 승부예요.", width=110)
+    show_mascot("vote", "조사는 사건마다 딱 3번! 누구를, 어떻게 조사할지가 승부예요.", width=110)
     with st.container(border=True):
         st.markdown("**🎮 규칙**")
         st.markdown(
