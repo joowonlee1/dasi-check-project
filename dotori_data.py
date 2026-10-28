@@ -71,7 +71,7 @@ HALL_TEXT = {
     "escape": lambda r: (("🔓 탈출 성공" if r.get("escaped") else f"⏳ 탈출 실패 · 잠금 {r.get('unlocked', 0)}/3")
                          + f" · 힌트 {r.get('hints', 0)}번 · 재검토 {r.get('mistakes', 0)}번 · {r.get('seconds', 0) // 60}분 {r.get('seconds', 0) % 60}초"),
     "grandma": lambda r: f"맞은 판단 {r.get('right', 0)}/7 · 마지막 신뢰 {r.get('trust', 0)}",
-    "notice": lambda r: (f"첫 제출 정확도 {r.get('score',0)}/{r.get('total',3)} · 자료 조사" if r.get("version")==3 else f"맞힌 안내서 {r.get('score', 0)}/{r.get('total', 5)}" + (" · 독립 확인" if r.get("version") == 2 else f" · 이전 번호부 활동 {r.get('probes', 0)}번")),
+    "notice": lambda r: (f"첫 제출 정확도 {r.get('score',0)}/{r.get('total',3)} · 자료 조사" if r.get("version")==3 else f"맞힌 안내서 {r.get('score', 0)}/{r.get('total', 5)}" + (" · 따로 확인" if r.get("version") == 2 else f" · 이전 번호부 활동 {r.get('probes', 0)}번")),
     "filter": lambda r: f"⭐ {r.get('stars', 0)}/9 · 블록 {r.get('blocks', 0)}개",
     "nono": lambda r: f"⭐ {r.get('stars', 0)}/9 · 힌트 {r.get('hints', 0)}번",
     "memo": lambda r: f"⭐ {r.get('stars', 0)}/3 · 힌트 {r.get('hints', 0)}번 · 잘못 지목 {r.get('wrong', 0)}번",
