@@ -278,7 +278,7 @@ function render(){
 
 function renderIntro(){
   $('app').innerHTML = `
-  <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>도시로 들어오는 문자, 내가 만든 규칙으로 걸러라!</b><span>조건 블록을 조립하면 컴퓨터가 그대로 실행해요.</span></section>
+  <section class="hero"><span>   도토리 우체국 · 문자 필터실</span><b>도시로 들어오는 문자, 내가 만든 규칙으로 걸러라!</b><span>조건 블록을 조립하면 컴퓨터가 그대로 실행해요.</span></section>
   <div class="steps">
     <div class="step"><div class="ic">🏷️</div><div><b class="h">① 태그 보기</b><p>문자마다 ‘링크 있음’, ‘모르는 번호’ 같은 특징 태그가 붙어 있어요.</p></div></div>
     <div class="step"><div class="ic">🧩</div><div><b class="h">② 규칙 조립</b><p>‘만약 A <b>그리고</b>/<b>또는</b> B면 의심’처럼 블록과 연결을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div></div>
@@ -295,7 +295,7 @@ function renderIntro(){
       규칙: <span class="kw">만약</span> 🔗 링크 있음 <b style="color:#B4471B">또는</b> ❓ 모르는 번호 <span class="kw then">→ 🚫 의심</span><br>
       · 문자 A (🔗 링크 있음 · ❓ 모르는 번호) → 둘 다 맞음 → <b style="color:#B42318">🚫 의심</b><br>
       · 문자 B (🔗 링크 있음 · 📇 저장된 번호) → 하나만 맞아도 → <b style="color:#B42318">🚫 의심</b> (그리고일 때는 통과였어요!)<br>
-      <span style="font-size:.9rem;color:#52616B">또는은 더 넓게 걸러서 사기 문자를 놓치지 않지만, 진짜 문자까지 막을(오탐) 수 있어요.</span></div>
+      <span style="font-size:.9rem;color:#52616B">또는은 더 넓게 걸러서 일부 누락을 줄일 수 있지만, 진짜 문자까지 막을(오탐) 수 있어요.</span></div>
     <div class="ex2"><b>규칙 줄이 2개라면? (또는)</b><br>
       <span class="r">규칙 1 · 💸 돈 요구 <span class="kw and">그리고</span> ❓ 모르는 번호</span> <b style="color:#B4471B">또는</b>
       <span class="r">규칙 2 · 🔑 인증번호·개인정보 요구</span><br>
@@ -391,12 +391,12 @@ function resultHtml(st, res){
       <span class="stamp miss">다시 고치기</span>${whyHtml(st, res)}${othersHtml(st)}</section>`;
   }
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
-  const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 최고 기록이에요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
+  const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 목표 블록 수를 달성했어요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
   const twins = s.best > 0 ? twinHtml(st) : '';
   const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">처음 보는 문자로 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
-  return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${s.best > 0 ? '이게 규칙으로 할 수 있는 최선이에요!' : '필터 완성!'}</b>
+  return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${G.hold[st]?.ok ? '연습·새 문자 시험 통과!' : '연습 문자 목표 달성!'}</b>
     <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
-    ${twins}<div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${othersHtml(st)}${holdHtml(st)}${next}</section>`;
+    <div class="box"><b>① 연습 문자 → ② 새 문자 시험 → ③ 다음 단계</b><p>새 문자 시험까지 통과해야 다음 단계가 열려요. 틀리면 규칙을 고치고 연습·새 문자 시험을 다시 실행하세요.</p>${next}</div>${twins}<div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${G.hold[st]?.ok ? '시험 통과!' : '연습 통과!'}</span>${sp}${othersHtml(st)}${holdHtml(st)}</section>`;
 }
 
 function twinHtml(st){
@@ -502,7 +502,7 @@ function runHoldout(){
  sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
  render();
  monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 시험',title:`⚠️ 새 문자 ${errors}건 오분류`,body:'처음 보는 문자에서는 규칙이 맞지 않았어요. 특정 문자에만 맞춘 규칙은 아닌지 살펴보세요.',button:'규칙 다시 보기 ▶'}
-   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'외운 규칙이 아니라 진짜로 통하는 규칙이에요. 다음 단계로 가 볼까요?'});
+   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'다음 단계로 가 볼까요?'});
 }
 function toFinal(){
  if(!G.best.every(Boolean))return;
@@ -572,7 +572,7 @@ dd.show_hall_note(st.session_state.get("filter_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
-        "- **조건문과 논리 연산**: 규칙 한 줄은 `and`, 규칙 줄끼리는 `or`로 이어진 `if` 문이에요. 오른쪽 코드 창에서 내가 만든 규칙이 코드로 바뀌는 걸 볼 수 있어요.\n"
+        "- **조건문과 논리 연산**: 규칙 한 줄에서는 `and` 또는 `or`를 선택하고, 규칙 줄끼리는 `or`로 이어진 `if` 문이에요. 오른쪽 코드 창에서 내가 만든 규칙이 코드로 바뀌는 걸 볼 수 있어요.\n"
         "- **오탐·미탐과 혼동 행렬**: 결과 표는 실제 스팸 필터와 인공지능 분류 모델을 평가할 때 쓰는 2×2 표와 같아요.\n"
         "- **새 자료 시험**: 같은 규칙을 연습 문자와 새 문자에 적용해요. 목표 블록 수는 권장 목표이며, 3단계 동일 태그 두 문자는 별도 확인이 필요해요."
     )
