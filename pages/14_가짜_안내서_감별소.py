@@ -47,6 +47,28 @@ with intro("14", suffix=""):
         '다람쥐아파트 101·102·103호 문에 등기 안내서가 붙었어요. 진짜 안내도, 가짜 안내도, 아직 알 수 없는 안내도 있어요. '
         '공식 경로로 직접 확인한 기록과 대조해 ‘정상·위조·판단 보류’ 중 하나로 감별해 주세요.</div></div>',
         unsafe_allow_html=True)
+    # 시작 전 설명: 안내서에 무엇이 적혀 있고, 무엇으로 확인하고, 어떻게 판정하는지 미리 알려 줘요.
+    st.markdown("""<div style="border:2.5px solid #C7D2FE;background:#F5F7FF;border-radius:16px;padding:14px 16px;margin:.2rem 0 .8rem;line-height:1.7;word-break:keep-all">
+<b style="font-size:1.1rem;color:#1E3A8A">🧭 시작하기 전에 · 이렇게 감별해요</b>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px">
+<div style="background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid #E0E7FF"><b>① 안내서 읽기</b><br>
+<b>🔖 참조번호</b>는 안내서에 적힌 <b>등기번호</b>예요. 공식 조회에서 이 번호로 우편물을 찾아 <b>주소·방문 시각이 안내서와 같은지</b> 맞춰 봐요.<br>
+<b>👀 겉모습</b>(구겨짐·테이프·흐린 글씨)은 참고만 해요. 겉모습만으로는 진짜·가짜를 정할 수 없어요.</div>
+<div style="background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid #E0E7FF"><b>② 확인 경로 고르기</b><br>
+안내서에 적힌 <b>번호·QR</b>로 물어보면, 안내서를 만든 사람에게 묻는 셈이라 확인이 안 돼요.<br>
+<b>안내서와 상관없이 내가 직접 찾은 공식 홈페이지·고객센터</b>로 확인해야 기록으로 인정돼요.</div>
+<div style="background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid #E0E7FF"><b>③ 확인 기록 모으기</b><br>
+📦 <b>등기 조회</b>: 그 번호의 우편물이 진짜 있는지, 주소·시각이 맞는지<br>
+📞 <b>정식 절차</b>: 안내서가 시킨 일(QR 입력 등)을 기관이 정말 요구하는지<br>
+🕒 <b>조회 범위</b>: 조회가 제대로 끝났는지, 최신 기록인지</div>
+<div style="background:#fff;border-radius:12px;padding:10px 12px;border:1.5px solid #E0E7FF"><b>④ 판정 도장 찍기</b><br>
+<b style="color:#15803D">정상 확인</b> · 기록이 안내서와 모두 맞아요<br>
+<b style="color:#B91C1C">위조</b> · 기관이 안내서의 요구를 부인했어요 (우편물이 진짜 있어도 위조일 수 있어요!)<br>
+<b style="color:#B45309">판단 보류</b> · 조회가 안 돼서 아직 알 수 없어요<br>
+판정·이유·근거 기록·다음 행동을 함께 골라 제출해요.</div>
+</div>
+<div style="margin-top:8px;font-size:.95rem;color:#374151">🚪 101호 → 102호 → 103호, 안내서 3장을 차례로 감별해요. <b>처음 제출에서 맞힌 개수</b>가 점수예요. 필요한 기록을 다 모은 뒤에 제출하세요.</div>
+</div>""", unsafe_allow_html=True)
     st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
 
 
