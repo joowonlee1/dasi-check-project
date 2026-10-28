@@ -144,12 +144,19 @@ with tab_stats:
                 "그림", "힌트 없이 푼 비율(%)")
 
     elif game == "notice":
+        if data.get("v3_plays",0):
+            st.markdown("#### 자료 조사 활동")
+            a,b=st.columns(2)
+            a.metric("조사 완료",f"{data['v3_plays']}회")
+            b.metric("첫 제출에서 3건 모두 정확",f"{dd.pct(data.get('v3_perfect',0),data['v3_plays'])}%")
+            st.caption("자료 조사와 재판단을 모두 마쳐야 완료됩니다. 정확도는 첫 제출 기준이며 이전 활동과 따로 집계합니다.")
+        st.markdown("#### 이전 3건 확인 활동")
         plays = data.get("v2_plays", 0)
         if not plays:
             empty()
         else:
             a, b = st.columns(2)
-            a.metric("새 활동 완료 횟수", f"{plays}회")
+            a.metric("이전 활동 완료 횟수", f"{plays}회")
             b.metric("3건 모두 판단·근거 일치", f"{dd.pct(data.get('v2_perfect', 0), plays)}%")
             bar([(name, dd.pct(data.get(f"v2_h{i}_ok", 0), plays))
                  for i,name in enumerate(["101호 · 정상 확인","102호 · 위조 확인","103호 · 판단 보류"])],
