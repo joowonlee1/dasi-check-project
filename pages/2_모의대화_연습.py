@@ -378,11 +378,14 @@ def render_scenario_picker():
     st.caption("다른 상황을 고르면 현재 대화와 리포트가 초기화돼요.")
 
     names = list(SCENARIOS)
+    # 좁은 칸에서도 상황 이름이 '…'로 잘리지 않고 두 줄로 다 보이게 해요.
+    st.markdown('<style>[class*="st-key-practice_card_"] button p{white-space:normal!important;word-break:keep-all;line-height:1.35}'
+                '[class*="st-key-practice_card_"] button{min-height:52px}</style>', unsafe_allow_html=True)
 
-    for start in range(0, len(names), 4):
-        columns = st.columns(4)
+    for start in range(0, len(names), 2):
+        columns = st.columns(2)
 
-        for offset, name in enumerate(names[start:start + 4]):
+        for offset, name in enumerate(names[start:start + 2]):
             chosen = name == selected
 
             with columns[offset]:
@@ -903,6 +906,10 @@ st.info(
     "링크나 앱을 실제로 실행할 필요 없이 어떻게 대응할지만 말하면 됩니다."
 )
 
+# 넓은 화면에서는 왼쪽에 ① 상황 고르기·설정, 오른쪽에 ② 대화를 나란히 둬요(휴대폰에서는 위아래로 쌓여요).
+_left, _right = st.columns([1, 1.6], gap="large")
+_left.__enter__()
+
 scenario = render_scenario_picker()
 
 if STATE_KEY not in st.session_state:
@@ -976,6 +983,9 @@ with st.expander("🔧 AI 연결 확인"):
 
         except Exception as error:
             st.error(explain_error(error))
+
+_left.__exit__(None, None, None)
+_right.__enter__()
 
 messages = state["messages"]
 
@@ -1068,21 +1078,6 @@ turns = sum(
     message["role"] == "user"
     for message in messages
 )
-
-st.caption(f"완료한 대화: {turns} / {MAX_TURNS}회")
-
-if not state["ended"]:
-    st.caption(
-        "💡 대화창에서 ‘그만’이라고 해도 상대는 실제 사기범처럼 붙잡을 수 있어요. "
-        "연습 자체를 끝내려면 ‘연습 종료’ 버튼을 누르거나 ‘연습 종료’라고 입력하세요."
-    )
-
-if not state["ended"]:
-    st.button(
-        "연습 종료",
-        on_click=finish_chat,
-        key="stop_chat_now",
-    )
 
 pending = state["pending"]
 
@@ -1262,5 +1257,23 @@ else:
             )
 
 
+# 대화 횟수·도움말·연습 종료 버튼은 답변 칸 아래에 둬요(답변 칸이 대화창 바로 밑에 오도록).
+st.caption(f"완료한 대화: {turns} / {MAX_TURNS}회")
+
+if not state["ended"]:
+    st.caption(
+        "💡 대화창에서 ‘그만’이라고 해도 상대는 실제 사기범처럼 붙잡을 수 있어요. "
+        "연습 자체를 끝내려면 ‘연습 종료’ 버튼을 누르거나 ‘연습 종료’라고 입력하세요."
+    )
+
+if not state["ended"]:
+    st.button(
+        "연습 종료",
+        on_click=finish_chat,
+        key="stop_chat_now",
+    )
+
 if state.get("ended"):
     st.button("🔄 다른 방법으로 다시 도전", key="chat_retry_result", on_click=reset_chat, width="stretch")
+
+_right.__exit__(None, None, None)
