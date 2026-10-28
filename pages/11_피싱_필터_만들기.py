@@ -18,7 +18,7 @@ from filter_component_ui import create_filter_component
 with intro("11", suffix=""):
     st.title("🤖 피싱 필터 만들기")
     show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
-    show_mascot("shield", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
+    show_mascot("postman", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
 
 # 조건: L 링크 있음, U 모르는 번호, S 저장된 번호(모르는 번호가 아님), M 돈 요구, R 재촉, P 인증번호·개인정보 요구, A 앱 설치 요구
 VERIFIED = [
