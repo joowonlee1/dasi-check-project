@@ -206,9 +206,9 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 .matrix .h{background:transparent;color:#52616B}
 .matrix .tp{background:#DFF5EA}.matrix .tn{background:#DFF5EA}.matrix .fp{background:#FFF1E2;color:#B4471B}.matrix .fn{background:#FFE4E4;color:#B42318}
 .matrix b{display:block;font-size:1.3rem}
-.twin{background:#FFFBEA;border:2px solid #F2D58A;border-radius:16px;padding:12px 14px;margin:10px 0;text-align:left;word-break:keep-all;animation:rise .5s .6s ease-out both}
-.twin .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
-.twin .pair div{background:#fff;border:1.5px solid #E6D9A8;border-radius:12px;padding:8px;font-size:.88rem;line-height:1.5}
+.twin{background:#FFF7E6;border:3px solid #F59E0B;border-radius:18px;padding:16px 18px;margin:14px 0;font-size:1rem;line-height:1.7;box-shadow:0 6px 18px rgba(245,158,11,.25);text-align:left;word-break:keep-all;animation:rise .5s .6s ease-out both}
+.twin>b:first-child{display:block;font-size:1.25rem;color:#9A3412;margin-bottom:4px}.twin .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.twin .pair .fake{border:2.5px solid #EF4444!important;background:#FEF2F2!important}.twin .pair .real{border:2.5px solid #22C55E!important;background:#F0FDF4!important}.twin .same{display:inline-block;background:#FDE68A;color:#78350F;font-weight:900;border-radius:999px;padding:1px 10px;margin:0 2px}.twin .key{background:#9A3412;color:#fff;border-radius:12px;padding:10px 12px;margin-top:10px;font-weight:700}
+.twin .pair div{background:#fff;border:1.5px solid #E6D9A8;border-radius:12px;padding:10px;font-size:.95rem;line-height:1.55}
 .others{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;margin:10px auto 0;max-width:640px;text-align:left;font-weight:700;font-size:.92rem;line-height:1.6;color:#1E3A5F;word-break:keep-all}
 .final{text-align:left}
 .guide{background:#F0F7FF;border:2px solid #B8D4F0;border-radius:14px;padding:8px 12px;font-size:.9rem;line-height:1.6;margin:6px 0 8px;word-break:keep-all}
@@ -301,6 +301,8 @@ function renderIntro(){
   <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🤖 필터실 입장하기</button>`;
 }
 
+// 필터실 안에서 바로 전 화면(시작 화면)으로 돌아가요. 만든 규칙과 기록은 그대로 남아요.
+function backIntro(){ G.screen = 'intro'; fresh = true; render(); window.scrollTo(0, 0); }
 function startStage(i){if(i>0&&!G.best[i-1])return; G.screen = 'play'; G.stage = i; G.last = null; fresh = true; render(); window.scrollTo(0, 0); }
 
 function stageButtons(){
@@ -338,7 +340,9 @@ function renderPlay(){
   }).join('');
   const hints = s.hints.slice(0, G.hintOpen[st]).map((h, k) => `<div class="hint">💡 힌트 ${k + 1}: ${esc(h)}</div>`).join('');
   $('app').innerHTML = `
+  <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="backIntro()">← 이전 화면으로</button>
   <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>${st + 1}단계 · ${esc(s.name)}</b><span>문자 ${s.msgs.length}개 · 목표 블록 ${s.par}개 이하</span></section>
+  ${s.best > 0 ? `<div style="background:#FFF7E6;border:3px solid #F59E0B;border-radius:14px;padding:10px 14px;margin:8px 0;font-weight:800;color:#9A3412">⚠️ 이번 단계는 <b style="background:#FDE68A;padding:0 4px;border-radius:4px">어떤 규칙으로도 ${s.best}개는 꼭 틀려요.</b> 최대한 적게 틀리는 필터를 만들고, 시험 결과에서 그 이유를 확인해 보세요.</div>` : ''}
   ${stageButtons()}
   <div class="goal">🎯 목표: ${esc(s.goal)}</div>
   <div class="sintro">📢 ${esc(s.intro)}</div>
@@ -369,7 +373,7 @@ function resultHtml(st, res){
     <div class="h">진짜 문자</div><div class="fp"><b>${res.fp}</b>오탐</div><div class="tn"><b>${res.tn}</b>잘 통과</div></div>`;
   if (!stars) {
     const msg = s.best > 0 ? `더 줄일 수 있어요! 이 단계는 ${s.best}개까지는 어쩔 수 없지만, 지금은 ${res.errors}개를 틀렸어요.` : `${res.errors}개를 틀렸어요. 빨간 테두리 문자를 보고 규칙을 고쳐 보세요.`;
-    return `<section class="result lose${go}"><div class="big">🔧</div><b class="t">${esc(msg)}</b>${matrix}
+    return `<section class="result lose${go}"><div class="big">🔧</div><b class="t">${esc(msg)}</b>${s.best > 0 ? twinHtml(st) : ''}${matrix}
       <span class="stamp miss">다시 고치기</span>${whyHtml(st, res)}${othersHtml(st)}</section>`;
   }
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
@@ -378,15 +382,15 @@ function resultHtml(st, res){
   const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">처음 보는 문자로 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
   return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${s.best > 0 ? '이게 규칙으로 할 수 있는 최선이에요!' : '필터 완성!'}</b>
     <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
-    <div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${twins}${othersHtml(st)}${holdHtml(st)}${next}</section>`;
+    ${twins}<div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${s.best > 0 ? '최선의 필터!' : '필터 통과!'}</span>${sp}${othersHtml(st)}${holdHtml(st)}${next}</section>`;
 }
 
 function twinHtml(st){
   const s = D.stages[st], [a, b] = D.twins, A = s.msgs[a], B = s.msgs[b];
-  return `<div class="twin"><b>🤔 왜 1개는 꼭 틀릴까요?</b>
-    <div class="pair"><div>🔴 <b>${esc(A[0])}</b> (가짜 · 계정 도용)<br>${esc(A[2])}</div><div>🟢 <b>${esc(B[0])}</b> (진짜)<br>${esc(B[2])}</div></div>
-    두 문자는 <b>저장된 번호 · 돈 요구 · 재촉</b>으로 특징이 똑같아요. 똑같은 입력에는 규칙도 똑같이 답할 수밖에 없어서, 하나를 막으면 다른 하나도 막혀요.<br>
-    👉 그래서 <b>규칙(필터)만으로는 완벽할 수 없어요.</b> 친구가 돈을 부탁하면 <b>원래 알던 번호로 전화</b>해서 직접 확인하는 게 마지막 방어선이에요.</div>`;
+  return `<div class="twin"><b>🤔 왜 1개는 꼭 틀릴까요? · 이 단계의 진짜 비밀</b>
+    <div class="pair"><div class="fake">🔴 <b>${esc(A[0])}</b> (가짜 · 계정 도용)<br>${esc(A[2])}</div><div class="real">🟢 <b>${esc(B[0])}</b> (진짜)<br>${esc(B[2])}</div></div>
+    두 문자는 특징이 <span class="same">저장된 번호</span><span class="same">돈 요구</span><span class="same">재촉</span>으로 <b>똑같아요.</b> 똑같은 입력에는 규칙도 똑같이 답할 수밖에 없어서, 하나를 막으면 다른 하나도 막혀요.<br>
+    <div class="key">👉 그래서 규칙(필터)만으로는 완벽할 수 없어요. 친구가 돈을 부탁하면 원래 알던 번호로 전화하거나 직접 만나서 확인하는 게 마지막 방어선이에요.</div></div>`;
 }
 
 function othersHtml(st){
