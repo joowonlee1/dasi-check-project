@@ -101,16 +101,20 @@ def show_mascot(pose, message="", width=96):
         if message:
             st.caption(message)
         return
-    width = max(110, min(int(int(width) * 1.45), 200))  # 깡지는 마스코트라 크게 보여 줘요(너무 커지지 않게 상한)
+    width = max(96, min(int(width), 160))  # 깡지는 마스코트라 크게 보여 줘요(너무 커지지 않게 상한)
     text = html.escape(message)
     label = html.escape(description, quote=True)
     st.markdown(
-        f'<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;'
+        '<style>.jk-mascot-message{font-size:clamp(1.15rem,1.5vw,1.35rem)!important;line-height:1.65!important;}'
+        '[data-testid="stSidebar"] .jk-mascot-card{flex-direction:column;text-align:center;gap:8px!important;}'
+        '[data-testid="stSidebar"] .jk-mascot-card img{width:120px!important;}'
+        '@media(max-width:480px){.jk-mascot-card{gap:10px!important;}.jk-mascot-card img{max-width:110px!important;}}</style>'
+        f'<div class="jk-mascot-card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;'
         f'background:#FFFFFF;border:1px solid #E4E9DD;border-radius:20px;'
         f'padding:4px 12px;margin:2px 0 6px;">'
         f'<img src="data:image/png;base64,{encoded}" alt="{label}" '
         f'style="width:{width}px;max-width:100%;height:auto;flex-shrink:0;">'
-        f'<div style="flex:1;min-width:100px;color:#24443B;font-size:1.05rem;'
+        f'<div class="jk-mascot-message" style="flex:1;min-width:100px;color:#24443B;font-size:1.05rem;'
         f'font-weight:700;line-height:1.5;word-break:keep-all;">{text}</div></div>',
         unsafe_allow_html=True,
     )
