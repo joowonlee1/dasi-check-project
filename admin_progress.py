@@ -1,4 +1,3 @@
-
 """관리자 인증 후에만 접근하는 공용 도장 저장소. 시민 기록과 분리합니다."""
 import streamlit as st
 from datetime import datetime
@@ -70,7 +69,7 @@ def award(code,quiet=False):
 def status(prefix="sidebar"):
     if not active():return
     load()
-    st.caption("관리자 공용 도장판 · 같은 관리자 코드로 이용하는 사람끼리 공유해요.")
+    # 공용 도장판 설명은 사이드바 대신 관리자 도구(관리자 정답·관리) 맨 위에 보여 줘요.
     if st.session_state.get(ERROR):st.warning(st.session_state[ERROR])
     if st.session_state.get(PENDING) or st.session_state.get(ERROR):
         if st.button("관리자 도장 불러오기·저장 재시도",key="admin_progress_retry_"+prefix):
