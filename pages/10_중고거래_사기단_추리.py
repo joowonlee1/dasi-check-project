@@ -203,6 +203,20 @@ td.c button.bad{outline:3px solid #E5484D}
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
+const IQ_THEME = 'market';
+// 도토리마켓 앱 화면 모양의 큰 창 (중고거래 추리 전용)
+function marketPop(o, then){
+  jkOverlay(`<div class="jk-panel" style="background:#1F2937;border-radius:34px;padding:12px;box-shadow:0 20px 50px #0007;max-width:560px">
+   <div style="background:#FFF7ED;border-radius:26px;overflow:hidden">
+    <div style="background:${o.bar||'#F97316'};color:#fff;padding:12px 18px;font-weight:900;font-size:1.05rem;display:flex;justify-content:space-between"><span>🛍️ 도토리마켓</span><span>${o.tag||''}</span></div>
+    <div style="padding:16px 18px;display:flex;gap:14px;align-items:center">${jkImg(o.mascot,150)}
+     <div style="flex:1"><div style="font-size:1.35rem;font-weight:900;color:#7C2D12;line-height:1.35">${o.title}</div>
+     <div style="margin-top:8px;background:#fff;border-radius:4px 16px 16px 16px;padding:10px 12px;box-shadow:0 1px 3px #0002;font-size:1.02rem;line-height:1.7;color:#1F2937">${o.body}</div></div></div>
+    ${o.extra||''}
+    <div style="padding:0 18px 18px"><button data-close style="width:100%;min-height:52px;border:0;border-radius:14px;background:${o.bar||'#F97316'};color:#fff;font:800 1.1rem system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div>
+   </div></div>`, then);
+}
+
 const KINDS = ['c', 'r', 'p'];
 const G = {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0,
   k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, auto: true, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0};
@@ -302,7 +316,11 @@ function gridExample(){
 }
 function hint(i){ G.hints[i] = true; render(); }
 function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
-function unlock(i){ G.solved[i] = true; toastMsg = '🔓 조사 완료! 추리 표에 새 단서가 열렸어요.'; render(); }
+function unlock(i){ G.solved[i] = true; toastMsg = '🔓 조사 완료! 추리 표에 새 단서가 열렸어요.'; render();
+  const n = G.solved.filter(Boolean).length;
+  marketPop({mascot:'sneaker', tag:'거래 기록 조사 완료', title:`🔓 단서 확보! (${n}/3)`,
+    body: esc(IQ_CASES[i].lesson) + '<br><b>추리 표에 새 단서가 열렸어요.</b>',
+    button: n === 3 ? '🧩 추리 표로 가기 ▶' : '다음 거래 기록 조사하기 ▶'}, n === 3 ? () => go('grid') : null); }
 function check1(){ if (G.k === D.memo1.answer) unlock(0); else { G.wrongMemo++; toast('아직 문장이 안 돼요. 다른 칸 수로 해 보세요.', $('m0')); } }
 function check2(){ if (G.shift === D.memo2.shift && Number(G.m2val) === Number(shiftBack(D.memo2.cipher,D.memo2.shift))) unlock(1); else { G.wrongMemo++; toast('되돌리는 칸 수와 직접 계산한 금액을 함께 확인하세요.', $('m1')); } }
 function check3(){
@@ -402,7 +420,10 @@ function pickTab(){
 }
 function answer(){
   if(!G.solved.every(Boolean)||!G.gridChecked){toast("거래 기록 3건과 추리표를 완성한 뒤 지목하세요.");return;}
-  if (G.pick !== D.real) { G.wrongPick++; toast(`${G.pick}의 요구를 다시 떠올려 봐요. 표를 확인하고 다시 골라요!`, $('pk')); return; }
+  if (G.pick !== D.real) { G.wrongPick++; toast(`${G.pick}의 요구를 다시 떠올려 봐요. 표를 확인하고 다시 골라요!`, $('pk'));
+    marketPop({mascot:'think', bar:'#64748B', tag:'신고 반려', title:`🚨 ${esc(G.pick)}님은 진짜 판매자가 아니에요`,
+      body:'그 판매자가 무엇을 요구했는지 추리 표에서 다시 확인해 봐요. <b>앱 밖으로 나가자고 하지 않고, 안전하게 거래하는 판매자</b>가 진짜예요.', button:'추리 표 다시 보기 ▶'});
+    return; }
   G.done = true;
   const box = $('app');
   const steps = [['🥁', '두구두구…'], ['🔎', '거래 기록을 대조하는 중…'], ['🎉', '진짜 판매자 발견!']];
@@ -434,6 +455,9 @@ function final(){
   ③ 시세보다 <b>너무 싼 가격</b>은 미끼일 수 있어요.<br>
   ④ <b>신분증 사진·상품권 결제</b> 요구는 거절해요.</section>
   <button class="go" style="width:100%" onclick="restart()">🔄 처음부터 다시</button>`;
+  marketPop({mascot:'hooray', bar:'#15803D', tag:'🚔 사기단 검거 보고서', title:'🎉 진짜 판매자는 ‘동네이웃’!',
+    body:`앱 안에서 안전결제로 거래한 판매자만 진짜였어요. 나머지 4명은 외부 메신저·선입금·상품권·신분증 사진을 요구했죠.<br><b style="font-size:1.3rem">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</b>`,
+    button:'판매자별 수법 보기 ▶'});
 }
 function restart(){ iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
 
