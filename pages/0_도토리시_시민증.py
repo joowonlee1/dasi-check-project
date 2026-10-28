@@ -133,7 +133,7 @@ if account:
         dd.logout()
         st.rerun()
 else:
-    show_mascot("welcome", "로그인하지 않아도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
+    show_mascot("id", "로그인하지 않아도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
     dd.show_login_forms("page")
 
     st.markdown("#### 알아 두세요")
@@ -150,6 +150,3 @@ else:
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
 
 # 맨 아래: 관리자만 쓰는 상자(관리자 코드가 Secrets에 있을 때만 보여요)
-
-
-
