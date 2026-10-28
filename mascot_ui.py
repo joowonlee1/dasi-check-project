@@ -38,6 +38,16 @@ POSES = {
     "hooray": ("mascot_more.png", 630, 639, 869, 861, "꽃가루 속에서 만세하는 캐릭터"),
     "call112": ("mascot_more.png", 948, 642, 1152, 858, "112에 전화하는 캐릭터"),
     "think": ("mascot_more.png", 1243, 638, 1457, 862, "골똘히 생각하는 캐릭터"),
+    # 세 번째로 받은 깡지 9가지 (같은 시트의 아래 두 줄)
+    "grandma": ("mascot_more.png", 10, 954, 290, 1146, "할머니와 함께 휴대폰을 보는 캐릭터"),
+    "safe": ("mascot_more.png", 310, 922, 590, 1177, "금고를 꼭 끌어안은 캐릭터"),
+    "sad": ("mascot_more.png", 610, 951, 890, 1149, "눈물 글썽이며 할머니에게 위로받는 캐릭터"),
+    "news": ("mascot_more.png", 910, 935, 1190, 1164, "신문을 펼쳐 든 캐릭터"),
+    "link": ("mascot_more.png", 1210, 945, 1490, 1155, "링크를 돋보기로 살피는 캐릭터"),
+    "chat": ("mascot_more.png", 1510, 955, 1790, 1144, "단톡방 말풍선에 둘러싸인 캐릭터"),
+    "id": ("mascot_more.png", 10, 1228, 290, 1471, "시민증을 자랑하는 캐릭터"),
+    "badge": ("mascot_more.png", 310, 1217, 590, 1482, "관리자 배지를 단 캐릭터"),
+    "bye": ("mascot_more.png", 610, 1228, 890, 1472, "손 흔들며 배웅하는 캐릭터"),
 }
 PAD = 14  # 테두리 선이 가장자리에 붙지 않도록 남기는 여백(px)
 
@@ -91,7 +101,7 @@ def show_mascot(pose, message="", width=96):
         if message:
             st.caption(message)
         return
-    width = max(56, min(int(width), 130))  # 깡지가 눈에 잘 띄되 화면을 너무 차지하지 않게 상한을 둬요
+    width = max(110, min(int(int(width) * 1.45), 200))  # 깡지는 마스코트라 크게 보여 줘요(너무 커지지 않게 상한)
     text = html.escape(message)
     label = html.escape(description, quote=True)
     st.markdown(
