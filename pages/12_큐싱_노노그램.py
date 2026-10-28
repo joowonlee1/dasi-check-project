@@ -78,7 +78,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
 .box h3{margin:0 0 8px;font-size:1.12rem}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}@media (max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
 .step{background:#F4F8F6;border:1.5px solid #D7E2DD;border-radius:16px;padding:12px;text-align:center;word-break:keep-all}
 .step .ic{font-size:34px}.step b.h{display:block;font-size:1.02rem;margin:2px 0}.step p{margin:0;font-size:.9rem;color:#33524A;line-height:1.5}
 .exs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
@@ -172,6 +172,7 @@ function renderIntro(){
     <div class="step"><div class="ic">🔢</div><div><b class="h">① 단서 읽기</b><p>줄 옆 숫자는 <b>연달아 칠한 칸 수</b>예요. ‘3 1’이면 3칸 묶음, 빈칸 하나 이상, 1칸 묶음.</p></div></div>
     <div class="step"><div class="ic">✏️</div><div><b class="h">② 칠하고 ✕ 치기</b><p>확실한 칸은 칠하고, 확실히 빈칸은 ✕로 표시해요. 누른 채 끌면 여러 칸을 한 번에!</p></div></div>
     <div class="step"><div class="ic">🖼️</div><div><b class="h">③ 그림 복원</b><p>모든 줄의 숫자를 맞추면 숨은 그림이 나타나고 수법이 공개돼요.</p></div></div>
+    <div class="step"><div class="ic">🔍</div><div><b class="h">④ 사실 조사</b><p>그림을 복원하면 <b>그 QR을 써도 되는지</b> 자료를 읽고 판단해요. 조사를 마쳐야 다음 조각이 열려요.</p></div></div>
   </div>
   <section class="box"><h3>🔍 예시로 감 잡기 (5칸짜리 줄)</h3>
     <div class="exs">
@@ -186,6 +187,8 @@ function renderIntro(){
   <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🧩 복원 시작하기</button>`;
 }
 
+// 복원실 안에서 바로 전 화면(시작 화면)으로 돌아가요. 칠한 칸과 기록은 그대로 남아요.
+function backIntro(){ G.screen = 'intro'; fresh = true; render(); window.scrollTo(0, 0); }
 function startStage(i){ if(i>0&&!iqState(i+2).done)return; G.screen = 'play'; G.stage = i; G.justSolved = false; fresh = true; render(); window.scrollTo(0, 0); }
 
 function stageButtons(){
@@ -220,6 +223,7 @@ function renderPlay(){
   const st = G.stage, s = D.stages[st];
   const n = SOL[st].length;
   $('app').innerHTML = `
+  <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="backIntro()">← 이전 화면으로</button>
   <section class="hero"><span>🅿️ 도토리 공영주차장 · 증거 복원실</span><b>${st + 1}단계 · ${esc(s.name)}</b><span>${n}×${n} 칸</span></section>
   ${stageButtons()}
   <div class="story">📜 ${esc(s.story)}</div>
