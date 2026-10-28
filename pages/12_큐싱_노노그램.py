@@ -7,6 +7,7 @@ from play_ui import intro, bridge
 모든 장소·스티커·주소는 교육용 가상 내용입니다.
 """
 import json
+from investigation_ui import attach
 
 import streamlit as st
 import dotori_data as dd
@@ -15,7 +16,7 @@ from nonogram_component_ui import create_nonogram_component
 
 with intro("12", suffix=""):
     st.title("🧩 큐싱 노노그램")
-    show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림이 완성되면 **사기단의 수법**이 드러나요.", "🧩")
+    show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림을 복원한 뒤 **출처·목적지·요구를 조사**하세요.", "🧩")
     show_mascot("detective", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
 
     st.info("이번 활동은 ‘그림 복원’과 ‘안전성 판단’을 구별하는 연습이에요. 숫자로 그림을 정확히 복원해도 QR의 목적지가 안전하다는 뜻은 아니에요.")
@@ -46,7 +47,7 @@ DATA = {
             "name": "증거 조각 ③",
             "title": "🔳 QR 코드",
             "pic": ["###.##.###", "#.#..#.#.#", "###..#.###", "....#.....", "#####.##..", ".#.#.####.", "....#..#.#", "###.##.##.", "#.#.##..#.", "###....#.#"],
-            "story": "마지막 조각이에요. 사기단이 정산기의 진짜 QR 위에 덧붙인 가짜 스티커예요.",
+            "story": "마지막 조각이에요. 정산기에서 발견된 스티커 모양이에요. 복원 후 안내의 출처와 요구를 확인해야 해요.",
             "lesson": "이렇게 QR 코드로 가짜 사이트에 접속하게 만드는 수법을 ‘큐싱(QR + 피싱)’이라고 해요.",
         },
     ],
@@ -185,11 +186,11 @@ function renderIntro(){
   <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🧩 복원 시작하기</button>`;
 }
 
-function startStage(i){ G.screen = 'play'; G.stage = i; G.justSolved = false; fresh = true; render(); window.scrollTo(0, 0); }
+function startStage(i){ if(i>0&&!iqState(i+2).done)return; G.screen = 'play'; G.stage = i; G.justSolved = false; fresh = true; render(); window.scrollTo(0, 0); }
 
 function stageButtons(){
   return `<div class="stages">${D.stages.map((s, i) => {
-    const locked = i > 0 && !G.solved[i - 1];
+    const locked = i > 0 && (!G.solved[i - 1] || !iqState(i+2).done);
     const st = G.solved[i] ? '⭐'.repeat(G.stars[i]) + '☆'.repeat(3 - G.stars[i]) : (locked ? '🔒' : `${SOL[i].length}×${SOL[i].length}`);
     return `<button class="${i === G.stage ? 'on' : ''}" ${locked ? 'disabled' : ''} onclick="startStage(${i})">${i + 1}단계 · ${esc(s.name)}<small>${st}</small></button>`;
   }).join('')}</div>`;
@@ -285,7 +286,7 @@ function checkSolved(){
   if (!g.every((row, r) => row.every((v, c) => (v === 1) === (sol[r][c] === 1)))) return;
   G.solved[st] = true; G.justSolved = true;
   G.stars[st] = Math.max(G.stars[st], 1 + (G.hints[st] === 0 ? 1 : 0) + (G.checks[st] === 0 ? 1 : 0));
-  sendResult({game: 'nono', type: 'clear', stage: st, stars: 1 + (G.hints[st] === 0 ? 1 : 0) + (G.checks[st] === 0 ? 1 : 0), hints: G.hints[st]});
+
   render();
   const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
   G.justSolved = false;
@@ -325,6 +326,7 @@ function clearBoard(){ const n = SOL[G.stage].length; G.grid[G.stage] = SOL[G.st
 function miniQR(pic){ const n = pic.length; return `<div class="mini" style="grid-template-columns:repeat(${n},11px)">${pic.join('').split('').map(ch => `<span class="${ch === '#' ? 'f' : ''}"></span>`).join('')}</div>`; }
 
 function resultHtml(st){
+  if(!iqState(st+3).done)return `<section class="result"><h3>그림 복원 완료 · 이제 사실을 확인하세요</h3><p>그림만으로 안전성을 판정할 수 없어요.</p></section>`+iqHTML(st+3);
   const s = D.stages[st], stars = G.stars[st];
   const sp = ['✨', '⭐', '🧩', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   const qr = st === 2 ? `<div class="twoqr"><figure>${miniQR(D.real_qr)}✅ 정산기의 진짜 QR</figure><figure>${miniQR(s.pic)}🚨 덧붙인 가짜 QR</figure></div>
@@ -337,7 +339,15 @@ function resultHtml(st){
     <div class="lesson">🔎 ${esc(s.lesson)}</div>${qr}${othersHtml(st)}${next}</section>`;
 }
 
+function iqComplete(i){
+ const st=i-3;
+ G.stars[st]=1+(G.hints[st]===0?1:0)+(G.checks[st]===0?1:0);
+ sendResult({game:'nono',type:'clear',stage:st,stars:G.stars[st],hints:G.hints[st]});render();
+}
+function iqHintUsed(i){G.hints[i-3]++;}
+function iqWrong(i){G.checks[i-3]++;}
 function toFinal(){
+ if(![3,4,5].every(i=>iqState(i).done))return;
   sendResult({game: 'nono', type: 'final', stars: G.stars.reduce((a, b) => a + b, 0), hints: G.hints.reduce((a, b) => a + b, 0)});
   G.screen = 'final'; fresh = true; render(); window.scrollTo(0, 0);
 }
@@ -379,7 +389,7 @@ function renderFinal(){
   <div class="row"><button onclick="startStage(0)">🔁 1단계부터 다시 풀기</button><button class="go" onclick="restart()">🔄 처음부터 다시</button></div>`;
 }
 
-function restart(){ Object.assign(G, {screen: 'intro', stage: 0, mode: 1, grid: blank(), solved: [false, false, false], hints: [0, 0, 0], checks: [0, 0, 0], stars: [0, 0, 0], justSolved: false}); fresh = true; render(); }
+function restart(){ iqReset(); Object.assign(G, {screen: 'intro', stage: 0, mode: 1, grid: blank(), solved: [false, false, false], hints: [0, 0, 0], checks: [0, 0, 0], stars: [0, 0, 0], justSolved: false}); fresh = true; render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
@@ -396,7 +406,7 @@ render();
 </script></body></html>
 '''
 
-page = bridge(HTML, "12").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+page = bridge(attach(HTML), "12").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_nonogram_component(page)(key="jamkkan_qr_nonogram_v1", default=None, stats=dd.stats("nono"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
