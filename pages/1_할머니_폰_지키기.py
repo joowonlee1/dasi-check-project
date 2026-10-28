@@ -819,7 +819,7 @@ def show_last_feedback(game):
 def show_intro():
     show_hero(f"📱 가족 지키기 게임 · 연락 {len(EVENTS)}개", "할머니 휴대폰을 지켜라",
               "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어와요.", tone="pink")
-    show_mascot("phone", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
+    show_mascot("grandma", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, key="grandma_start_top", width="stretch")
     st.caption("처음이라면 아래 설명을 먼저 읽어 보세요.")
     st.markdown("#### 🎯 미션: 할머니의 돈을 지켜라")
@@ -1039,6 +1039,9 @@ def show_ending(game):
         f'<div class="t">{esc(title)}</div><div style="text-align:left;">{esc(story)}</div>{stamp}</div>',
         unsafe_allow_html=True,
     )
+    # 결말에 맞는 깡지: 돈을 지켰으면 금고를 끌어안은 깡지, 송금됐으면 할머니와 서로 위로하는 깡지
+    show_mascot("sad" if ending == "bad" else "safe",
+                "괜찮아요. 다음엔 더 일찍, 다정하게 같이 확인해 봐요." if ending == "bad" else "할머니의 돈을 지켜 냈어요! 함께 확인한 덕분이에요.", width=140)
     data = dd.stats("grandma")
     plays = data.get("plays", 0)
     if plays:
