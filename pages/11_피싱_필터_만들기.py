@@ -226,6 +226,20 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 <main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
+// 문자 필터실 관제 모니터 모양의 큰 창 (피싱 필터 전용)
+function monitorPop(o, then){
+  const lamp = o.ok ? '#22C55E' : '#EF4444';
+  jkOverlay(`<div class="jk-panel" style="background:#0B1F1A;border:4px solid #1F4D42;border-radius:18px;padding:16px 18px;color:#D1FAE5;box-shadow:0 20px 50px #0008;font-family:ui-monospace,Consolas,monospace">
+   <div style="display:flex;align-items:center;gap:10px;border-bottom:1px dashed #1F4D42;padding-bottom:8px;margin-bottom:12px">
+    <span style="width:14px;height:14px;border-radius:50%;background:${lamp};box-shadow:0 0 12px ${lamp}"></span>
+    <b style="letter-spacing:.06em">📮 도토리 우체국 · 문자 필터실 모니터</b><span style="margin-left:auto;color:#6EE7B7">${o.tag||''}</span></div>
+   <div style="display:flex;gap:14px;align-items:center">${jkImg(o.mascot,145)}
+    <div style="flex:1"><div style="font-size:1.4rem;font-weight:900;color:${o.ok?'#86EFAC':'#FCA5A5'}">${o.title}</div>
+    <div style="margin-top:6px;line-height:1.7;font-family:system-ui,sans-serif;color:#ECFDF5">${o.body}</div></div></div>
+   ${o.lines?'<div style="margin-top:12px;background:#06140F;border-radius:10px;padding:10px 12px;line-height:1.9">'+o.lines.map(l=>'&gt; '+l).join('<br>')+'</div>':''}
+   <button data-close style="margin-top:14px;width:100%;min-height:50px;border:2px solid ${lamp};border-radius:12px;background:#0F2E26;color:#ECFDF5;font:800 1.05rem system-ui;cursor:pointer">${o.button||'모니터 닫기 ▶'}</button></div>`, then);
+}
+
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const KEYS = Object.keys(D.conds);
@@ -466,6 +480,12 @@ function run(){
     sendResult({game: 'filter', type: 'run', stage: st, clear: false, stars, blocks: res.blocks,
       wrong: res.rows.map((r, i) => r.flag !== s.msgs[i][4] ? i : -1).filter(i => i >= 0)});
     const box = document.querySelector('.result'); if (box) box.scrollIntoView({block: 'start', behavior: 'smooth'});
+    const lines = [`잘 막은 가짜 문자 ${res.tp}건`, `잘 통과한 진짜 문자 ${res.tn}건`, `놓친 가짜 문자(미탐) ${res.fn}건`, `잘못 막은 진짜 문자(오탐) ${res.fp}건`, `사용한 블록 ${res.blocks}개 (목표 ${s.par}개 이하)`];
+    if (stars) monitorPop({ok:true, mascot:'postman', tag:`${st + 1}단계 · ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`,
+      title: s.best > 0 ? '✅ 규칙으로 할 수 있는 최선!' : '✅ 필터 가동 성공!',
+      body: s.best > 0 ? '어떤 규칙으로도 1개는 틀릴 수밖에 없는 단계예요. 결과 화면의 설명 상자를 꼭 읽어 보세요.' : '이제 처음 보는 문자로도 시험해 봐요.', lines});
+    else monitorPop({ok:false, mascot:'think', tag:`${st + 1}단계 · 경고`, title:`⚠️ ${res.errors}건 잘못 분류됨`,
+      body:'빨간 테두리 문자를 보고 규칙을 고쳐 보세요. 놓친 가짜 문자는 막고, 진짜 문자는 통과시켜야 해요.', lines, button:'규칙 고치러 가기 ▶'});
   }, s.msgs.length * 260 + 500);
 }
 
@@ -481,6 +501,8 @@ function runHoldout(){
  if(!errors)G.best[st]={stars:starsFor(st,G.last),blocks:blocks(st)};
  sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
  render();
+ monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 시험',title:`⚠️ 새 문자 ${errors}건 오분류`,body:'처음 보는 문자에서는 규칙이 맞지 않았어요. 특정 문자에만 맞춘 규칙은 아닌지 살펴보세요.',button:'규칙 다시 보기 ▶'}
+   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'외운 규칙이 아니라 진짜로 통하는 규칙이에요. 다음 단계로 가 볼까요?'});
 }
 function toFinal(){
  if(!G.best.every(Boolean))return;
