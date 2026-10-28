@@ -4,7 +4,7 @@ import re
 import time
 
 import streamlit as st
-from mascot_ui import show_hero, show_mascot
+from mascot_ui import show_hero, show_mascot, mascot_img
 import dotori_data as dd
 from card_ui import show_result_card
 
@@ -236,7 +236,7 @@ HINTS = {
 st.markdown(
     """
     <style>
-    .ev-wrap {max-width: 400px; margin: 6px 0 10px;}
+    .ev-wrap {max-width: 560px; margin: 16px 0 10px;}
     .phone {background:#0B1220; border-radius:30px; padding:10px 12px 14px; border:3px solid #2B3645;
             box-shadow:0 8px 22px rgba(15,23,42,.25); color:#E5ECF4;}
     .phone .status {display:flex; justify-content:space-between; font-size:.72rem; color:#AAB7C6;
@@ -517,18 +517,22 @@ def render_evidence(evidence_id):
 
 def evidence_card(evidence_id):
     with st.container(border=True):
-        st.markdown(f"**{EVIDENCE[evidence_id]['title']}**")
+        code, _, name = EVIDENCE[evidence_id]["title"].partition(" · ")
+        st.markdown(f'<div style="display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px dashed #D6DDE2">'
+                    f'<span style="background:#20483F;color:#fff;font-weight:900;border-radius:8px;padding:2px 9px;font-size:.9rem">{esc(code)}</span>'
+                    f'<b style="font-size:1.08rem">{esc(name or code)}</b></div>', unsafe_allow_html=True)
         render_evidence(evidence_id)
 
         if evidence_id in game["evidence"]:
-            st.markdown('<div style="display:inline-block;background:#DCFCE7;color:#166534;border:2px solid #4ADE80;border-radius:999px;'
-                        'padding:4px 14px;font-weight:900">✅ 증거 보관함에 저장됨</div>', unsafe_allow_html=True)
+            st.markdown('<div style="display:flex;align-items:center;justify-content:center;min-height:52px;margin:12px 0 4px;'
+                        'background:#ECFDF3;color:#166534;border:2px solid #86EFAC;border-radius:14px;font-size:1.08rem;font-weight:800">'
+                        '✅ 증거 보관함에 저장됨</div>', unsafe_allow_html=True)
         else:
-            # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 눈에 잘 띄는 주황 버튼으로 크게 보여 줘요.
-            st.markdown('<style>[class*="st-key-collectbox_"] button{background:#EA580C!important;color:#fff!important;border:3px solid #9A3412!important;'
-                        'border-radius:14px!important;min-height:54px!important;box-shadow:0 4px 0 #9A3412!important;}'
-                        '[class*="st-key-collectbox_"] button p{font-size:1.1rem!important;font-weight:900!important;}'
-                        '[class*="st-key-collectbox_"] button:hover{filter:brightness(1.08);}</style>', unsafe_allow_html=True)
+            # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 부담스럽지 않은 연한 노란 버튼으로 크게 보여 줘요.
+            st.markdown('<style>[class*="st-key-collectbox_"] button{background:#FFF4D6!important;color:#7C4A03!important;border:2px solid #E8B04B!important;'
+                        'border-radius:14px!important;min-height:52px!important;box-shadow:0 2px 0 #E8B04B!important;}'
+                        '[class*="st-key-collectbox_"] button p{font-size:1.08rem!important;font-weight:800!important;}'
+                        '[class*="st-key-collectbox_"] button:hover{background:#FFE9B0!important;border-color:#D69A2D!important;}</style>', unsafe_allow_html=True)
             with st.container(key=f"collectbox_{evidence_id}"):
                 if st.button("📥 증거 보관함에 넣기 (+1분)", key=f"escape_collect_{evidence_id}", width="stretch"):
                     save_evidence(evidence_id)
@@ -598,9 +602,19 @@ def hint_panel(stage):
 
 @st.dialog("🔓 잠금 해제!", width="large")
 def feedback_popup(text):
-    st.markdown(f'<div style="font-size:1.25rem;line-height:1.8;font-weight:600;word-break:keep-all;color:#14532D;'
-                f'background:#F0FDF4;border:3px solid #4ADE80;border-radius:16px;padding:18px 20px">{esc(text)}</div>',
-                unsafe_allow_html=True)
+    # 첫 문장은 크게(무엇이 열렸는지), 나머지는 해설로 나눠 보여 줘요. 창 기본 제목과 여백은 줄여요.
+    body = text.lstrip("🔓 ").strip()
+    head, _, rest = body.partition(". ")
+    st.markdown(
+        "<style>div[role=dialog] [data-testid=stVerticalBlock]{gap:.6rem!important}"
+        "@keyframes ul-pop{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}</style>"
+        '<div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#14532D,#166534);color:#fff;'
+        'border-radius:18px;padding:14px 18px;margin-top:4px">'
+        f'<span style="flex:0 0 96px;animation:ul-pop .6s ease-out both">{mascot_img("unlock", 96) or "🔓"}</span>'
+        f'<div style="font-size:1.5rem;font-weight:900;line-height:1.4;word-break:keep-all">{esc(head)}.</div></div>'
+        + (f'<div style="font-size:1.12rem;line-height:1.75;word-break:keep-all;color:#1F2937;background:#F0FDF4;'
+           f'border-left:6px solid #22C55E;border-radius:12px;padding:12px 16px">{esc(rest)}</div>' if rest else ""),
+        unsafe_allow_html=True)
     if st.button("확인했어요 ▶", type="primary", width="stretch", key="escape_feedback_ok"):
         st.rerun()
 
@@ -706,7 +720,16 @@ def lock_three():
     st.subheader("🔒 잠금 3 · 출입문의 사건 보고서")
     st.write("출입문 화면에 사건 보고서 양식이 떠 있습니다. 모든 칸이 맞아야 문이 열립니다.")
 
-    with st.form("escape_final_form"):
+    # 입력한 내용을 게임 기록(draft3)에 보관해서, 다른 화면에 다녀와도 그대로 남아 있게 해요.
+    draft = game.setdefault("draft3", {})
+    for name in ("conclusion", "proof", "block", "action"):
+        widget_key = f"escape_l3_{name}"
+        if widget_key not in st.session_state and name in draft:
+            value = draft[name]
+            if name == "proof":
+                value = [e for e in value if e in game["evidence"]]
+            st.session_state[widget_key] = value
+    with st.container(border=True):
         conclusion = st.radio(
             "① 사건 판단",
             [
@@ -715,19 +738,26 @@ def lock_three():
                 "연락 내용이 실제 가족의 요청과 일치하지 않는다.",
                 "엄마가 전화를 받지 않았으므로 위험에 처해 있다.",
             ],
-            index=None,
+            **({} if "escape_l3_conclusion" in st.session_state else {"index": None}),
+            key="escape_l3_conclusion",
         )
         st.info("자료를 읽기만 해서는 선택할 수 없어요. ‘방 조사’에서 필요한 자료의 ‘증거 보관함에 넣기’를 누른 뒤, 여기에서 증거 3개를 선택하세요.")
         if not game["evidence"]:
             st.warning("아직 선택할 증거가 없어요. 먼저 장소를 조사해 증거를 수집하세요.")
+        st.markdown('<div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:12px;padding:10px 14px;line-height:1.7;margin:4px 0">'
+                    '<b>② 증거 3개 고르는 법</b><br>'
+                    '🅰️ <b>상대가 무엇을 요구했는지</b> 보여 주는 자료 2개 (처음 받은 연락들)<br>'
+                    '🅱️ <b>진짜 가족에게 원래 번호로 따로 확인한 결과</b> 1개<br>'
+                    '<small>🅰️와 🅱️를 나란히 놓으면 ‘요구한 내용’과 ‘진짜 사실’이 다르다는 게 드러나요.</small></div>', unsafe_allow_html=True)
         proof = st.multiselect(
             "② 처음 받은 전화·문자와, 저장된 가족 번호로 따로 확인한 내용을 비교할 증거 3개",
             game["evidence"],
             format_func=evidence_name,
             placeholder="보관함의 증거 중 3개 선택" if game["evidence"] else "먼저 증거 보관함에 자료를 넣어 주세요",
             disabled=not game["evidence"],
+            key="escape_l3_proof",
         )
-        block = st.text_input("③ 차단하고 신고할 번호 (하이픈 있어도 괜찮아요)", max_chars=16)
+        block = st.text_input("③ 차단하고 신고할 번호 (하이픈 있어도 괜찮아요)", max_chars=16, key="escape_l3_block")
         action = st.radio(
             "④ 지금 할 행동",
             [
@@ -736,9 +766,11 @@ def lock_three():
                 "요구를 멈추고 확인된 가족 번호로 소통한 뒤, 112에 신고한다.",
                 "문자를 지우고 아무 일 없었던 것처럼 넘어간다.",
             ],
-            index=None,
+            **({} if "escape_l3_action" in st.session_state else {"index": None}),
+            key="escape_l3_action",
         )
-        submitted = st.form_submit_button("최종 잠금 해제", type="primary")
+        draft.update(conclusion=conclusion, proof=list(proof), block=block, action=action)
+        submitted = st.button("최종 잠금 해제", type="primary", key="escape_l3_submit")
 
     if submitted:
         if conclusion is None or action is None or len(proof) != 3 or not digits(block):
@@ -844,7 +876,11 @@ def show_drawer():
     evidence_card("memo")
 
     if game["unlocked"] < 2:
-        st.info("서랍 안쪽에 확인 장치가 보입니다. 8자리 시간 자물쇠로 잠겨 있어요.")
+        st.markdown('<div style="display:flex;align-items:center;gap:14px;background:#1F2937;color:#F9FAFB;border:3px solid #F59E0B;'
+                    'border-radius:16px;padding:14px 18px;margin:6px 0 10px">'
+                    '<span style="font-size:2.4rem;line-height:1">🔐</span><div style="font-size:1.15rem;line-height:1.6;font-weight:700">'
+                    '서랍 안쪽에 <b style="color:#FCD34D">확인 장치</b>가 보입니다.<br>'
+                    '<b style="color:#FCD34D;font-size:1.25rem">8자리 시간 자물쇠</b>로 잠겨 있어요.</div></div>', unsafe_allow_html=True)
         return
 
     show_dialer()
@@ -884,7 +920,10 @@ def show_room():
 
     st.divider()
     place = game["place"]
-    st.subheader(f"📍 지금 조사 중: {place}")
+    st.markdown(f'<div style="display:flex;align-items:center;gap:10px;background:#F1F7F4;border:2px solid #CFE3D9;border-radius:14px;'
+                f'padding:10px 16px;margin:4px 0 12px"><span style="font-size:1.6rem">📍</span>'
+                f'<div><small style="color:#52616B;font-weight:800">지금 조사 중</small><div style="font-size:1.3rem;font-weight:900;color:#20483F">{esc(place)}</div></div></div>',
+                unsafe_allow_html=True)
 
     if place == "🗄️ 잠긴 서랍":
         show_drawer()
@@ -1085,6 +1124,7 @@ def countdown():
 def show_failure():
     save_record(False)
     st.error(f"⏰ 제한 시간 {TIME_LIMIT_MINUTES}분이 지났습니다.")
+    show_mascot("panic", "앗, 시간이 다 됐어요! 그래도 실제 상황에는 제한 시간이 없어요.", width=120)
     st.subheader("🔴 배드 엔딩 · 확인이 끝나기 전에")
     st.write(
         "확인을 마치기 전에 시간이 다 됐습니다. 실제 상황이었다면 상대는 그사이 쉬지 않고 재촉했을 거예요. "
@@ -1119,11 +1159,12 @@ def show_failure():
 
 MUST_KNOW = [
     ("⏳ 진짜 시간 {limit}분이 지나면 실패", "게임을 시작하는 순간 타이머가 시작돼요. 다른 탭을 보거나 화면을 꺼도 시간은 계속 흘러요."),
-    ("📁 읽기만 하면 수집되지 않아요", "필요한 자료는 ‘증거 보관함에 넣기’를 눌러야 해요. 마지막 잠금의 보고서는 보관함에 넣은 증거 중에서만 고를 수 있어요."),
+    ("📁 읽기만 하면 수집되지 않아요", "필요한 자료는 ‘📥 증거 보관함에 넣기’를 눌러야 해요. 마지막 잠금의 보고서는 보관함에 넣은 증거 중에서만 고를 수 있어요."),
     ("🔢 자물쇠는 숫자로 풀어요", "자물쇠 번호는 증거 속 시각·숫자를 조합해 만들어요. 숫자만 입력해도 되고, 하이픈(-)이나 띄어쓰기를 넣어도 괜찮아요."),
     ("🔓 잠금을 풀면 방을 다시 조사하세요", "잠금 해제 탭에는 지금 풀어야 할 잠금 하나만 보여요. 잠금을 풀 때마다 ‘방 조사’ 탭의 🗄️ 잠긴 서랍에 새로운 것이 생겨요."),
     ("🕘 게임 속 시계는 엔딩을 바꿔요", "실패 여부는 진짜 타이머가, 엔딩 등급은 게임 속 시각이 정해요. 조사·수집·오답·힌트·전화를 할 때마다 게임 속 시각이 흘러요."),
     ("💡 힌트와 오답은 횟수가 남아요", "틀려도 몇 번이든 다시 도전할 수 있어요. 대신 오답은 게임 시계 +2분, 힌트는 +3분이고 둘 다 명예의 전당 순위에 반영돼요."),
+    ("📱 문자와 전화는 ‘나의 폰’에서", "오른쪽 아래 ‘📱 나의 폰’ 버튼을 누르면 받은 문자를 볼 수 있고, 📞 전화 탭에서 전화를 걸 수 있어요. 새 문자가 오면 폰 버튼이 흔들려요."),
     ("🔄 새로고침하면 진행이 사라져요", "브라우저 새로고침이나 창 닫기를 하면 처음부터 다시 해야 해요. 이동은 화면 안의 탭과 버튼으로만 하세요."),
 ]
 
@@ -1183,7 +1224,8 @@ def show_game_guide():
             st.markdown(
                 "| 위치 | 하는 일 |\n|---|---|\n"
                 "| ⏳ 남은 시간 | 진짜 제한 시간. 0이 되면 실패 |\n"
-                "| 🕘 게임 속 시각 · 🔒 잠금화면 알림 | 게임 속 시각과 상대가 보내는 압박 문자 |\n"
+                "| 🕘 게임 속 시각 | 행동할 때마다 흐르는 게임 속 시계 |\n"
+                "| 📱 나의 폰 (오른쪽 아래 버튼) | 💬 문자: 상대가 보내는 재촉 문자가 쌓여요 · 📞 전화: 번호를 눌러 전화를 걸어요 |\n"
                 "| 🔎 방 조사 탭 | 장소를 골라 자료를 읽고 증거를 수집 |\n"
                 "| 📁 증거 보관함 탭 | 수집한 증거를 모아 보고 비교 |\n"
                 "| 🔐 잠금 해제 탭 | 지금 풀어야 할 잠금 하나가 나타남 |"
@@ -1191,16 +1233,17 @@ def show_game_guide():
             st.markdown("### 진행 순서")
             st.markdown(
                 "1. **방 조사** — 📱 휴대전화, 💻 노트북, 📅 달력, 🖼️ 사진 액자를 눌러 자료를 읽어요. :orange-background[**⚠️ 사건과 상관없는 자료도 섞여 있어요.**]\n"
-                "2. **증거 수집** — 중요해 보이는 자료 아래 ‘증거 보관함에 넣기’를 눌러요.\n"
-                "3. **잠금 1** — 서랍의 4자리 번호 자물쇠를 풀어요.\n"
+                "2. **증거 수집** — 중요해 보이는 자료 아래 ‘📥 증거 보관함에 넣기’를 눌러요.\n"
+                "3. **잠금 1** — 서랍의 4자리 번호 자물쇠를 풀어요. 풀면 화면 가운데 큰 창으로 결과가 떠요.\n"
                 "4. **잠금 2** — 서랍 안 확인 장치의 8자리 시간 자물쇠를 풀어요.\n"
-                "5. **확인 장치 사용** — 🗄️ 잠긴 서랍으로 돌아가면 전화 다이얼이 생겨요. 번호를 직접 입력해 전화를 걸 수 있어요.\n"
+                "5. **전화로 확인** — 확인 장치가 열리면 **📱 나의 폰 → 📞 전화 탭**에서 전화를 걸 수 있어요. 통화 결과는 증거가 돼요.\n"
                 "6. **잠금 3** — 출입문의 사건 보고서 네 칸을 모두 맞게 채우면 탈출!"
             )
             st.markdown("### 입력 방법")
             st.markdown(
                 "- **자물쇠:** 숫자를 입력하고, 아래 질문에도 답한 뒤 ‘잠금 해제’를 눌러요. 번호와 답이 **둘 다** 맞아야 열려요.\n"
-                "- **전화 다이얼:** `010-0000-0000`처럼 하이픈을 넣어도, 숫자만 넣어도 돼요.\n"
+                "- **전화 걸기:** 📱 나의 폰 → 📞 전화 탭에서 키패드를 누르거나, ‘증거에서 찾은 번호’ 버튼을 눌러 넣어요. `010-0000-0000`처럼 하이픈을 넣어도, 숫자만 넣어도 돼요.\n"
+                "- **새 문자 알림:** 문자가 오면 화면 위쪽에 빨간 알림 띠가 뜨고 폰 버튼이 흔들려요. 사이드바의 🔊 효과음을 켜 두면 알림음도 나요.\n"
                 "- **사진 액자:** 사진 아래 ‘🔍 사진 정보 더 보기’를 누르면 숨은 정보가 펼쳐져요."
             )
 
