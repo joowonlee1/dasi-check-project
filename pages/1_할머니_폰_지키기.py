@@ -1,5 +1,6 @@
 from play_ui import intro, bridge
 import html
+import copy
 import random
 import time
 
@@ -377,6 +378,19 @@ def back_to_intro():
     st.session_state[KEY] = new_game(started=False)
     dd.scroll_top()
 
+def go_back():
+    """바로 전 화면으로: 앞 연락을 고르기 전 상태로 되돌려요. 첫 연락이면 게임 설명 화면으로 가요."""
+    game = st.session_state[KEY]
+    history = game.get("history") or []
+    if not history:
+        back_to_intro()
+        return
+    previous = history.pop()
+    previous["history"] = history
+    previous.pop("show_reaction", None)
+    st.session_state[KEY] = previous
+    dd.scroll_top()
+
 def open_clues():
     st.session_state[KEY]["clue_open"] = True
 
@@ -550,6 +564,8 @@ def act(key, typed=None, quality=None, reply="", feedback="", real_fine=False):
     game.pop("typing", None)
     if game["result"]:
         return  # 결과 화면이 열리는 중에 남아 있던 버튼을 또 눌러도 기록이 늘지 않게 해요.
+    # '이전 화면으로'를 누르면 되돌아갈 수 있게, 고르기 전 상태를 저장해 둬요.
+    game.setdefault("history", []).append(copy.deepcopy({k: v for k, v in game.items() if k != "history"}))
     step = game["step"]
     event = EVENTS[step]
     approach = APPROACHES[key]
@@ -885,11 +901,11 @@ def show_play(game):
     step = game["step"]
     event = EVENTS[step]
 
-    # 게임 중에도 언제든 그만두고 처음 화면(게임 설명)으로 돌아갈 수 있어요. 진행 기록은 지워져요.
+    # 게임 중에도 바로 전 화면(앞 연락, 첫 연락이면 게임 설명)으로 돌아갈 수 있어요.
     top_left, top_right = st.columns([3, 1.3], vertical_alignment="center")
     top_left.caption(f"연락 {step + 1} / {len(EVENTS)}")
-    top_right.button("⏹️ 그만하고 처음 화면으로", on_click=back_to_intro, key="gp_quit", width="stretch",
-                     help="지금 게임을 멈추고 게임 설명 화면으로 돌아가요. 지금까지의 진행은 지워져요.")
+    top_right.button("← 이전 화면으로", on_click=go_back, key="gp_quit", width="stretch",
+                     help="앞 연락을 고르기 전으로 돌아가요. 첫 연락이면 게임 설명 화면으로 가요.")
     show_last_feedback(game)
 
     phone_col, side_col = st.columns([1.1, 1])
