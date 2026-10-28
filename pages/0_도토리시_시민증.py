@@ -11,11 +11,6 @@ from firebase_support import ConnectionProblem, explain
 
 
 st.title("🪪 도토리시 시민증")
-if st.session_state.get("admin_open"):
-    from admin_ui import card, tools_button
-    card()
-    tools_button("citizen")
-    st.stop()
 show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당**에 내 최고 기록이 올라가요.", "🪪")
 
 
@@ -62,6 +57,8 @@ def show_stamps():
     )
     if dd.citizen():
         st.caption("도장은 시민증에 저장돼요. 창을 닫았다가 닉네임과 비밀 숫자로 다시 들어오면 이어서 모을 수 있어요.")
+    elif st.session_state.get("admin_open"):
+        st.caption("관리자 도장은 서버에 저장되며 관리자 코드로 다시 인증한 뒤 불러와요. 저장 오류가 표시되면 재시도해 주세요.")
     else:
         st.caption("도장은 시민증이 없어도 모을 수 있어요. 다만 저장되지 않아서 창을 닫으면 처음부터 다시 모아야 해요. 시민증을 만들면 지금까지 모은 도장도 함께 저장돼요.")
     if len(got) == total:
@@ -79,6 +76,15 @@ def show_stamps():
             "jamkkan_honorary_citizen.png",
         )
 
+
+if st.session_state.get("admin_open"):
+    from admin_ui import card, tools_button
+    from admin_progress import status
+    card()
+    show_stamps()
+    status("citizen")
+    tools_button("citizen")
+    st.stop()
 
 account = dd.citizen()
 
