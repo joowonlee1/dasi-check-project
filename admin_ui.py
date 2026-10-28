@@ -18,9 +18,12 @@ def card(compact=False):
     st.markdown(
         '<div style="display:flex;align-items:center;gap:12px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:12px;box-sizing:border-box;">'
         +photo+'<div style="min-width:0;line-height:1.4;word-break:keep-all;overflow-wrap:normal;font-size:.85rem"><div style="color:#f4d784;font-weight:800">★ 도토리시<br>관리자증</div>'
-        '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>',unsafe_allow_html=True)
-    if not compact:
-        st.caption("🌱 관리자 모드에서는 게임을 연습 모드로만 할 수 있어요. 명예의 전당 기록은 시민증 닉네임으로만 남아요.")
+        '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>'
+        # 안내 문구를 카드와 같은 덩어리 안에 넣어서, 아래 글씨가 카드와 겹치지 않게 해요.
+        +('' if compact else '<div style="margin:10px 0 6px;padding:10px 14px;background:#F0FDF4;border:2px solid #86EFAC;border-radius:12px;'
+          'color:#14532D;font-size:1.02rem;font-weight:700;line-height:1.6;word-break:keep-all">'
+          '🌱 관리자 모드에서는 게임을 <b>연습 모드로만</b> 할 수 있어요. 명예의 전당 기록은 <b>시민증 닉네임</b>으로만 남아요.</div>'),
+        unsafe_allow_html=True)
 
 def tools_button(prefix):
     if not st.session_state.get("admin_open"):
