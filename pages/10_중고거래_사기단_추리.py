@@ -340,13 +340,13 @@ function gridTab(){
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
   ${gridExample()}
   <h3 style="margin:8px 2px">🔎 단서 (${D.base.length + cluesOpen()} / ${D.base.length + 3})</h3>
-  <div class="legend">흰색 = 처음부터 알고 있던 단서 · <span style="background:#FFFBEA;border:1.5px solid #E6D9A8;border-radius:6px;padding:0 6px">노란색</span> = 📜 메모를 해독해서 얻은 단서(3개)</div>
+  <div class="legend">흰색 = 처음부터 알고 있던 단서 · <span style="background:#FFFBEA;border:1.5px solid #E6D9A8;border-radius:6px;padding:0 6px">노란색</span> = 📜 거래 기록을 조사해서 얻은 단서(3개)</div>
   <div class="clues">${clueHtml}</div>
   <div class="tools"><button onclick="resetGrid()">↺ 표 지우기</button></div>
   <div class="grids">${KINDS.map(gridHtml).join('')}</div>
   <button class="ok bigcheck" onclick="checkGrid()">✅ 표 채점하기 (⭕ 15개를 모두 채우면)</button>
   ${aiBox()}
-  ${cluesOpen() < 3 ? '<div class="hint">💡 단서 7개만으로는 답이 하나로 안 정해져요. 메모를 해독해서 단서를 더 모아요!</div>' : ''}`;
+  ${cluesOpen() < 3 ? '<div class="hint">💡 단서 7개만으로는 답이 하나로 안 정해져요. 거래 기록을 조사해서 단서를 더 모아요!</div>' : ''}`;
 }
 function clueBtn(id, text, locked, memo){
   const src = memo ? `<span class="src">📜 메모 ${+id.slice(1) + 1}에서 나온 단서</span>` : '';
@@ -485,7 +485,7 @@ AI_RULES = (
     "너는 고등학생이 푸는 논리 퍼즐(중고거래 판매자 5명 × 연락 방식·요구한 것·가격)을 돕는 친절한 도우미야. "
     "학생의 질문에 쉬운 해요체로 2~4문장만 답해. 정답 표 전체나 진짜 판매자가 누구인지는 절대 직접 말하지 마. "
     "대신 어떤 단서를 어떻게 이어 보면 되는지, 학생이 표시한 ⭕ 중 다시 볼 줄이 있는지 정도로 생각할 방향을 알려 줘. "
-    "아직 해독하지 않은 메모의 단서 내용은 말하지 말고 '메모를 해독해 보라'고 해. "
+    "아직 조사를 완료하지 않은 거래 기록의 단서 내용은 말하지 말고 '거래 자료를 비교하고 근거를 연결해 보라'고 해. "
     "퍼즐과 관계없는 질문이면 퍼즐에 대해 물어봐 달라고 짧게 답해. 개인정보를 묻거나 요구하지 마."
 )
 
