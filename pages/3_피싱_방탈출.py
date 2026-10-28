@@ -183,7 +183,7 @@ EVIDENCE = {
             ("엄마", "09:10에 전화한 적 없어. 폰도 멀쩡해. 앱 깔라는 문자도 내가 보낸 게 아니야."),
             ("이모", "내 번호는 바뀐 적 없어."),
         ],
-        "note": "평소 저장된 번호로 연결된 독립 확인입니다. 이 게임에서는 이 결과를 검증된 사실로 제공합니다.",
+        "note": "원래 저장된 번호로 따로 확인한 결과입니다. 이 게임에서는 이 결과를 검증된 사실로 제공합니다.",
     },
 }
 
@@ -227,7 +227,7 @@ HINTS = {
     ],
     3: [
         "냉장고 가족 약속(E12)을 다시 읽고, 서랍 속 확인 장치에서 어떤 번호로 걸어야 할지 생각해 보세요.",
-        "문자 속 번호와 저장된 이모 번호를 한 자리씩 비교해 보세요. 독립 확인은 원래 저장된 번호로만 가능해요.",
+        "문자 속 번호와 저장된 이모 번호를 한 자리씩 비교해 보세요. 따로 확인할 때는 원래 저장된 번호로만 걸어야 해요.",
         "핵심 증거는 최초 통화(E01), 후속 문자(E02), 저장된 이모 번호로 확인한 결과(E16)예요. 차단할 번호는 문자 발신 번호예요.",
     ],
 }
@@ -300,9 +300,10 @@ st.markdown(
     .frame-cap {color:#E7D5C3; font-size:.8rem; margin-top:8px;}
     .meta-table {cursor:pointer; padding:6px 0 0; background:#fff; border:1px solid #DDE3EA; border-radius:10px; margin-top:8px; font-size:.82rem; color:#172B3A;}
     .meta-table summary {padding:4px 10px; font-weight:700;} .meta-table div {display:flex; justify-content:space-between; padding:6px 10px; border-bottom:1px solid #EEF2F6;}
-    .sticky {background:#FEF08A; color:#3F3A12; padding:16px 18px 12px; transform:rotate(-1.2deg);
-             box-shadow:0 6px 14px rgba(0,0,0,.15); font-size:.95rem; line-height:1.7;}
-    .sticky .pin {text-align:center; margin-top:-10px; font-size:1.2rem;}
+    .sticky {position:relative; background:#FEF08A; color:#1F1B05; padding:14px 16px 10px; transform:rotate(-1.2deg);
+             box-shadow:0 6px 14px rgba(0,0,0,.15); font-size:1.08rem; line-height:1.65; font-weight:600;}
+    .sticky b {font-size:1.15rem;}
+    .sticky .sticky-pin {position:absolute; top:-12px; left:50%; transform:translateX(-50%); font-size:1.3rem; line-height:1;}
     .lock-banner {background:#1F2937; color:#F9FAFB; border-radius:14px; padding:10px 14px; margin:6px 0 10px;}
     .lock-banner .from {color:#FCA5A5; font-weight:700; font-size:.85rem;}
     .lock-banner .text {font-size:1rem;}
@@ -503,7 +504,7 @@ def evidence_html(item):
     if kind == "sticky":
         lines = "<br>".join(f"{number}. {esc(t)}" for number, t in enumerate(item["lines"], 1))
         return (
-            '<div class="ev-wrap"><div class="sticky"><div class="pin">📌</div>'
+            '<div class="ev-wrap"><div class="sticky"><span class="sticky-pin">📌</span>'
             f"<b>우리 가족 확인 약속</b><br>{lines}</div></div>"
         )
 
@@ -520,11 +521,19 @@ def evidence_card(evidence_id):
         render_evidence(evidence_id)
 
         if evidence_id in game["evidence"]:
-            st.caption("✓ 증거 보관함에 저장됨")
-        elif st.button("증거 보관함에 넣기 (+1분)", key=f"escape_collect_{evidence_id}"):
-            save_evidence(evidence_id)
-            spend("collect")
-            st.rerun()
+            st.markdown('<div style="display:inline-block;background:#DCFCE7;color:#166534;border:2px solid #4ADE80;border-radius:999px;'
+                        'padding:4px 14px;font-weight:900">✅ 증거 보관함에 저장됨</div>', unsafe_allow_html=True)
+        else:
+            # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 눈에 잘 띄는 주황 버튼으로 크게 보여 줘요.
+            st.markdown('<style>[class*="st-key-collectbox_"] button{background:#EA580C!important;color:#fff!important;border:3px solid #9A3412!important;'
+                        'border-radius:14px!important;min-height:54px!important;box-shadow:0 4px 0 #9A3412!important;}'
+                        '[class*="st-key-collectbox_"] button p{font-size:1.1rem!important;font-weight:900!important;}'
+                        '[class*="st-key-collectbox_"] button:hover{filter:brightness(1.08);}</style>', unsafe_allow_html=True)
+            with st.container(key=f"collectbox_{evidence_id}"):
+                if st.button("📥 증거 보관함에 넣기 (+1분)", key=f"escape_collect_{evidence_id}", width="stretch"):
+                    save_evidence(evidence_id)
+                    spend("collect")
+                    st.rerun()
 
 
 def evidence_name(evidence_id):
@@ -564,8 +573,10 @@ def show_status_bar():
             )
         with right:
             countdown()
+    show_dial_bridge()
     from game_phone import show_phone
-    show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False))
+    show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False),
+               dial=phone_dial_data())
 
 
 def hint_panel(stage):
@@ -585,10 +596,21 @@ def hint_panel(stage):
             st.write(text)
 
 
+@st.dialog("🔓 잠금 해제!", width="large")
+def feedback_popup(text):
+    st.markdown(f'<div style="font-size:1.25rem;line-height:1.8;font-weight:600;word-break:keep-all;color:#14532D;'
+                f'background:#F0FDF4;border:3px solid #4ADE80;border-radius:16px;padding:18px 20px">{esc(text)}</div>',
+                unsafe_allow_html=True)
+    if st.button("확인했어요 ▶", type="primary", width="stretch", key="escape_feedback_ok"):
+        st.rerun()
+
+
 def show_feedback():
+    # 잠금을 풀면 결과를 화면 가운데 큰 창으로 보여 줘요. 한 번 보여 준 뒤에는 지워요.
     if game.get("feedback"):
-        st.success(game["feedback"])
+        text = game["feedback"]
         game["feedback"] = None
+        feedback_popup(text)
 
 
 def lock_one():
@@ -734,46 +756,74 @@ def lock_three():
         elif digits(block) == AUNT:
             wrong("그 번호는 1년 넘게 저장돼 있던 진짜 이모 번호입니다. 숫자를 한 자리씩 다시 비교해 보세요.")
         elif "aunt" not in proof:
-            wrong("상대가 알려 주지 않은, 독립된 경로로 확인한 결과가 보고서에 들어가야 합니다.")
+            wrong("상대가 알려 준 번호가 아니라, 원래 번호로 따로 확인한 결과가 보고서에 들어가야 합니다.")
         else:
-            wrong("보고서가 반려됐습니다. 최초 요청과 독립 확인 결과가 정확히 대조되는지 확인하세요.")
+            wrong("보고서가 반려됐습니다. 처음 받은 요청과 원래 번호로 따로 확인한 결과가 정확히 맞는지 비교하세요.")
 
     hint_panel(3)
 
 
-def show_dialer():
-    st.subheader("📞 확인 장치 · 다이얼")
-    st.caption("번호를 직접 입력해 전화를 겁니다. 한 번 걸 때마다 게임 시계가 흐릅니다. 모든 연결은 가상입니다.")
+def process_dial(raw):
+    """전화 걸기 판정: 번호에 따라 결과 증거를 넣고 게임 시계를 흘려요. ('나의 폰'의 전화 탭에서 불러요)"""
+    number = digits(raw)
+    result = {MOM: "no_answer", DAD: "dad_off", AUNT: "aunt", SCAM: "new_contact"}.get(number)
+    if result is None:
+        spend("bad_number")
+        game["dial_note"] = "“지금 거신 번호는 없는 번호입니다.” (+1분)"
+        return
+    game["dial_note"] = ""
+    if result == "new_contact" and game["scam_dialed_at"] is None:
+        spend("scam")
+        game["scam_dialed_at"] = game["clock"]
+    else:
+        spend("dial")
+    save_evidence(result)
+    if result not in game["dialed"]:
+        game["dialed"].append(result)
 
-    st.caption("직접 수집한 증거에 등장한 번호예요. 번호 바로 옆 ‘📋 복사’를 눌러 복사하세요. 목록은 정답 표시가 아니에요.")
+
+def collected_numbers():
     import re as _phone_re
     available = []
     for eid in game["evidence"]:
         for phone in _phone_re.findall(r"01[0-9]-?\d{3,4}-?\d{4}", str(EVIDENCE.get(eid, {}))):
             if phone not in available:
                 available.append(phone)
-    from game_phone import copy_numbers
-    copy_numbers(available)
-    with st.form("escape_dial_form", clear_on_submit=True):
-        number = st.text_input("전화번호", max_chars=16, placeholder="010-0000-0000")
-        dialed = st.form_submit_button("📞 전화 걸기")
+    return available
 
-    if dialed:
-        number = digits(number)
-        result = {MOM: "no_answer", DAD: "dad_off", AUNT: "aunt", SCAM: "new_contact"}.get(number)
-        if result is None:
-            spend("bad_number")
-            st.warning("“지금 거신 번호는 없는 번호입니다.” (+1분)")
-        else:
-            if result == "new_contact" and game["scam_dialed_at"] is None:
-                spend("scam")
-                game["scam_dialed_at"] = game["clock"]
-            else:
-                spend("dial")
-            save_evidence(result)
-            if result not in game["dialed"]:
-                game["dialed"].append(result)
-            st.rerun()
+
+def phone_dial_data():
+    """'나의 폰' 전화 탭에 보여 줄 번호 목록과 통화 기록."""
+    calls = [{k: EVIDENCE[e][k] for k in ("title", "name", "number", "status", "note")} | {"lines": EVIDENCE[e]["lines"]}
+             for e in game["dialed"]]
+    return {"numbers": collected_numbers(), "calls": calls, "note": game.get("dial_note", "")}
+
+
+def show_dial_bridge():
+    """'나의 폰'에서 누른 전화 걸기를 받는 숨은 입력칸. 화면에는 보이지 않아요."""
+    st.markdown("<style>.st-key-phone_dial_bridge{position:absolute!important;left:-10000px!important;top:0;width:300px;height:1px;overflow:hidden;}</style>",
+                unsafe_allow_html=True)
+    with st.container(key="phone_dial_bridge"):
+        with st.form("phone_dial_form", clear_on_submit=True):
+            raw = st.text_input("phone dial", key="phone_dial_input", label_visibility="collapsed")
+            go = st.form_submit_button("dial")
+    if go and digits(raw or ""):
+        process_dial(raw)
+        st.rerun()
+
+
+def show_dialer():
+    st.subheader("📞 확인 장치 · 다이얼")
+    st.caption("전화는 ‘📱 나의 폰’의 📞 전화 탭에서 걸어요. 한 번 걸 때마다 게임 시계가 흐릅니다. 모든 연결은 가상입니다.")
+    st.caption("나의 폰에는 직접 수집한 증거에 나온 번호가 버튼으로 떠요. 누르면 입력칸에 들어가요. 목록은 정답 표시가 아니에요.")
+    # 나의 폰을 '전화' 탭으로 바로 열어요.
+    st.session_state["_open_call_n"] = st.session_state.get("_open_call_n", 0) + 1
+    if st.button("📱 나의 폰에서 전화 걸기", type="primary", width="stretch", key="escape_open_call"):
+        import streamlit.components.v1 as _c
+        _c.html("<script>try{const s=parent.__dotoriPhone;if(s&&s.openCall)s.openCall();}catch(e){}</script>"
+                f"<!-- {st.session_state['_open_call_n']} -->", height=0)
+    if game.get("dial_note"):
+        st.warning(game["dial_note"])
 
     for evidence_id in game["dialed"]:
         with st.expander(EVIDENCE[evidence_id]["title"], expanded=evidence_id == game["dialed"][-1]):
@@ -840,7 +890,7 @@ def show_room():
         show_drawer()
     elif place == "🚪 출입문":
         st.write("출입문에는 세 개의 잠금이 있습니다.")
-        st.write("공개 정보의 출처 → 시간의 의미 → 독립 확인")
+        st.write("공개 정보의 출처 → 시간의 의미 → 따로 확인(원래 번호로)")
         st.info("‘잠금 해제’ 탭에서 현재 퍼즐에 도전하세요.")
     else:
         # 자료를 두 칸씩 놓아 아래로 길게 내려가지 않게 해요.
@@ -1589,8 +1639,10 @@ if section == "🚪 시작 안내·입장":
     if (_running_game and _running_game["unlocked"] < 3
             and time.time() - _running_game["started"] < TIME_LIMIT_MINUTES * 60):
         game = _running_game
+        show_dial_bridge()
         from game_phone import show_phone
-        show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False))
+        show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False),
+                   dial=phone_dial_data())
 
 else:
     show_play()
