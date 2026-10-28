@@ -53,7 +53,7 @@ DATA = {
         {
             "name": "택배 문자",
             "goal": "가짜 문자를 모두 막고, 진짜 문자는 모두 통과시키기",
-            "intro": "규칙 한 줄 안에 조건을 2개까지 넣을 수 있어요. ‘그리고’로 묶으면 두 조건이 모두 맞는 문자만 걸려요.",
+            "intro": "규칙 한 줄 안에 조건을 2개까지 넣을 수 있어요. ‘그리고’로 묶으면 두 조건이 모두 맞을 때, ‘또는’으로 묶으면 하나만 맞아도 걸려요.",
             "best": 0,
             "par": 4,
             "hints": [
@@ -267,7 +267,7 @@ function renderIntro(){
   <section class="hero"><span>📮 도토리 우체국 · 문자 필터실</span><b>도시로 들어오는 문자, 내가 만든 규칙으로 걸러라!</b><span>조건 블록을 조립하면 컴퓨터가 그대로 실행해요.</span></section>
   <div class="steps">
     <div class="step"><div class="ic">🏷️</div><div><b class="h">① 태그 보기</b><p>문자마다 ‘링크 있음’, ‘모르는 번호’ 같은 특징 태그가 붙어 있어요.</p></div></div>
-    <div class="step"><div class="ic">🧩</div><div><b class="h">② 규칙 조립</b><p>‘만약 A <b>그리고</b> B면 의심’처럼 블록을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div></div>
+    <div class="step"><div class="ic">🧩</div><div><b class="h">② 규칙 조립</b><p>‘만약 A <b>그리고</b>/<b>또는</b> B면 의심’처럼 블록과 연결을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div></div>
     <div class="step"><div class="ic">▶️</div><div><b class="h">③ 실행하고 고치기</b><p>문자가 하나씩 필터를 지나가요. 틀린 문자를 보고 규칙을 고쳐요.</p></div></div>
   </div>
   <section class="box"><h3>🔍 예시로 먼저 볼까요?</h3>
@@ -277,6 +277,11 @@ function renderIntro(){
       <div><b>문자 B</b> · 🔗 링크 있음 · 📇 저장된 번호<br>하나만 맞아요 → <b style="color:#0B655B">✅ 통과</b></div>
     </div>
     <p style="margin:10px 0 0">👉 <b>그리고</b>는 한 줄 안의 조건이 <b>모두</b> 맞아야 걸려요. 연결을 ‘또는’으로 바꾸면 하나 이상 맞을 때 걸려요.</p>
+    <div class="ex2"><b>같은 줄을 ‘또는’으로 바꾸면?</b><br>
+      규칙: <span class="kw">만약</span> 🔗 링크 있음 <b style="color:#B4471B">또는</b> ❓ 모르는 번호 <span class="kw then">→ 🚫 의심</span><br>
+      · 문자 A (🔗 링크 있음 · ❓ 모르는 번호) → 둘 다 맞음 → <b style="color:#B42318">🚫 의심</b><br>
+      · 문자 B (🔗 링크 있음 · 📇 저장된 번호) → 하나만 맞아도 → <b style="color:#B42318">🚫 의심</b> (그리고일 때는 통과였어요!)<br>
+      <span style="font-size:.9rem;color:#52616B">또는은 더 넓게 걸러서 사기 문자를 놓치지 않지만, 진짜 문자까지 막을(오탐) 수 있어요.</span></div>
     <div class="ex2"><b>규칙 줄이 2개라면? (또는)</b><br>
       <span class="r">규칙 1 · 💸 돈 요구 <span class="kw and">그리고</span> ❓ 모르는 번호</span> <b style="color:#B4471B">또는</b>
       <span class="r">규칙 2 · 🔑 인증번호·개인정보 요구</span><br>
@@ -312,7 +317,7 @@ function ruleHtml(st, ri){
       <option value="">${ci === 0 ? '조건 고르기 ▾' : '(추가 조건 없음) ▾'}</option>
       ${KEYS.map(k => `<option value="${k}" ${r[ci] === k ? 'selected' : ''}>${esc(D.conds[k])}</option>`).join('')}</select>`;
   return `<div class="rule"><div class="head">🧩 규칙 ${ri + 1}${G.rules[st].length > 1 ? `<button onclick="delRule(${ri})" ${G.running ? 'disabled' : ''}>🗑 빼기</button>` : ''}</div>
-    <div class="line"><span class="kw">만약</span>${sel(0)}<select aria-label="규칙 ${ri+1} 연결" onchange="setOp(${ri},this.value)" ${G.running?'disabled':''}><option value="and">그리고 (모두)</option><option value="or" ${G.ops[st][ri]==='or'?'selected':''}>또는 (하나 이상)</option></select>${sel(1)}<span class="kw then">→ 🚫 의심</span></div></div>`;
+    <div class="line"><span class="kw">만약</span>${sel(0)}<select aria-label="규칙 ${ri+1} 연결" onchange="setOp(${ri},this.value)" ${G.running?'disabled':''}><option value="and">그리고</option><option value="or" ${G.ops[st][ri]==='or'?'selected':''}>또는</option></select>${sel(1)}<span class="kw then">→ 🚫 의심</span></div></div>`;
 }
 
 function renderPlay(){
@@ -411,8 +416,9 @@ function whyHtml(st, res){
       const tip = G.rules[st].length < 3 ? ' 이 문자를 막을 <b>새 규칙 줄을 ➕로 추가</b>해 보세요.' : ' 규칙 줄 하나를 이 문자도 걸리게 바꿔 보세요.';
       items.push(`<li>🔴 <b>문자 ${i + 1}</b>(${esc(m[0])}) · 가짜인데 <b>어느 규칙에도 안 걸렸어요</b>.${tip}</li>`);
     } else {
-      const ri = r.fired[0], one = G.rules[st][ri - 1].filter(c => c).length === 1;
-      const tip = one ? ` 규칙 ${ri}에 <b>‘그리고’ 조건을 하나 더</b> 붙이면 더 좁게 걸러져요.` : ` 규칙 ${ri}의 조건을 다른 것으로 바꿔 보세요.`;
+      const ri = r.fired[0], one = G.rules[st][ri - 1].filter(c => c).length === 1, isOr = G.ops[st][ri - 1] === 'or';
+      const tip = isOr && !one ? ` 규칙 ${ri}의 연결이 <b>‘또는’</b>이라 넓게 걸렸어요. <b>‘그리고’</b>로 바꾸면 더 좁게 걸러져요.`
+        : one ? ` 규칙 ${ri}에 <b>‘그리고’ 조건을 하나 더</b> 붙이면 더 좁게 걸러져요.` : ` 규칙 ${ri}의 조건을 다른 것으로 바꿔 보세요.`;
       items.push(`<li>🟠 <b>문자 ${i + 1}</b>(${esc(m[0])}) · 진짜인데 <b>규칙 ${r.fired.join('·')}에 걸렸어요</b>.${tip}</li>`);
     }
   });
