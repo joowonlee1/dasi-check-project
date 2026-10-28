@@ -24,8 +24,20 @@ def tools_button(prefix):
     if not st.session_state.get("admin_open"):
         return
     key="admin_tools_"+prefix
-    if st.button("🔑 관리자 정답·관리",key=key,width="stretch"):
-        st.session_state[key+"_open"]=not st.session_state.get(key+"_open",False)
+    # 관리자증 카드와 같은 진초록·금색으로 크게 보여 줘요. 열려 있으면 '닫기'로 바뀌어요.
+    st.markdown(
+        f'<style>.st-key-{key}_box button{{background:linear-gradient(135deg,#173f35,#24604f)!important;color:#fff7db!important;'
+        'border:3px solid #d8b85d!important;border-radius:16px!important;min-height:64px!important;'
+        'box-shadow:0 4px 0 #b8953a,0 6px 14px rgba(23,63,53,.25)!important;}'
+        f'.st-key-{key}_box button p{{font-size:1.2rem!important;font-weight:900!important;}}'
+        f'.st-key-{key}_box button:hover{{filter:brightness(1.12);color:#fff!important;border-color:#f4d784!important;}}</style>',
+        unsafe_allow_html=True)
+    opened=st.session_state.get(key+"_open",False)
+    with st.container(key=key+"_box"):
+        clicked=st.button("🔑 관리자 정답·관리 닫기 ▲" if opened else "🔑 관리자 정답·관리 열기 ▼",key=key,width="stretch")
+    if clicked:
+        st.session_state[key+"_open"]=not opened
+        st.rerun()
     if st.session_state.get(key+"_open"):
         from admin_tools import show_admin_box
         show_admin_box()
