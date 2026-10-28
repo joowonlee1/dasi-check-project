@@ -125,9 +125,11 @@ def _admin_tools():
     if not st.session_state.get(OPEN):
         return
     from admin_answers import show_answers
-    show_answers()
-    st.success("관리자 모드예요. 창을 닫거나 ‘관리자 모드 끝내기’를 누르면 닫혀요.")
-    t_reset, t_people, t_hall = st.tabs(["🔑 비밀 숫자 재설정", "👥 시민 목록·삭제", "🏆 명예의 전당 정리"])
+    # 관리 메뉴(탭)가 '관리자이신가요?' 바로 아래에 오도록, 게임 정답은 맨 위가 아니라 네 번째 탭에 넣어요.
+    st.caption("🔑 관리자 모드예요. 창을 닫거나 맨 아래 ‘관리자 모드 끝내기’를 누르면 닫혀요.")
+    t_reset, t_people, t_hall, t_answers = st.tabs(["🔑 비밀 숫자 재설정", "👥 시민 목록·삭제", "🏆 명예의 전당 정리", "📋 게임 정답"])
+    with t_answers:
+        show_answers()
 
     with t_reset:
         st.caption("비밀 숫자는 누구도 원래 숫자를 볼 수 없어요. 잊어버린 친구에게 새 비밀 숫자를 정해 주고 알려 주세요.")
