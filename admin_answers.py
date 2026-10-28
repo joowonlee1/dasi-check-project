@@ -2,6 +2,9 @@
 from pathlib import Path
 import ast
 import streamlit as st
+from investigation_content import CASES as INVESTIGATIONS
+from notice_inquiry import DATA as NOTICE
+from filter_trials import HOLDOUT
 
 GUIDES = {
  "1": "각 상황의 선택지별 결과·해설을 확인하세요. 결말은 선택과 신뢰도에 따라 달라져요.",
@@ -10,7 +13,7 @@ GUIDES = {
  "6": "실시간 확산 시뮬레이션은 하나의 고정 정답 순서가 없어요. 단계별 확산 조건·개입 수단과 결과 기준을 확인하세요.",
  "8": "대처유형 테스트는 정답·오답이 없어요. 응답별 유형 점수와 결과 설명을 확인하세요.",
  "9": "사건별 정답 인물과 공개 단서·해설을 확인하세요.",
- "10": "메모 해독과 판매자별 최종 정답을 확인하세요.",
+ "10": "거래 자료의 결론·필요한 증거와 판매자별 최종 정답을 확인하세요.",
  "11": "문자별 차단·통과 정답과 별도 확인 근거를 보여 줘요. 단일 조건으로 실제 문자의 안전을 확정하지 않아요. 여러 필터 조합이 정답일 수 있어요.",
  "12": "■는 칠할 칸, □는 빈칸이에요. 그림 복원과 QR 안전성 판단은 별개예요.",
  "14": "1번 정상 확인: 실제 방문과 안내 내용이 일치. 2번 위조 확인: 실제 등기는 있지만 인증번호 요구를 기관이 부인. 3번 판단 보류: 전산 지연으로 조회 결과가 불충분.",
@@ -40,14 +43,15 @@ def _readable_answers(number, values):
     """정답을 개발자용 JSON 밖에서도 읽을 수 있게 표시합니다."""
     if number == "1":
         for i, event in enumerate(values.get("EVENTS", []), 1):
-            with st.expander(f"{i}. {event.get('stage', event.get('sender', '상황'))}"):
+            with st.container(border=True):
+                st.markdown(f"### {i}. {event.get('stage', event.get('sender', '상황'))}")
                 st.write("교육용 사건 판정: " + ("정상 연락" if event.get("real") else "사칭·사기 연락"))
                 options = (values["NORMAL_OPTIONS"] + ["police"]) if event.get("final") else values["NORMAL_OPTIONS"]
                 if event.get("real"):
-                    st.write("정답 판정: " + values["APPROACHES"]["watch"]["label"])
+                    st.success("정답 판정: " + values["APPROACHES"]["watch"]["label"])
                     st.write("함께 확인하기도 정상 연락에서 처음 선택한 경우에는 정답으로 판정해요. 반복하면 정답 판정에서 제외돼요.")
                 else:
-                    st.write("끼어들기 정답 판정: " + " / ".join(values["APPROACHES"][k]["label"] for k in options if k != "watch"))
+                    st.success("끼어들기 정답 판정: " + " / ".join(values["APPROACHES"][k]["label"] for k in options if k != "watch"))
                     st.caption("끼어들기 판정과 좋은 대응은 별개예요. 선택에 따른 신뢰도·결말은 달라져요.")
                 for key, label in [("route","확인 경로"),("result","확인 결과"),("together","함께 확인하는 답변"),("reason","판단 이유")]:
                     if event.get(key): st.write(label+": "+str(event[key]))
@@ -70,24 +74,38 @@ def _readable_answers(number, values):
             for clue in case.get("decisive",[]): st.write("• "+clue)
     elif number == "10":
         data=values.get("DATA",{})
-        st.write("메모 1: 4칸 / 메모 2: 3칸 되돌리기와 120000원 / 메모 3: 전구 01110과 14만 원")
+        for case in INVESTIGATIONS[:3]:
+            show_investigation_answer(case)
         st.write("최종 판매자: "+data.get("real",""))
         st.table([{"판매자":name,"연락 방식":v[0],"요구":v[1],"가격":v[2]} for name,v in data.get("solution",{}).items()])
     elif number == "11":
         for i,stage in enumerate(values.get("DATA",{}).get("stages",[])):
-            with st.expander(stage["name"]+" · 문자별 정답"):
+            with st.container(border=True):
+                st.markdown("### "+stage["name"]+" · 문자별 정답")
                 proofs=values.get("VERIFIED",[[],[],[]])[i]
                 st.table([{"문자":j+1,"보낸 사람":m[0],"내용":m[2],"교육용 정답":"차단 대상" if m[4] else "통과 대상","별도 확인":proofs[j] if j<len(proofs) else ""} for j,m in enumerate(stage["msgs"])])
         st.caption("필터 조합은 여러 가지일 수 있어요. 3단계에는 같은 태그지만 실제 판정이 다른 문자가 있어 태그만으로 전부 구분할 수 없어요.")
+        st.markdown("### 새 문자 시험까지 통과하는 규칙 예시")
+        st.write("1단계: (링크 그리고 재촉) 또는 (링크 그리고 돈 요구)")
+        st.write("2단계: (돈 요구 그리고 재촉) 또는 (모르는 번호 그리고 앱 설치) 또는 인증정보 요구")
+        st.write("3단계: (링크 그리고 재촉) 또는 (돈 요구 그리고 재촉) 또는 인증정보 요구")
+        st.caption("유일한 정답 조합은 아닙니다. 3단계의 서연·민준 문자는 같은 태그여서 규칙만으로 구별할 수 없어요. 두 문자를 골라 기존 연락처나 대면으로 별도 확인을 선택합니다.")
+        for i,rows in enumerate(HOLDOUT,1):
+            st.markdown(f"**{i}단계 새 문자 정답**")
+            st.table([{"문자":m[2],"확인 결과":"사칭·사기" if m[4] else "정상"} for m in rows])
     elif number == "12":
         for stage in values.get("DATA",{}).get("stages",[]):
             st.markdown("**"+stage["title"]+" 정답 그림**")
             st.code("\n".join(row.replace("#","■").replace(".","□") for row in stage["pic"]),language=None)
+        for case in INVESTIGATIONS[3:]:
+            show_investigation_answer(case)
     elif number == "14":
         for i,case in enumerate(values.get("CASES",[]),1):
             st.markdown(f"**{i}. {case['answer']}**")
             st.write("확인 경로: " + values["ROUTES"][1])
-            st.write("판단 근거: " + case["reason"])
+            st.success("판단 근거: " + case["reason"])
+            st.write("필요한 확인 기록: "+" / ".join(NOTICE["questions"][k] for k in NOTICE["required"][i-1]))
+            st.write("다음 행동: "+NOTICE["actions"][i-1])
     elif number == "6":
         for i, stage in enumerate(values.get("STAGES",[]),1):
             st.markdown(f"**{i}. {stage['tactic']}**")
@@ -107,3 +125,13 @@ def _readable_answers(number, values):
             label, letters, meanings = values["AXES"][axis]
             st.write(question)
             st.write(left + " → " + letters[0] + " / " + right + " → " + letters[1])
+
+
+def show_investigation_answer(case):
+    with st.container(border=True):
+        st.markdown("### "+case["title"])
+        st.success(case["options"][case["answer"]])
+        names={x[0]:x[1] for x in case["sources"]}
+        st.write("선택할 근거: "+" / ".join(names[k] for k in case["proof"]))
+        with st.expander("자세한 해설"):
+            st.write(case["lesson"])
