@@ -8,10 +8,8 @@ from filter_trials import HOLDOUT
 
 GUIDES = {
  "1": "각 상황의 선택지별 결과·해설을 확인하세요. 결말은 선택과 신뢰도에 따라 달라져요.",
- "2": "자유 입력 대화는 고정 정답 문장이 없어요. 요구 중단, 독립 확인, 개인정보·인증정보 전달 여부를 판정 기준과 대조하세요.",
  "3": "각 잠금의 입력값과 선택할 문장을 아래에서 확인하세요.",
  "6": "실시간 확산 시뮬레이션은 하나의 고정 정답 순서가 없어요. 단계별 확산 조건·개입 수단과 결과 기준을 확인하세요.",
- "8": "대처유형 테스트는 정답·오답이 없어요. 응답별 유형 점수와 결과 설명을 확인하세요.",
  "9": "사건별 정답 인물과 공개 단서·해설을 확인하세요.",
  "10": "거래 자료의 결론·필요한 증거와 판매자별 최종 정답을 확인하세요.",
  "11": "문자별 차단·통과 정답과 별도 확인 근거를 보여 줘요. 단일 조건으로 실제 문자의 안전을 확정하지 않아요. 여러 필터 조합이 정답일 수 있어요.",
@@ -23,7 +21,7 @@ def show_answers():
     if not st.session_state.get(OPEN):
         return
     st.subheader("📖 게임 정답·판정 기준")
-    st.caption("고정 정답이 없는 대화·시뮬레이션·유형 테스트는 판정 기준을 보여 줘요. 문항별 정답과 선택할 문장을 확인하세요.")
+    st.caption("정답이 정해진 게임만 보여 줘요. (AI 모의대화·대처유형 테스트는 정답이 없어서 빼 두었어요.)")
     pages=Path(__file__).resolve().parent/"pages"
     choices=sorted((p for p in pages.glob("*.py") if p.name.split("_",1)[0] in GUIDES), key=lambda p:int(p.name.split("_",1)[0]))
     if not choices:
@@ -49,11 +47,11 @@ def _readable_answers(number, values):
                 options = (values["NORMAL_OPTIONS"] + ["police"]) if event.get("final") else values["NORMAL_OPTIONS"]
                 if event.get("real"):
                     st.success("정답 판정: " + values["APPROACHES"]["watch"]["label"])
-                    st.write("함께 확인하기도 정상 연락에서 처음 선택한 경우에는 정답으로 판정해요. 반복하면 정답 판정에서 제외돼요.")
+
                 else:
                     st.success("끼어들기 정답 판정: " + " / ".join(values["APPROACHES"][k]["label"] for k in options if k != "watch"))
-                    st.caption("끼어들기 판정과 좋은 대응은 별개예요. 선택에 따른 신뢰도·결말은 달라져요.")
-                for key, label in [("route","확인 경로"),("result","확인 결과"),("together","함께 확인하는 답변"),("reason","판단 이유")]:
+
+                for key, label in [("reason","판단 이유")]:
                     if event.get(key): st.write(label+": "+str(event[key]))
     elif number == "3":
         st.table([
@@ -114,17 +112,6 @@ def _readable_answers(number, values):
                 if correct:
                     st.write("정정 문구 정답: " + text)
                     st.write("해설: " + reason)
-    elif number == "2":
-        for name,scenario in values.get("SCENARIOS",{}).items():
-            st.markdown("**"+name+"**")
-            st.write(scenario.get("guide",""))
-
-    elif number == "8":
-        st.info("정답·오답이 없는 자기점검이에요. 각 축의 세 문항에서 더 많이 선택한 성향을 결과에 반영해요.")
-        for axis, question, left, right, reverse in values["QUESTIONS"]:
-            label, letters, meanings = values["AXES"][axis]
-            st.write(question)
-            st.write(left + " → " + letters[0] + " / " + right + " → " + letters[1])
 
 
 def show_investigation_answer(case):
