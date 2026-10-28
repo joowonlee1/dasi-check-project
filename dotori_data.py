@@ -617,7 +617,9 @@ def show_login_forms(prefix):
             st.rerun()
         if third.button("👀 로그인 없이 둘러보기",key=f"choose_guest_{prefix}",width="stretch"):
             st.session_state["guest"]=True
-            st.session_state["guest_go_home"]=True
+            # 홈으로 보내지 않고 보던 페이지에 그대로 있어요(시민증 페이지에서 눌렀으면 보던 페이지로 돌아가요).
+            if prefix=="page":
+                st.session_state["login_return"]=True
             st.rerun()
         third.caption("기록은 저장되지 않아요")
 
@@ -635,6 +637,8 @@ def show_login_forms(prefix):
                     with st.spinner("시민증을 만들고 있어요…"):
                         name = register(nickname, secret)
                     st.success(f"환영해요, {name}님! 닉네임과 비밀 숫자를 기억해 두면 다음에도 같은 시민증으로 들어올 수 있어요.")
+                    if prefix=="page":
+                        st.session_state["login_return"]=True  # 시민증을 만들면 보던 페이지로 돌아가요.
                     st.rerun()
                 except ConnectionProblem as exc:
                     if exc.reason == "NICKNAME_TAKEN":
@@ -653,6 +657,8 @@ def show_login_forms(prefix):
                 with st.spinner("시민증을 찾고 있어요…"):
                     name = login(nickname, secret)
                 st.success(f"다시 만나서 반가워요, {name}님!")
+                if prefix=="page":
+                    st.session_state["login_return"]=True  # 다시 들어오면 보던 페이지로 돌아가요.
                 st.rerun()
             except ConnectionProblem as exc:
                 if exc.reason == "LOGIN_FAILED":
