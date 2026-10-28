@@ -15,6 +15,14 @@ STATISTICS = [
     {"유형": "대출사기형", "발생 건수": 10037},
 ]
 
+# 피해액·전년 대비 변화: 경찰청 2025년 통계를 보도한 헤럴드경제 기사(2026-01-23)에서 확인한 수치예요.
+NEWS_URL = "https://www.heraldk.com/article/2026012321000010309"
+DAMAGE_EOK = {"기관사칭형": 9884, "대출사기형": 2694}  # 단위: 억 원 (합계 1조 2,578억 원)
+TOTAL_2025 = {"건수": 23360, "건수 증가": 12.1, "피해액": 12578, "피해액 증가": 47.2,
+              "전년 피해액": 8545, "건당 피해": 5384, "전년 건당 피해": 4100}
+# 공공데이터포털 자료 설명(경찰청)에 적힌 과거 수치예요.
+TREND = {"기관사칭형": ("2016년", 3384, "2025년", 13323), "대출사기형": ("2019년(가장 많던 해)", 30448, "2025년", 10037)}
+
 # 개념 카드: (묶음, 아이콘, 이름, 한 줄 뜻, 이렇게 확인, 이 앱에서 만나는 곳)
 # 앱의 게임·연습에 나오는 수법은 모두 여기에서 찾아볼 수 있게 했어요.
 GROUPS = {
@@ -142,13 +150,74 @@ with statistics_tab:
     st.subheader("2025년 보이스피싱 유형별 발생 건수")
     st.caption("집계 기간: 2025년 · 단위: 건 · 제공기관: 경찰청")
 
+    org, loan = (row["발생 건수"] for row in STATISTICS)
+    total = org + loan
+    org_share = org / total * 100
+    org_damage_share = DAMAGE_EOK["기관사칭형"] / TOTAL_2025["피해액"] * 100
+    per_case = {k: DAMAGE_EOK[k] * 10000 / n for k, n in (("기관사칭형", org), ("대출사기형", loan))}  # 만 원
+
+    st.markdown(
+        """<style>
+        .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:.4rem 0 1rem}
+        .stat-card{border-radius:16px;padding:14px 14px 12px;border:2px solid var(--b);background:var(--bg)}
+        .stat-card small{display:block;font-weight:800;color:#555;font-size:.9rem}
+        .stat-card b{display:block;font-size:1.75rem;line-height:1.25;margin:.25rem 0;color:var(--c)}
+        .stat-card span{font-size:.88rem;color:#444}
+        .vs{border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;margin:.6rem 0;background:#fff}
+        .vs h4{margin:0 0 .5rem;font-size:1.08rem}
+        .vs-bar{display:flex;height:44px;border-radius:12px;overflow:hidden;font-weight:900;color:#fff;font-size:1rem}
+        .vs-bar div{display:flex;align-items:center;justify-content:center;white-space:nowrap;padding:0 8px}
+        .vs-org{background:#C2410C}.vs-loan{background:#0F766E}
+        .vs p{margin:.5rem 0 0;font-size:.95rem}
+        .trend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:.4rem 0}
+        .trend div{border-radius:14px;padding:12px 14px;background:#F8FAFC;border:2px solid #E2E8F0}
+        .trend b{font-size:1.25rem}
+        @media (max-width:760px){.stat-cards{grid-template-columns:1fr 1fr}.trend{grid-template-columns:1fr}.stat-card b{font-size:1.4rem}}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="stat-cards">'
+        f'<div class="stat-card" style="--b:#FDBA74;--bg:#FFF7ED;--c:#C2410C"><small>📈 전체 발생</small><b>{total:,}건</b><span>전년보다 {TOTAL_2025["건수 증가"]}% 늘었어요</span></div>'
+        f'<div class="stat-card" style="--b:#FCA5A5;--bg:#FEF2F2;--c:#B91C1C"><small>💸 전체 피해액</small><b>1조 {TOTAL_2025["피해액"] - 10000:,}억 원</b><span>전년({TOTAL_2025["전년 피해액"]:,}억 원)보다 {TOTAL_2025["피해액 증가"]}% ↑ · 처음 1조 원 넘음</span></div>'
+        f'<div class="stat-card" style="--b:#C4B5FD;--bg:#F5F3FF;--c:#6D28D9"><small>🧾 1건당 피해액</small><b>{TOTAL_2025["건당 피해"]:,}만 원</b><span>전년 {TOTAL_2025["전년 건당 피해"]:,}만 원보다 커졌어요</span></div>'
+        f'<div class="stat-card" style="--b:#99F6E4;--bg:#F0FDFA;--c:#0F766E"><small>⏰ 하루 평균</small><b>약 {total / 365:.0f}건</b><span>{total:,}건 ÷ 365일로 계산했어요</span></div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
     first, second = st.columns(2)
 
     with first:
-        st.metric("기관사칭형", "13,323건")
+        st.metric("기관사칭형", "13,323건", f"전체의 {org_share:.1f}%", delta_color="off")
 
     with second:
-        st.metric("대출사기형", "10,037건")
+        st.metric("대출사기형", "10,037건", f"전체의 {100 - org_share:.1f}%", delta_color="off")
+
+    # 건수와 피해액 비중을 같은 막대로 비교해요. 건수보다 피해액 쪽이 기관사칭형으로 훨씬 기울어요.
+    st.markdown(
+        '<div class="vs"><h4>🔢 발생 건수 비중</h4>'
+        f'<div class="vs-bar"><div class="vs-org" style="width:{org_share:.1f}%">기관사칭형 {org_share:.1f}%</div>'
+        f'<div class="vs-loan" style="width:{100 - org_share:.1f}%">대출사기형 {100 - org_share:.1f}%</div></div>'
+        '<h4 style="margin-top:.9rem">💸 피해액 비중</h4>'
+        f'<div class="vs-bar"><div class="vs-org" style="width:{org_damage_share:.1f}%">기관사칭형 {DAMAGE_EOK["기관사칭형"]:,}억 원 ({org_damage_share:.1f}%)</div>'
+        f'<div class="vs-loan" style="width:{100 - org_damage_share:.1f}%">{100 - org_damage_share:.1f}%</div></div>'
+        f'<p>👉 기관사칭형은 <b>건수로는 {org_share:.0f}%</b>인데 <b>피해액으로는 {org_damage_share:.0f}%</b>예요. '
+        f'한 건당 피해가 약 <b>{per_case["기관사칭형"]:,.0f}만 원</b>으로, 대출사기형(약 {per_case["대출사기형"]:,.0f}만 원)의 '
+        f'<b>{per_case["기관사칭형"] / per_case["대출사기형"]:.1f}배</b>예요. (피해액 ÷ 건수로 계산)</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("**📅 수법이 이렇게 바뀌었어요**")
+    o, l = TREND["기관사칭형"], TREND["대출사기형"]
+    st.markdown(
+        '<div class="trend">'
+        f'<div>👮 <b>기관사칭형</b><br>{o[0]} {o[1]:,}건 → {o[2]} <b style="color:#C2410C">{o[3]:,}건</b><br>약 <b>{o[3] / o[1]:.1f}배</b> 늘어 역대 가장 많아요</div>'
+        f'<div>🏦 <b>대출사기형</b><br>{l[0]} {l[1]:,}건 → {l[2]} <b style="color:#0F766E">{l[3]:,}건</b><br>약 <b>{l[3] / l[1] * 100:.0f}%</b> 수준으로 줄었어요</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.bar_chart(
         {
@@ -159,17 +228,26 @@ with statistics_tab:
         y="발생 건수",
         color="#0F766E",
         horizontal=True,
+        height=200,
     )
 
     st.dataframe(
-        STATISTICS,
+        [
+            {"유형": row["유형"], "발생 건수": f'{row["발생 건수"]:,}건',
+             "건수 비중": f'{row["발생 건수"] / total * 100:.1f}%',
+             "피해액": f'{DAMAGE_EOK[row["유형"]]:,}억 원',
+             "1건당 피해(계산)": f'약 {per_case[row["유형"]]:,.0f}만 원'}
+            for row in STATISTICS
+        ] + [{"유형": "합계", "발생 건수": f"{total:,}건", "건수 비중": "100%",
+              "피해액": f'{TOTAL_2025["피해액"]:,}억 원', "1건당 피해(계산)": f'{TOTAL_2025["건당 피해"]:,}만 원'}],
         hide_index=True,
         use_container_width=True,
     )
 
     st.info(
         "이 자료는 기관사칭형과 대출사기형 보이스피싱 통계입니다. "
-        "가족 사칭 또는 AI 음성 사칭만의 발생 건수를 뜻하지 않습니다."
+        "가족 사칭 또는 AI 음성 사칭만의 발생 건수를 뜻하지 않습니다. "
+        "‘하루 평균’과 ‘1건당 피해(유형별)’는 공식 수치를 나눠 이 앱에서 계산한 값이에요."
     )
 
     st.markdown("**자료 정보**")
@@ -177,8 +255,10 @@ with statistics_tab:
     st.write("원문에 표시된 수정일: 2026-01-21")
     st.write("이 앱에 사용할 자료를 확인한 날짜: 2026-09-22")
     st.write("원문 갱신 주기: 연간")
+    st.write("피해액·전년 대비 변화: 경찰청 2025년 통계를 보도한 헤럴드경제 기사(2026-01-23)")
 
     st.link_button("공식 통계 원문 확인", SOURCE_URL)
+    st.link_button("피해액 보도 기사 확인", NEWS_URL)
 
     st.caption(
         "현재 화면은 출처 확인 당시 수치를 담은 고정 자료입니다. "
@@ -187,9 +267,10 @@ with statistics_tab:
     )
 
     csv_text = (
-        "연도,유형,발생건수\n"
-        "2025,기관사칭형,13323\n"
-        "2025,대출사기형,10037\n"
+        "연도,유형,발생건수,피해액(억원)\n"
+        f"2025,기관사칭형,13323,{DAMAGE_EOK['기관사칭형']}\n"
+        f"2025,대출사기형,10037,{DAMAGE_EOK['대출사기형']}\n"
+        f"2025,합계,{total},{TOTAL_2025['피해액']}\n"
     )
 
     st.download_button(
