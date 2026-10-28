@@ -26,18 +26,68 @@ def show_answers():
     choices=sorted((p for p in pages.glob("*.py") if p.name.split("_",1)[0] in GUIDES), key=lambda p:int(p.name.split("_",1)[0]))
     if not choices:
         st.info("게임 페이지 파일을 찾지 못했어요.");return
-    picked=st.selectbox("게임 선택", choices, format_func=lambda p:p.stem.split("_",1)[1].replace("_"," "))
+    # 모든 게임의 정답을 한 파일로 내려받아요(인쇄·채점용). 관리자 모드에서만 보여요.
+    try:
+        sheet=answer_sheet(choices)
+        st.download_button("📥 게임 전체 답안지 내려받기 (.txt)", data=sheet.encode("utf-8-sig"),
+                           file_name="jamkkan_answer_sheet.txt", mime="text/plain", type="primary", width="stretch")
+    except Exception:
+        st.warning("답안지 파일을 만들지 못했어요. 아래에서 게임별로 확인해 주세요.")
+    picked=st.selectbox("게임 선택", choices, format_func=_title)
     st.info(GUIDES[picked.name.split("_",1)[0]])
-    source=picked.read_text(encoding="utf-8")
-    tree=ast.parse(source)
+    _readable_answers(picked.name.split("_",1)[0], _page_values(picked))
+
+
+def _title(path):
+    return path.stem.split("_",1)[1].replace("_"," ")
+
+
+def _page_values(path):
+    """페이지 파일을 실행하지 않고, 맨 위에 적힌 자료(상수)만 읽어요."""
     values={}
-    for node in tree.body:
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
         if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
             try: values[node.targets[0].id]=ast.literal_eval(node.value)
             except (ValueError,TypeError,SyntaxError): pass
-    _readable_answers(picked.name.split("_",1)[0], values)
+    return values
 
-def _readable_answers(number, values):
+
+class _Sheet:
+    """화면에 그리는 대신 글로 적는 '가짜 st'. 화면과 같은 정답 코드를 그대로 써서 내용이 어긋나지 않아요."""
+    def __init__(self): self.lines=[]
+    def __enter__(self): return self
+    def __exit__(self,*args): self.lines.append("")
+    def _add(self,text,mark=""): self.lines.append(mark+str(text).replace("**","").replace("### ",""))
+    def markdown(self,text): self._add(text)
+    def write(self,text): self._add(text)
+    def caption(self,text): self._add(text,"  ※ ")
+    def info(self,text): self._add(text,"ℹ️ ")
+    def success(self,text): self._add(text,"✅ ")
+    def code(self,text,language=None): self.lines.extend(str(text).split("\n"))
+    def container(self,**kwargs): return self
+    def expander(self,label,**kwargs): self._add(label,"▸ "); return self
+    def table(self,rows):
+        for row in rows: self._add(" · ".join(f"{k}: {v}" for k,v in row.items()),"  - ")
+
+
+def answer_sheet(choices):
+    """정답이 있는 모든 게임의 답안지를 글(txt)로 만들어요."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    out=_Sheet()
+    out.lines+=["잠깐! 게임 전체 답안지 (관리자용)",
+                "만든 시각: "+datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M"),
+                "정답이 정해진 게임만 담았어요. (AI 모의대화·대처유형 테스트는 정답이 없어서 빼 두었어요.)",""]
+    for path in choices:
+        number=path.name.split("_",1)[0]
+        out.lines+=["="*40, f"[{number}] {_title(path)}", "="*40]
+        out.info(GUIDES[number])
+        _readable_answers(number, _page_values(path), st=out)
+        out.lines.append("")
+    return "\n".join(out.lines)
+
+
+def _readable_answers(number, values, st=st):
     """정답을 개발자용 JSON 밖에서도 읽을 수 있게 표시합니다."""
     if number == "1":
         for i, event in enumerate(values.get("EVENTS", []), 1):
@@ -73,7 +123,7 @@ def _readable_answers(number, values):
     elif number == "10":
         data=values.get("DATA",{})
         for case in INVESTIGATIONS[:3]:
-            show_investigation_answer(case)
+            show_investigation_answer(case, st)
         st.write("최종 판매자: "+data.get("real",""))
         st.table([{"판매자":name,"연락 방식":v[0],"요구":v[1],"가격":v[2]} for name,v in data.get("solution",{}).items()])
     elif number == "11":
@@ -96,7 +146,7 @@ def _readable_answers(number, values):
             st.markdown("**"+stage["title"]+" 정답 그림**")
             st.code("\n".join(row.replace("#","■").replace(".","□") for row in stage["pic"]),language=None)
         for case in INVESTIGATIONS[3:]:
-            show_investigation_answer(case)
+            show_investigation_answer(case, st)
     elif number == "14":
         for i,case in enumerate(values.get("CASES",[]),1):
             st.markdown(f"**{i}. {case['answer']}**")
@@ -114,7 +164,7 @@ def _readable_answers(number, values):
                     st.write("해설: " + reason)
 
 
-def show_investigation_answer(case):
+def show_investigation_answer(case, st=st):
     with st.container(border=True):
         st.markdown("### "+case["title"])
         st.success(case["options"][case["answer"]])
