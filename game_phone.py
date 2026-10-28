@@ -58,7 +58,7 @@ if(!state.root||!state.root.isConnected){
   state.focus=D.activeElement;state.draw();state.open=true;cover.style.display='flex';close.focus({preventScroll:true});
  };
  state.hide=()=>{
-  state.open=false;cover.style.display='none';
+  state.open=false;state.tab='sms';  // 닫으면 다음에 열 때는 문자 탭부터 보여요(전화는 ‘나의 폰에서 전화 걸기’로 바로 열려요)cover.style.display='none';
   for(const m of state.messages)state.seen.add(m.id);
   launch.textContent=state.messages.length?'📱 나의 폰 · 받은 문자 '+state.messages.length:'📱 나의 폰 · 새 문자 없음';
   if(state.focus&&state.focus.isConnected)state.focus.focus({preventScroll:true});
@@ -109,7 +109,7 @@ if(fresh.length){
  banner.textContent='📩 새 문자 '+fresh.length+'개가 왔어요! ‘📱 나의 폰’을 눌러 확인하세요';
  banner.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:999995;background:#B42318;color:#fff;font:800 18px system-ui,sans-serif;padding:14px 22px;border-radius:16px;box-shadow:0 8px 24px #0006;max-width:calc(100vw - 32px);text-align:center;transition:opacity .5s';
  D.body.appendChild(banner);W.setTimeout(()=>{banner.style.opacity='0';},3500);W.setTimeout(()=>banner.remove(),4100);
- if(!state.open&&payload.pop){state.show();ringTone(false);}
+ if(!state.open&&payload.pop){state.tab='sms';state.show();ringTone(false);}
  else if(state.open){state.draw();ringTone(false);}
  else{
   // 창을 열지 않을 때는 버튼을 크게 흔들고 빨갛게 깜빡이며 알람 소리로 알려요(누르면 멈춰요).
