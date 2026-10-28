@@ -19,6 +19,8 @@ def card(compact=False):
         '<div style="display:flex;align-items:center;gap:12px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:12px;box-sizing:border-box;">'
         +photo+'<div style="min-width:0;line-height:1.4;word-break:keep-all;overflow-wrap:normal;font-size:.85rem"><div style="color:#f4d784;font-weight:800">★ 도토리시<br>관리자증</div>'
         '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>',unsafe_allow_html=True)
+    if not compact:
+        st.caption("🌱 관리자 모드에서는 게임을 연습 모드로만 할 수 있어요. 명예의 전당 기록은 시민증 닉네임으로만 남아요.")
 
 def tools_button(prefix):
     if not st.session_state.get("admin_open"):
