@@ -3,6 +3,7 @@ from play_ui import intro, bridge
 
 모든 인물·대화·링크는 교육용 가상 내용입니다. 실제 접속·송금·인증은 일어나지 않습니다.
 """
+import copy
 import time
 from html import escape
 
@@ -332,6 +333,8 @@ def finish_case():
 
 def next_case():
     s = state()
+    # '이전 화면으로'를 누르면 이 사건의 결과 화면으로 돌아갈 수 있게 저장해 둬요.
+    s.setdefault("history", []).append(copy.deepcopy({k: v for k, v in s.items() if k != "history"}))
     s["case"] += 1
     s["checks"], s["votes"], s["voter"] = [], {}, 0
     s["phase"] = "final" if s["case"] >= len(CASES) else "play"
@@ -341,6 +344,20 @@ def next_case():
 
 def restart():
     st.session_state[KEY] = new_state()
+
+
+def go_back():
+    """바로 전 화면으로: 앞 사건의 결과 화면으로, 첫 사건이면 처음(설정) 화면으로 돌아가요."""
+    s = state()
+    history = s.get("history") or []
+    if not history:
+        restart()
+        return
+    previous = history.pop()
+    previous["history"] = history
+    previous["fresh"] = False
+    previous["scroll"] = True
+    st.session_state[KEY] = previous
 
 
 # ───────── 화면 조각 ─────────
@@ -442,9 +459,9 @@ def show_setup():
 def show_play():
     s = state()
     case = CASES[s["case"]]
-    # 게임 중에도 언제든 그만두고 처음 화면(게임 설명)으로 돌아갈 수 있어요.
-    st.button("⏹️ 그만하고 처음 화면으로", on_click=restart, key=KEY + "_quit",
-              help="지금 수사를 멈추고 처음 화면으로 돌아가요. 지금까지의 점수는 지워져요.")
+    # 게임 중에도 바로 전 화면(앞 사건 결과, 첫 사건이면 처음 화면)으로 돌아갈 수 있어요.
+    st.button("← 이전 화면으로", on_click=go_back, key=KEY + "_quit",
+              help="앞 사건의 결과 화면으로 돌아가요. 첫 사건이면 처음 화면으로 가요.")
     st.progress(s["case"] / len(CASES), text=f"사건 {s['case'] + 1} / {len(CASES)}")
     st.markdown(
         f'<div class="mf-hero mf-hero-sm"><span>난이도 {case["stars"]}</span><b>{case["title"]}</b>'
