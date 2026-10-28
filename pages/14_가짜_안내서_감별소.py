@@ -39,21 +39,107 @@ S=st.session_state.setdefault(KEY,fresh())
 with intro("14", suffix=""):
     st.title("📬 가짜 안내서 감별소")
     show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
+    # 이 게임은 시작 이야기가 없어서 짧은 이야기 상자를 넣었어요.
+    st.markdown(
+        '<div style="display:flex;gap:12px;align-items:flex-start;background:#FFF8E7;border:2.5px solid #F1C96B;'
+        'border-radius:16px;padding:12px 16px;margin:.4rem 0 .8rem;line-height:1.7;word-break:keep-all">'
+        '<span style="font-size:1.8rem;line-height:1">📖</span><div><b style="color:#8A5A00;font-size:1.05rem">이야기</b><br>'
+        '다람쥐아파트 101·102·103호 문에 등기 안내서가 붙었어요. 진짜 안내도, 가짜 안내도, 아직 알 수 없는 안내도 있어요. '
+        '공식 경로로 직접 확인한 기록과 대조해 ‘정상·위조·판단 보류’ 중 하나로 감별해 주세요.</div></div>',
+        unsafe_allow_html=True)
     st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
 
-def _quit_notice():
-    st.session_state[KEY]=fresh()
+
+# ───────── 그림으로 보여 주기(판정 로직은 그대로) ─────────
+from html import escape as _esc
+
+STAMP = {"안내 내용 정상 확인": ("정상 확인", "#15803D"), "안내 내용 위조 확인": ("위조", "#B91C1C"), "판단 보류": ("판단 보류", "#B45309")}
+Q_ICON = {"delivery": "📦", "procedure": "📞", "status": "🕒", "surface": "🔍", "printed": "☎️"}
+# 안내서 종이 모양: 겉모습 설명에 맞춰 1번은 구겨지고 테이프, 2번은 깨끗하고 QR, 3번은 접착 흔적과 흐린 시각
+PAPER = [
+    {"rot": -2.5, "bg": "repeating-linear-gradient(115deg,#FFFDF6 0 22px,#F3EEDF 22px 24px,#FFFDF6 24px 47px)", "tape": True, "qr": False, "blur": False},
+    {"rot": 0, "bg": "#FFFFFF", "tape": False, "qr": True, "blur": False},
+    {"rot": 1.5, "bg": "#FFFCF2", "tape": False, "qr": False, "blur": True},
+]
+NV_CSS = """<style>
+@keyframes nv-stamp{0%{transform:scale(2.4) rotate(-20deg);opacity:0}60%{transform:scale(.92) rotate(-12deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+@keyframes nv-in{from{transform:translateY(-10px);opacity:0}to{transform:none;opacity:1}}
+.nv-doors{display:flex;gap:10px;margin:.3rem 0 .8rem}
+.nv-doors div{flex:1;text-align:center;border-radius:12px;padding:8px 4px;font-weight:800;border:2px solid #E5E7EB;background:#F9FAFB;color:#6B7280}
+.nv-doors .now{border-color:#B45309;background:#FFF7ED;color:#9A3412}.nv-doors .ok{border-color:#16A34A;background:#F0FDF4;color:#166534}
+.nv-scene{display:flex;justify-content:center;background:linear-gradient(#EDE7DB,#E2D9C8);border-radius:18px;padding:18px 10px 0;margin-bottom:.6rem}
+.nv-door{position:relative;width:min(100%,430px);background:linear-gradient(90deg,#8B5E3C,#A47148 50%,#8B5E3C);border:6px solid #6B4429;border-bottom:0;border-radius:10px 10px 0 0;padding:16px 18px 26px}
+.nv-plate{display:inline-block;background:#F5E6C8;color:#4A3420;font-weight:900;border-radius:6px;padding:2px 12px;margin-bottom:12px;box-shadow:0 2px 0 #0003}
+.nv-knob{position:absolute;right:12px;top:55%;width:16px;height:16px;border-radius:50%;background:radial-gradient(#F7D774,#B8860B)}
+.nv-paper{position:relative;color:#1F2937;border-radius:4px;padding:16px 16px 14px;box-shadow:0 6px 14px #0004;line-height:1.65;animation:nv-in .4s ease-out both}
+.nv-paper h4{margin:0 0 6px;font-size:1.05rem;letter-spacing:.04em}
+.nv-tape{position:absolute;top:-10px;width:70px;height:22px;background:#F4E7A9cc;border:1px solid #E2CF7A}
+.nv-qr{display:grid;grid-template-columns:repeat(7,8px);gap:1px;margin-top:8px}.nv-qr i{width:8px;height:8px;background:#111}.nv-qr i.o{background:#fff}
+.nv-stamp{position:absolute;right:10px;bottom:10px;border:4px solid currentColor;border-radius:10px;padding:4px 12px;font-weight:900;font-size:1.3rem;background:#ffffffcc;animation:nv-stamp .5s ease-out both}
+.nv-rec{border-radius:14px;padding:10px 14px;margin:6px 0;border:2px solid;line-height:1.6}
+.nv-rec b{display:block}.nv-rec small{font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px}
+</style>"""
+
+def door_strip(i):
+    cells = []
+    for k, c in enumerate(CASES):
+        if k in S["answers"]:
+            cells.append(f'<div class="ok">✅ {c["door"]}</div>')
+        elif k == i:
+            cells.append(f'<div class="now">🔍 {c["door"]}</div>')
+        else:
+            cells.append(f'<div>🚪 {c["door"]}</div>')
+    st.markdown('<div class="nv-doors">' + "".join(cells) + "</div>", unsafe_allow_html=True)
+
+def door_scene(i, stamp=None):
+    case, look = CASES[i], PAPER[i]
+    claim = _esc(case["claim"])
+    extra = ""
+    if look["blur"]:
+        extra += '<div>방문 시각: <span style="filter:blur(3.5px)">14:25</span> <small style="color:#92400E">(사진에서 흐려요)</small></div>'
+    if look["qr"]:
+        pattern = "1111111100000110111011011101101110110000011111111"
+        extra += '<div class="nv-qr">' + "".join(f'<i class="{"" if b == "1" else "o"}"></i>' for b in pattern) + "</div>"
+    tape = ('<span class="nv-tape" style="left:10px;transform:rotate(-8deg)"></span>'
+            '<span class="nv-tape" style="right:10px;transform:rotate(7deg)"></span>') if look["tape"] else ""
+    if look["blur"]:
+        tape = '<span class="nv-tape" style="left:40%;background:#00000010;border:1px dashed #9CA3AF"></span>'
+    stamp_html = ""
+    if stamp:
+        label, color = STAMP[stamp]
+        stamp_html = f'<span class="nv-stamp" style="color:{color}">{label}</span>'
+    st.markdown(
+        f'<div class="nv-scene"><div class="nv-door"><span class="nv-plate">다람쥐아파트 {case["door"]}</span><span class="nv-knob"></span>'
+        f'<div class="nv-paper" style="transform:rotate({look["rot"]}deg);background:{look["bg"]}">{tape}'
+        f'<h4>📮 등기 우편물 안내</h4><div>{claim}</div>{extra}'
+        f'<div style="margin-top:6px;font-size:.9rem;color:#6B7280">참조번호 {case["reference"]}</div>{stamp_html}</div></div></div>',
+        unsafe_allow_html=True)
+
+def record_card(q, text):
+    official = q in ("delivery", "procedure", "status")
+    color, bg, tag = ("#16A34A", "#F0FDF4", "공식 경로로 확인") if official else ("#9CA3AF", "#F9FAFB", "참고만 · 진위 확인 아님")
+    st.markdown(
+        f'<div class="nv-rec" style="border-color:{color};background:{bg}"><b>{Q_ICON.get(q, "📄")} {_esc(INQUIRY["questions"][q])}'
+        f'<small style="background:{color};color:#fff">{tag}</small></b>{_esc(text)}</div>', unsafe_allow_html=True)
+
+def _back_notice():
+    # 바로 전 화면으로: 2·3번 안내서에서는 앞 안내서로, 1번 안내서에서는 처음 화면으로 돌아가요.
+    if S["i"]>0:
+        S["i"]-=1
+    else:
+        st.session_state[KEY]=fresh()
 
 if not S["done"]:
     i=S["i"]; case=CASES[i]
-    # 감별 중에도 언제든 그만두고 처음(1번 안내서)으로 돌아갈 수 있어요.
-    st.button("⏹️ 그만하고 처음 화면으로", on_click=_quit_notice, key="nv_quit",
-              help="지금 감별을 멈추고 처음으로 돌아가요. 지금까지의 판단은 지워져요.")
-    st.progress(i/len(CASES))
-    st.subheader(f"{i+1}/3 · 다람쥐아파트 {case['door']}")
+    # 감별 중에도 바로 전 화면으로 돌아갈 수 있어요.
+    st.button("← 이전 화면으로", on_click=_back_notice, key="nv_quit",
+              help="앞 안내서로 돌아가요. 1번 안내서에서는 처음 화면으로 돌아가요.")
+    st.markdown(NV_CSS, unsafe_allow_html=True)
+    door_strip(i)
+    st.subheader(f"{i+1}/3 · 다람쥐아파트 {case['door']} 문 앞")
+    # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
+    door_scene(i, case["answer"] if i in S["answers"] else None)
     with st.container(border=True):
-        st.markdown("**안내서에 적힌 내용**")
-        st.write(case["claim"])
         # 참조번호·겉모습은 감별 단서라서 작은 회색 글씨 대신 눈에 띄는 칸으로 보여 줘요.
         st.markdown(
             '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:1.02rem;line-height:1.6">'
@@ -78,9 +164,7 @@ if not S["done"]:
     if checked:
         st.markdown("#### 내가 모은 확인 기록")
         for q,text in checked.items():
-            with st.container(border=True):
-                st.markdown("**"+INQUIRY["questions"][q]+"**")
-                st.write(text)
+            record_card(q, text)
     with st.form(f"nv_answer_{i}"):
         verdict=st.radio("현재 근거로 내릴 수 있는 판단",VERDICTS,index=None)
         reason=st.radio("판단 이유",case["options"],index=None)
@@ -123,6 +207,11 @@ else:
     dd.stamp("14")
     st.subheader(f"조사 완료 3/3 · 첫 제출에서 맞힌 사례 {score}/3")
     dd.show_hall_note(S.get("hall"))
+    st.markdown(NV_CSS, unsafe_allow_html=True)
+    cols=st.columns(3)
+    for k,col in enumerate(cols):
+        with col:
+            door_scene(k, CASES[k]["answer"])
     for case in CASES:
         with st.expander(f"{case['door']} · {case['answer']}",expanded=True):
             st.write(case["lesson"])
