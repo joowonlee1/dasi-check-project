@@ -600,22 +600,45 @@ def hint_panel(stage):
             st.write(text)
 
 
-@st.dialog("🔓 잠금 해제!", width="large")
+@st.dialog("🔓 잠금 해제!", width="medium")
 def feedback_popup(text):
-    # 첫 문장은 크게(무엇이 열렸는지), 나머지는 해설로 나눠 보여 줘요. 창 기본 제목과 여백은 줄여요.
+    # 깡지를 크게 왼쪽에, 무엇이 열렸는지(제목)와 해설을 오른쪽 한 카드에 모아 빈 곳을 줄여요.
     body = text.lstrip("🔓 ").strip()
     head, _, rest = body.partition(". ")
     st.markdown(
-        "<style>div[role=dialog] [data-testid=stVerticalBlock]{gap:.6rem!important}"
-        "@keyframes ul-pop{0%{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}</style>"
-        '<div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#14532D,#166534);color:#fff;'
-        'border-radius:18px;padding:14px 18px;margin-top:4px">'
-        f'<span style="flex:0 0 96px;animation:ul-pop .6s ease-out both">{mascot_img("unlock", 96) or "🔓"}</span>'
-        f'<div style="font-size:1.5rem;font-weight:900;line-height:1.4;word-break:keep-all">{esc(head)}.</div></div>'
-        + (f'<div style="font-size:1.12rem;line-height:1.75;word-break:keep-all;color:#1F2937;background:#F0FDF4;'
-           f'border-left:6px solid #22C55E;border-radius:12px;padding:12px 16px">{esc(rest)}</div>' if rest else ""),
+        "<style>div[role=dialog] [data-testid=stVerticalBlock]{gap:.5rem!important}"
+        "@keyframes ul-pop{0%{transform:scale(.4) rotate(-15deg);opacity:0}60%{transform:scale(1.12) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0)}}"
+        "@keyframes ul-glow{0%,100%{box-shadow:0 0 0 0 #FDE04788}50%{box-shadow:0 0 0 12px #FDE04700}}</style>"
+        '<div style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#14532D,#15803D);'
+        'border-radius:20px;padding:14px 16px;color:#fff;flex-wrap:wrap;margin-bottom:10px">'
+        '<div style="flex:0 0 180px;height:180px;border-radius:50%;background:radial-gradient(circle,#FEF9C3 0%,#FDE68A 70%);'
+        'display:flex;align-items:center;justify-content:center;animation:ul-glow 1.6s ease-out 2">'
+        f'<div style="animation:ul-pop .6s ease-out both">{mascot_img("unlock", 160) or "🔓"}</div></div>'
+        f'<div style="flex:1;min-width:220px"><div style="font-size:1.55rem;font-weight:900;line-height:1.35;word-break:keep-all">{esc(head)}.</div>'
+        + (f'<div style="margin-top:8px;background:#ffffffee;color:#1F2937;border-radius:12px;padding:10px 12px;'
+           f'font-size:1.02rem;line-height:1.7;word-break:keep-all">{esc(rest)}</div>' if rest else "")
+        + '</div></div>',
         unsafe_allow_html=True)
     if st.button("확인했어요 ▶", type="primary", width="stretch", key="escape_feedback_ok"):
+        st.rerun()
+
+
+@st.dialog("🏳️ 정말 포기할까요?", width="medium")
+def giveup_popup():
+    left, right = st.columns([1, 1.6], vertical_alignment="center")
+    with left:
+        st.markdown(mascot_img("bye", 170), unsafe_allow_html=True)
+    with right:
+        st.markdown(f'<div style="font-size:1.15rem;font-weight:800;line-height:1.7;word-break:keep-all">지금까지 잠금 <b style="color:#B42318">{game["unlocked"]} / 3</b>개를 풀었어요.<br>'
+                    '포기하면 결과 화면으로 가고, 해설과 두 번호 비교를 볼 수 있어요.</div>'
+                    '<div style="margin-top:6px;color:#52616B">시민증으로 하는 중이면 ‘포기’로 기록돼요(시간 초과 실패와 따로 표시).</div>',
+                    unsafe_allow_html=True)
+    a, b = st.columns(2)
+    if a.button("계속 도전할래요", type="primary", width="stretch", key="escape_giveup_no"):
+        st.rerun()
+    if b.button("포기하기", width="stretch", key="escape_giveup_yes"):
+        game["gave_up"] = True
+        game["finished"] = time.time()
         st.rerun()
 
 
@@ -977,18 +1000,19 @@ def ending():
 
 
 def save_record(escaped):
-    """탈출 성공이든 실패든, 한 게임에 한 번만 통계(+1)와 명예의 전당에 남겨요."""
+    """탈출 성공이든 실패든 포기든, 한 게임에 한 번만 통계(+1)와 명예의 전당에 남겨요."""
     if game.get("recorded"):
         return
     game["recorded"] = True
     hints = sum(game["hints"].values())
-    counts = {"plays": 1, "escaped": int(escaped), "nohint": int(escaped and hints == 0)}
+    gave_up = bool(game.get("gave_up")) and not escaped
+    counts = {"plays": 1, "escaped": int(escaped), "nohint": int(escaped and hints == 0), "gaveup": int(gave_up)}
     counts.update({f"lock{k}": 1 for k in range(1, 4) if game["unlocked"] >= k})
     dd.record("escape", counts)
     end = game["finished"] or (game["started"] + TIME_LIMIT_MINUTES * 60)
-    dd.note_mine("escape", "탈출 성공" if escaped else f"탈출 실패 · 잠금 {game['unlocked']}/3")
+    dd.note_mine("escape", "탈출 성공" if escaped else (f"탈출 포기 · 잠금 {game['unlocked']}/3" if gave_up else f"탈출 실패 · 잠금 {game['unlocked']}/3"))
     if game.get("rank_uid"):
-        fields = {"escaped": int(escaped), "unlocked": game["unlocked"], "hints": hints,
+        fields = {"escaped": int(escaped), "gave_up": int(gave_up), "unlocked": game["unlocked"], "hints": hints,
                   "mistakes": game["mistakes"], "seconds": max(0, int(end - game["started"]))}
         game["rank_status"] = dd.save_hall("escape", fields, lambda old, new: dd.HALL_SORT["escape"](new) < dd.HALL_SORT["escape"](old))
 
@@ -1123,13 +1147,25 @@ def countdown():
 
 def show_failure():
     save_record(False)
-    st.error(f"⏰ 제한 시간 {TIME_LIMIT_MINUTES}분이 지났습니다.")
-    show_mascot("panic", "앗, 시간이 다 됐어요! 그래도 실제 상황에는 제한 시간이 없어요.", width=120)
-    st.subheader("🔴 배드 엔딩 · 확인이 끝나기 전에")
-    st.write(
-        "확인을 마치기 전에 시간이 다 됐습니다. 실제 상황이었다면 상대는 그사이 쉬지 않고 재촉했을 거예요. "
-        "사칭범이 ‘10분 안에’, ‘지금 당장’을 외치는 이유가 바로 이것입니다. 생각할 시간을 빼앗으면 확인을 건너뛰게 되니까요."
-    )
+    if game.get("gave_up"):
+        # 포기는 시간 초과 실패와 다른 결말로 보여 줘요. 나의 폰도 바로 닫아요.
+        from game_phone import clear_phone
+        clear_phone()
+        st.warning(f"🏳️ 탈출을 포기했어요. (잠금 {game['unlocked']} / 3)")
+        show_mascot("bye", "포기해도 괜찮아요! 아래 해설을 보고, 다음엔 끝까지 도전해 봐요.", width=140)
+        st.subheader("🏳️ 포기 엔딩 · 멈춘 것도 판단이에요")
+        st.write(
+            "실제 상황에서도 ‘모르겠으면 일단 멈추는 것’은 좋은 선택이에요. "
+            "다만 멈춘 뒤에는 상대가 준 번호가 아니라 원래 저장된 번호로 가족에게 직접 확인하는 것까지 해야 사건이 끝나요."
+        )
+    else:
+        st.error(f"⏰ 제한 시간 {TIME_LIMIT_MINUTES}분이 지났습니다.")
+        show_mascot("panic", "앗, 시간이 다 됐어요! 그래도 실제 상황에는 제한 시간이 없어요.", width=140)
+        st.subheader("🔴 배드 엔딩 · 확인이 끝나기 전에")
+        st.write(
+            "확인을 마치기 전에 시간이 다 됐습니다. 실제 상황이었다면 상대는 그사이 쉬지 않고 재촉했을 거예요. "
+            "사칭범이 ‘10분 안에’, ‘지금 당장’을 외치는 이유가 바로 이것입니다. 생각할 시간을 빼앗으면 확인을 건너뛰게 되니까요."
+        )
     st.info(
         "그래도 기억할 것: 실제 상황에는 제한 시간이 없습니다. 상대가 아무리 재촉해도 "
         "요구를 멈추고, 원래 저장된 번호로 직접 확인하는 데 시간을 써도 괜찮아요."
@@ -1473,7 +1509,7 @@ def show_play():
 
     game = st.session_state["escape_game"]
 
-    if is_timed_out():
+    if is_timed_out() or game.get("gave_up"):
         show_failure()
         return
 
@@ -1530,6 +1566,11 @@ def show_play():
                 lock_three()
 
     st.divider()
+
+    if game["unlocked"] < 3:
+        if st.button("🏳️ 포기하고 결과 보기", key="escape_giveup",
+                     help="확인 창이 한 번 더 떠요. 포기는 시간 초과 실패와 따로 기록돼요."):
+            giveup_popup()
 
     if st.button("참여 방식 선택 / 새 게임 준비"):
         go_to("🚪 시작 안내·입장")
@@ -1679,7 +1720,7 @@ if section == "🚪 시작 안내·입장":
     show_entry()
     # 게임이 진행 중이면 시작 안내 화면에서도 '나의 폰'은 계속 떠 있어요(연락은 계속 오니까요).
     _running_game = st.session_state.get("escape_game")
-    if (_running_game and _running_game["unlocked"] < 3
+    if (_running_game and _running_game["unlocked"] < 3 and not _running_game.get("gave_up")
             and time.time() - _running_game["started"] < TIME_LIMIT_MINUTES * 60):
         game = _running_game
         show_dial_bridge()
