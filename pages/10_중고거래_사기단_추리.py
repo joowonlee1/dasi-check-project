@@ -227,6 +227,7 @@ function render(){
   <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em><small>판매자 ${i + 1}</small>${esc(s)}</div>`).join('')}</div>
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
   <div class="chips"><span class="hot">📜 검증한 거래 기록 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
+  <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="goBack()">← 이전 화면으로</button>
   <div class="tabs">
     <button class="${G.tab === 'memo' ? 'on' : ''}" onclick="go('memo')">① 📜 거래 기록 조사</button>
     <button class="${G.tab === 'grid' ? 'on' : ''}" onclick="go('grid')">② 🧩 추리 표</button>
@@ -238,6 +239,10 @@ function render(){
   if (G.tab === 'memo') memoTab(); else if (G.tab === 'grid') gridTab(); else pickTab();
 }
 function go(t){ G.tab = t; fresh = true; render(); }
+// 바로 전 화면으로: 추리 표 → 거래 기록, 지목 → 추리 표, 거래 기록 → 바깥의 게임 설명 화면. 진행은 그대로 남아요.
+function goBack(){ const order = ['memo', 'grid', 'pick'], k = order.indexOf(G.tab);
+  if (k > 0) { go(order[k - 1]); return; }
+  hasInteracted = false; setPlayActive(false); try { window.parent.scrollTo({top: 0, behavior: 'smooth'}); } catch (e) {} }
 function toast(t, el){ const x = $('toast'); if (x) x.textContent = t; if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
 
 // ───── ① 거래 기록 조사 ─────
@@ -245,7 +250,7 @@ function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 
 function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
- $('body').innerHTML='<p class="story">거래 기록을 조사해 단서 세 개를 확보하세요. 자료의 거래번호와 마지막 합의를 연결한 뒤 추리 표를 완성해요.</p>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
+ $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB"><b style="font-size:1.08rem">🧭 시작하기 전에 · 이렇게 풀어요</b><p style="margin:.4rem 0 .2rem">거래 기록은 <b>누구의 거래인지 이름을 가려 둔</b> 조사 자료예요. 대신 판매자마다 <b>익명 판매자 가·나·다·라</b> 이름표를 붙여 두었어요. <b>위의 판매자 1~5와는 다른 이름표</b>라서, 누가 누구인지는 추리 표로 찾아야 해요. (예: <b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> 거래라고 적힌 자료들은 모두 같은 판매자와의 거래 이야기)</p><ol style="margin:.3rem 0 .2rem 1.2rem;padding:0;line-height:1.7"><li><b>자료 버튼</b>을 눌러 하나씩 읽어요. 앞 자료를 읽어야 열리는 자료도 있어요.</li><li><b>같은 익명 판매자의 자료</b>끼리 이어요. 다른 익명 판매자의 자료나 판매자의 말만 있는 자료는 헷갈리라고 넣은 자료일 수 있어요.</li><li>이어 보니 알게 된 사실을 <b>결론</b>에서 고르고, 그 결론을 직접 뒷받침하는 <b>자료에 체크</b>해서 제출해요.</li><li>세 거래를 모두 풀면 단서 세 개가 생겨요. 그 단서로 <b>추리 표</b>를 채워 진짜 판매자를 찾아요.</li></ol><small style="color:#6B5A2E">💡 막히면 ‘비교할 지점 힌트’를 눌러 보세요. 정답 자료를 처음부터 다 보여 주지는 않아요.</small></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
 }
 function iqComplete(i){unlock(i);}
 function iqHintUsed(i){G.hints[i]=true;}
@@ -523,5 +528,5 @@ elif event and event.get("type") == "finish":
 dd.show_hall_note(st.session_state.get("memo_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
-    st.markdown("- 거래번호로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
+    st.markdown("- 같은 익명 판매자 이름표로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
 st.caption("교육용 가상 이야기입니다. 실제 거래 앱·판매자와 관계없으며, 진행은 새로고침하면 초기화됩니다.")
