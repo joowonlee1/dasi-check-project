@@ -56,6 +56,22 @@ STAMP_PLACES = {
     "14": ("🏢", "아파트 관리사무소", "안내서 3건 판단 완료하기"),
 }
 
+# 업적 배지: 게임 속 특별한 순간에 받아요(번호: 아이콘, 이름, 받는 방법). 시민증이 있으면 시민증 문서에 함께 저장해요.
+BADGES = "dotori_badges"
+PENDING_BADGES = "dotori_pending_badges"
+ACHIEVEMENTS = {
+    "escape_nohint": ("🧠", "힌트 없이 잠금 해제", "방탈출 잠금 하나를 힌트 없이 열기"),
+    "verify_call": ("📞", "원래 번호로 확인", "방탈출에서 저장된 번호로 직접 확인 전화 걸기"),
+    "escape_fast": ("⚡", "번개 탈출", "방탈출을 15분 안에 탈출하기"),
+    "escape_true": ("⭐", "트루 엔딩", "방탈출 트루 엔딩 보기"),
+    "grandma_best": ("👵", "할머니 지킴이", "할머니 폰 지키기 최고 결말 보기"),
+    "memo_clean": ("🔍", "한 번에 검거", "중고거래 사기단을 잘못 지목 없이 검거하기"),
+    "nono_nohint": ("🧩", "힌트 없이 복원", "노노그램 그림을 힌트 없이 복원하기"),
+    "filter_final": ("🤖", "필터 완성", "피싱 필터 만들기 마지막 시험까지 끝내기"),
+    "voice_talk": ("🎙️", "말로 대답하기", "AI 모의대화에서 목소리로 대답하기"),
+    "qr_scan": ("📷", "QR 탐정", "웹캠으로 QR을 비춰 주소 확인하기"),
+}
+
 # 명예의 전당: 정렬 기준(앞이 작을수록 높은 순위)과 기록 글자
 HALL_SORT = {
     "escape": lambda r: (-r.get("escaped", 0), -r.get("unlocked", 0), r.get("gave_up", 0), r.get("hints", 0), r.get("mistakes", 0), r.get("seconds", 0)),
@@ -205,7 +221,9 @@ def register(nickname, secret):
     except ConnectionProblem:
         # 예전 방식(하루짜리)으로 다른 사람이 오늘 쓰고 있는 닉네임이면 여기서 막혀요.
         raise ConnectionProblem(409, "NICKNAME_TAKEN") from None
-    return _keep(account, name, canonical)
+    name = _keep(account, name, canonical)
+    _merge_badges({})  # 시민증 없이 받은 배지도 새 시민증에 저장해요
+    return name
 
 
 def login(nickname, secret):
@@ -221,7 +239,10 @@ def login(nickname, secret):
     doc = request("https://firestore.googleapis.com/v1/" + quote(_root() + "/citizens/" + quote(canonical, safe=""), safe="/"), token=account["token"])
     shown = (doc or {}).get("fields", {}).get("nickname", {}).get("stringValue", name)
     saved = (doc or {}).get("fields", {}).get("stamps", {}).get("mapValue", {}).get("fields", {})
-    return _keep(account, shown, canonical, {k: _value(v) for k, v in saved.items() if k in STAMP_PLACES})
+    badges = (doc or {}).get("fields", {}).get("badges", {}).get("mapValue", {}).get("fields", {})
+    name = _keep(account, shown, canonical, {k: _value(v) for k, v in saved.items() if k in STAMP_PLACES})
+    _merge_badges({k: _value(v) for k, v in badges.items() if k in ACHIEVEMENTS})
+    return name
 
 
 def _keep(account, name, canonical, saved=None):
@@ -387,6 +408,92 @@ def stamp(code, quiet=False):
         # app.py가 페이지를 다 그린 뒤 show_stamp_popup()으로 한 번만 보여 줘요.
         st.session_state["stamp_popup"] = (code, len(got))
     return True
+
+
+# ───────── 업적 배지 ─────────
+
+def _merge_badges(saved):
+    """로그인할 때: 서버에 있던 배지와 이번 창에서 받은 배지를 합치고, 새로 받은 것만 저장해요."""
+    got = st.session_state.setdefault(BADGES, {})
+    pending = {k: v for k, v in got.items() if k not in saved}
+    got.update(saved)
+    st.session_state[PENDING_BADGES] = pending
+    if pending:
+        _save_badges()
+
+
+def _save_badges():
+    """새로 받은 배지만 시민증 문서의 badges 칸에 저장해요. 실패해도 이번 창에는 그대로 남아요."""
+    account = citizen()
+    pending = dict(st.session_state.get(PENDING_BADGES, {}))
+    if not account or not account.get("canonical") or not pending:
+        return not pending
+    try:
+        account = _fresh(account)
+        path = _root() + "/citizens/" + quote(account["canonical"], safe="")
+        fields = {k: {"stringValue": str(v)} for k, v in pending.items()}
+        request(_url() + ":commit", "POST",
+                {"writes": [{"update": {"name": path, "fields": {"badges": {"mapValue": {"fields": fields}}}},
+                             "updateMask": {"fieldPaths": [f"badges.`{k}`" for k in pending]},
+                             "currentDocument": {"exists": True}}]},
+                account["token"])
+    except ConnectionProblem:
+        return False
+    waiting = st.session_state.setdefault(PENDING_BADGES, {})
+    for code in pending:
+        waiting.pop(code, None)
+    return True
+
+
+def achieve(code):
+    """업적 배지를 줘요. 처음 받을 때만 화면 위쪽에 배지 알림과 효과음이 나와요."""
+    if code not in ACHIEVEMENTS:
+        return False
+    got = st.session_state.setdefault(BADGES, {})
+    if code in got:
+        return False
+    got[code] = datetime.now(KST).strftime("%m/%d %H:%M")
+    if citizen() and not st.session_state.get("admin_open"):
+        st.session_state.setdefault(PENDING_BADGES, {})[code] = got[code]
+        _save_badges()
+    st.session_state.setdefault("badge_popup", []).append(code)
+    return True
+
+
+def badges():
+    return st.session_state.get(BADGES, {})
+
+
+def show_badge_popup():
+    """맡겨 둔 배지 알림을 화면 위쪽 가운데에 게임 업적처럼 보여 줘요(효과음 포함)."""
+    queue = st.session_state.pop("badge_popup", None)
+    if not queue:
+        return
+    import json as _json
+    import streamlit.components.v1 as components
+    items = [{"icon": ACHIEVEMENTS[c][0], "name": ACHIEVEMENTS[c][1], "how": ACHIEVEMENTS[c][2]} for c in queue if c in ACHIEVEMENTS]
+    total, have = len(ACHIEVEMENTS), len(badges())
+    st.session_state["_badge_n"] = st.session_state.get("_badge_n", 0) + 1
+    components.html(
+        "<script>(()=>{const items=" + _json.dumps(items, ensure_ascii=False).replace("<", "\\u003c") + ";"
+        f"const total={total},have={have};"
+        """const D=parent.document,H=parent.__jamkkanSound;
+let box=D.getElementById('jk-badges');if(!box){box=D.createElement('div');box.id='jk-badges';
+box.innerHTML='<style>#jk-badges{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:1000001;display:flex;flex-direction:column;gap:10px;pointer-events:none;width:min(440px,calc(100vw - 24px))}'
++'#jk-badges .b{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#1f2937,#111827);color:#fff;border:3px solid #f6d55c;border-radius:20px;padding:12px 16px;box-shadow:0 12px 30px #0007;animation:jkb-in 4.6s ease-out forwards}'
++'#jk-badges .i{width:60px;height:60px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;background:radial-gradient(circle,#fff7d1,#f6d55c);box-shadow:0 0 0 4px #f6d55c55;animation:jkb-pop .6s .2s ease-out both}'
++'#jk-badges small{display:block;color:#f6d55c;font-weight:900;font-size:.85rem;letter-spacing:.04em}#jk-badges b{display:block;font-size:1.15rem;font-family:system-ui,sans-serif}#jk-badges em{display:block;font-style:normal;color:#cbd5e1;font-size:.85rem}'
++'@keyframes jkb-in{0%{transform:translateY(-30px);opacity:0}10%{transform:none;opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}@keyframes jkb-pop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1)}}'
++'@media (prefers-reduced-motion:reduce){#jk-badges .b,#jk-badges .i{animation:none}}</style>';D.body.appendChild(box);}
+items.forEach((it,k)=>{setTimeout(()=>{const b=D.createElement('div');b.className='b';b.style.fontFamily='system-ui,sans-serif';
+ const i=D.createElement('div');i.className='i';i.textContent=it.icon;const t=D.createElement('div');
+ const s=D.createElement('small');s.textContent='🏅 업적 달성! ('+(have-items.length+k+1)+' / '+total+')';const n=D.createElement('b');n.textContent=it.name;const e=D.createElement('em');e.textContent=it.how;
+ t.append(s,n,e);b.append(i,t);box.appendChild(b);setTimeout(()=>b.remove(),4700);
+ try{if(H&&H.want){const go=()=>H.play('result');if(H.ctx&&H.ctx.state==='running')go();else if(H.activate)H.activate().then(go).catch(()=>{});}}catch(x){}
+},k*1300);});})();</script>"""
+        + f"<!-- {st.session_state['_badge_n']} -->",
+        height=0,
+    )
 
 
 @st.cache_data(show_spinner=False)
