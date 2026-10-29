@@ -241,6 +241,8 @@ def _keep(account, name, canonical, saved=None):
     st.session_state[PENDING_STAMPS] = pending
     if pending:
         _save_stamps()
+    from login_resume import remember
+    remember()
     return name
 
 
@@ -262,6 +264,8 @@ def logout(discard=False):
     for key in list(st.session_state):
         if key not in preferences:
             del st.session_state[key]
+    from login_resume import clear
+    clear()
     return True
 
 
