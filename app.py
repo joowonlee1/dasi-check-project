@@ -1140,6 +1140,7 @@ navigation.run()
 
 # 페이지에서 받은 도장이 있으면, 페이지를 다 그린 뒤 도장 알림과 효과음을 한 번 보여 줘요.
 dd.show_stamp_popup()
+dd.show_badge_popup()  # 업적 배지 알림(처음 받을 때 한 번)
 from sound_effects import flush_effect
 flush_effect()  # 페이지에서 예약한 효과음(queue_effect)을 들려줘요. (전에는 이 줄이 없어 예약한 소리가 나지 않았어요)
 if dd.citizen() and st.session_state.get(dd.PENDING_STAMPS):
