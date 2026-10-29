@@ -91,9 +91,9 @@ NV_CSS = """<style>
 .nv-doors div{flex:1;text-align:center;border-radius:12px;padding:8px 4px;font-weight:800;border:2px solid #E5E7EB;background:#F9FAFB;color:#6B7280}
 .nv-doors .now{border-color:#B45309;background:#FFF7ED;color:#9A3412}.nv-doors .ok{border-color:#16A34A;background:#F0FDF4;color:#166534}
 .nv-scene{display:flex;justify-content:center;align-items:flex-end;gap:22px;flex-wrap:wrap;background:linear-gradient(#EDE7DB,#E2D9C8);border-radius:18px;padding:18px 14px 0;margin-bottom:.6rem}.nv-clues{flex:1 1 280px;max-width:420px;align-self:center;margin:0 0 16px;display:flex;flex-direction:column;gap:10px}.nv-clues .t{font-weight:900;color:#374151;font-size:1.05rem}.nv-clue{border-radius:12px;padding:10px 14px;font-size:1.02rem;line-height:1.6;box-shadow:0 3px 8px #0002}@media (max-width:640px){.nv-clues{max-width:none;margin-bottom:12px}}
-.nv-door{position:relative;width:min(100%,430px);background:linear-gradient(90deg,#8B5E3C,#A47148 50%,#8B5E3C);border:6px solid #6B4429;border-bottom:0;border-radius:10px 10px 0 0;padding:16px 18px 26px}
-.nv-plate{display:inline-block;background:#F5E6C8;color:#4A3420;font-weight:900;border-radius:6px;padding:2px 12px;margin-bottom:12px;box-shadow:0 2px 0 #0003}
-.nv-knob{position:absolute;right:12px;top:55%;width:16px;height:16px;border-radius:50%;background:radial-gradient(#F7D774,#B8860B)}
+.nv-doorwrap{display:flex;flex-direction:column;align-items:center;width:min(100%,440px)}.nv-door{position:relative;width:100%;box-sizing:border-box;background:linear-gradient(90deg,#7B5134,#9C6A43 45%,#8A5C3B);border:12px solid #4A2F1D;border-bottom:0;border-radius:8px 8px 0 0;padding:14px 44px 18px 18px;box-shadow:inset 0 0 0 3px #5C3A23,0 6px 0 #3B2516}.nv-peep{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:radial-gradient(#1F2937 35%,#C9A227 40%,#8B6B14 70%);box-shadow:0 1px 2px #0006}.nv-panel{border:3px solid #6B4429;border-radius:6px;box-shadow:inset 2px 2px 0 #B07D52,inset -2px -2px 0 #5A3920;padding:12px}.nv-panel.low{height:64px;margin-top:14px;background:linear-gradient(#8F603E,#7E5336)}.nv-handle{position:absolute;right:-4px;top:58%;width:44px;height:12px;border-radius:8px;background:linear-gradient(#F7D774,#B8860B);box-shadow:0 2px 3px #0005}.nv-handle::before{content:'';position:absolute;right:30px;top:-8px;width:22px;height:28px;border-radius:6px;background:linear-gradient(#E5C158,#A47A0E)}.nv-mat{width:78%;height:26px;margin-top:0;background:repeating-linear-gradient(90deg,#9B7B4E 0 6px,#8A6A40 6px 12px);border-radius:4px;color:#F5E6C8;font-weight:900;font-size:.8rem;letter-spacing:.2em;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px #0003}
+.nv-plate{display:table;margin:14px auto 10px;background:linear-gradient(#F9E7B5,#D9B45A);color:#4A3420;font-weight:900;border-radius:6px;padding:3px 14px;box-shadow:0 2px 0 #0004;border:1px solid #A6802B}
+
 .nv-paper{position:relative;color:#1F2937;border-radius:4px;padding:16px 16px 14px;box-shadow:0 6px 14px #0004;line-height:1.65;animation:nv-in .4s ease-out both}
 .nv-paper h4{margin:0 0 6px;font-size:1.05rem;letter-spacing:.04em}
 .nv-tape{position:absolute;top:-10px;width:70px;height:22px;background:#F4E7A9cc;border:1px solid #E2CF7A}
@@ -146,10 +146,11 @@ def door_scene(i, stamp=None, clues=False, say=None):
         label, color = STAMP[stamp]
         stamp_html = f'<span class="nv-stamp" style="color:{color}">{label}</span>'
     st.markdown(
-        f'<div class="nv-scene"><div class="nv-door"><span class="nv-plate">다람쥐아파트 {case["door"]}</span><span class="nv-knob"></span>'
-        f'<div class="nv-paper" style="transform:rotate({look["rot"]}deg);background:{look["bg"]}">{tape}'
+        f'<div class="nv-scene"><div class="nv-doorwrap"><div class="nv-door"><span class="nv-peep"></span><span class="nv-plate">🏠 {case["door"]}</span>'
+        f'<div class="nv-panel"><div class="nv-paper" style="transform:rotate({look["rot"]}deg);background:{look["bg"]}">{tape}'
         f'<h4>📮 등기 우편물 안내</h4><div>{claim}</div>{extra}'
         f'<div style="margin-top:6px;font-size:.9rem;color:#6B7280">참조번호 {case["reference"]}</div>{stamp_html}</div></div>'
+        '<div class="nv-panel low"></div><span class="nv-handle"></span></div><div class="nv-mat">다람쥐아파트</div></div>'
         + (('<div class="nv-clues"><div class="t">🔎 안내서에서 보이는 단서</div>'
             f'<div class="nv-clue" style="background:#FFE08A;color:#6B4300"><b>🔖 참조번호(등기번호)</b><br>{case["reference"]}</div>'
             f'<div class="nv-clue" style="background:#EEF4FF;color:#1F3A68"><b>👀 겉모습</b><br>{_esc(case["looks"])}</div>'
