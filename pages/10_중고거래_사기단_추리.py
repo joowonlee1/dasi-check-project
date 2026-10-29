@@ -137,7 +137,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .got{background:#E6F4EC;border:2px solid #0F766E;border-radius:12px;padding:10px 12px;font-weight:800;margin-top:8px;word-break:keep-all;animation:pop .5s ease-out both}
 .toast{min-height:1.5em;font-weight:800;color:#B4471B;margin:6px 0;word-break:keep-all}
 .shake{animation:shake .45s}
-.clues{display:grid;gap:6px;margin:8px 0}
+.clues{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}.clues .clue{margin:0!important;min-height:52px;align-items:center}@media (max-width:640px){.clues{grid-template-columns:1fr}}
 .clue{display:flex;gap:8px;align-items:flex-start;background:#fff;border:1.5px solid #D7E2DD;border-radius:12px;padding:8px 10px;cursor:pointer;word-break:keep-all;text-align:left;font-weight:700;font-size:.95rem;width:100%}
 .clue.used{opacity:.5;text-decoration:line-through}
 .clue.lock{background:#F4F4F0;color:#8A8F87;cursor:default}
@@ -236,7 +236,7 @@ function render(){
   app.classList.toggle('still', !fresh); fresh = false;
   app.innerHTML = `
   <section class="hero"><span>🔐 추리 퍼즐 · 거래 기록 조사 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
-  <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요.</span></section>
+  <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</span></section>
   <div class="sellhead">🛍️ 연락해 온 판매자 5명 (중고거래 앱 닉네임)</div>
   <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em><small>판매자 ${i + 1}</small>${esc(s)}</div>`).join('')}</div>
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
@@ -264,7 +264,7 @@ function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 
 function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
- $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB"><b style="font-size:1.08rem">🧭 시작하기 전에 · 이렇게 풀어요</b><p style="margin:.4rem 0 .2rem">거래 기록은 <b>누구의 거래인지 이름을 가려 둔</b> 조사 자료예요. 대신 판매자마다 <b>익명 판매자 가·나·다·라</b> 이름표를 붙여 두었어요. <b>위의 판매자 1~5와는 다른 이름표</b>라서, 누가 누구인지는 추리 표로 찾아야 해요. (예: <b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> 거래라고 적힌 자료들은 모두 같은 판매자와의 거래 이야기)</p><ol style="margin:.3rem 0 .2rem 1.2rem;padding:0;line-height:1.7"><li><b>자료 버튼</b>을 눌러 하나씩 읽어요. 앞 자료를 읽어야 열리는 자료도 있어요.</li><li><b>같은 익명 판매자의 자료</b>끼리 이어요. 다른 익명 판매자의 자료나 판매자의 말만 있는 자료는 헷갈리라고 넣은 자료일 수 있어요.</li><li>이어 보니 알게 된 사실을 <b>결론</b>에서 고르고, 그 결론을 직접 뒷받침하는 <b>자료에 체크</b>해서 제출해요.</li><li>세 거래를 모두 풀면 단서 세 개가 생겨요. 그 단서로 <b>추리 표</b>를 채워 진짜 판매자를 찾아요.</li></ol><small style="color:#6B5A2E">💡 막히면 ‘비교할 지점 힌트’를 눌러 보세요. 정답 자료를 처음부터 다 보여 주지는 않아요.</small></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
+ $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB"><b style="font-size:1.08rem">🧭 시작하기 전에 · 이렇게 풀어요</b><p style="margin:.4rem 0 .2rem">거래 기록은 <b>누구의 거래인지 이름을 가려 둔</b> 조사 자료예요. 대신 판매자마다 <b>익명 판매자 가·나·다·라</b> 이름표를 붙여 두었어요. <b>위의 판매자 1~5와는 다른 이름표</b>라서, 누가 누구인지는 추리 표로 찾아야 해요. (예: <b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> 거래라고 적힌 자료들은 모두 같은 판매자와의 거래 이야기)</p><ol style="margin:.3rem 0 .2rem 1.2rem;padding:0;line-height:1.7"><li><b>자료 버튼</b>을 눌러 하나씩 읽어요. 앞 자료를 읽어야 열리는 자료도 있어요. 실제 조사처럼 <b>시간 순서대로</b> 따라가야 무엇이 바뀌었는지 보이거든요.</li><li><b>같은 익명 판매자의 자료</b>끼리 이어요. 다른 익명 판매자의 자료나 판매자의 말만 있는 자료는 헷갈리라고 넣은 자료일 수 있어요.</li><li>이어 보니 알게 된 사실을 <b>결론</b>에서 고르고, 그 결론을 직접 뒷받침하는 <b>자료에 체크</b>해서 제출해요.</li><li>세 거래를 모두 풀면 단서 세 개가 생겨요. 그 단서로 <b>추리 표</b>를 채워 진짜 판매자를 찾아요.</li></ol><small style="color:#6B5A2E">💡 막히면 ‘비교할 지점 힌트’를 눌러 보세요. 정답 자료를 처음부터 다 보여 주지는 않아요.</small></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
 }
 function iqComplete(i){unlock(i);}
 function iqHintUsed(i){G.hints[i]=true;}
@@ -316,7 +316,7 @@ function gridExample(){
 }
 function hint(i){ G.hints[i] = true; render(); }
 function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
-function unlock(i){ G.solved[i] = true; toastMsg = '🔓 조사 완료! 추리 표에 새 단서가 열렸어요.'; render();
+function unlock(i){ G.solved[i] = true; render();  // 조사 완료 소식은 도토리마켓 큰 창으로만 알려요(맨 아래 글자는 띄우지 않아요)
   const n = G.solved.filter(Boolean).length;
   marketPop({mascot:'sneaker', tag:'거래 기록 조사 완료', title:`🔓 단서 확보! (${n}/3)`,
     body: esc(IQ_CASES[i].lesson) + '<br><b>추리 표에 새 단서가 열렸어요.</b>',
@@ -345,11 +345,11 @@ function gridTab(){
   <div class="tools"><button onclick="resetGrid()">↺ 표 지우기</button></div>
   <div class="grids">${KINDS.map(gridHtml).join('')}</div>
   <button class="ok bigcheck" onclick="checkGrid()">✅ 표 채점하기 (⭕ 15개를 모두 채우면)</button>
-  ${aiBox()}
+  <div class="hint" style="background:#F5F3FF;border:2px solid #C4B5FD;color:#3730A3">🤖 막히면 화면 <b>오른쪽 아래 ‘AI 탐정’ 버튼</b>을 눌러 궁금한 걸 물어보세요. (남은 질문 ${AI.left} / 5)</div>
   ${cluesOpen() < 3 ? '<div class="hint">💡 단서 7개만으로는 답이 하나로 안 정해져요. 거래 기록을 조사해서 단서를 더 모아요!</div>' : ''}`;
 }
 function clueBtn(id, text, locked, memo){
-  const src = memo ? `<span class="src">📜 메모 ${+id.slice(1) + 1}에서 나온 단서</span>` : '';
+  const src = memo ? `<span class="src">📜 거래 ${'ABC'[+id.slice(1)]} 조사에서 얻은 단서</span>` : '';
   return `<button class="clue ${locked ? 'lock' : ''} ${memo ? 'memo' : ''} ${G.used[id] ? 'used' : ''}" ${locked ? 'disabled' : `onclick="G.used['${id}']=!G.used['${id}'];render()"`}><span>${src}${esc(text)}</span></button>`;
 }
 // ───── 🤖 AI에게 물어보기 (정해진 힌트 대신, 내가 궁금한 걸 5번까지) ─────
@@ -364,6 +364,63 @@ function aiBox(){
   <div class="ask"><input id="aiq" maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : (AI.left ? '답을 기다리는 중…' : '질문 5번을 모두 썼어요')}" value="${esc(G.aiDraft || '')}" oninput="G.aiDraft=this.value" ${can ? '' : 'disabled'} onkeydown="if(event.key==='Enter')ask()">
   <button class="ok" onclick="ask()" ${can ? '' : 'disabled'}>물어보기</button></div></section>`;
 }
+
+// ───── 🤖 AI 탐정: 피싱 방탈출의 ‘나의 폰’처럼 화면 오른쪽 아래에 떠 있는 버튼 + 열리는 대화창 ─────
+// 같은 보라색 상자 디자인을 그대로 쓰고, 어느 탭에서든 열 수 있어요. 게임이 끝나거나 다른 페이지로 가면 사라져요.
+function aiFloat(){
+  let P, D; try { P = window.parent; D = P.document; } catch (e) { return; }
+  const remove = () => { ['jk-ai-launch','jk-ai-panel'].forEach(id => { const el = D.getElementById(id); if (el) el.remove(); }); };
+  if (G.done) { remove(); return; }
+  if (!D.getElementById('jk-ai-style')) {
+    const st = D.createElement('style'); st.id = 'jk-ai-style';
+    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:18px;padding:12px 20px;font:900 19px system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
+#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
+#jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:system-ui,sans-serif}
+#jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+#jk-ai-panel .hd{background:#6D28D9;color:#fff;padding:12px 16px;font-weight:900;display:flex;align-items:center;gap:8px}
+#jk-ai-panel .hd button{margin-left:auto;background:#fff2;color:#fff;border:0;border-radius:10px;padding:6px 10px;font:800 14px system-ui;cursor:pointer}
+#jk-ai-panel .bd{padding:12px 14px;overflow:auto;min-height:120px}
+#jk-ai-panel .tip{font-size:.88rem;color:#4C1D95;line-height:1.55;margin-bottom:8px;word-break:keep-all}
+#jk-ai-panel .q{background:#E9D5FF;border-radius:14px 14px 4px 14px;padding:8px 12px;margin:8px 0 4px auto;max-width:85%;word-break:keep-all}
+#jk-ai-panel .a{background:#fff;border-radius:14px 14px 14px 4px;padding:8px 12px;margin:4px auto 8px 0;max-width:90%;box-shadow:0 1px 3px #0002;word-break:keep-all;line-height:1.6}
+#jk-ai-panel .ft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #DDD6FE;background:#fff}
+#jk-ai-panel .ft input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:2px solid #C4B5FD;border-radius:12px;outline:none}#jk-ai-panel .ft input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px #DDD6FE}
+#jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px system-ui;cursor:pointer}
+#jk-ai-panel .ft button:disabled{opacity:.5;cursor:default}
+@media(max-width:600px){#jk-ai-launch{right:12px;bottom:92px;font-size:16px}#jk-ai-panel{right:12px;bottom:12px}}`;
+    D.head.appendChild(st);
+  }
+  if (!P.__jkAiCleanup) {  // 다른 페이지로 가면 버튼과 창을 지워요
+    const path = P.location.pathname;
+    P.__jkAiCleanup = P.setInterval(() => { if (P.location.pathname !== path) { remove(); P.clearInterval(P.__jkAiCleanup); P.__jkAiCleanup = null; } }, 800);
+    window.addEventListener('pagehide', remove);
+  }
+  const can = AI.left > 0 && !AI.wait;
+  let launch = D.getElementById('jk-ai-launch');
+  if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
+  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : `🤖 AI 탐정에게 물어보기 · ${AI.left}/5`;
+  launch.classList.toggle('wait', AI.wait);
+  launch.onclick = () => { P.__jkAiOpen = true; aiFloat(); };
+  let panel = D.getElementById('jk-ai-panel');
+  if (!P.__jkAiOpen) { if (panel) panel.remove(); launch.style.display = ''; return; }
+  launch.style.display = 'none';
+  if (!panel) { panel = D.createElement('div'); panel.id = 'jk-ai-panel'; D.body.appendChild(panel); }
+  const qa = AI.answers.map(x => `<div class="q">🙋 ${esc(x.q)}</div><div class="a">🤖 ${esc(x.a)}</div>`).join('');
+  panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정 · 남은 질문 ${AI.left} / 5<button type="button" data-x>닫기 ✕</button></div>
+   <div class="bd"><div class="tip">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
+   ${qa}${AI.wait ? '<div class="a">🤖 생각하는 중이에요…</div>' : ''}</div>
+   <div class="ft"><input maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : (AI.left ? '답을 기다리는 중…' : '질문 5번을 모두 썼어요')}" ${can ? '' : 'disabled'}><button type="button" ${can ? '' : 'disabled'}>물어보기</button></div></div>`;
+  const input = panel.querySelector('.ft input'), send = panel.querySelector('.ft button');
+  input.value = G.aiDraft || '';
+  input.oninput = () => { G.aiDraft = input.value; };
+  input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); send.click(); } };
+  send.onclick = () => { G.aiDraft = input.value; ask(); };
+  panel.querySelector('[data-x]').onclick = () => { P.__jkAiOpen = false; aiFloat(); };
+  const bd = panel.querySelector('.bd'); bd.scrollTop = bd.scrollHeight;
+  if (can) input.focus({preventScroll: true});
+}
+const _renderMain = render;
+render = function(){ _renderMain(); aiFloat(); };
 function snapshot(){
   const marks = Object.entries(G.grid).filter(([, v]) => v === 2).map(([k]) => k.split('|').slice(1).join('='));
   return {solved: G.solved, marks};
@@ -424,7 +481,7 @@ function answer(){
     marketPop({mascot:'think', bar:'#64748B', tag:'신고 반려', title:`🚨 ${esc(G.pick)}님은 진짜 판매자가 아니에요`,
       body:'그 판매자가 무엇을 요구했는지 추리 표에서 다시 확인해 봐요. <b>앱 밖으로 나가자고 하지 않고, 안전하게 거래하는 판매자</b>가 진짜예요.', button:'추리 표 다시 보기 ▶'});
     return; }
-  G.done = true;
+  G.done = true; aiFloat();  // 게임이 끝나면 AI 탐정 버튼을 치워요
   const box = $('app');
   const steps = [['🥁', '두구두구…'], ['🔎', '거래 기록을 대조하는 중…'], ['🎉', '진짜 판매자 발견!']];
   let i = 0;
@@ -470,7 +527,7 @@ let STATS = {};
 function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
 window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { const a = ev.data.args || {}; if (a.stats) STATS = a.stats;
   if (a.ai) { const before = AI.answers.length; AI.answers = a.ai.answers || []; AI.left = a.ai.left; G.stepHint = AI.answers.length + (AI.wait && AI.answers.length === before ? 1 : 0);
-    if (AI.answers.length > before) AI.wait = false; if (G.tab === 'grid' && !G.done) render(); }
+    if (AI.answers.length > before) AI.wait = false; if (!G.done) render(); }
   requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
