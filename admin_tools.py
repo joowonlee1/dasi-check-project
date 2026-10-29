@@ -114,6 +114,8 @@ def show_admin_box():
             if ok:
                 if hmac.compare_digest(typed.strip().encode(), code.encode()):
                     st.session_state[OPEN] = True
+                    from login_resume import remember
+                    remember()
                     st.rerun()
                 st.session_state[TRIES] = tries + 1
                 st.error("관리자 코드가 맞지 않아요.")
@@ -208,6 +210,12 @@ def _admin_tools():
                     _problem(exc)
 
     if st.button("관리자 모드 끝내기"):
+        from admin_progress import PENDING, sync
+        if st.session_state.get(PENDING) and not sync():
+            st.warning("도장을 저장하지 못했어요. 다시 저장한 뒤 관리자 모드를 끝내 주세요.")
+            return
         st.session_state.pop(OPEN, None)
         st.session_state.pop("admin_token", None)
+        from login_resume import remember
+        remember()
         st.rerun()
