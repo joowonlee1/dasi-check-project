@@ -917,10 +917,14 @@ with st.sidebar:
             height=0,
         )
 
-    show_mascot(
-        "stop",
-        "멈추고, 확인하고, 판단하기",
-        width=90,
+    # 깡지는 왼쪽, 구호는 오른쪽에 세 줄로 나란히 (좁은 사이드바에서도 글자가 깡지 밑으로 밀리지 않아요)
+    from mascot_ui import mascot_img as _side_img
+    st.markdown(
+        '<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E9DD;border-radius:18px;padding:8px 12px;margin:2px 0 6px">'
+        f'<div style="flex:0 0 92px">{_side_img("stop", 92)}</div>'
+        '<div style="line-height:1.55;font-weight:900;color:#24443B;font-size:1.02rem;word-break:keep-all">'
+        '✋ 멈추고,<br>🔍 확인하고,<br>✅ 판단하기</div></div>',
+        unsafe_allow_html=True,
     )
 
     st.caption(
