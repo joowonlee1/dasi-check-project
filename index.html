@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><script>
+const KEY="dotori.login.resume.v1";
+let last="";
+function send(type,extra={}){parent.postMessage({isStreamlitMessage:true,type,...extra},"*");}
+addEventListener("message",e=>{
+ if(e.source!==parent||e.data?.type!=="streamlit:render")return;
+ const op=e.data.args.operation;
+ if(!op||last===op.id)return;
+ last=op.id;
+ let value={id:op.id,token:"",error:false};
+ try{
+  if(op.token!==null){if(op.token)sessionStorage.setItem(KEY,op.token);else sessionStorage.removeItem(KEY);}
+  else value.token=sessionStorage.getItem(KEY)||"";
+ }catch(err){value.error=true;}
+ send("streamlit:setComponentValue",{value,dataType:"json"});
+ send("streamlit:setFrameHeight",{height:0});
+});
+send("streamlit:componentReady",{apiVersion:1});
+send("streamlit:setFrameHeight",{height:0});
+</script></body></html>
