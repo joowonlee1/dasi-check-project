@@ -15,10 +15,21 @@ def card(compact=False):
         photo=f'<img src="data:image/png;base64,{manager_photo()}" alt="관리자 깡지" style="width:{52 if compact else 116}px;height:{52 if compact else 116}px;object-fit:contain;flex-shrink:0;border:3px solid #efd68b;border-radius:8px;">'
     except Exception:
         photo='<span style="font-size:40px">🐿️</span>'
+    # 사이드바(작은 카드)는 사진을 키우고 글자를 두 줄로 줄여 빈 곳 없이, 큰 카드는 원래 배치 그대로예요.
+    if compact:
+        head = ('<div style="display:flex;align-items:center;gap:10px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:8px 10px;box-sizing:border-box;">'
+                + photo.replace("width:52px;height:52px", "width:60px;height:60px") +
+                '<div style="min-width:0;flex:1;line-height:1.3">'
+                '<div style="color:#f4d784;font-weight:800;font-size:.78rem;white-space:nowrap">★ 도토리시 관리자증</div>'
+                '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px">'
+                '<strong style="font-size:1.15rem;color:#fff">관리자</strong>'
+                '<span style="font-size:.74rem;font-weight:800;background:#d8b85d;color:#173f35;border-radius:999px;padding:2px 8px;white-space:nowrap">🔑 인증 완료</span></div></div></div>')
+    else:
+        head = ('<div style="display:flex;align-items:center;gap:12px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:12px;box-sizing:border-box;">'
+                +photo+'<div style="min-width:0;line-height:1.4;word-break:keep-all;overflow-wrap:normal;font-size:.85rem"><div style="color:#f4d784;font-weight:800">★ 도토리시<br>관리자증</div>'
+                '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>')
     st.markdown(
-        '<div style="display:flex;align-items:center;gap:12px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:12px;box-sizing:border-box;">'
-        +photo+'<div style="min-width:0;line-height:1.4;word-break:keep-all;overflow-wrap:normal;font-size:.85rem"><div style="color:#f4d784;font-weight:800">★ 도토리시<br>관리자증</div>'
-        '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>'
+        head
         # 안내 문구를 카드와 같은 덩어리 안에 넣어서, 아래 글씨가 카드와 겹치지 않게 해요.
         +('' if compact else '<div style="margin:10px 0 6px;padding:10px 14px;background:#F0FDF4;border:2px solid #86EFAC;border-radius:12px;'
           'color:#14532D;font-size:1.02rem;font-weight:700;line-height:1.6;word-break:keep-all">'
