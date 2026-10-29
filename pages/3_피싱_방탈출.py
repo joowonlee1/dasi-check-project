@@ -236,36 +236,38 @@ HINTS = {
 st.markdown(
     """
     <style>
-    .ev-wrap {max-width: 560px; margin: 16px 0 10px;}
-    .phone {background:#0B1220; border-radius:30px; padding:10px 12px 14px; border:3px solid #2B3645;
+    .ev-wrap {max-width: 560px; margin: 6px 0 4px;}
+    .phone {background:#0B1220; border-radius:28px; padding:8px 10px 10px; border:3px solid #2B3645;
             box-shadow:0 8px 22px rgba(15,23,42,.25); color:#E5ECF4;}
     .phone .status {display:flex; justify-content:space-between; font-size:.72rem; color:#AAB7C6;
-                    padding:2px 10px 8px; font-variant-numeric:tabular-nums;}
-    .phone .notch {width:90px; height:6px; background:#2B3645; border-radius:6px; margin:0 auto 6px;}
-    .call-top {text-align:center; padding:6px 0 10px;}
+                    padding:0 10px 4px; font-variant-numeric:tabular-nums;}
+    .phone .notch {width:90px; height:5px; background:#2B3645; border-radius:6px; margin:0 auto 4px;}
+    .call-top {display:flex; align-items:center; gap:12px; padding:4px 6px 8px; border-bottom:1px solid #1E293B; margin-bottom:4px;}
+    .call-top .avatar {margin:0; flex-shrink:0; width:50px; height:50px;}
+    .call-num {display:inline-block; margin-top:2px; background:#1E3A8A; color:#fff; font-weight:800; border-radius:8px; padding:1px 8px; font-size:.88rem; letter-spacing:.03em; font-variant-numeric:tabular-nums;}
     .avatar {width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg,#F59E0B,#EF4444);
              color:#fff; font-weight:900; font-size:1.5rem; display:flex; align-items:center;
              justify-content:center; margin:0 auto 6px;}
     .avatar.gray {background:#475569;}
     .avatar.small {width:34px; height:34px; font-size:.95rem; margin:0;}
-    .call-name {font-size:1.35rem; font-weight:800; color:#fff;}
-    .call-sub {font-size:.8rem; color:#9FB0C3;}
-    .say {background:#1E293B; border-radius:14px 14px 14px 4px; padding:8px 12px; margin:6px 30px 6px 0;
-          font-size:.93rem; line-height:1.55; color:#F1F5F9;}
+    .call-name {font-size:1.35rem; font-weight:900; color:#fff; line-height:1.2;}
+    .call-sub {font-size:.82rem; color:#B6C4D4; margin-top:2px;}
+    .say {background:#1E293B; border-radius:14px 14px 14px 4px; padding:7px 11px; margin:5px 14px 5px 0;
+          font-size:1rem; line-height:1.55; color:#F1F5F9;}
     .say .who {display:block; font-size:.72rem; color:#93C5FD; font-weight:700; margin-bottom:2px;}
     .call-btns {display:flex; justify-content:center; gap:34px; margin-top:12px;}
     .call-btns span {width:42px; height:42px; border-radius:50%; display:flex; align-items:center;
                      justify-content:center; font-size:1.1rem;}
     .end {background:#DC2626;} .mute {background:#334155;}
-    .sms-head {display:flex; align-items:center; gap:8px; border-bottom:1px solid #1E293B; padding:0 4px 8px;}
+    .sms-head {display:flex; align-items:center; gap:8px; border-bottom:1px solid #1E293B; padding:0 4px 6px;}
     .sms-head b {font-size:.95rem; color:#fff;}
     .warn-tag {font-size:.68rem; background:#7F1D1D; color:#FECACA; border-radius:6px; padding:1px 6px;}
-    .bubble {background:#E5E7EB; color:#111827; border-radius:16px 16px 16px 4px; padding:9px 12px;
-             margin:8px 40px 4px 4px; font-size:.93rem; line-height:1.55;}
+    .bubble {background:#E5E7EB; color:#111827; border-radius:16px 16px 16px 4px; padding:8px 11px;
+             margin:5px 18px 3px 2px; font-size:1rem; line-height:1.55;}
     .linkpill {display:inline-block; margin:2px 0 0 4px; background:#1D4ED8; color:#DBEAFE; border-radius:10px;
                padding:6px 10px; font-size:.8rem; opacity:.75; cursor:not-allowed;}
     .stamp {font-size:.7rem; color:#7C8BA0; margin:2px 6px;}
-    .phone-note {margin-top:10px; font-size:.76rem; color:#94A3B8; border-top:1px dashed #334155; padding-top:8px;}
+    .phone-note {margin-top:6px; font-size:.82rem; color:#CBD5E1; border-top:1px dashed #334155; padding-top:6px; line-height:1.5;}
     .noti {background:rgba(255,255,255,.08); border-radius:16px; padding:10px 12px; display:flex; gap:10px;}
     .noti .ic {font-size:1.4rem;} .noti .t {font-size:.75rem; color:#AAB7C6;} .noti .x {font-size:.92rem; color:#F8FAFC;}
     .contact {display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px solid #1E293B;}
@@ -389,16 +391,16 @@ def evidence_html(item):
     kind = item["kind"]
 
     if kind == "call":
+        # 통화 화면: 이름·번호를 왼쪽 위에 한 줄로 모아 빈 곳을 줄여요.
         lines = "".join(f'<div class="say"><span class="who">상대</span>{esc(t)}</div>' for t in item["lines"])
         inner = (
             '<div class="call-top">'
-            f'<div class="avatar">{esc(item["name"][0])}</div>'
+            f'<div class="avatar">{esc(item["name"][0])}</div><div>'
             f'<div class="call-name">{esc(item["name"])}</div>'
-            f'<div class="call-sub">휴대전화 {esc(item["number"])}</div>'
+            f'<span class="call-num">📞 {esc(item["number"])}</span>'
             f'<div class="call-sub">{esc(item["time"])}</div>'
-            "</div>"
+            "</div></div>"
             f"{lines}"
-            '<div class="call-btns"><span class="mute">🔇</span><span class="end">📞</span><span class="mute">🔊</span></div>'
             f'<div class="phone-note">{esc(item["note"])}</div>'
         )
         return phone_shell(inner)
@@ -522,22 +524,48 @@ def evidence_card(evidence_id):
                     f'<span style="background:#20483F;color:#fff;font-weight:900;border-radius:8px;padding:2px 9px;font-size:.9rem">{esc(code)}</span>'
                     f'<b style="font-size:1.08rem">{esc(name or code)}</b></div>', unsafe_allow_html=True)
         render_evidence(evidence_id)
-
-        if evidence_id in game["evidence"]:
-            st.markdown('<div style="display:flex;align-items:center;justify-content:center;min-height:52px;margin:12px 0 4px;'
-                        'background:#ECFDF3;color:#166534;border:2px solid #86EFAC;border-radius:14px;font-size:1.08rem;font-weight:800">'
-                        '✅ 증거 보관함에 저장됨</div>', unsafe_allow_html=True)
+        if EVIDENCE[evidence_id]["kind"] == "call":
+            # 통화 기록은 녹음을 목소리로 다시 들을 수 있어요(교육용 가상 대사).
+            # 녹음 듣기와 보관함 버튼을 한 줄에 나란히 두어 카드가 길어지지 않게 해요.
+            from voice_ui import call_button
+            item = EVIDENCE[evidence_id]
+            collect_style()  # 버튼 꾸밈을 칸 밖에서 먼저 넣어, 두 버튼이 같은 높이에서 시작하게 해요.
+            rec_col, act_col = st.columns([1, 1.25], vertical_alignment="top")
+            with rec_col:
+                call_button({"name": item["name"], "number": item["number"], "avatar": "👩", "ring": False, "status": "통화 녹음 재생",
+                             "lines": [["상대", item["lines"][0], ""],
+                                       ["상대", item["lines"][1], "⚠️ 방금 그 말! 다른 가족에게는 연락하지 말라고 해요"]],
+                             "pitch": VOICE_PITCH, "verdict": "🎧 녹음이 끝났어요. 이 통화에서 이상한 점을 증거와 비교해 보세요."},
+                            "녹음 듣기", key=f"rec_{evidence_id}", tone="calm", icon="🎧")
+            with act_col:
+                collect_button(evidence_id, compact=True)
         else:
-            # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 부담스럽지 않은 연한 노란 버튼으로 크게 보여 줘요.
-            st.markdown('<style>[class*="st-key-collectbox_"] button{background:#FFF4D6!important;color:#7C4A03!important;border:2px solid #E8B04B!important;'
-                        'border-radius:14px!important;min-height:52px!important;box-shadow:0 2px 0 #E8B04B!important;}'
-                        '[class*="st-key-collectbox_"] button p{font-size:1.08rem!important;font-weight:800!important;}'
-                        '[class*="st-key-collectbox_"] button:hover{background:#FFE9B0!important;border-color:#D69A2D!important;}</style>', unsafe_allow_html=True)
-            with st.container(key=f"collectbox_{evidence_id}"):
-                if st.button("📥 증거 보관함에 넣기 (+1분)", key=f"escape_collect_{evidence_id}", width="stretch"):
-                    save_evidence(evidence_id)
-                    spend("collect")
-                    st.rerun()
+            collect_button(evidence_id)
+
+
+def collect_button(evidence_id, compact=False):
+    if evidence_id in game["evidence"]:
+        st.markdown('<div style="display:flex;align-items:center;justify-content:center;min-height:52px;margin:'
+                    + ("0" if compact else "12px 0 4px") + ';'
+                    'background:#ECFDF3;color:#166534;border:2px solid #86EFAC;border-radius:14px;font-size:1.08rem;font-weight:800">'
+                    + ('✅ 보관함에 저장됨' if compact else '✅ 증거 보관함에 저장됨') + '</div>', unsafe_allow_html=True)
+    else:
+        if not compact:
+            collect_style()
+        with st.container(key=f"collectbox_{evidence_id}"):
+            if st.button("📥 보관함에 넣기 (+1분)" if compact else "📥 증거 보관함에 넣기 (+1분)", key=f"escape_collect_{evidence_id}", width="stretch"):
+                save_evidence(evidence_id)
+                spend("collect")
+                st.rerun()
+
+
+def collect_style():
+    # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 부담스럽지 않은 연한 노란 버튼으로 크게 보여 줘요.
+    st.markdown('<style>[class*="st-key-collectbox_"] button{background:#FFF4D6!important;color:#7C4A03!important;border:2px solid #E8B04B!important;'
+                'border-radius:14px!important;min-height:52px!important;box-shadow:0 2px 0 #E8B04B!important;}'
+                '[class*="st-key-collectbox_"] button p{font-size:1.08rem!important;font-weight:800!important;}'
+                '[class*="st-key-collectbox_"] button:hover{background:#FFE9B0!important;border-color:#D69A2D!important;}'
+                '[class*="st-key-collectbox_"] button{height:52px!important;margin:0!important}</style>', unsafe_allow_html=True)
 
 
 def evidence_name(evidence_id):
@@ -578,9 +606,10 @@ def show_status_bar():
         with right:
             countdown()
     show_dial_bridge()
-    from game_phone import show_phone
+    from game_phone import show_phone, tension
     show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False),
-               dial=phone_dial_data())
+               dial=phone_dial_data(), pitch=VOICE_PITCH)
+    tension(game["started"], seconds_left())  # 5분 이하: 빨간 테두리·심장 박동, 1분 이하: 더 빠르게
 
 
 def hint_panel(stage):
@@ -681,6 +710,8 @@ def lock_one():
             st.warning("번호 4자리와 판단을 모두 입력하세요.")
         elif digits(code) == "1820" and unknown.startswith("가족끼리만"):
             game["unlocked"] = 1
+            if game["hints"][1] == 0:
+                dd.achieve("escape_nohint")  # 업적: 힌트 없이 잠금 해제
             game["feedback"] = (
                 "🔓 서랍이 열렸습니다. ‘방 조사 → 🗄️ 잠긴 서랍’에 새 증거가 추가됐어요. "
                 "통화 상대가 아는 정보는 모두 전체 공개 게시물에 있던 것이었고, "
@@ -723,6 +754,8 @@ def lock_two():
             st.warning("8자리 숫자와 판단을 모두 입력하세요.")
         elif digits(code) == "40550310" and location.startswith("사진은 과거"):
             game["unlocked"] = 2
+            if game["hints"][2] == 0:
+                dd.achieve("escape_nohint")  # 업적: 힌트 없이 잠금 해제
             game["feedback"] = (
                 "🔓 확인 장치가 켜졌습니다. 액자의 09:03은 ‘보낸’ 시각일 뿐 사진은 전날 찍혔고, "
                 "달력은 계획일 뿐입니다. 통화 화면의 이름과 번호도 조작될 수 있어요(발신번호 변작). "
@@ -805,6 +838,8 @@ def lock_three():
             and action.startswith("요구를 멈추고")
         ):
             game["unlocked"] = 3
+            if game["hints"][3] == 0:
+                dd.achieve("escape_nohint")  # 업적: 힌트 없이 잠금 해제
             game["finished"] = time.time()
             game["finished_clock"] = game["clock"]
             st.rerun()
@@ -835,6 +870,8 @@ def process_dial(raw):
     save_evidence(result)
     if result not in game["dialed"]:
         game["dialed"].append(result)
+    if result == "aunt":
+        dd.achieve("verify_call")  # 업적: 원래 저장된 번호로 직접 확인
 
 
 def collected_numbers():
@@ -847,10 +884,27 @@ def collected_numbers():
     return available
 
 
+# 통화 목소리 연출(나의 폰에서 전화를 걸면 통화 화면이 열리고 대사를 목소리로 읽어 줘요). 모두 교육용 가상 대사예요.
+# 누가 말하는지에 따라 목소리 높이·빠르기를 다르게 해요.
+VOICE_PITCH = {"상대": [1.15, 1.05], "이모": [1.3, 1.0], "엄마": [1.05, 1.0], "안내 음성": [1.0, 0.95]}
+# 통화마다: 얼굴 그림, 목소리로 읽을 줄([누가, 대사, 그 말이 나올 때 띄울 경고]), 통화가 끝나고 띄울 한 줄
+CALL_VOICE = {
+    "no_answer": {"avatar": "👩", "voice": [["안내 음성", "고객이 전화를 받지 않아, 삐 소리 후 음성사서함으로 연결됩니다.", ""]],
+                  "verdict": "📵 응답 없음 · 받지 않은 이유는 아직 몰라요"},
+    "dad_off": {"avatar": "👨", "voice": [["안내 음성", "전원이 꺼져 있어, 음성사서함으로 연결됩니다.", ""]],
+                "verdict": "📴 전원 꺼짐 · 출장 중 비행기 안일 수도 있어요"},
+    "new_contact": {"avatar": "❓", "danger": True,
+                    "voice": [["상대", EVIDENCE["new_contact"]["lines"][0][1], "⚠️ 방금 그 말! 목소리 확인도 없이 앱 설치부터 시켜요"]],
+                    "verdict": "⚠️ 상대가 알려 준 새 번호로 건 통화예요"},
+    "aunt": {"avatar": "👩", "safe": True, "voice": [[w, t, ""] for w, t in EVIDENCE["aunt"]["lines"]],
+             "verdict": "✅ 원래 저장된 번호로 직접 확인한 통화예요"},
+}
+
+
 def phone_dial_data():
     """'나의 폰' 전화 탭에 보여 줄 번호 목록과 통화 기록."""
     calls = [{k: EVIDENCE[e][k] for k in ("title", "name", "number", "status", "note")} | {"lines": EVIDENCE[e]["lines"]}
-             for e in game["dialed"]]
+             | CALL_VOICE.get(e, {}) for e in game["dialed"]]
     return {"numbers": collected_numbers(), "calls": calls, "note": game.get("dial_note", "")}
 
 
@@ -1054,6 +1108,10 @@ def show_ending():
     hint_count = sum(game["hints"].values())
     title, story = ending()
     save_record(True)
+    if seconds <= 15 * 60:
+        dd.achieve("escape_fast")  # 업적: 15분 안에 탈출
+    if title.startswith("⭐"):
+        dd.achieve("escape_true")  # 업적: 트루 엔딩
 
     dd.stamp("03")
     show_mascot("escape", "탈출 성공! 근거를 비교하고 직접 확인했어요.", width=160)
@@ -1726,7 +1784,7 @@ if section == "🚪 시작 안내·입장":
         show_dial_bridge()
         from game_phone import show_phone
         show_phone(game["started"], pressure_messages(), "010-6620-1184", clock_text, pop=not game.pop("phone_quiet", False),
-                   dial=phone_dial_data())
+                   dial=phone_dial_data(), pitch=VOICE_PITCH)
 
 else:
     show_play()
