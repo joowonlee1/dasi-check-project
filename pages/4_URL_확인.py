@@ -441,6 +441,7 @@ with st.form("url_check_form"):
         "확인할 URL",
         placeholder="https://example.com",
         max_chars=2049,
+        key="url_check_input",  # 큐싱 노노그램의 'QR 비춰 보기'에서 읽은 주소를 여기에 넣어 줘요
     )
     submitted = st.form_submit_button("주소 특징 확인", type="primary")
 
