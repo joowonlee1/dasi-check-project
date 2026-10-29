@@ -489,6 +489,52 @@ def explain_error(error):
     return "연결 또는 응답 처리 중 문제가 발생했어요. 다시 시도해 주세요."
 
 
+def transcribe(audio_bytes):
+    """녹음한 목소리를 Gemini로 받아써요. 녹음은 글자로 바꾸는 데만 쓰고 저장하지 않아요."""
+    with new_client() as client:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+                "이 녹음에서 사람이 한 말을 한국어 문장 그대로 받아쓰기만 하세요. 설명·따옴표·덧붙임 없이 말한 내용만 쓰세요. "
+                "말소리가 없으면 빈 줄만 쓰세요.",
+            ],
+            config=types.GenerateContentConfig(max_output_tokens=400, temperature=0),
+        )
+    return (response.text or "").strip()
+
+
+def show_voice_reply(state, turns, offline):
+    """🎙️ 말로 대답하기: 마이크로 녹음하면 글자로 바꿔서 내 답변으로 보내요."""
+    if offline:
+        st.caption("🎙️ 말로 대답하기는 AI 연결이 필요해서 오프라인 대본 모드에서는 쓸 수 없어요.")
+        return
+    audio = st.audio_input("마이크 버튼을 눌러 말하고, 다 말하면 다시 눌러요. 내 말이 글자로 바뀌어 바로 보내져요.", key=f"voice_reply_{turns}")
+    st.caption("🔒 녹음은 글자로 바꾸는 데만 AI(Gemini)로 보내고 저장하지 않아요. 실제 이름·번호는 말하지 마세요.")
+    if audio is None:
+        return
+    data = audio.getvalue()
+    mark = f"{turns}:{len(data)}"
+    if state.get("voice_done") == mark:
+        return
+    state["voice_done"] = mark
+    try:
+        with st.spinner("목소리를 글자로 바꾸는 중…"):
+            text = transcribe(data)
+    except Exception as error:
+        st.error("목소리를 글자로 바꾸지 못했어요. " + explain_error(error))
+        return
+    if not text:
+        st.warning("말소리를 알아듣지 못했어요. 조금 더 크게, 천천히 말해 주세요.")
+    elif looks_like_real_info(text):
+        st.warning("🔒 숫자가 들려서 보내지 않았어요. 실제 번호일 수 있으니, 어떻게 행동할지만 말해 주세요.")
+    else:
+        dd.achieve("voice_talk")
+        state["pending"] = text[:500]
+        state["error"] = None
+        st.rerun()
+
+
 def run_diagnosis():
     results = []
 
@@ -1190,6 +1236,9 @@ else:
         )
 
     else:
+        # 글로 대답하기 / 말로 대답하기를 탭으로 나눠 한 자리에서 골라요(화면이 길어지지 않게).
+        tab_text, tab_voice = st.tabs(["✍️ 글로 대답하기", "🎙️ 말로 대답하기"])
+        tab_text.__enter__()
         with st.form(
             "jamkkan_reply_form_v2",
             clear_on_submit=True,
@@ -1220,6 +1269,10 @@ else:
                 state["pending"] = user_text.strip()
                 state["error"] = None
                 st.rerun()
+
+        tab_text.__exit__(None, None, None)
+        with tab_voice:
+            show_voice_reply(state, turns, offline)
 
     if turns > 0:
         if state["offline_used"]:
