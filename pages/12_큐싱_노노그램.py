@@ -441,6 +441,8 @@ if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2):
     s, stars, hints = int(event["stage"]), int(event.get("stars", 0)), int(event.get("hints", 0))
     dd.record("nono", {f"s{s}_clear": 1, f"s{s}_nohint": 1 if hints == 0 else 0, f"s{s}_star3": 1 if stars == 3 else 0})
     dd.stamp("12")
+    if hints == 0:
+        dd.achieve("nono_nohint")  # 업적: 힌트 없이 복원
 elif event and event.get("type") == "final":
     stars, hints = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("hints", 0)))
     dd.record("nono", {"finals": 1})
@@ -450,6 +452,10 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], -new["hints"]) > (old.get("stars", 0), -old.get("hints", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("nono_hall"))
+
+# 📷 진짜 QR 비춰 보기: 웹캠 사진 속 QR을 읽어 목적지만 보여 줘요(접속하지 않아요).
+from qr_scan_ui import show_qr_scanner
+show_qr_scanner()
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
