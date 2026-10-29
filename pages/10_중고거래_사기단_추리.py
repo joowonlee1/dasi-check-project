@@ -373,8 +373,8 @@ function aiFloat(){
   if (G.done) { remove(); return; }
   if (!D.getElementById('jk-ai-style')) {
     const st = D.createElement('style'); st.id = 'jk-ai-style';
-    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:18px;padding:12px 20px;font:900 19px system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
-#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
+    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 30px;min-height:76px;font:900 25px system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
+#jk-ai-launch{padding-left:112px}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
 #jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:system-ui,sans-serif}
 #jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 #jk-ai-panel .hd{background:#6D28D9;color:#fff;padding:12px 16px;font-weight:900;display:flex;align-items:center;gap:8px}
@@ -387,7 +387,7 @@ function aiFloat(){
 #jk-ai-panel .ft input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:2px solid #C4B5FD;border-radius:12px;outline:none}#jk-ai-panel .ft input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px #DDD6FE}
 #jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px system-ui;cursor:pointer}
 #jk-ai-panel .ft button:disabled{opacity:.5;cursor:default}
-@media(max-width:600px){#jk-ai-launch{right:12px;bottom:92px;font-size:16px}#jk-ai-panel{right:12px;bottom:12px}}`;
+@media(max-width:600px){#jk-ai-launch{right:12px;bottom:92px;font-size:19px;min-height:60px;padding:12px 18px 12px 78px}#jk-ai-launch::before{width:64px;height:72px;left:8px}#jk-ai-panel{right:12px;bottom:12px}}`;
     D.head.appendChild(st);
   }
   if (!P.__jkAiCleanup) {  // 다른 페이지로 가면 버튼과 창을 지워요
@@ -582,7 +582,8 @@ def ask_ai(question, snap):
 
 
 answers = st.session_state.setdefault(AI_KEY, [])
-page = bridge(attach(HTML), "10").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+from game_phone import _btn_img  # AI 탐정 버튼에 붙일 로봇 깡지 그림
+page = bridge(attach(HTML), "10").replace("__AIBTNIMG__", _btn_img("btn_ai.png")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"),
                                       ai={"answers": answers, "left": AI_MAX - len(answers)})
 
@@ -602,6 +603,8 @@ elif event and event.get("type") == "finish":
     dd.record("memo", {"plays": 1, f"star{stars}": 1, "first_pick": 1 if wrong == 0 else 0})
     dd.note_mine("memo", f"별 {stars}/3 · 힌트 {hints}번 · 잘못 지목 {wrong}번")
     dd.stamp("10")
+    if wrong == 0:
+        dd.achieve("memo_clean")  # 업적: 잘못 지목 없이 검거
     st.session_state["memo_hall"] = dd.save_hall(
         "memo", {"stars": stars, "hints": hints, "wrong": wrong},
         lambda old, new: (new["stars"], -new["hints"], -new["wrong"]) > (old.get("stars", 0), -old.get("hints", 10**6), -old.get("wrong", 10**6)),
