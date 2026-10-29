@@ -563,6 +563,7 @@ elif event and event.get("type") == "final":
     stars, blocks = max(0, min(9, int(event.get("stars", 0)))), max(0, int(event.get("blocks", 0)))
     dd.record("filter", {"finals": 1})
     dd.stamp("11")
+    dd.achieve("filter_final")  # 업적: 마지막 시험까지 끝내기
     dd.note_mine("filter", f"별 {stars}/9 · 블록 {blocks}개")
     st.session_state["filter_hall"] = dd.save_hall(
         "filter", {"stars": stars, "blocks": blocks},
