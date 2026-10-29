@@ -5,7 +5,7 @@ from html import escape
 
 import pandas as pd
 import streamlit as st
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import mascot_img, show_key_question, show_mascot
 import dotori_data as dd
 
 GREEN = "#0F766E"
@@ -42,6 +42,24 @@ st.markdown("""<style>
 .sb-val{font-weight:900;text-align:right;color:#0F766E}
 .sb-box{background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:10px 16px;margin:6px 0 4px}
 @media (max-width:640px){.sb-row{grid-template-columns:1fr 54px}.sb-label{grid-column:1/3}}
+.hf-head{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#FEF3C7,#F0FDFA);border:2px solid #FCD34D;border-radius:18px;padding:6px 16px;margin:6px 0 4px}
+.hf-head img{margin:0!important}.hf-head .t{font-weight:900;font-size:1.25rem;color:#78350F}.hf-head .s{font-weight:700;color:#115E59;font-size:.95rem;margin-top:2px}
+.hf-pod{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin:8px 0 10px}
+.hf-card{border-radius:18px;padding:14px 12px 12px;text-align:center;border:2px solid;box-shadow:0 4px 0 rgba(0,0,0,.06)}
+.hf-card .m{font-size:2.3rem;line-height:1}.hf-card .n{font-weight:900;font-size:1.12rem;color:#1F2937;margin-top:6px;word-break:keep-all}
+.hf-card .r{margin-top:6px;display:inline-block;background:#fff;border-radius:999px;padding:3px 10px;font-weight:800;font-size:.86rem;color:#0F766E}
+.hf-1{background:linear-gradient(180deg,#FEF3C7,#FFFBEB);border-color:#FBBF24;padding-top:22px;padding-bottom:20px}
+.hf-2{background:linear-gradient(180deg,#F1F5F9,#FFFFFF);border-color:#CBD5E1}
+.hf-3{background:linear-gradient(180deg,#FFEDD5,#FFF7ED);border-color:#FDBA74}
+.hf-me{outline:3px solid #14B8A6;outline-offset:2px}
+.hf-list{background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:6px 14px;margin:4px 0}
+.hf-row{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #E2E8F0}
+.hf-row:last-child{border-bottom:none}
+.hf-rank{background:#F0FDFA;color:#0F766E;border:1.5px solid #99F6E4;border-radius:999px;text-align:center;font-weight:900;padding:2px 0;font-size:.9rem}
+.hf-name{font-weight:800;color:#1F2937;word-break:keep-all}.hf-rec{font-weight:800;color:#0F766E;text-align:right}
+.hf-row.hf-me{outline:none;background:#F0FDFA;border-radius:10px;padding-left:6px;padding-right:6px}
+.hf-tag{background:#14B8A6;color:#fff;border-radius:999px;padding:1px 8px;font-size:.75rem;margin-left:6px;vertical-align:middle}
+@media (max-width:640px){.hf-pod{grid-template-columns:1fr}.hf-row{grid-template-columns:44px 1fr}.hf-rec{grid-column:2;text-align:left}}
 </style>""", unsafe_allow_html=True)
 
 
@@ -206,16 +224,34 @@ with tab_hall:
     if not entries:
         st.info("아직 명예의 전당에 오른 시민이 없어요. 시민증을 만들고 첫 주인공이 되어 보세요!")
     else:
+        # 1~3위는 메달 시상대 카드로, 4위부터는 순위 배지가 붙은 목록으로 보여 줘요. 내 기록은 청록색으로 표시해요.
         medals = ["🥇", "🥈", "🥉"]
         rows, rank, prev = [], 0, None
         for i, r in enumerate(entries[:20]):
             key = dd.HALL_SORT[hall_game](r)
             if key != prev:
                 rank, prev = i + 1, key
-            name = r.get("nickname", "시민") + ("  ⭐ 나" if me and r["uid"] == me["uid"] else "")
-            rows.append({"순위": medals[rank - 1] if rank <= 3 else f"{rank}위", "닉네임": name, "기록": dd.HALL_TEXT[hall_game](r)})
-        st.dataframe(rows, hide_index=True, width="stretch")
-        st.caption(f"전체 {len(entries)}명 중 상위 20명 · 기록이 같으면 같은 순위예요.")
+            rows.append((rank, escape(str(r.get("nickname", "시민"))), escape(str(dd.HALL_TEXT[hall_game](r))),
+                         bool(me and r["uid"] == me["uid"])))
+        tag = '<span class="hf-tag">나</span>'
+        top = [x for x in rows if x[0] <= 3][:3]
+        cards = {}
+        for j, (rk, name, rec, mine) in enumerate(top):
+            cards[j] = (f'<div class="hf-card hf-{rk}{" hf-me" if mine else ""}"><div class="m">{medals[rk - 1]}</div>'
+                        f'<div class="n">{name}{tag if mine else ""}</div><div class="r">{rec}</div></div>')
+        # 가운데에 1등이 오도록 2등-1등-3등 순서로 놓아요(빈 자리는 비워 둬요).
+        order = [cards.get(1, "<div></div>"), cards.get(0, "<div></div>"), cards.get(2, "<div></div>")]
+        g_icon, g_name = dd.GAMES[hall_game][0], dd.GAMES[hall_game][1]
+        head = (f'<div class="hf-head">{mascot_img("hooray", 84)}<div><div class="t">🏆 {escape(g_icon)} {escape(g_name)} 명예의 전당</div>'
+                f'<div class="s">전체 {len(entries)}명 중 상위 {min(20, len(entries))}명 · 기록이 같으면 같은 순위예요.</div></div></div>')
+        html = head + '<div class="hf-pod">' + "".join(order) + "</div>"
+        rest = rows[len(top):]
+        if rest:
+            html += '<div class="hf-list">' + "".join(
+                f'<div class="hf-row{" hf-me" if mine else ""}"><div class="hf-rank">{rk}위</div>'
+                f'<div class="hf-name">{name}{tag if mine else ""}</div><div class="hf-rec">{rec}</div></div>'
+                for rk, name, rec, mine in rest) + "</div>"
+        st.markdown(html, unsafe_allow_html=True)
     if hall_game == "escape":
         st.caption("방탈출 순위: 탈출 성공 → 많이 푼 잠금 → (같으면 포기보다 시간 초과가 위) → 힌트 적은 순 → 재검토 적은 순 → 빠른 순. 실패한 도전도 기록돼요.")
         # 예전 방탈출 페이지에 있던 '탈출 랭킹' 기록도 지우지 않고 그대로 보여 줘요.
