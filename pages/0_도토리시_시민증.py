@@ -14,6 +14,34 @@ st.title("🪪 도토리시 시민증")
 show_key_question("닉네임 하나로 시민증을 만들면 **명예의 전당**에 내 최고 기록이 올라가요.", "🪪")
 
 
+def show_badges():
+    """🏅 업적 배지판: 받은 배지는 금색, 아직 못 받은 배지는 흐리게 받는 방법과 함께 보여 줘요."""
+    got = dd.badges()
+    total = len(dd.ACHIEVEMENTS)
+    st.subheader(f"🏅 업적 배지 {len(got)} / {total}")
+    cells = []
+    for code, (icon, name, how) in dd.ACHIEVEMENTS.items():
+        on = code in got
+        when = f'<span class="bd-when">{escape(dd.stamp_time(got[code]))}</span>' if on else ""
+        cells.append(f'<div class="bd{" on" if on else ""}"><div class="bd-i">{icon if on else "🔒"}</div>'
+                     f'<b>{escape(name)}</b><small>{escape(how)}</small>{when}</div>')
+    st.markdown(
+        "<style>.bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:4px 0 8px}"
+        ".bd{background:#F8FAFC;border:2px dashed #CBD5E1;border-radius:16px;padding:12px 10px;text-align:center;color:#64748B}"
+        ".bd b{display:block;color:#475569;margin-top:6px;word-break:keep-all}.bd small{display:block;font-size:.8rem;line-height:1.4;margin-top:3px;word-break:keep-all}"
+        ".bd-i{width:54px;height:54px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#E2E8F0;filter:grayscale(1)}"
+        ".bd.on{background:linear-gradient(180deg,#1F2937,#111827);border:3px solid #F6D55C;color:#CBD5E1}.bd.on b{color:#fff}"
+        ".bd.on .bd-i{background:radial-gradient(circle,#FFF7D1,#F6D55C);filter:none;box-shadow:0 0 0 4px #F6D55C44}"
+        ".bd-when{display:inline-block;margin-top:6px;background:#F6D55C;color:#173F35;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:800}</style>"
+        '<div class="bd-grid">' + "".join(cells) + "</div>",
+        unsafe_allow_html=True,
+    )
+    if dd.citizen() and st.session_state.get(dd.PENDING_BADGES):
+        st.caption("⚠️ 새로 받은 배지 일부를 계정에 아직 저장하지 못했어요. 이번 창에서는 그대로 보여요.")
+    elif not dd.citizen():
+        st.caption("배지도 시민증이 없으면 이번 창에만 남아요. 시민증을 만들면 함께 저장돼요.")
+
+
 def show_stamps():
     """시민증 도장판: 도토리시 곳곳에서 받은 도장(시민증이 있으면 저장돼요)."""
     got = dd.stamps()
@@ -82,6 +110,7 @@ if st.session_state.get("admin_open"):
     from admin_progress import status
     card()
     show_stamps()
+    show_badges()
     status("citizen")
     tools_button("citizen")
     st.stop()
@@ -109,6 +138,7 @@ if account:
     )
 
     show_stamps()
+    show_badges()
 
     st.subheader("🏆 명예의 전당 속 내 순위")
     rows = []
@@ -146,6 +176,7 @@ else:
     )
 
     show_stamps()
+    show_badges()
 
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
 
