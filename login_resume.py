@@ -69,7 +69,7 @@ def restore(token):
             return False
         admin=p.get("admin")
         admin_ok=bool(admin and hmac.compare_digest(admin,_admin_version()))
-        account=None;shown=None;saved={}
+        account=None;shown=None;saved={};badges={}
         if p.get("citizen"):
             c=p["citizen"]
             account={"uid":c["uid"],"refresh":c["refresh"],"token":"","expires":0}
@@ -86,6 +86,7 @@ def restore(token):
             if f.get("uid",{}).get("stringValue")!=c["uid"]:return False
             shown=f.get("nickname",{}).get("stringValue",c["canonical"])
             saved={k:dd._value(v) for k,v in f.get("stamps",{}).get("mapValue",{}).get("fields",{}).items() if k in dd.STAMP_PLACES}
+            badges={k:dd._value(v) for k,v in f.get("badges",{}).get("mapValue",{}).get("fields",{}).items() if k in dd.ACHIEVEMENTS}  # 업적 배지도 함께 되찾아요
             account.update(nickname=shown,canonical=c["canonical"])
         if not account and not admin_ok:return False
         if account:
@@ -93,6 +94,8 @@ def restore(token):
             st.session_state[dd.ANON]=account
             st.session_state[dd.STAMPS]=saved
             st.session_state[dd.PENDING_STAMPS]={}
+            st.session_state[dd.BADGES]=badges
+            st.session_state[dd.PENDING_BADGES]={}
         if admin_ok:st.session_state["admin_open"]=True
         st.session_state[PREFIX+"expires"]=p["exp"]
         return True
