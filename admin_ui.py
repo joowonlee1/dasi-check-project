@@ -6,35 +6,46 @@ import base64
 def manager_photo():
     return base64.b64encode((Path(__file__).resolve().parent/'assets'/'ggangji_manager.png').read_bytes()).decode('ascii')
 
+def _asset(name):
+    return base64.b64encode((Path(__file__).resolve().parent/'assets'/name).read_bytes()).decode('ascii')
+
 def card(compact=False):
     if not st.session_state.get("admin_open"):
         return
     if compact:
         st.markdown("<style>[data-testid=stSidebarNav]{margin-top:200px!important;}</style>",unsafe_allow_html=True)
+    # 관리자증 증명사진: 경례하는 깡지(금색 액자·별 포함) 사진. 사진이 없으면 예전 사진, 그것도 없으면 이모지로 대신해요.
+    h = 70 if compact else 124
     try:
-        photo=f'<img src="data:image/png;base64,{manager_photo()}" alt="관리자 깡지" style="width:{52 if compact else 116}px;height:{52 if compact else 116}px;object-fit:contain;flex-shrink:0;border:3px solid #efd68b;border-radius:8px;">'
+        photo = f'<img src="data:image/png;base64,{_asset("admin_photo.png")}" alt="경례하는 관리자 깡지" style="height:{h}px;width:auto;flex-shrink:0;display:block">'
     except Exception:
-        photo='<span style="font-size:40px">🐿️</span>'
-    # 사이드바(작은 카드)는 사진을 키우고 글자를 두 줄로 줄여 빈 곳 없이, 큰 카드는 원래 배치 그대로예요.
-    if compact:
-        head = ('<div style="display:flex;align-items:center;gap:10px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:8px 10px;box-sizing:border-box;">'
-                + photo.replace("width:52px;height:52px", "width:60px;height:60px") +
-                '<div style="min-width:0;flex:1;line-height:1.3">'
-                '<div style="color:#f4d784;font-weight:800;font-size:.78rem;white-space:nowrap">★ 도토리시 관리자증</div>'
-                '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px">'
-                '<strong style="font-size:1.15rem;color:#fff">관리자</strong>'
-                '<span style="font-size:.74rem;font-weight:800;background:#d8b85d;color:#173f35;border-radius:999px;padding:2px 8px;white-space:nowrap">🔑 인증 완료</span></div></div></div>')
-    else:
-        head = ('<div style="display:flex;align-items:center;gap:12px;background:#173f35;color:#fff7db;border:2px solid #d8b85d;border-radius:16px;padding:12px;box-sizing:border-box;">'
-                +photo+'<div style="min-width:0;line-height:1.4;word-break:keep-all;overflow-wrap:normal;font-size:.85rem"><div style="color:#f4d784;font-weight:800">★ 도토리시<br>관리자증</div>'
-                '<strong style="font-size:1.2rem;color:#fff">관리자</strong><div style="font-size:.8rem;color:#fff7db">🔑 인증 완료</div></div></div>')
-    st.markdown(
-        head
-        # 안내 문구를 카드와 같은 덩어리 안에 넣어서, 아래 글씨가 카드와 겹치지 않게 해요.
-        +('' if compact else '<div style="margin:10px 0 6px;padding:10px 14px;background:#F0FDF4;border:2px solid #86EFAC;border-radius:12px;'
-          'color:#14532D;font-size:1.02rem;font-weight:700;line-height:1.6;word-break:keep-all">'
-          '🌱 관리자 모드에서는 게임을 <b>연습 모드로만</b> 할 수 있어요. 명예의 전당 기록은 <b>시민증 닉네임</b>으로만 남아요.</div>'),
-        unsafe_allow_html=True)
+        try:
+            photo = f'<img src="data:image/png;base64,{manager_photo()}" alt="관리자 깡지" style="width:{h}px;height:{h}px;object-fit:contain;flex-shrink:0;border:3px solid #efd68b;border-radius:8px;">'
+        except Exception:
+            photo = '<span style="font-size:40px">🐿️</span>'
+    # 큰 카드 오른쪽 빈 곳은 종이비행기·별·방패 무늬로 채워요(왼쪽 끝은 흐리게 섞여요).
+    deco = ""
+    if not compact:
+        try:
+            deco = (f'<img src="data:image/jpeg;base64,{_asset("admin_card_deco.jpg")}" alt="" aria-hidden="true" '
+                    'style="position:absolute;right:0;top:0;height:100%;width:auto;pointer-events:none;'
+                    '-webkit-mask-image:linear-gradient(to right,transparent,#000 22%);mask-image:linear-gradient(to right,transparent,#000 22%)">')
+        except Exception:
+            deco = ""
+    gap, pad, t1, t2, t3 = (10, "6px 10px", ".9rem", "1.45rem", ".82rem") if compact else (20, "8px 14px", "1.2rem", "2.3rem", "1.02rem")
+    head = (f'<div style="position:relative;overflow:hidden;display:flex;width:100%;align-items:center;gap:{gap}px;background:#164539;color:#fff7db;'
+            f'border:{3 if compact else 4}px solid #f2cd5c;border-radius:{18 if compact else 26}px;padding:{pad};box-sizing:border-box;'
+            'box-shadow:0 4px 0 #f8e7a6,0 6px 16px rgba(22,69,57,.18)">'
+            + deco + photo +
+            '<div style="position:relative;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;line-height:1.25;white-space:nowrap">'
+            f'<div style="color:#f6d55c;font-weight:900;font-size:{t1}">★ 도토리시 관리자증</div>'
+            f'<strong style="font-size:{t2};font-weight:900;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.18)">관리자</strong>'
+            f'<span style="font-size:{t3};font-weight:900;background:linear-gradient(180deg,#fff3b0,#f6d55c);color:#173f35;border-radius:999px;padding:{"2px 10px" if compact else "4px 16px"};box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)">🛡️ 인증 완료</span>'
+            '</div></div>')
+    note = ('' if compact else '<div style="margin:10px 0 6px;padding:10px 14px;background:#F0FDF4;border:2px solid #86EFAC;border-radius:12px;'
+            'color:#14532D;font-size:1.02rem;font-weight:700;line-height:1.6;word-break:keep-all">'
+            '🌱 관리자 모드에서는 게임을 <b>연습 모드로만</b> 할 수 있어요. 명예의 전당 기록은 <b>시민증 닉네임</b>으로만 남아요.</div>')
+    st.markdown(head + note, unsafe_allow_html=True)
 
 def tools_button(prefix):
     if not st.session_state.get("admin_open"):
