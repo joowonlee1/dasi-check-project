@@ -254,17 +254,6 @@ with tab_hall:
         st.markdown(html, unsafe_allow_html=True)
     if hall_game == "escape":
         st.caption("방탈출 순위: 탈출 성공 → 많이 푼 잠금 → (같으면 포기보다 시간 초과가 위) → 힌트 적은 순 → 재검토 적은 순 → 빠른 순. 실패한 도전도 기록돼요.")
-        # 예전 방탈출 페이지에 있던 '탈출 랭킹' 기록도 지우지 않고 그대로 보여 줘요.
-        with st.expander("📜 예전 방탈출 탈출 랭킹 기록 보기"):
-            try:
-                from firebase_support import config as fb_config, rankings as old_rankings
-                old = old_rankings(fb_config()[1])
-                if old:
-                    st.dataframe(old, hide_index=True, width="stretch")
-                else:
-                    st.caption("예전 기록이 없어요.")
-            except Exception:
-                st.caption("예전 기록을 불러오지 못했어요.")
     st.caption("🧭 대처유형 테스트는 점수를 겨루는 게임이 아니라서 명예의 전당이 없어요. 결과 분포는 ‘게임별 통계’에서 볼 수 있어요.")
     if not me:
         st.page_link("pages/0_도토리시_시민증.py", label="시민증(닉네임)을 만들면 명예의 전당에 올라갈 수 있어요", icon="🪪")
