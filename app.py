@@ -18,6 +18,10 @@ st.set_page_config(
 )
 
 
+from login_resume import bootstrap as restore_login
+restore_login()
+
+
 # ─────────────────────────────────────
 # 전체 페이지 공통 디자인
 # ─────────────────────────────────────
