@@ -772,6 +772,32 @@ def phone_html(step):
     )
 
 
+# 통화 목소리 연출: 수사관이 말하는 연락이면 '전화 받아서 듣기' 버튼이 생겨요(교육용 가상 대사).
+# 이 말이 나오면 경고를 띄워요. 왜 수상한지는 플레이어가 직접 판단하도록 이유는 적지 않아요.
+VOICE_WARN = ("가족에게도 알리시면 안", "체포영장", "안전계좌", "등록금’이라고 하세요", "10분 안에")
+
+
+def show_voice_call(event, step):
+    said = []
+    if event["kind"] == "call":
+        said += event["lines"]
+    said += event.get("call_lines", [])
+    said += [t for t in event["lines"] if event["kind"] != "call" and t.startswith("(수사관)")]
+    if not said:
+        return
+    from voice_ui import call_button
+    lines = []
+    for text in said:
+        text = text.replace("(수사관)", "").strip()
+        warn = "⚠️ 방금 그 말, 수상하지 않나요?" if any(w in text for w in VOICE_WARN) else ""
+        lines.append(["수사관", text, warn])
+    number, _, shown = event["sender"].partition(" (")
+    call_button({"name": shown.rstrip(")") or number, "number": number if shown else "", "avatar": "🕴️", "danger": True,
+                 "lines": lines, "pitch": {"수사관": [0.75, 1.05]}, "status": "통화 중",
+                 "verdict": "📵 통화가 끝났어요. 할머니께 어떻게 말할지 골라 보세요."},
+                "할머니 폰에 걸려 온 전화 받아서 듣기", key=f"gp_call_{step}")
+
+
 def show_gauges(game):
     stage = scam_stage(game["step"])
     st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
@@ -911,6 +937,7 @@ def show_play(game):
     phone_col, side_col = st.columns([1.1, 1])
     with phone_col:
         st.markdown(phone_html(step), unsafe_allow_html=True)
+        show_voice_call(event, step)
     with side_col:
         log = game["log"]
         prev = log[-1]["reaction"] if log else None
@@ -1025,6 +1052,8 @@ def show_ending(game):
         dd.record("grandma", {"plays": 1, f"end_{ending}": 1})
         dd.note_mine("grandma", f"결말: {title}")
         dd.stamp("01")
+        if ending == "best":
+            dd.achieve("grandma_best")  # 업적: 최고 결말
         scroll_top()
         drumroll((("🥁", "두구두구…"), ("📱", "할머니 휴대전화를 확인하는 중…"), ("👵", "그날 오전의 결말은?")))
     stamp = {
