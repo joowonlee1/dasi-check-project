@@ -14,6 +14,11 @@ from river_component_ui import create_river_component
 
 with intro("06", suffix=""):
     st.title("🌐 가짜뉴스 확산 막기")
+    from mascot_ui import show_scene
+    import scene_ui
+    SCENE_SLOT = st.empty() if scene_ui.ready("scene_plaza") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
+    if SCENE_SLOT is None:
+        show_scene("scene_plaza", "")
     show_key_question("가짜 소식은 **사람과 사람 사이를 타고** 번져요. 카드 몇 장으로 **누구를 먼저 지킬지** 골라 보세요.", "🌐")
 
 # 단계: 수법, 마을 크기, 카드 수, 퍼지는 간격(ms), 처음 올린 계정 수, 가짜 소식, 진실, 수법 공개, 정정 문구 퀴즈
@@ -617,6 +622,13 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], new["avg"]) > (old.get("stars", 0), old.get("avg", 0)),
     )
 dd.show_hall_note(st.session_state.get("fakenews_hall"))
+if SCENE_SLOT is not None:
+    if event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
+        best = st.session_state.setdefault("fakenews_scene_stars", {})
+        best[int(event["stage"])] = max(best.get(int(event["stage"]), 0), int(event.get("stars", 1)))
+        st.session_state["fakenews_scene_pct"] = max(0, min(100, int(event.get("pct", 0))))
+    SCENE_SLOT.markdown(scene_ui.plaza(st.session_state.get("fakenews_scene_pct"), sum(st.session_state.get("fakenews_scene_stars", {}).values())),
+                        unsafe_allow_html=True)
 
 with st.expander("🧠 이 게임 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
