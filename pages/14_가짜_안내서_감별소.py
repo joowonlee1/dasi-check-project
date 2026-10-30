@@ -36,7 +36,7 @@ VERDICTS = ["안내 내용 정상 확인","안내 내용 위조 확인","판단 
 def fresh():
     return {"i":0,"checks":{},"answers":{},"recorded":False,"done":False,"attempts":{}}
 S=st.session_state.setdefault(KEY,fresh())
-with intro("14", suffix=""):
+if not S.get("entered", False):
     st.title("📬 가짜 안내서 감별소")
     from mascot_ui import show_scene
     import scene_ui
@@ -81,6 +81,11 @@ with intro("14", suffix=""):
 <div style="margin-top:8px;font-size:.95rem;color:#374151">🚪 101호 → 102호 → 103호, 안내서 3장을 차례로 감별해요. <b>처음 제출에서 맞힌 개수</b>가 점수예요. 필요한 기록을 다 모은 뒤에 제출하세요.</div>
 </div>""", unsafe_allow_html=True)
 
+
+    if st.button("🚪 아파트 관리사무소 들어가기 · 이어하기", type="primary", width="stretch"):
+        S["entered"] = True
+        st.rerun()
+    st.stop()
 
 # ───────── 그림으로 보여 주기(판정 로직은 그대로) ─────────
 from html import escape as _esc
@@ -322,143 +327,150 @@ def stamp_popup(i):
         st.rerun()
 
 def _back_notice():
-    # 바로 전 화면으로: 2·3번 안내서에서는 앞 안내서로, 1번 안내서에서는 처음 화면으로 돌아가요.
-    if S["i"]>0:
-        S["i"]-=1
-    else:
-        st.session_state[KEY]=fresh()
+    S["entered"] = False
 
 if not S["done"]:
     i=S["i"]; case=CASES[i]
     # 감별 중에도 바로 전 화면으로 돌아갈 수 있어요.
     st.button("← 이전 화면으로", on_click=_back_notice, key="nv_quit",
-              help="앞 안내서로 돌아가요. 1번 안내서에서는 처음 화면으로 돌아가요.")
+              help="시작 안내로 돌아가요. 조사 기록과 제출한 답은 유지돼요.")
     st.markdown(NV_CSS, unsafe_allow_html=True)
     door_strip(i)
     st.markdown(f'<div style="font-size:1.3rem;font-weight:900;margin:14px 0 8px">{i+1}/3 · 다람쥐아파트 {case["door"]} 문 앞</div>', unsafe_allow_html=True)
-    # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
-    _checked=S["checks"].get(i,{})
-    if i in S["answers"]:
-        _say=("hooray","도장 쾅! 위 복도에서 다음 문을 눌러 가 보자!")
-    elif not _checked:
-        _say=("letter","이 안내서, 진짜일까? 아래 🧰 도구로 하나씩 확인해 보자!")
-    else:
-        _say=("think",f"기록 {len(_checked)}개 모음! 필요한 걸 다 모았으면 도장을 찍어 봐.")
-    door_scene(i, case["answer"] if i in S["answers"] else None, clues=True, say=_say)
-
     checked=S["checks"].setdefault(i,{})
     flash=S.setdefault("flash",{})
-    st.markdown('<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">🧰 조사 도구함 · 도구를 골라 사실을 확인하세요</div>', unsafe_allow_html=True)
-    st.markdown('<style>[class*="st-key-nv_tool_"] button{min-height:64px!important;border-radius:14px!important;text-align:left!important;justify-content:flex-start!important}'
-                '[class*="st-key-nv_tool_"] button p{font-size:1rem!important;font-weight:800!important;line-height:1.45!important}'
-                '.nv-group{font-weight:900;border-radius:10px;padding:6px 12px;margin:6px 0 6px}</style>', unsafe_allow_html=True)
-
-    def use_tool(kind, q):
-        # 판정에 쓰는 기록(checked)은 원래와 똑같은 규칙으로 쌓여요.
-        if kind=="trap":
-            flash[i]="⚠️ 안내서에 적힌 QR·번호로는 안내서 자체를 검증할 수 없어요. 안내서를 만든 사람에게 묻는 셈이니까요. 내가 직접 찾은 공식 경로로 같은 질문을 확인하세요."
-            S["popup"]=(i,"trap",q)
-        elif q=="procedure" and "delivery" not in checked:
-            flash[i]="📦 먼저 공식 조회에서 등기번호·주소·방문 시각을 확인해야, 그 우편물의 절차를 고객센터에 물을 수 있어요."
-            S["popup"]=(i,"blocked",q)
+    investigate_tab, judge_tab = st.tabs([f"① 📄 {case['door']} 조사·확인 기록", f"② 🔏 {case['door']} 판단하기"])
+    with investigate_tab:
+        # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
+        _checked=S["checks"].get(i,{})
+        if i in S["answers"]:
+            _say=("hooray","도장 쾅! 위 복도에서 다음 문을 눌러 가 보자!")
+        elif not _checked:
+            _say=("letter","이 안내서, 진짜일까? 아래 🧰 도구로 하나씩 확인해 보자!")
         else:
-            S["popup"]=(i,kind,q)
-            checked[q]=INQUIRY["responses"][i][q]
-            flash.pop(i,None)
-            if kind=="official":
-                queue_effect("clue")
-
-    tools=[
-        ("📮 안내서에 적힌 방법", "#FEF2F2", "#B91C1C", [
-            ("trap","delivery","📷 안내서 QR로 등기 조회하기"),
-            ("plain","printed","☎️ 안내서에 적힌 번호로 문의하기")]),
-        ("🏛️ 내가 직접 찾은 공식 경로", "#F0FDF4", "#166534", [
-            ("official","delivery","📦 공식 조회에서 등기번호·주소·방문 시각 찾기"),
-            ("official","procedure","📞 공식 고객센터에 안내서의 요구가 맞는지 묻기"),
-            ("official","status","🕒 조회가 끝까지 됐는지·최신 기록인지 보기")]),
-        ("🔍 눈으로 살피기", "#F8FAFC", "#334155", [
-            ("plain","surface","🔍 돋보기로 종이·접착 흔적 살피기")]),
-    ]
-    for gname, gbg, gfg, items in tools:
-        st.markdown(f'<div class="nv-group" style="background:{gbg};color:{gfg}">{gname}</div>', unsafe_allow_html=True)
-        cols=st.columns(len(items))
-        for col,(kind,q,label) in zip(cols,items):
-            done = q in checked and kind!="trap"
-            with col.container(key=f"nv_tool_{i}_{kind}_{q}"):
-                st.button(("✓ " if done else "")+label, key=f"nv_toolbtn_{i}_{kind}_{q}", width="stretch",
-                          disabled=done or i in S["answers"], on_click=use_tool, args=(kind,q))
-    if flash.get(i):
-        st.warning(flash[i])
-    if S.get("popup") and S["popup"][0]==i:
-        _pi,_pk,_pq=S.pop("popup")
-        tool_popup(_pi,_pk,_pq)
-    st.markdown(f'<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">📁 확인 기록 보관함 · {len(checked)}개</div>', unsafe_allow_html=True)
-    if checked:
-        for q,text in checked.items():
-            record_card(q, text)
-    else:
-        st.caption("아직 모은 기록이 없어요. 위의 도구를 눌러 확인해 보세요.")
-    st.markdown('<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">🔏 판정 도장 찍기</div>', unsafe_allow_html=True)
-    st.markdown("""<style>
-.st-key-nv_judge [data-testid=stForm]{background:linear-gradient(180deg,#FFFBEF,#F3FAF6);border:2.5px solid #F1C96B;border-radius:22px;padding:14px 16px 16px}
-.st-key-nv_judge [data-testid=stRadio],.st-key-nv_judge [data-testid=stButtonGroup],.st-key-nv_judge .nv-empty{width:100%!important;box-sizing:border-box;background:#fff;border-radius:16px;padding:10px 14px 12px;box-shadow:0 2px 0 #E8E2CF;margin-bottom:4px}
-.st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stRadio]),.st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stButtonGroup]),.st-key-nv_judge [data-testid=stRadio] [role=radiogroup]{width:100%!important}
-.st-key-nv_judge [data-testid=stWidgetLabel] p{font-size:1.1rem!important;font-weight:900!important;color:#20483F}
-.st-key-nv_judge [role=radiogroup]{gap:6px!important;align-items:stretch!important}
-.st-key-nv_judge [role=radiogroup] > label{max-width:none!important;flex:1 1 auto}
-.st-key-nv_judge [role=radiogroup] label{border:2px solid #E2E8F0;border-radius:12px;padding:8px 12px;background:#FAFBFC;font-weight:700;transition:.12s;width:100%}
-.st-key-nv_judge [role=radiogroup] label:hover{border-color:#3BA99C;background:#F0FBF8}
-.st-key-nv_judge [role=radiogroup] label:has(input:checked){border-color:#16A34A;background:#ECFDF3;box-shadow:0 0 0 3px #BBF7D0}
-.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:nowrap}
-.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label{flex:1;justify-content:center;font-size:1.05rem;font-weight:900;padding:12px 8px}
-.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(2):has(input:checked){border-color:#DC2626;background:#FEE2E2;box-shadow:0 0 0 3px #FECACA}
-.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(3):has(input:checked){border-color:#D97706;background:#FEF3C7;box-shadow:0 0 0 3px #FDE68A}
-.st-key-nv_judge [data-testid=stButtonGroup] button{font-weight:800;border-radius:999px;border:2px solid #CFE3DA;padding:6px 14px}
-.st-key-nv_judge [data-testid=stFormSubmitButton] button{min-height:54px;border-radius:16px;font-size:1.15rem;font-weight:900;box-shadow:0 4px 0 #14532D}
-@media (max-width:640px){.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:wrap}}
-</style>""", unsafe_allow_html=True)
-    st.markdown(kkangji_say("think", "①→④ 차례로 골라 봐! 헷갈리면 위 기록 보관함을 다시 보자.", 110), unsafe_allow_html=True)
-    with st.container(key="nv_judge"), st.form(f"nv_answer_{i}"):
-        verdict=st.radio("① 지금 모은 근거로 보면, 이 안내서는?",VERDICTS,index=None,horizontal=True,
-                         help="확인한 내용만으로 결론을 내기 어렵다면 ‘판단 보류’도 좋은 답이에요.")
-        reason=st.radio("② 그렇게 판단한 이유는?",case["options"],index=None)
-        if checked:
-            evidence=st.pills("③ 내 판단의 증거가 되는 확인 기록을 모두 눌러 줘 (여러 개 가능)",list(checked),
-                              selection_mode="multi",format_func=lambda q: "📁 "+INQUIRY["questions"].get(q,q))
-        else:
-            evidence=[]
-            st.markdown('<div class="nv-empty"><div style="font-weight:900;color:#20483F;font-size:1.1rem">③ 내 판단의 증거가 되는 확인 기록</div>'
-                        '<div style="background:#FEF3C7;border-radius:10px;padding:8px 12px;font-weight:700;color:#92400E">'
-                        '📭 아직 모은 기록이 없어요. 위의 확인 도구를 먼저 눌러 기록을 모아 오세요.</div></div>', unsafe_allow_html=True)
-        action=st.radio("④ 그럼 이제 어떻게 할까?",INQUIRY["actions"],index=None)
-        submitted=st.form_submit_button("🔏 근거를 연결해 판정 도장 찍기",type="primary",disabled=i in S["answers"],width="stretch")
-    if submitted:
-        if verdict is None or reason is None or action is None or not evidence:
-            st.warning("①~④를 모두 골라 주세요. ③은 위 기록 보관함에 모은 기록 중에서 증거가 되는 것을 눌러요.")
-        else:
-            S["attempts"][i]=S["attempts"].get(i,0)+1
-            needed=set(INQUIRY["required"][i])
-            ok=(verdict==case["answer"] and reason==case["reason"] and set(evidence)==needed and needed.issubset(checked) and action==INQUIRY["actions"][i])
-            if ok:
-                S["answers"][i]={"ok":True,"first":S["attempts"][i]==1}
-                S["stamp_pop"]=i
-                queue_effect("correct")
-                st.rerun()
+            _say=("think",f"기록 {len(_checked)}개 모음! 필요한 걸 다 모았으면 도장을 찍어 봐.")
+        door_scene(i, case["answer"] if i in S["answers"] else None, clues=True, say=_say)
+    
+        st.markdown('<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">🧰 조사 도구함 · 도구를 골라 사실을 확인하세요</div>', unsafe_allow_html=True)
+        st.markdown('<style>[class*="st-key-nv_tool_"] button{min-height:64px!important;border-radius:14px!important;text-align:left!important;justify-content:flex-start!important}'
+                    '[class*="st-key-nv_tool_"] button p{font-size:1rem!important;font-weight:800!important;line-height:1.45!important}'
+                    '.nv-group{font-weight:900;border-radius:10px;padding:6px 12px;margin:6px 0 6px}</style>', unsafe_allow_html=True)
+    
+        def use_tool(kind, q):
+            # 판정에 쓰는 기록(checked)은 원래와 똑같은 규칙으로 쌓여요.
+            if kind=="trap":
+                flash[i]="⚠️ 안내서에 적힌 QR·번호로는 안내서 자체를 검증할 수 없어요. 안내서를 만든 사람에게 묻는 셈이니까요. 내가 직접 찾은 공식 경로로 같은 질문을 확인하세요."
+                S["popup"]=(i,"trap",q)
+            elif q=="procedure" and "delivery" not in checked:
+                flash[i]="📦 먼저 공식 조회에서 등기번호·주소·방문 시각을 확인해야, 그 우편물의 절차를 고객센터에 물을 수 있어요."
+                S["popup"]=(i,"blocked",q)
             else:
-                queue_effect("notice")
-                st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 아직 기록과 결론이 딱 맞게 이어지지 않았어. 👉 번호·주소·시각이 같은지, 조회가 끝까지 됐는지, 추가 요구까지 확인했는지 기록 보관함을 다시 봐!",120), unsafe_allow_html=True)
-    if S.get("stamp_pop")==i and not S.get("popup"):
-        S.pop("stamp_pop")
-        stamp_popup(i)
-    if i in S["answers"]:
-        label, color = STAMP[case["answer"]]
-        st.markdown(f'<div style="border:3px solid {color};border-radius:16px;padding:14px 18px;background:#fff;line-height:1.7">'
-                    f'<b style="color:{color};font-size:1.25rem">🔏 {label} 도장 쾅!</b><br>{_esc(case["lesson"])}<br>'
-                    f'<span style="color:#52616B">판단 근거: {_esc(case["reason"])}</span></div>', unsafe_allow_html=True)
-        if st.button("다음 안내서" if i<2 else "결과 보기",type="primary"):
-            if i<2:S["i"]+=1
-            else:S["done"]=True
-            st.rerun()
+                S["popup"]=(i,kind,q)
+                checked[q]=INQUIRY["responses"][i][q]
+                flash.pop(i,None)
+                if kind=="official":
+                    queue_effect("clue")
+    
+        tools=[
+            ("📮 안내서에 적힌 방법", "#FEF2F2", "#B91C1C", [
+                ("trap","delivery","📷 안내서 QR로 등기 조회하기"),
+                ("plain","printed","☎️ 안내서에 적힌 번호로 문의하기")]),
+            ("🏛️ 내가 직접 찾은 공식 경로", "#F0FDF4", "#166534", [
+                ("official","delivery","📦 공식 조회에서 등기번호·주소·방문 시각 찾기"),
+                ("official","procedure","📞 공식 고객센터에 안내서의 요구가 맞는지 묻기"),
+                ("official","status","🕒 조회가 끝까지 됐는지·최신 기록인지 보기")]),
+            ("🔍 눈으로 살피기", "#F8FAFC", "#334155", [
+                ("plain","surface","🔍 돋보기로 종이·접착 흔적 살피기")]),
+        ]
+        for gname, gbg, gfg, items in tools:
+            st.markdown(f'<div class="nv-group" style="background:{gbg};color:{gfg}">{gname}</div>', unsafe_allow_html=True)
+            cols=st.columns(len(items))
+            for col,(kind,q,label) in zip(cols,items):
+                done = q in checked and kind!="trap"
+                with col.container(key=f"nv_tool_{i}_{kind}_{q}"):
+                    st.button(("✓ " if done else "")+label, key=f"nv_toolbtn_{i}_{kind}_{q}", width="stretch",
+                              disabled=done or i in S["answers"], on_click=use_tool, args=(kind,q))
+        if flash.get(i):
+            st.warning(flash[i])
+        if S.get("popup") and S["popup"][0]==i:
+            _pi,_pk,_pq=S.pop("popup")
+            tool_popup(_pi,_pk,_pq)
+        st.markdown(f'<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">📁 확인 기록 보관함 · {len(checked)}개</div>', unsafe_allow_html=True)
+        if checked:
+            for q,text in checked.items():
+                record_card(q, text)
+        else:
+            st.caption("아직 모은 기록이 없어요. 위의 도구를 눌러 확인해 보세요.")
+    with judge_tab:
+        with st.expander("📄 안내서 다시 보기"):
+            door_scene(i, clues=True)
+        with st.expander("📁 확인 기록 다시 보기", expanded=True):
+            for q,text in checked.items():
+                record_card(q,text)
+            if not checked:
+                st.info("① 안내서 조사에서 도구를 눌러 기록을 먼저 모아 주세요.")
+        st.markdown('<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">🔏 판정 도장 찍기</div>', unsafe_allow_html=True)
+        st.markdown("""<style>
+    .st-key-nv_judge [data-testid=stForm]{background:linear-gradient(180deg,#FFFBEF,#F3FAF6);border:2.5px solid #F1C96B;border-radius:22px;padding:14px 16px 16px}
+    .st-key-nv_judge [data-testid=stRadio],.st-key-nv_judge [data-testid=stButtonGroup],.st-key-nv_judge .nv-empty{width:100%!important;box-sizing:border-box;background:#fff;border-radius:16px;padding:10px 14px 12px;box-shadow:0 2px 0 #E8E2CF;margin-bottom:4px}
+    .st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stRadio]),.st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stButtonGroup]),.st-key-nv_judge [data-testid=stRadio] [role=radiogroup]{width:100%!important}
+    .st-key-nv_judge [data-testid=stWidgetLabel] p{font-size:1.1rem!important;font-weight:900!important;color:#20483F}
+    .st-key-nv_judge [role=radiogroup]{gap:6px!important;align-items:stretch!important}
+    .st-key-nv_judge [role=radiogroup] > label{max-width:none!important;flex:1 1 auto}
+    .st-key-nv_judge [role=radiogroup] label{border:2px solid #E2E8F0;border-radius:12px;padding:8px 12px;background:#FAFBFC;font-weight:700;transition:.12s;width:100%}
+    .st-key-nv_judge [role=radiogroup] label:hover{border-color:#3BA99C;background:#F0FBF8}
+    .st-key-nv_judge [role=radiogroup] label:has(input:checked){border-color:#16A34A;background:#ECFDF3;box-shadow:0 0 0 3px #BBF7D0}
+    .st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:nowrap}
+    .st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label{flex:1;justify-content:center;font-size:1.05rem;font-weight:900;padding:12px 8px}
+    .st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(2):has(input:checked){border-color:#DC2626;background:#FEE2E2;box-shadow:0 0 0 3px #FECACA}
+    .st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(3):has(input:checked){border-color:#D97706;background:#FEF3C7;box-shadow:0 0 0 3px #FDE68A}
+    .st-key-nv_judge [data-testid=stButtonGroup] button{font-weight:800;border-radius:999px;border:2px solid #CFE3DA;padding:6px 14px}
+    .st-key-nv_judge [data-testid=stFormSubmitButton] button{min-height:54px;border-radius:16px;font-size:1.15rem;font-weight:900;box-shadow:0 4px 0 #14532D}
+    @media (max-width:640px){.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:wrap}}
+    </style>""", unsafe_allow_html=True)
+        st.markdown(kkangji_say("think", "①→④ 차례로 골라 봐! 헷갈리면 바로 위 ‘안내서 다시 보기’와 ‘확인 기록 다시 보기’를 열어 보자.", 110), unsafe_allow_html=True)
+        with st.container(key="nv_judge"), st.form(f"nv_answer_{i}"):
+            verdict=st.radio("① 지금 모은 근거로 보면, 이 안내서는?",VERDICTS,index=None,horizontal=True,
+                             help="확인한 내용만으로 결론을 내기 어렵다면 ‘판단 보류’도 좋은 답이에요.")
+            reason=st.radio("② 그렇게 판단한 이유는?",case["options"],index=None)
+            if checked:
+                evidence=st.pills("③ 내 판단의 증거가 되는 확인 기록을 모두 눌러 줘 (여러 개 가능)",list(checked),
+                                  selection_mode="multi",format_func=lambda q: "📁 "+INQUIRY["questions"].get(q,q))
+            else:
+                evidence=[]
+                st.markdown('<div class="nv-empty"><div style="font-weight:900;color:#20483F;font-size:1.1rem">③ 내 판단의 증거가 되는 확인 기록</div>'
+                            '<div style="background:#FEF3C7;border-radius:10px;padding:8px 12px;font-weight:700;color:#92400E">'
+                            '📭 아직 모은 기록이 없어요. 위의 확인 도구를 먼저 눌러 기록을 모아 오세요.</div></div>', unsafe_allow_html=True)
+            action=st.radio("④ 그럼 이제 어떻게 할까?",INQUIRY["actions"],index=None)
+            submitted=st.form_submit_button("🔏 근거를 연결해 판정 도장 찍기",type="primary",disabled=i in S["answers"],width="stretch")
+        if submitted:
+            if verdict is None or reason is None or action is None or not evidence:
+                st.warning("①~④를 모두 골라 주세요. ③은 위 기록 보관함에 모은 기록 중에서 증거가 되는 것을 눌러요.")
+            else:
+                S["attempts"][i]=S["attempts"].get(i,0)+1
+                needed=set(INQUIRY["required"][i])
+                ok=(verdict==case["answer"] and reason==case["reason"] and set(evidence)==needed and needed.issubset(checked) and action==INQUIRY["actions"][i])
+                if ok:
+                    S["answers"][i]={"ok":True,"first":S["attempts"][i]==1}
+                    S["stamp_pop"]=i
+                    queue_effect("correct")
+                    st.rerun()
+                else:
+                    queue_effect("notice")
+                    st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 아직 기록과 결론이 딱 맞게 이어지지 않았어. 👉 번호·주소·시각이 같은지, 조회가 끝까지 됐는지, 추가 요구까지 확인했는지 기록 보관함을 다시 봐!",120), unsafe_allow_html=True)
+        if S.get("stamp_pop")==i and not S.get("popup"):
+            S.pop("stamp_pop")
+            stamp_popup(i)
+        if i in S["answers"]:
+            label, color = STAMP[case["answer"]]
+            st.markdown(f'<div style="border:3px solid {color};border-radius:16px;padding:14px 18px;background:#fff;line-height:1.7">'
+                        f'<b style="color:{color};font-size:1.25rem">🔏 {label} 도장 쾅!</b><br>{_esc(case["lesson"])}<br>'
+                        f'<span style="color:#52616B">판단 근거: {_esc(case["reason"])}</span></div>', unsafe_allow_html=True)
+            if st.button("다음 안내서" if i<2 else "결과 보기",type="primary"):
+                if i<2:S["i"]+=1
+                else:S["done"]=True
+                st.rerun()
+
 else:
     score=sum(a.get("first",False) for a in S["answers"].values())
     if not S["recorded"]:
