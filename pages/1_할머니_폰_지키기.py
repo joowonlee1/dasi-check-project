@@ -808,10 +808,13 @@ def show_voice_call(event, step):
         warn = ""  # 수상한 말인지는 플레이어가 직접 판단해요(힌트 없음)
         lines.append(["수사관", text, warn])
     number, _, shown = event["sender"].partition(" (")
-    call_button({"name": shown.rstrip(")") or number, "number": number if shown else "", "avatar": "🕴️", "danger": True,
-                 "lines": lines, "pitch": {"수사관": [0.9, 1.05]}, "gender": {"수사관": "m"}, "status": "통화 중",
-                 "verdict": "📵 통화가 끝났어요. 할머니께 어떻게 말할지 골라 보세요."},
-                "할머니 폰에 걸려 온 전화 받아서 듣기", key=f"gp_call_{step}")
+    # 전화 받기 버튼을 휴대폰과 같은 너비(360px)로 맞춰 가운데에 둬요.
+    st.markdown("<style>.st-key-gp_callbox{max-width:360px;width:100%;margin:0 auto}</style>", unsafe_allow_html=True)
+    with st.container(key="gp_callbox"):
+        call_button({"name": shown.rstrip(")") or number, "number": number if shown else "", "avatar": "🕴️", "danger": True,
+                     "lines": lines, "pitch": {"수사관": [0.9, 1.05]}, "gender": {"수사관": "m"}, "status": "통화 중",
+                     "verdict": "📵 통화가 끝났어요. 할머니께 어떻게 말할지 골라 보세요."},
+                    "할머니 폰에 걸려 온 전화 받아서 듣기", key=f"gp_call_{step}")
 
 
 def clue_block(game, event):
@@ -859,8 +862,9 @@ def show_gauges(game):
         "@keyframes gp-alarm{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}"
         "@media (max-width:640px){.gp-gs{grid-template-columns:1fr}}</style>"
         f'<div class="gp-gs">{html_cards}</div>'
-        f'<div style="font-size:.88rem;color:#64748B;margin-top:2px">😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.'
-        + (' <b style="color:#7C3AED">⚠️ 지금이 송금 직전이에요!</b>' if danger else "") + "</div>",
+        + (f'<div style="margin-top:8px;background:#7C3AED;color:#fff;border-radius:14px;padding:10px 16px;text-align:center;'
+         'font-size:1.25rem;font-weight:900;animation:gp-alarm 1s ease-in-out infinite">🚨 지금이 송금 직전이에요! 이번에 꼭 멈추게 해요</div>' if danger else "")
+        + f'<div style="font-size:.88rem;color:#64748B;margin-top:4px">😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.</div>',
         unsafe_allow_html=True,
     )
 

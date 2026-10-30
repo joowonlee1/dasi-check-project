@@ -164,22 +164,32 @@ if account:
         dd.logout()
         st.rerun()
 else:
-    show_mascot("id", "로그인 없이도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
-    dd.show_login_forms("page")
-    # 처음 화면에서만 보이던 ‘관리자이신가요?’를 시민증 페이지에서도 열 수 있게 해요.
-    from admin_tools import show_admin_box
-    show_admin_box()
-
-    st.markdown("#### 알아 두세요")
-    st.markdown(
+    NOTES = (
         "- **닉네임은 명예의 전당에 공개돼요.** 실제 이름·학교는 넣지 마세요.\n"
         "- 창을 닫았다가 와도 **닉네임 + 비밀 숫자**로 다시 들어오면 이어서 할 수 있어요. 한 번 만든 닉네임은 나만 써요.\n"
         "- 비밀 숫자는 암호화해 보관해요. **다른 곳의 비밀번호·생일은 쓰지 마세요.** 잊으면 관리자가 새로 바꿔 줄 수 있어요.\n"
         "- 다른 사람이 불쾌할 수 있는 닉네임은 쓰지 않아요."
     )
-
-    show_stamps()
-    show_badges()
+    from admin_tools import show_admin_box
+    if st.session_state.get("guest"):
+        # ‘로그인 없이 둘러보기’로 들어온 사람: 로그인 화면 대신 지금 모은 도장·배지를 먼저 보여 주고,
+        # 시민증 만들기는 접힌 상자로 둬요.
+        show_mascot("id", "둘러보기 중이에요! 지금까지 모은 도장과 배지예요. 기록을 남기고 싶으면 아래에서 시민증을 만들어요.", width=100)
+        show_stamps()
+        show_badges()
+        with st.expander("🪪 시민증 만들기 · 다시 들어오기"):
+            dd.show_login_forms("page")
+            st.markdown(NOTES)
+        show_admin_box()
+    else:
+        show_mascot("id", "로그인 없이도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
+        dd.show_login_forms("page")
+        # 처음 화면에서만 보이던 ‘관리자이신가요?’를 시민증 페이지에서도 열 수 있게 해요.
+        show_admin_box()
+        st.markdown("#### 알아 두세요")
+        st.markdown(NOTES)
+        show_stamps()
+        show_badges()
 
 st.page_link("pages/13_도토리시_통계청.py", label="도토리시 통계청에서 모두의 기록 보기", icon="📊")
 
