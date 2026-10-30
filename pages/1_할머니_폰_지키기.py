@@ -799,7 +799,7 @@ def show_voice_call(event, step):
 
 
 def clue_block(game, event):
-    """단서 버튼·단서 상자. 휴대폰 아래 빈 곳에 두어 오른쪽(할머니·게이지)과 높이를 맞춰요."""
+    """단서 버튼·단서 상자. 휴대폰 바로 아래에 두고, 상태 게이지는 두 영역 아래에 가로로 배치해요."""
     if game["clue_open"]:
         with st.container(border=True):
             st.markdown("**🔎 눈에 보이는 단서**")
@@ -819,12 +819,16 @@ def clue_block(game, event):
 
 def show_gauges(game):
     stage = scam_stage(game["step"])
-    st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
-    st.progress(game["belief"] / 100)
-    st.markdown(f"**💛 할머니가 나를 믿는 정도 {game['trust']}**")
-    st.progress(game["trust"] / 100)
-    st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**" + (" · ⚠️ 지금이 송금 직전이에요!" if stage == TOTAL_STAGES else ""))
-    st.progress(stage / TOTAL_STAGES)
+    gauges = st.columns(3)
+    with gauges[0]:
+        st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
+        st.progress(game["belief"] / 100)
+    with gauges[1]:
+        st.markdown(f"**💛 할머니가 나를 믿는 정도 {game['trust']}**")
+        st.progress(game["trust"] / 100)
+    with gauges[2]:
+        st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**" + (" · ⚠️ 지금이 송금 직전이에요!" if stage == TOTAL_STAGES else ""))
+        st.progress(stage / TOTAL_STAGES)
     st.caption(
         f"사기범을 믿는 정도가 {STOP_LINE} 이하로 내려가면 할머니가 스스로 멈춰요. "
         "수치는 게임 속 상태이며 실제 확률이 아니에요."
@@ -1002,8 +1006,7 @@ def show_play(game):
                 f'<div class="say">{esc(now)}</div></div>',
                 unsafe_allow_html=True,
             )
-        st.write("")
-        show_gauges(game)
+    show_gauges(game)
 
     st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
     options = list(FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS)
