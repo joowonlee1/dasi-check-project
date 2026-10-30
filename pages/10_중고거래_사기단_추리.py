@@ -10,6 +10,11 @@ from puzzle_component_ui import create_puzzle_component
 
 with intro("10", suffix=""):
     st.title("🔐 중고거래 사기단 추리")
+    from mascot_ui import show_scene
+    import scene_ui
+    SCENE_SLOT = st.empty() if scene_ui.ready("scene_market") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
+    if SCENE_SLOT is None:
+        show_scene("scene_market", "")
     show_key_question("판매자 5명 중 **진짜는 단 1명**. 거래 기록을 **비교**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
     show_mascot("sneaker", "거래 기록을 연결할 때마다 새 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
 
@@ -610,6 +615,11 @@ elif event and event.get("type") == "finish":
         lambda old, new: (new["stars"], -new["hints"], -new["wrong"]) > (old.get("stars", 0), -old.get("hints", 10**6), -old.get("wrong", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("memo_hall"))
+if SCENE_SLOT is not None:
+    if event and event.get("type") == "finish":
+        st.session_state["memo_scene_done"] = True
+    SCENE_SLOT.markdown(scene_ui.market(list(DATA["solution"]), DATA["emoji"], DATA["real"], st.session_state.get("memo_scene_done", False)),
+                        unsafe_allow_html=True)
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown("- 같은 익명 판매자 이름표로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
