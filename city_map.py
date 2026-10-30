@@ -292,3 +292,82 @@ def city_map_html(got, places):
             f'<span class="cpin{on}" style="left:{x}%;top:{y}%;" title="{tip}"><i>{html.escape(icon)}</i><b>{html.escape(short)}</b></span>')
     parts.append("</div>")
     return "".join(parts)
+
+
+# ───── 그림 지도(직접 만든 일러스트 static/dotori_map.jpg, 1450×1085) ─────
+# 그림 속 빈 나무 이름표 자리에 장소 이름을 얹고, 도장 상태에 따라 건물 색·발자국을 바꿔요. (그림 가로·세로 %)
+ART_PINS = {'01': (16.1, 24.0), '09': (38.8, 24.3), '10': (62.6, 23.7), '04': (84.3, 24.3), '03': (14.6, 59.4), '06': (49.1, 53.0), '02': (71.9, 59.1), '05': (88.4, 56.5), '08': (87.1, 71.7), '14': (16.5, 80.0), '12': (53.2, 74.5), '07': (35.7, 84.9), '11': (70.7, 85.6), '13': (86.8, 87.1)}
+ART_BUILD = {'01': (15.9, 16.1), '09': (38.8, 16.6), '10': (62.1, 16.6), '04': (85.9, 16.1), '03': (13.4, 52.1), '06': (49.1, 46.1), '02': (72.4, 51.2), '05': (89.0, 49.8), '08': (87.9, 65.0), '14': (15.5, 70.5), '12': (53.2, 67.7), '07': (36.2, 77.9), '11': (71.4, 78.8), '13': (86.9, 80.2)}
+ART_TOWNS = {'상수리동': (15.9, 9.7), '떡갈나무동': (38.8, 10.0), '개암골': (62.4, 10.0), '도토리역 앞': (75.5, 11.8), '다람쥐동': (11.7, 45.8), '중앙동': (49.1, 39.4), '시청로': (76.6, 67.7)}
+ART_SHORT = {"01": "할머니 댁", "09": "3반 단톡방", "10": "중고마켓", "04": "사이버 검문소", "03": "민서네 집", "06": "도토리 광장",
+             "02": "대화 연습실", "05": "시립도서관", "08": "시민 등록소", "14": "관리사무소", "12": "공영주차장",
+             "07": "시민안전센터", "11": "우체국 필터실", "13": "통계청"}
+
+
+def art_map_ready():
+    from pathlib import Path
+    return (Path(__file__).resolve().parent / "static" / "dotori_map.jpg").exists()
+
+
+def art_map_html(got, places, guide_img="", order=None):
+    """일러스트 지도: 빈 이름표에 장소 이름, 안 간 곳은 건물을 흐리게 + '?', 도장 받은 곳은 원래 색 + 🐾 발자국 도장."""
+    total = sum(1 for n in ART_PINS if n in places)
+    done = sum(1 for n in ART_PINS if n in places and n in got)
+    nxt = next((n for n in (order or ART_PINS) if n in places and n in ART_PINS and n not in got), None)
+    marks = []
+    for number, (x, y) in ART_PINS.items():
+        if number not in places:
+            continue
+        on = number in got
+        bx, by = ART_BUILD[number]
+        if not on:
+            marks.append(f'<span class="am-fade" style="left:{bx}%;top:{by}%;"></span>')
+        name = html.escape(ART_SHORT.get(number, places[number][2]))
+        marks.append(f'<span class="am-name{" on" if on else ""}" style="left:{x}%;top:{y}%;">{name}</span>')
+        if on:
+            marks.append(f'<span class="am-paw" style="left:{x + 5.3:.1f}%;top:{y - 2.9:.1f}%;" title="{name} · 도장 받음">🐾</span>')
+        else:
+            marks.append(f'<span class="am-new" style="left:{x + 5.1:.1f}%;top:{y - 2.7:.1f}%;" title="{name} · 아직 안 가 봤어요">?</span>')
+    for name, (x, y) in ART_TOWNS.items():
+        plate = " plate" if name == "다람쥐동" else ""  # 다람쥐동은 그림에 빈 나무판이 있어요
+        marks.append(f'<span class="am-town{plate}" style="left:{x}%;top:{y}%;">{html.escape(name)}</span>')
+    kj = ""
+    if guide_img and nxt:
+        kx, ky = ART_PINS[nxt]
+        kj = (f'<span class="am-kj" style="left:{kx + 6.5:.1f}%;top:{ky - 3:.1f}%;"><img src="{guide_img}" alt="길을 안내하는 깡지">'
+              '<b>여기로 가 볼까?</b></span>')
+    return (
+        "<style>.amap{position:relative;width:100%;max-width:980px;margin:2px auto 6px;border-radius:22px;overflow:hidden;border:3px solid #E2C98A;"
+        "box-shadow:0 6px 18px rgba(60,40,10,.15);container-type:inline-size}"
+        ".amap>img{display:block;width:100%!important;height:auto!important;margin:0!important;max-width:none!important}"
+        ".amap span{position:absolute;transform:translate(-50%,-50%)}"
+        ".amap .am-title{left:49.5%;top:4.7%;text-align:center;line-height:1.1;color:#5B3A12}"
+        ".amap .am-title b{display:block;font-size:2.6cqw;font-weight:900;letter-spacing:.06em;text-shadow:0 2px 0 #FFF3D1}"
+        ".amap .am-title small{display:block;font-size:1.3cqw;font-weight:900;color:#4A2E0C;margin-top:.2cqw;letter-spacing:-.01em}"
+        ".amap .am-name{font-size:1.4cqw;font-weight:900;color:#5B3A12;white-space:nowrap;letter-spacing:-.02em}"
+        ".amap .am-town{font-size:1.4cqw;font-weight:900;color:#2F4A2E;background:rgba(255,253,240,.92);border:.2cqw solid #C9A86A;border-radius:99px;padding:.1cqw .9cqw;white-space:nowrap}"
+        ".amap .am-town.plate{background:none;border:0;color:#5B3A12;font-size:1.55cqw}"
+        ".amap .am-legend{left:12.6%;top:94.6%;font-size:2.1cqw;font-weight:900;color:#5B3A12;white-space:nowrap}"
+        ".amap .am-paw,.amap .am-new{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900}"
+        ".amap .am-paw{width:3.3%;aspect-ratio:1;background:radial-gradient(circle,#FFE38A,#F5B700);border:.25cqw solid #8A5A2B;font-size:1.8cqw;box-shadow:0 .3cqw .6cqw rgba(0,0,0,.3);animation:am-pop .5s ease-out both}"
+        ".amap .am-new{width:2.4%;aspect-ratio:1;background:#fff;border:.2cqw dashed #94A3B8;color:#64748B;font-size:1.3cqw}"
+        ".amap .am-fade{width:15%;aspect-ratio:1.35;border-radius:50%;backdrop-filter:grayscale(1) brightness(1.06);-webkit-backdrop-filter:grayscale(1) brightness(1.06);"
+        "background:rgba(255,255,255,.22);pointer-events:none;-webkit-mask-image:radial-gradient(closest-side,#000 68%,transparent);mask-image:radial-gradient(closest-side,#000 68%,transparent)}"
+        ".amap .am-kj{transform:translate(0,-35%)!important;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none;z-index:3}"
+        ".amap .am-kj img{width:9.5cqw!important;height:auto!important;margin:0!important;filter:drop-shadow(0 .4cqw .4cqw rgba(0,0,0,.35));animation:am-bob 1.8s ease-in-out infinite}"
+        ".amap .am-kj b{background:#fff;border:.3cqw solid #20483F;border-radius:1.6cqw 1.6cqw 1.6cqw .4cqw;padding:.4cqw 1.2cqw;font-size:1.5cqw;color:#20483F;white-space:nowrap;margin:-.4cqw 0 0 30%}"
+        ".amap .am-count{left:auto!important;right:1.5%;top:3%;transform:none!important;background:#FFF6CF;border:.3cqw solid #8A5A2B;border-radius:1.6cqw;padding:.4cqw 1.2cqw;font-weight:900;color:#5B3A12;font-size:1.6cqw;box-shadow:0 .3cqw 0 rgba(60,40,10,.25)}"
+        "@keyframes am-bob{0%,100%{translate:0 0}50%{translate:0 -.6cqw}}"
+        "@keyframes am-pop{0%{transform:translate(-50%,-50%) scale(2.2) rotate(-25deg);opacity:0}100%{transform:translate(-50%,-50%) scale(1) rotate(-8deg);opacity:1}}"
+        "@media (prefers-reduced-motion:reduce){.amap .am-paw,.amap .am-kj img{animation:none}}"
+        # 휴대폰처럼 좁은 화면: 지도를 글씨가 읽히는 크기로 두고 옆으로 밀어서 봐요.
+        ".amap-hint{display:none}"
+        "@media (max-width:640px){.amap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;border-radius:22px}"
+        ".amap-wrap .amap{min-width:680px}.amap-hint{display:block;font-size:.85rem;font-weight:800;color:#64748B;text-align:center;margin:2px 0 4px}}</style>"
+        '<div class="amap-hint">👉 지도를 옆으로 밀어서 둘러보세요</div><div class="amap-wrap">'
+        f'<div class="amap" role="img" aria-label="도토리시 지도 · 도장 {done}/{total}"><img src="app/static/dotori_map.jpg" alt="">'
+        '<span class="am-title"><b>도토리시</b><small>깡지와 함께, 한 걸음씩 안전하게</small></span>'
+        + "".join(marks) + kj
+        + '<span class="am-legend">방문한 곳</span>'
+        + f'<span class="am-count">🌰 도장 {done} / {total}</span></div></div>'
+    )
