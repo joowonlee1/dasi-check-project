@@ -391,7 +391,7 @@ st.markdown(
     .town h5 {margin:0 0 6px !important;padding:0 !important;font-size:.95rem !important;font-weight:900;color:#3F4A2E;}
     .town .pins {display:flex;flex-wrap:wrap;gap:6px;}
     .pin {background:#FFFFFF;border:1.5px solid rgba(0,0,0,.08);border-radius:999px;padding:3px 10px;font-size:.84rem;
-      font-weight:700;color:#24443B;white-space:nowrap;}
+      font-weight:700;color:#24443B;white-space:normal;word-break:keep-all;max-width:100%;}
     .pin.on {border-color:#B42318;background:#FFF8E6;}
     .pin.on::after {content:" ✓";color:#15803D;font-weight:900;}
     @media (max-width:640px) {
@@ -605,10 +605,40 @@ def show_home():
 
 
     st.subheader("🌰 도토리시 지도")
+    # 안내자 깡지: 내가 모은 도장을 보고 아직 안 가 본 곳을 추천해요. 다 모으면 축하해요.
+    got_now = dd.stamps()
+    route = ("01", "03", "02", "06", "09", "10", "11", "12", "14", "08", "04", "05", "13", "07")
+    nxt = next((n for n in route if n in PLACES and n not in got_now), None)
+    try:
+        import base64 as _b64
+        from pathlib import Path as _P
+        guide = _b64.b64encode((_P(__file__).resolve().parent / "assets" / "kj_guide.png").read_bytes()).decode("ascii")
+        guide_img = f'<img src="data:image/png;base64,{guide}" alt="지도를 들고 길을 안내하는 깡지" class="ci-kj">'
+    except OSError:
+        guide_img = ""
+    if nxt:
+        n_icon, n_town, n_place, n_intro = PLACES[nxt]
+        say = (f'<div class="ci-say">🗺️ 다음엔 <b class="ci-place">{n_icon} {html.escape(n_town)} · {html.escape(n_place)}</b>에 가 볼까?'
+               f'<span>{html.escape(n_intro)}</span></div>')
+    else:
+        guide_img = mascot_img("trophy", 140).replace("display:block;margin:0 auto;", "") or guide_img
+        say = '<div class="ci-say">🎖️ 14곳 도장을 모두 모았어요! <b class="ci-place">도토리시 명예 시민</b>이 된 걸 축하해요!</div>'
     st.markdown(
-        f'<div class="city-intro"><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}</div>',
+        "<style>.city-intro.has-kj{display:flex;align-items:center;gap:16px;padding:12px 18px}"
+        ".city-intro .ci-kj{width:150px;height:auto;flex-shrink:0}"
+        ".city-intro .ci-say{margin-top:8px;background:#fff;border:2px solid #20483F;border-radius:16px 16px 16px 4px;padding:8px 14px;font-weight:800;color:#20483F;line-height:1.6}"
+        ".city-intro .ci-say .ci-place{display:inline;font-size:1.05rem;color:#B42318;margin:0}"
+        ".city-intro .ci-say span{display:block;font-weight:600;color:#475569;font-size:.92rem}"
+        ".st-key-guide_go{margin-top:-6px}.st-key-guide_go a{background:#20483F!important;border-radius:999px!important;padding:8px 18px!important;width:fit-content;box-shadow:0 3px 0 #0F2A24}"".st-key-guide_go a p,.st-key-guide_go a span{color:#fff!important;font-weight:800!important}.st-key-guide_go a:hover{background:#2D6457!important}"
+        "@media (max-width:640px){.city-intro.has-kj{flex-direction:column;text-align:center}.city-intro .ci-kj{width:110px}}</style>"
+        f'<div class="city-intro has-kj">{guide_img}<div><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}{say}</div></div>',
         unsafe_allow_html=True,
     )
+    if nxt:
+        path = {row[0]: row[3] for row in FEATURES}.get(nxt)
+        if path:
+            with st.container(key="guide_go"):
+                st.page_link(path, label=f"깡지가 추천한 {PLACES[nxt][2]}(으)로 가기", icon="➡️")
     # 장소 버튼 목록 대신, 동네별로 장소가 어디 있는지 한눈에 보는 지도예요(누르는 곳이 아니에요).
     # 들어가는 버튼은 아래 ‘어떤 활동을 해볼까요?’ 카드에 있어요.
     got = dd.stamps()
@@ -627,7 +657,18 @@ def show_home():
         blocks.append(f'<div class="town" style="grid-area:{area};background:{color};"><h5>{mark} {town_name}</h5>'
                       f'<div class="pins">{pins}</div></div>')
     # 실제 지도처럼 섬 위에 장소 핀을 찍어 보여 줘요. 폭이 좁은 휴대폰에서는 핀 이름 대신 아래 동네별 목록을 함께 보여 줘요.
-    st.markdown(city_map_css() + city_map_html(got, PLACES), unsafe_allow_html=True)
+    # 직접 그린 일러스트 지도가 있으면 그 위에 발자국 도장을 찍고, 없으면 예전 지도를 보여 줘요.
+    from city_map import art_map_ready, art_map_html
+    if art_map_ready():
+        try:
+            import base64 as _b64m
+            from pathlib import Path as _Pm
+            _kj = 'data:image/png;base64,' + _b64m.b64encode((_Pm(__file__).resolve().parent / 'assets' / 'kj_guide.png').read_bytes()).decode('ascii')
+        except OSError:
+            _kj = ''
+        st.markdown(city_map_css() + art_map_html(got, PLACES, guide_img=_kj, order=route), unsafe_allow_html=True)
+    else:
+        st.markdown(city_map_css() + city_map_html(got, PLACES), unsafe_allow_html=True)
     st.markdown('<div class="citymap cmap-legend">' + "".join(blocks) + "</div>", unsafe_allow_html=True)
     # 지도 핀에 붙는 것과 똑같은 빨간 동그라미 ✓ 표시로 안내해요.
     st.markdown(
@@ -636,7 +677,10 @@ def show_home():
         '<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:#D92D20;color:#fff;'
         'font-weight:900;font-size:.95rem;align-items:center;justify-content:center;border:2px solid #fff;'
         'box-shadow:0 1px 3px rgba(0,0,0,.35);vertical-align:middle;">✓</span> '
-        "표시(노란 테두리)는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>",
+        "표시(노란 테두리)는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>"
+        if not art_map_ready() else
+        '<div style="color:#3E4A46;font-size:1.08rem;font-weight:700;line-height:1.7;margin-top:6px;">'
+        "🐾 노란 발자국은 도장을 받은 곳, <b>?</b>는 아직 안 가 본 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>",
         unsafe_allow_html=True,
     )
 
@@ -783,6 +827,12 @@ with st.sidebar:
         margin:0!important;padding:4px!important;box-sizing:border-box!important;
         display:flex!important;align-items:center!important;justify-content:center!important;
         border:1.5px solid #20483F!important;border-radius:10px!important;
+    }
+    /* 사이드바를 아주 좁게 줄이면 '내 시민증·로그아웃' 두 버튼을 위아래로 쌓아 글자가 세로로 꺾이지 않게 해요. */
+    .st-key-citizen_top {container-type:inline-size;}
+    @container (max-width:260px) {
+        .st-key-citizen_top [data-testid="stHorizontalBlock"] {flex-direction:column!important;gap:6px!important;}
+        .st-key-citizen_top [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {width:100%!important;flex:1 1 auto!important;}
     }
     .st-key-side_citizen button {background:#20483F!important;color:#fff!important;}
     .st-key-side_logout button {background:#fff!important;color:#20483F!important;}
@@ -1136,6 +1186,36 @@ if current:
 # 선택한 기존 페이지 실행
 # ─────────────────────────────────────
 
+def alert_css():
+    """앱 전체의 안내 상자(st.info·warning·success·error)를 도토리시 스타일로 통일해요.
+    크림색 바탕 + 둥근 테두리 + 왼쪽에 상황에 맞는 깡지(알려 줌·주의·잘했어·앗!)."""
+    import base64 as _b64
+    from pathlib import Path as _P
+
+    def url(name):
+        try:
+            return "data:image/png;base64," + _b64.b64encode((_P(__file__).resolve().parent / "assets" / name).read_bytes()).decode("ascii")
+        except OSError:
+            return ""
+    kinds = {"Info": ("kj_tip.png", "#7FB2E5", "#F4F9FF", "#1E3A5F"),
+             "Warning": ("kj_stop.png", "#E8B04B", "#FFFBEF", "#6B4A00"),
+             "Success": ("kj_good.png", "#7CCB95", "#F3FCF5", "#14532D"),
+             "Error": ("kj_oops.png", "#E88A8A", "#FFF6F5", "#7F1D1D")}
+    css = ['[data-testid="stAlertContainer"]{border-radius:18px!important;padding:12px 16px 12px 78px!important;min-height:70px;'
+           'background-repeat:no-repeat!important;background-position:12px center!important;background-size:56px auto!important;'
+           'box-shadow:0 2px 0 rgba(0,0,0,.05)!important;display:flex!important;align-items:center!important}'
+           '[data-testid="stAlertContainer"] p{font-weight:600!important;line-height:1.65!important;word-break:keep-all}'
+           '[data-testid="stAlertContainer"] [data-testid^="stAlertContent"]>div>svg,[data-testid="stAlertContainer"] [data-testid="stAlertDynamicIcon"]{display:none!important}'
+           '[data-testid="stSidebar"] [data-testid="stAlertContainer"]{padding-left:58px!important;background-size:40px auto!important;background-position:9px center!important;min-height:54px}'
+           '@media (max-width:640px){[data-testid="stAlertContainer"]{padding-left:62px!important;background-size:44px auto!important}}']
+    for kind, (img, border, bg, fg) in kinds.items():
+        icon = url(img)
+        css.append(f'[data-testid="stAlertContainer"]:has([data-testid="stAlertContent{kind}"]){{background-color:{bg}!important;'
+                   f'border:2px solid {border}!important;' + (f'background-image:url({icon})!important;' if icon else '') + '}'
+                   f'[data-testid="stAlertContainer"]:has([data-testid="stAlertContent{kind}"]) p{{color:{fg}!important}}')
+    return "<style>" + "".join(css) + "</style>"
+
+
 navigation.run()
 
 # 페이지에서 받은 도장이 있으면, 페이지를 다 그린 뒤 도장 알림과 효과음을 한 번 보여 줘요.
@@ -1151,13 +1231,14 @@ if dd.citizen() and st.session_state.get(dd.PENDING_STAMPS):
 # 공통 하단 안내
 # ─────────────────────────────────────
 
+# 모든 페이지 안내 상자를 같은 모양으로 꾸미는 스타일도 맨 아래 안내문과 함께 넣어요(위쪽에 빈칸이 생기지 않게).
 st.markdown(
-    """
+    alert_css() + __import__("textwrap").dedent("""
     <div class="footer-note">
         <b>잠깐! · 피싱 대응 교육 프로젝트</b><br>
         체험과 테스트는 교육용입니다. 실제 피해는 ‘피해가 의심될 때’ 안내를 확인하세요.<br>
         실제 개인정보나 인증번호를 이 웹앱에 입력하지 마세요.
     </div>
-    """,
+    """),
     unsafe_allow_html=True,
 )
