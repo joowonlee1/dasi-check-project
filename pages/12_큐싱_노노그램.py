@@ -74,7 +74,8 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 @keyframes flash{0%,100%{box-shadow:inset 0 0 0 0 #E5484D}50%{box-shadow:inset 0 0 0 4px #E5484D}}
 @keyframes glow{0%,100%{box-shadow:inset 0 0 0 3px #FF7A45}50%{box-shadow:inset 0 0 0 3px #FFD3BD}}
 @keyframes wave{0%{transform:scale(.4)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,#1E5B4F,#2E8B75)!important;color:#fff;border-radius:18px;padding:10px 16px;text-align:center;animation:pop .5s ease-out both}
+.boardwrap{background:linear-gradient(rgba(255,255,255,.15),rgba(255,255,255,.15)),url(__SCENEIMG__) center/cover;border-radius:20px;padding:18px 10px!important;box-shadow:inset 0 0 0 2px #D7E2DD}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
 .box h3{margin:0 0 8px;font-size:1.12rem}
@@ -100,7 +101,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .mode button{border-radius:0;background:#fff;min-width:110px}
 .mode button.on,.mode button.on:hover:not(:disabled){background:#20483F;color:#fff}
 .boardwrap{overflow-x:auto;padding:4px 0 8px;display:flex;justify-content:center}
-table.board{border-collapse:collapse;touch-action:none;user-select:none;-webkit-user-select:none}
+table.board{border-collapse:collapse;touch-action:none;user-select:none;-webkit-user-select:none;background:rgba(255,255,255,.94);box-shadow:0 0 0 12px rgba(255,255,255,.94),0 10px 24px 10px rgba(0,0,0,.28);border-radius:4px;margin:12px;transform:rotate(-1deg)}
 .board td{padding:0}
 .board .cc{vertical-align:bottom;text-align:center;font-weight:900;font-size:var(--fs);line-height:1.15;padding:0 0 4px;color:#20483F;width:var(--cs)}
 .board .rc{text-align:right;font-weight:900;font-size:var(--fs);padding:0 6px 0 0;white-space:nowrap;color:#20483F;letter-spacing:.06em}
