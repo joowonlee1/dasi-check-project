@@ -22,7 +22,7 @@ CALL_JS = r'''
  +'#jk-call .wave{display:flex;gap:4px;justify-content:center;align-items:flex-end;height:26px;margin:12px 0 6px;opacity:.25;transition:opacity .2s}#jk-call .wave.on{opacity:1}#jk-call .wave i{width:5px;background:#60a5fa;border-radius:3px;height:6px}#jk-call .wave.on i{animation:jkc-bar .7s ease-in-out infinite}'
  +'#jk-call .wave i:nth-child(2){animation-delay:.1s!important}#jk-call .wave i:nth-child(3){animation-delay:.2s!important}#jk-call .wave i:nth-child(4){animation-delay:.3s!important}#jk-call .wave i:nth-child(5){animation-delay:.15s!important}#jk-call .wave i:nth-child(6){animation-delay:.25s!important}'
  +'#jk-call .sub{background:#f8fafc;color:#0f172a;border-radius:18px;padding:14px 16px;min-height:64px;text-align:left;font-size:1.18rem;line-height:1.6;font-weight:700;word-break:keep-all}#jk-call .sub b{display:inline-block;background:#1e3a8a;color:#fff;border-radius:999px;padding:1px 10px;font-size:.85rem;margin-right:6px;vertical-align:2px}'
- +'#jk-call .wn{display:none;margin:10px 0 0;background:#fee2e2;color:#991b1b;border:3px solid #dc2626;border-radius:14px;padding:9px 12px;font-weight:900;font-size:1.05rem;animation:jkc-shake .5s 2}#jk-call .wn.ok{background:#dcfce7;color:#14532d;border-color:#16a34a;animation:none}'
+ +'#jk-call .wn{display:none;margin:10px 0 0;background:#fee2e2;color:#991b1b;border:3px solid #dc2626;border-radius:14px;padding:10px 14px;font-weight:900;font-size:1.05rem;line-height:1.45;text-align:left;word-break:keep-all;text-wrap:balance;animation:jkc-shake .5s 2}#jk-call .wn.ok{background:#dcfce7;color:#14532d;border-color:#16a34a;animation:none}'
  +'#jk-call .hs{margin-top:10px;text-align:left;max-height:150px;overflow:auto}#jk-call .hs div{color:#cbd5e1;font-size:.92rem;line-height:1.5;padding:4px 2px;border-top:1px dashed #334155}#jk-call .hs div.w{color:#fca5a5}'
  +'#jk-call .nt{color:#94a3b8;font-size:.8rem;margin-top:8px}#jk-call .end{margin-top:14px;width:100%;min-height:56px;border:0;border-radius:999px;background:#dc2626;color:#fff;font:900 1.15rem system-ui;cursor:pointer}#jk-call .end.done{background:#16a34a}'
  +'@keyframes jkc-pulse{0%{box-shadow:0 0 0 0 #60a5fa88}100%{box-shadow:0 0 0 22px #60a5fa00}}@keyframes jkc-bar{0%,100%{height:6px}50%{height:26px}}@keyframes jkc-shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}'
@@ -45,7 +45,7 @@ CALL_JS = r'''
   [0,1.25].forEach(off=>{[440,480].forEach(f=>{const o=c.createOscillator(),g=c.createGain(),at=c.currentTime+off;o.frequency.value=f;
    g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(v,at+.03);g.gain.setValueAtTime(v,at+.9);g.gain.exponentialRampToValueAtTime(.0001,at+1);
    o.connect(g);g.connect(c.destination);o.start(at);o.stop(at+1.05);});});}catch(e){}};
- const pickVoice=()=>{try{const vs=synth?synth.getVoices():[];return vs.find(v=>/^ko/i.test((v.lang||'').replace('_','-')))||null;}catch(e){return null;}};
+ const KO=()=>{try{return (synth?synth.getVoices():[]).filter(v=>/^ko/i.test((v.lang||'').replace('_','-')));}catch(e){return [];}};const MALE=/injoon|hyunsu|bongjin|gookmin|jimin|male|남성/i,FEMALE=/sunhi|heami|yuna|seoyeon|female|여성|google/i;const score=v=>(/natural|neural|online/i.test(v.name)?6:0)+(/google/i.test(v.name)?3:0)+(v.localService===false?1:0);const pickVoice=(who)=>{const vs=KO().sort((a,b)=>score(b)-score(a));if(!vs.length)return null;const g=(data.gender||{})[who];if(g==='m'){const m=vs.find(v=>MALE.test(v.name));if(m)return m;}if(g==='f'){const f=vs.find(v=>FEMALE.test(v.name)&&!MALE.test(v.name));if(f)return f;}return vs[0];};
  const pitch=data.pitch||{};
  const lines=data.lines||[];
  let i=0,voice=null,speak=false;
@@ -63,11 +63,11 @@ CALL_JS = r'''
   let moved=false;const go=()=>{if(moved)return;moved=true;wave.classList.remove('on');later(next,warn?1500:600);};
   const guess=1600+text.length*190;
   if(speak){
-   try{const u=new SW.SpeechSynthesisUtterance(text);u.lang='ko-KR';if(voice)u.voice=voice;const p=pitch[who]||[1,1];u.pitch=p[0];u.rate=p[1];u.volume=Math.min(1,(H&&H.volume)||.8);
+   try{const u=new SW.SpeechSynthesisUtterance(text);u.lang='ko-KR';const vv=pickVoice(who)||voice;if(vv)u.voice=vv;const p=pitch[who]||[1,1];const male=vv&&MALE.test(vv.name);u.pitch=(male&&(data.gender||{})[who]==='m')?1:p[0];u.rate=p[1];u.volume=Math.min(1,(H&&H.volume)||.8);
     u.onstart=()=>wave.classList.add('on');u.onend=go;u.onerror=go;synth.speak(u);later(go,guess+4000);}catch(e){later(go,guess);}
   }else{wave.classList.add('on');later(go,guess);}
  };
- const begin=()=>{voice=pickVoice();speak=!!(want&&synth&&voice);
+ const begin=()=>{voice=pickVoice('');speak=!!(want&&synth&&voice);
   if(!speak)nt.textContent=!want?'🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)':'이 기기에는 한국어 목소리가 없어서 자막으로만 보여 줘요.';
   else nt.textContent='🔊 교육용 가상 통화예요. 목소리는 컴퓨터가 읽어 주는 소리예요.';
   stt.textContent=data.status||'통화 중';t0=Date.now();q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');next();};
