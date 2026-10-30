@@ -49,6 +49,6 @@ function render(){
 }
 window.addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='streamlit:render')return;const next=e.data.args||{};if(next.page!==args.page){open=false;pending=false;}if(next.revision!==args.revision||(next.answers||[]).length!==lastCount){pending=false;}lastCount=(next.answers||[]).length;args=next;render();});
 window.addEventListener('pagehide',remove);
-const path=parent.location.pathname;const cleanup=setInterval(()=>{if(parent.location.pathname!==path){remove();clearInterval(cleanup);}},500);
+// 페이지를 옮겨도 이 칸이 그대로 쓰이면 도우미를 지우지 않아요(전에는 처음 페이지를 옮길 때 도우미가 사라졌어요). 칸이 없어질 때만 지워요.
 send('streamlit:componentReady',{apiVersion:1});send('streamlit:setFrameHeight',{height:0});
 </script></body></html>
