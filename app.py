@@ -1120,6 +1120,13 @@ if len(history) >= 2:
 st.session_state.pop("login_return", None)
    
 
+# 방탈출(03)은 화면 오른쪽 아래에 '나의 폰'이 있어서, 깡지 도우미를 그 위 칸에 고정해 겹치지 않게 해요.
+# (나의 폰 상자와 주머니 탭은 맨 아래 칸, 깡지 도우미 상자와 탭은 그 위 칸)
+if current and current[0] == "03":
+    st.markdown("<style>#dotori-helper,#dotori-helper.pocketed{bottom:200px!important}"
+                "@media (max-width:600px){#dotori-helper,#dotori-helper.pocketed{bottom:176px!important}}</style>",
+                unsafe_allow_html=True)
+
 if current:
     with intro(current[0], route=True):
         (
