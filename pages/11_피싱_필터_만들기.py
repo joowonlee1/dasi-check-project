@@ -223,6 +223,14 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:720px){.cols{grid-template-columns:1fr}.builder{position:static}.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}}
 @media (max-width:480px){.ex,.terms,.twin .pair{grid-template-columns:1fr}.hero b{font-size:1.2rem}.stages small{font-size:.72rem}}
+
+.cols{background:#F4F8F6;padding:14px;}
+.filter-scene{height:110px;background:url(__SCENEIMG__) center/cover;border-radius:16px;margin:10px 0}
+.builder{background:#fff;border:2px solid #B8CFC4;border-radius:16px;padding:14px;color:#203C35}
+.meta{background:#EDF5F0;color:#203C35;padding:10px;border-radius:10px;font-weight:800}
+.builder pre{background:#172B3A;color:#fff;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg small{color:#475569;font-weight:600}.msg .txt{font-size:1.05rem}
+
 </style></head><body>
 <main class="wrap" id="app"></main>
 <script>
@@ -362,6 +370,7 @@ function renderPlay(){
   <div class="goal">🎯 목표: ${esc(s.goal)}</div>
   <div class="sintro">📢 ${esc(s.intro)}</div>
   ${res ? resultHtml(st, res) : ''}
+  ${'__SCENEIMG__' ? '<div class="filter-scene" role="img" aria-label="도토리 우체국 풍경"></div>' : ''}
   <div class="cols">
     <div><h3 style="margin:6px 0">📥 들어온 문자 ${s.msgs.length}개</h3><div class="inbox">${msgs}</div></div>
     <div class="builder"><h3 style="margin:6px 0">🧩 내 필터 규칙</h3>
