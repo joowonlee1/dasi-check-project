@@ -73,12 +73,8 @@ if(!state.root||!state.root.isConnected){
  pocketBtn.onclick=()=>{state.pocket=true;root.classList.add('pocket');};
  tab.onclick=()=>{state.pocket=false;root.classList.remove('pocket');tab.classList.remove('alarm');tab.removeAttribute('data-new');};
  if(state.pocket)root.classList.add('pocket');
- // 깡지 도우미와 겹치지 않게: 나의 폰 상자가 보이면 도우미를 그 위로 올려요(:has를 못 쓰는 브라우저도 되게 직접 계산).
- const liftHelper=()=>{try{const h=D.getElementById('dotori-helper');if(!h)return;const box=root.querySelector('#dotori-phone-box');
-  if(!root.isConnected){h.style.removeProperty('bottom');return;}
-  if(root.classList.contains('pocket')||!box){h.style.removeProperty('bottom');return;}
-  const top=box.getBoundingClientRect().top;if(top>0)h.style.setProperty('bottom',Math.ceil(W.innerHeight-top)+28+'px','important');}catch(e){}};
- liftHelper();if(W.__dpLift)W.clearInterval(W.__dpLift);W.__dpLift=W.setInterval(liftHelper,500);
+ // 깡지 도우미와 겹치지 않게: 앱 화면(부모 창)에 직접 감시 코드를 심어, 이 칸이 다시 그려져도 계속 동작해요.
+ if(!W.__dpLiftInstalled){W.__dpLiftInstalled=1;const sc=D.createElement('script');sc.textContent="setInterval(function(){try{var h=document.getElementById('dotori-helper'),ui=document.getElementById('dotori-phone-ui'),box=document.getElementById('dotori-phone-box');if(!h)return;if(!ui||!box||ui.classList.contains('pocket')||!box.offsetParent){h.style.removeProperty('bottom');return;}var t=box.getBoundingClientRect().top;if(t>0)h.style.setProperty('bottom',(Math.ceil(innerHeight-t)+28)+'px','important');}catch(e){}},400);";D.head.appendChild(sc);}
  state.openCall=()=>{state.tab='call';launch.classList.remove('alarm');state.show();dialInput.focus({preventScroll:true});};close.onclick=()=>state.hide();
  cover.addEventListener('keydown',e=>{
   if(e.key==='Escape'){e.preventDefault();state.hide();}

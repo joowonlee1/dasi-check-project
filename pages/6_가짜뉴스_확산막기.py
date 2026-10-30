@@ -114,6 +114,8 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .readme .rm-tip{font-weight:700;color:#33524A}
 .board.locked{min-height:400px}
 @media (max-width:560px){.readme{gap:10px;padding:12px}.readme .rm-post{padding:12px 14px}.readme .rm-post .txt{font-size:1.1rem}}
+.board .toast{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:4;width:max-content;max-width:92%;margin:0;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.board .toast:empty{display:none}
 .board{position:relative;background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.12)),url(__SCENEIMG__) center/cover;border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
 svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .board .edge{stroke:#FFFFFF;stroke-width:4;filter:drop-shadow(0 0 2px rgba(0,0,0,.55))}
@@ -193,7 +195,7 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .bars{display:flex;align-items:flex-end;justify-content:center;gap:14px;height:90px;padding:6px 0;border-bottom:2px solid #D7E2DD}
 .bars div{flex:1;max-width:70px;background:#E5484D;border-radius:6px 6px 0 0;position:relative;min-height:4px;animation:grow .6s ease-out both}
 .bars div span{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:.78rem;font-weight:800;color:#20483F}
-.barlab{display:flex;gap:6px;font-size:.72rem;color:#52616B}.barlab span{flex:1;text-align:center}
+.barlab{display:flex;justify-content:center;gap:14px;font-size:.78rem;font-weight:800;color:#52616B;margin-top:4px}.barlab span{flex:1;max-width:70px;text-align:center}
 .hubs li{margin:4px 0}
 .dialog{background:#FFFEFA;border:3px solid #5B6FD6;border-radius:22px;padding:16px;margin:10px 0;animation:pop .3s ease-out both;box-shadow:0 8px 22px #5B6FD630}
 .dialog[hidden]{display:none!important}
@@ -402,14 +404,13 @@ function render(){
   <div class="hud"><span class="cards">🃏 남은 카드 ${S.cards}장 (1장 = 1명 지키기·정정)</span><span>🔴 속은 사람 ${c.I}명</span><span>🛡️ 지킨 사람 ${c.R}명</span><span>💬 정정한 사람 ${c.C}명</span><span>⚪ 아직 모르는 사람 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
   <div class="todo" id="now"></div>
   ${S.phase === 'prep' ? `<button class="go" style="width:100%;margin-bottom:8px" onclick="run()" ${S.pre ? 'disabled' : ''}>${S.pre ? '🔒 지킬 사람 1명을 먼저 골라야 시작할 수 있어요' : '▶ 소문 퍼지기 시작'}</button>` : ''}
-  <div class="board${S.read ? '' : ' locked'}"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg>${S.read ? '' : `
+  <div class="board${S.read ? '' : ' locked'}"><svg id="svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="도토리시 주민 연결망"></svg><div class="toast" id="toast" aria-live="polite"></div>${S.read ? '' : `
     <div class="readme"><div class="rm-tag">📢 방금 올라온 소식</div>
       <div class="rm-post"><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div>
       <div class="rm-tip">이 소식이 마을에 퍼지려고 해요. 어디가 수상한지 생각해 보고 막으러 가요!</div>
       <button class="go" onclick="S.read=true;render()">읽었어요, 막으러 가기 ▶</button></div>`}</div>
   <div class="keys"><div><em>⚪ 👆</em>아직 모르는 사람 → 🛡️ 지킴</div><div><em>🔴 👆</em>속은 사람 → 💬 근거 있는 정정</div><div><em>📢</em>눌러도 소용없음</div><div><em>🃏 ${S.cards}</em>남은 카드 · 1장으로 1명</div></div>
   <div class="dialog" id="dlg" hidden></div>
-  <div class="toast" id="toast" aria-live="polite"></div>
   <div class="row" id="ctrl"></div>`;
   drawSvg();
   nowText();

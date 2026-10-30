@@ -7,6 +7,7 @@ let size=(()=>{try{const v=parent.__dhSize;return v===undefined?2:+v}catch(e){re
 let root,doc;try{doc=parent.document;}catch(e){doc=document;}
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function remove(){if(root)root.remove();}
+(()=>{try{const W=parent,D=W.document;if(!W.__dpLiftInstalled){W.__dpLiftInstalled=1;const sc=D.createElement('script');sc.textContent="setInterval(function(){try{var h=document.getElementById('dotori-helper'),ui=document.getElementById('dotori-phone-ui'),box=document.getElementById('dotori-phone-box');if(!h)return;if(!ui||!box||ui.classList.contains('pocket')||!box.offsetParent){h.style.removeProperty('bottom');return;}var t=box.getBoundingClientRect().top;if(t>0)h.style.setProperty('bottom',(Math.ceil(innerHeight-t)+28)+'px','important');}catch(e){}},400);";D.head.appendChild(sc);}}catch(e){}})();
 function snapshot(){
  let found=[];
  // 게임 iframe의 현재 보이는 글만 읽어요. 입력칸·숨겨진 정답 데이터는 읽지 않아요.
