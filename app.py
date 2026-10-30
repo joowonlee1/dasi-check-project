@@ -1034,6 +1034,13 @@ current = next(
 # '로그인 없이 둘러보기'도 할 수 있고, 실제 피해 안내(07)는 언제나 바로 열려요.
 # ─────────────────────────────────────
 
+# 공통 도우미는 fragment 안에서만 재실행되어 게임 화면의 진행을 건드리지 않아요.
+from app_helper import show_helper
+_helper_page = current[0] if current else ("00" if navigation.url_path == citizen_page.url_path else "home")
+if not dd.citizen() and not st.session_state.get("guest") and not st.session_state.get("admin_open") and _helper_page != "07":
+    _helper_page = "00"
+show_helper(_helper_page)
+
 def show_welcome_gate():
     st.markdown(
         """<style>
