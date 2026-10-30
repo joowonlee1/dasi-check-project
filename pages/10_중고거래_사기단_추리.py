@@ -413,7 +413,7 @@ function aiFloat(){
   // 결과 화면에서도 도우미를 다시 열 수 있어요.
   if (!D.getElementById('jk-ai-style')) {
     const st = D.createElement('style'); st.id = 'jk-ai-style';
-    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 30px;min-height:76px;font:900 25px Pretendard Variable,Pretendard,system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
+    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:64px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 26px;min-height:76px;font:900 22px Pretendard Variable,Pretendard,system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
 #jk-ai-launch{padding-left:112px}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
 #jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}
 #jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
@@ -427,7 +427,7 @@ function aiFloat(){
 #jk-ai-panel .ft input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:2px solid #C4B5FD;border-radius:12px;outline:none}#jk-ai-panel .ft input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px #DDD6FE}
 #jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
 #jk-ai-panel .ft button:disabled{opacity:.5;cursor:default}
-@media(max-width:600px){#jk-ai-launch{right:12px;bottom:92px;font-size:19px;min-height:60px;padding:12px 18px 12px 78px}#jk-ai-launch::before{width:64px;height:72px;left:8px}#jk-ai-panel{right:12px;bottom:12px}}`;
+@media(max-width:600px){#jk-ai-launch{right:12px;bottom:56px;font-size:19px;min-height:60px;padding:12px 18px 12px 78px}#jk-ai-launch::before{width:64px;height:72px;left:8px}#jk-ai-panel{right:12px;bottom:12px}}`;
     D.head.appendChild(st);
   }
   if (!P.__jkAiCleanup) {  // 다른 페이지로 가면 버튼과 창을 지워요
@@ -444,10 +444,12 @@ function aiFloat(){
   if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
   let pocket=D.getElementById('jk-ai-pocket');
   if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
-  pocket.textContent='🎒 주머니에 넣기';pocket.style.cssText='position:fixed;right:22px;bottom:60px;z-index:999990;background:#fff;color:#3730A3;border:2.5px solid #8B5CF6;border-radius:999px;padding:8px 18px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px #0003';
+  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;background:#fff;color:#4C1D95;border:2px solid #8B5CF6;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
   pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
   pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
-  if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{width:54px!important;min-height:54px!important;padding:6px!important;border-radius:50%!important;font-size:25px!important}#jk-ai-launch.pocket::before{display:none!important}';D.head.appendChild(st);}
+  // ‘넣기’ 버튼을 AI 탐정 상자 오른쪽 위 모서리에 걸쳐 둬요(깡지 도우미·나의 폰과 같은 모양).
+  const placePocket=()=>{try{const r=launch.getBoundingClientRect();pocket.style.top=(r.top-17)+'px';pocket.style.right=(P.innerWidth-r.right+14)+'px';}catch(e){}};placePocket();setTimeout(placePocket,100);if(!P.__jkPocketRs){P.__jkPocketRs=1;P.addEventListener('resize',()=>{const l=D.getElementById('jk-ai-launch'),k=D.getElementById('jk-ai-pocket');if(l&&k){const r=l.getBoundingClientRect();k.style.top=(r.top-17)+'px';k.style.right=(P.innerWidth-r.right+14)+'px';}});}
+  {const o=D.getElementById('jk-pocket-style');if(o)o.remove();}if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{right:0!important;bottom:150px!important;width:96px!important;min-height:92px!important;padding:0!important;border-right:0!important;border-radius:22px 0 0 22px!important;font-size:0!important}#jk-ai-launch.pocket::before{left:50%!important;bottom:6px!important;transform:translateX(-50%);width:76px!important;height:80px!important}';D.head.appendChild(st);}
 
   launch.onclick = () => { P.__jkAiPocket=false; P.__jkAiOpen = true; aiFloat(); };
   let panel = D.getElementById('jk-ai-panel');
@@ -595,6 +597,8 @@ window.addEventListener('message', ev => { if (ev.source === window.parent && ev
   if (a.ai) { const before = AI.answers.length; AI.answers = a.ai.answers || []; AI.left = a.ai.left; G.stepHint = a.ai.used ?? AI.answers.filter(x=>x.charged!==false).length;
     if (AI.answers.length > before) AI.wait = false; if (!G.done) render(); else aiFloat(); }
   requestAnimationFrame(() => resize(true)); } });
+// 화면을 다시 그려도 사용자가 펼치거나 접은 상자(게임 방법 등)는 그대로 유지해요.
+{ const _render = render; render = function(){ const st = {}; document.querySelectorAll('details > summary').forEach(x => { st[x.textContent] = x.parentElement.open; }); _render.apply(this, arguments); document.querySelectorAll('details > summary').forEach(x => { if (x.textContent in st) x.parentElement.open = st[x.textContent]; }); }; }
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
 window.addEventListener('load', resize); window.addEventListener('resize', resize);

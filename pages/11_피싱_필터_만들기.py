@@ -139,7 +139,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
 @keyframes scan{0%{background-position:-200px 0}100%{background-position:200px 0}}
 .hero{background:linear-gradient(135deg,#1E5B4F,#2E8B75)!important;color:#fff;border-radius:18px;padding:10px 16px;text-align:center;animation:pop .5s ease-out both}
-.cols{background:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,.18)),url(__SCENEIMG__) center/cover;border-radius:20px;padding:14px;box-shadow:inset 0 0 0 2px #D7E2DD}
+.cols{background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.1)),url(__SCENEIMG__) center/cover;border-radius:20px;padding:14px;box-shadow:inset 0 0 0 2px #D7E2DD}
 .cols .msg{box-shadow:0 4px 10px rgba(0,0,0,.18)}
 .cols .rule{background:rgba(244,248,246,.95)}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
@@ -224,8 +224,6 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 @media (max-width:720px){.cols{grid-template-columns:1fr}.builder{position:static}.steps{grid-template-columns:1fr}.step{display:flex;gap:10px;align-items:center;text-align:left}.step .ic{font-size:28px}}
 @media (max-width:480px){.ex,.terms,.twin .pair{grid-template-columns:1fr}.hero b{font-size:1.2rem}.stages small{font-size:.72rem}}
 
-.cols{background:#F4F8F6;padding:14px;}
-.filter-scene{height:110px;background:url(__SCENEIMG__) center/cover;border-radius:16px;margin:10px 0}
 .builder{background:#fff;border:2px solid #B8CFC4;border-radius:16px;padding:14px;color:#203C35}
 .meta{background:#EDF5F0;color:#203C35;padding:10px;border-radius:10px;font-weight:800}
 .builder pre{background:#172B3A;color:#fff;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -370,7 +368,6 @@ function renderPlay(){
   <div class="goal">🎯 목표: ${esc(s.goal)}</div>
   <div class="sintro">📢 ${esc(s.intro)}</div>
   ${res ? resultHtml(st, res) : ''}
-  ${'__SCENEIMG__' ? '<div class="filter-scene" role="img" aria-label="도토리 우체국 풍경"></div>' : ''}
   <div class="cols">
     <div><h3 style="margin:6px 0">📥 들어온 문자 ${s.msgs.length}개</h3><div class="inbox">${msgs}</div></div>
     <div class="builder"><h3 style="margin:6px 0">🧩 내 필터 규칙</h3>

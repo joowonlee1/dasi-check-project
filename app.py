@@ -268,14 +268,13 @@ st.markdown(
     /* 페이지별 이용 순서 */
     /* 스크롤을 줄이려고 위쪽 여백과 안내 상자를 작게 만들어요. */
     [data-testid="stMainBlockContainer"] {
-        padding-top: 2.6rem;
+        padding-top: 4rem;
     }
 
     /* 화면에 안 보이는 요소(스타일만 있는 칸·높이 0 연결 칸)가 간격만 차지해 위쪽이 비지 않게 접어요. */
     [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] > style:only-child),
     [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[height="0"]),
     [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"][height="0"]),
-    [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"]:not([height])),
     [data-testid="stMainBlockContainer"] div:has(> .st-key-dotori_helper),
     [data-testid="stMainBlockContainer"] .st-key-login_resume_bridge {
         position: absolute !important; width: 1px !important; height: 0 !important; overflow: hidden !important; margin: 0 !important;
@@ -770,6 +769,7 @@ feature_pages = [
 
 page_by_number = {row[0]: page for row, page in zip(FEATURES, feature_pages)}
 citizen_page = st.Page("pages/0_도토리시_시민증.py", title="도토리시 시민증", icon="🪪")
+admin_room = st.Page("pages/15_관리실.py", title="관리실", icon="🛠️")
 
 navigation = st.navigation(
     {
@@ -778,6 +778,8 @@ navigation = st.navigation(
         # 개념을 먼저 알고 게임을 하면 이해가 쉬워서 '확인과 학습'(개념과 통계 먼저)을 앞쪽에 둬요.
         "확인과 학습": [page_by_number[n] for n in ("05", "04", "13")],
         "체험과 연습": [page_by_number[n] for n in ("01", "02", "03", "06", "09", "10", "11", "12", "14", "08")],
+        # 관리자만 보이는 관리실(정답·시민 관리). 페이지마다 펼치던 관리 상자를 여기로 모았어요.
+        **({"관리": [admin_room]} if st.session_state.get("admin_open") else {}),
     },
     expanded=True,  # 페이지가 많아져도 'View more'로 접히지 않고 메뉴가 모두 보이게
 )

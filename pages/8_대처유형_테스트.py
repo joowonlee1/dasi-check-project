@@ -254,6 +254,23 @@ CSS = """
 .jk-q-num {color:#3BA99C;font-weight:800;margin-top:4px;}
 
 .jk-q-text {font-size:1.45rem;font-weight:800;color:#20483F;margin-top:6px;word-break:keep-all;line-height:1.5;}
+.jk-path {position:relative;display:flex;justify-content:space-between;align-items:flex-end;margin:46px 6px 2px;padding:0 4px;}
+.jk-line {position:absolute;left:18px;right:18px;bottom:15px;height:6px;background:#E7ECE9;border-radius:9px;overflow:hidden;}
+.jk-line i {display:block;height:100%;background:linear-gradient(90deg,#F6C453,#3BA99C);border-radius:9px;transition:width .4s;}
+.jk-st {position:relative;z-index:1;width:36px;height:36px;border-radius:50%;background:#fff;border:3px solid #DCE4E0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;color:#94A3B8;}
+.jk-st.on {border-color:#3BA99C;background:#ECFDF5;font-size:1.05rem;}
+.jk-st.now {border-color:#F59E0B;background:#FFF7E6;color:#B45309;transform:scale(1.15);box-shadow:0 0 0 4px #FDE68A;}
+.jk-walker {position:absolute;bottom:34px;left:50%;transform:translateX(-50%);animation:jk-hop 1.2s ease-in-out infinite;}
+@keyframes jk-hop {0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,-6px)}}
+.jk-q3 {display:flex;align-items:center;gap:6px;margin:8px 0 10px;}
+.jk-q3-kj {flex:0 0 150px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.12));animation:jk-float 2.6s ease-in-out infinite;}
+.jk-q3-bubble {position:relative;flex:1;background:linear-gradient(135deg,#FFF4E3,#E9F7F0);border:3px solid #F5C99B;border-radius:24px;padding:18px 22px;box-shadow:0 5px 0 #F5D9B5;}
+.jk-q3-bubble::before {content:"";position:absolute;left:-16px;top:50%;transform:translateY(-50%);border:13px solid transparent;border-right:16px solid #F5C99B;border-left:0;}
+.jk-q3-bubble::after {content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);border:10px solid transparent;border-right:12px solid #FFF4E3;border-left:0;}
+.jk-q3-top {display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.jk-q3-icon {display:inline-flex;width:54px;height:54px;border-radius:50%;background:#fff;align-items:center;justify-content:center;font-size:32px;box-shadow:0 3px 8px rgba(0,0,0,.08);}
+.jk-q3 .jk-q-text {font-size:1.5rem;text-align:left;margin:0;}
+@media (max-width:640px){.jk-q3-kj{flex-basis:90px}.jk-q3 .jk-q-text{font-size:1.2rem}.jk-st{width:24px;height:24px;font-size:.65rem;border-width:2px}.jk-walker img{width:32px!important}}
 .jk-dots {display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0 2px;}
 .jk-dot {width:30px;height:30px;border-radius:50%;background:#EEF2F1;color:#94A3B8;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:.2s;}
 .jk-dot.on {background:#3BA99C;color:#fff;}
@@ -558,20 +575,25 @@ def show_question(i):
     st.button("← 이전 화면으로", on_click=back_step, key=PREFIX + "quit",
               help="앞 문항으로 돌아가요. 고른 답은 그대로 남아요. 첫 문항이면 처음 화면으로 가요.")
 
-    # 12칸 진행 표시: 답한 문항은 채워지고, 지금 문항은 크게 빛나요.
-    dots = "".join(
-        f'<span class="jk-dot{" on" if answers[k] is not None else ""}{" now" if k == i else ""}" style="display:inline-flex;width:32px;height:32px;min-width:32px;font-size:.85rem">{k + 1}</span>' for k in range(12))
-    st.markdown(f'<div class="jk-dots">{dots}</div><div class="jk-dots-cap">{done} / 12 완료</div>', unsafe_allow_html=True)
-
+    # 12칸 도토리 길: 깡지가 지금 문항 위에 서서 함께 걸어가요.
     try:
         from mascot_ui import mascot_img
-        kj = mascot_img("think", 110).replace("display:block;margin:0 auto;", "")
+        walker = mascot_img("sneaker", 46).replace("display:block;margin:0 auto;", "")
+        poses = ("think", "detective", "suspicious", "phone", "letter", "hint", "shield", "headset", "chat", "link", "app", "trophy")
+        kj = mascot_img(poses[i % len(poses)], 150).replace("display:block;margin:0 auto;", "")
     except Exception:
-        kj = ""
+        walker, kj = "", ""
+    steps = "".join(
+        f'<div class="jk-st{" on" if answers[k] is not None else ""}{" now" if k == i else ""}">'
+        + (f'<div class="jk-walker">{walker}</div>' if k == i else "")
+        + f'<span>{"🌰" if answers[k] is not None else k + 1}</span></div>' for k in range(12))
+    st.markdown(f'<div class="jk-path"><div class="jk-line"><i style="width:{done / 12 * 100:.0f}%"></i></div>{steps}</div>'
+                f'<div class="jk-dots-cap">🌰 {done} / 12 모음</div>', unsafe_allow_html=True)
+
     st.markdown(
-        f'<div class="jk-q jk-q2" id="q{i}"><div class="jk-q-kj">{kj}</div>'
-        f'<div class="jk-q-main"><div class="jk-q-icon2">{QUESTION_ICONS[i]}</div>'
-        f'<div class="jk-q-num2">질문 {i + 1} / 12</div>'
+        f'<div class="jk-q3" id="q{i}"><div class="jk-q3-kj">{kj}</div>'
+        f'<div class="jk-q3-bubble"><div class="jk-q3-top"><span class="jk-q3-icon">{QUESTION_ICONS[i]}</span>'
+        f'<span class="jk-q-num2">깡지의 질문 {i + 1}</span></div>'
         f'<div class="jk-q-text">{escape(q[1])}</div></div></div>',
         unsafe_allow_html=True,
     )

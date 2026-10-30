@@ -530,7 +530,7 @@ def evidence_card(evidence_id):
             from voice_ui import call_button
             item = EVIDENCE[evidence_id]
             collect_style()  # 버튼 꾸밈을 칸 밖에서 먼저 넣어, 두 버튼이 같은 높이에서 시작하게 해요.
-            rec_col, act_col = st.columns([1, 1.25], vertical_alignment="top")
+            rec_col, act_col = st.columns([1, 1.25], vertical_alignment="top", gap="medium")
             with rec_col:
                 call_button({"name": item["name"], "number": item["number"], "avatar": "👩", "ring": False, "status": "통화 녹음 재생",
                              "lines": [["상대", item["lines"][0], ""],
@@ -546,7 +546,7 @@ def evidence_card(evidence_id):
 def collect_button(evidence_id, compact=False):
     if evidence_id in game["evidence"]:
         st.markdown('<div style="display:flex;align-items:center;justify-content:center;min-height:52px;margin:'
-                    + ("0" if compact else "12px 0 4px") + ';'
+                    + ("10px 0 0" if compact else "12px 0 4px") + ';'
                     'background:#ECFDF3;color:#166534;border:2px solid #86EFAC;border-radius:14px;font-size:1.08rem;font-weight:800">'
                     + ('✅ 보관함에 저장됨' if compact else '✅ 증거 보관함에 저장됨') + '</div>', unsafe_allow_html=True)
     else:

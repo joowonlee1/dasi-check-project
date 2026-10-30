@@ -92,57 +92,52 @@ def _to_url_page(text):
 
 
 def show_qr_scanner():
-    # 한 상자 안에: 왼쪽은 웹캠·결과, 오른쪽은 연습용 QR(작게 나란히). 빈 곳 없이 한눈에 보이게 배치해요.
+    # 한 상자 안에: 왼쪽은 설명·웹캠, 오른쪽 두 칸은 연습용 QR 카드. 빈 곳 없이 한 줄에 보이게 배치해요.
     with st.container(border=True, key="qr_scan_box"):
         st.markdown(
             "<style>.st-key-qr_scan_box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4)}"
-            ".st-key-qr_scan_box [data-testid=stImage] img{border-radius:10px;border:2px solid #CBD5E1}</style>"
-            '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:2rem">📷</span><div>'
-            '<div style="font-size:1.3rem;font-weight:900;color:#1E3A8A">진짜 QR 비춰 보기</div>'
-            '<div style="color:#475569;font-size:.95rem;word-break:keep-all">휴대폰 화면이나 종이 속 QR을 웹캠에 비춰 찍으면, 주소에 들어가지 않고 '
-            '<b>어디로 데려가는지만</b> 알려 줘요. 사진은 QR을 읽는 데만 쓰고 저장하지 않아요.</div></div></div>',
+            ".st-key-qr_scan_box [data-testid=stImage]{display:flex;justify-content:center}"
+            ".st-key-qr_scan_box [data-testid=stImage] img{border-radius:10px;border:2px solid #CBD5E1}"
+            ".st-key-qr_scan_box [data-testid=stImageCaption]{font-weight:800;color:#1E3A8A;text-align:center}"
+            "[class*=st-key-qr_card_]{background:#fff;border:2px solid #BFDBFE;border-radius:16px;padding:8px 10px}"
+            "[class*=st-key-qr_card_] [data-testid=stDownloadButton] button{min-height:32px;padding:2px 8px;font-size:.85rem}</style>",
             unsafe_allow_html=True,
         )
-        texts = _scan_area()
-        st.markdown("**🖨️ 연습용 가짜 QR** · 휴대폰에 띄우거나 출력해서 비춰 보세요")
-        cols = st.columns(len(PRACTICE))
-        for i, (col, (label, text)) in enumerate(zip(cols, PRACTICE.items())):
-            with col:
+        left, *cards = st.columns([1.3] + [1] * len(PRACTICE), gap="small")
+        with left:
+            st.markdown(
+                '<div style="font-size:1.3rem;font-weight:900;color:#1E3A8A">📷 진짜 QR 비춰 보기</div>'
+                '<div style="color:#475569;font-size:.92rem;word-break:keep-all;margin:2px 0 6px">QR을 웹캠에 비추면 <b>주소에 들어가지 않고</b> 어디로 데려가는지만 알려 줘요. 사진은 저장하지 않아요.</div>'
+                '<div style="display:flex;flex-wrap:wrap;gap:4px;font-size:.85rem;font-weight:800;color:#1E3A8A">'
+                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">① 📷 웹캠 켜기</span>'
+                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">② 🔲 QR 비추고 찍기</span>'
+                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">③ 🔎 목적지 확인</span></div>'
+                '<div style="margin-top:8px;background:#FEF3C7;border-radius:10px;padding:5px 9px;font-size:.82rem;font-weight:700;color:#92400E;word-break:keep-all">'
+                '📵 연습용 QR은 가상 주소라 휴대폰으로 찍어도 열리지 않아요. ‘바로 검사’를 눌러 보세요.</div>',
+                unsafe_allow_html=True,
+            )
+            texts = _scan_area()
+        for i, (col, (label, text)) in enumerate(zip(cards, PRACTICE.items())):
+            with col, st.container(key=f"qr_card_{i}"):
                 try:
                     png = _qr_png(text)
-                    st.image(png, caption=label, width=130)
+                    st.image(png, caption=label, width=110)
                     if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
                                  help="웹캠이 없어도 이 QR 속 주소를 바로 읽어 살펴봐요."):
                         st.session_state["qr_demo_text"] = text
-                    with st.expander("QR 저장·인쇄하기"):
-                        st.download_button("⬇️ QR 이미지 저장", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
-                                           mime="image/png", key=f"qr_dl_{i}", width="stretch")
+                    st.download_button("⬇️ QR 저장", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
+                                       mime="image/png", key=f"qr_dl_{i}", width="stretch")
                 except Exception:
                     st.caption("연습용 QR을 만들지 못했어요.")
-        st.markdown('<div style="margin-top:6px;background:#FEF3C7;border-radius:10px;padding:6px 10px;font-size:.85rem;font-weight:700;color:#92400E;word-break:keep-all">'
-                    '📵 연습용 QR은 <b>가상 주소</b>라 휴대폰 카메라로 찍어도 사이트가 열리지 않아요(일부러 그렇게 만들었어요). '
-                    '‘🔎 바로 검사’를 누르거나 위의 웹캠에 비춰 보세요.</div>', unsafe_allow_html=True)
         if not texts and st.session_state.get("qr_demo_text"):
             texts = [st.session_state["qr_demo_text"]]
-        # 결과는 두 칸 아래에 넓게 보여 줘요(오른쪽에 빈 곳이 생기지 않게).
+        # 결과는 세 칸 아래에 넓게 보여 줘요.
         if texts:
             _show_results(texts)
 
 
 def _scan_area():
     if not st.toggle("📷 웹캠 켜기", key="qr_cam_on", help="켜면 브라우저가 카메라 사용 허락을 물어봐요."):
-        steps = (("1", "📷", "웹캠 켜기", "브라우저가 카메라 허락을 물어봐요"),
-                 ("2", "🔲", "QR 비추고 찍기", "QR이 화면 가운데에 크게"),
-                 ("3", "🔎", "목적지 확인", "주소에 들어가지 않고 글자만 살펴봐요"))
-        st.markdown(
-            '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px">'
-            + "".join(f'<div style="background:#fff;border:2px solid #BFDBFE;border-radius:14px;padding:10px 8px;text-align:center">'
-                      f'<div style="font-size:1.8rem">{icon}</div><div style="font-weight:900;color:#1E3A8A">{n}. {t}</div>'
-                      f'<div style="font-size:.95rem;font-weight:600;color:#475569;word-break:keep-all;line-height:1.4">{d}</div></div>'
-                      for n, icon, t, d in steps)
-            + "</div>",
-            unsafe_allow_html=True,
-        )
         return None
     shot = st.camera_input("QR이 화면 가운데에 크게 오게 비추고 ‘사진 찍기’를 눌러요", key="qr_cam")
     if shot is None:

@@ -48,6 +48,10 @@ if not S.get("entered", False):
         except Exception:
             _kj = ""
         st.markdown(scene_ui.hallway_cover(_kj), unsafe_allow_html=True)
+    # 할머니 폰처럼 그림 바로 아래에 큰 입장 버튼을 둬요(설명은 그 아래에서 천천히 읽어도 돼요).
+    if st.button("🚪 아파트 관리사무소 들어가기", type="primary", width="stretch", key="nv_enter_top"):
+        S["entered"] = True
+        st.rerun()
     show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
     # 이 게임은 시작 이야기가 없어서 짧은 이야기 상자를 넣었어요.
     st.markdown(
@@ -339,7 +343,22 @@ if not S["done"]:
     st.markdown(f'<div style="font-size:1.3rem;font-weight:900;margin:14px 0 8px">{i+1}/3 · 다람쥐아파트 {case["door"]} 문 앞</div>', unsafe_allow_html=True)
     checked=S["checks"].setdefault(i,{})
     flash=S.setdefault("flash",{})
-    investigate_tab, judge_tab = st.tabs([f"① 📄 {case['door']} 조사·확인 기록", f"② 🔏 {case['door']} 판단하기"])
+    # 두 탭을 큰 버튼처럼 보이게 해요. 기록을 모으면 ‘② 판정 도장’ 탭이 주황색으로 반짝여 찾기 쉬워요.
+    _glow = len(checked) > 0 and i not in S["answers"]
+    st.markdown("<style>"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tablist]{gap:10px;border:0}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab]{flex:1;justify-content:center;min-height:58px;border-radius:16px 16px 0 0;border:3px solid #CBD5E1;border-bottom:0;background:#F8FAFC;padding:8px 14px}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab] p{font-size:1.18rem!important;font-weight:900!important}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab][aria-selected=true]{background:#20483F;border-color:#20483F}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab][aria-selected=true] p{color:#fff!important}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab]:nth-child(2){border-color:#F59E0B;background:#FFF7E6}"
+        ".st-key-nv_tabs [data-testid=stTabs] [role=tab]:nth-child(2)[aria-selected=true]{background:#D97706;border-color:#D97706}"
+        + (".st-key-nv_tabs [data-testid=stTabs] [role=tab]:nth-child(2)[aria-selected=false]{animation:nv-tabglow 1.4s ease-in-out infinite}"
+           "@keyframes nv-tabglow{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.6)}50%{box-shadow:0 0 0 8px rgba(245,158,11,0)}}" if _glow else "")
+        + ".st-key-nv_tabs [data-testid=stTabs] [data-baseweb=tab-highlight],.st-key-nv_tabs [data-testid=stTabs] [data-baseweb=tab-border]{display:none}"
+        "</style>", unsafe_allow_html=True)
+    _tabs_box = st.container(key="nv_tabs")
+    investigate_tab, judge_tab = _tabs_box.tabs([f"① 📄 {case['door']} 조사하기", f"② 🔏 {case['door']} 판정 도장 찍기"])
     with investigate_tab:
         # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
         _checked=S["checks"].get(i,{})
@@ -401,9 +420,11 @@ if not S["done"]:
                 record_card(q, text)
         else:
             st.caption("아직 모은 기록이 없어요. 위의 도구를 눌러 확인해 보세요.")
+        if checked and i not in S["answers"]:
+            st.markdown('<div style="margin-top:12px;background:#FFF7E6;border:3px solid #F59E0B;border-radius:16px;padding:12px 16px;'
+                        'font-size:1.1rem;font-weight:900;color:#92400E;text-align:center">⬆️ 기록을 다 모았으면 맨 위 <b>‘② 🔏 판정 도장 찍기’</b> 탭을 눌러요!</div>',
+                        unsafe_allow_html=True)
     with judge_tab:
-        with st.expander("📄 안내서 다시 보기"):
-            door_scene(i, clues=True)
         with st.expander("📁 확인 기록 다시 보기", expanded=True):
             for q,text in checked.items():
                 record_card(q,text)
@@ -428,7 +449,7 @@ if not S["done"]:
     .st-key-nv_judge [data-testid=stFormSubmitButton] button{min-height:54px;border-radius:16px;font-size:1.15rem;font-weight:900;box-shadow:0 4px 0 #14532D}
     @media (max-width:640px){.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:wrap}}
     </style>""", unsafe_allow_html=True)
-        st.markdown(kkangji_say("think", "①→④ 차례로 골라 봐! 헷갈리면 바로 위 ‘안내서 다시 보기’와 ‘확인 기록 다시 보기’를 열어 보자.", 110), unsafe_allow_html=True)
+        st.markdown(kkangji_say("think", "①→④ 차례로 골라 봐! 헷갈리면 바로 위 확인 기록을 다시 보자.", 110), unsafe_allow_html=True)
         with st.container(key="nv_judge"), st.form(f"nv_answer_{i}"):
             verdict=st.radio("① 지금 모은 근거로 보면, 이 안내서는?",VERDICTS,index=None,horizontal=True,
                              help="확인한 내용만으로 결론을 내기 어렵다면 ‘판단 보류’도 좋은 답이에요.")
