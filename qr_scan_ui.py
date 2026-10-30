@@ -103,27 +103,25 @@ def show_qr_scanner():
             '<b>어디로 데려가는지만</b> 알려 줘요. 사진은 QR을 읽는 데만 쓰고 저장하지 않아요.</div></div></div>',
             unsafe_allow_html=True,
         )
-        cam_col, practice_col = st.columns([1.35, 1], gap="medium")
-        with practice_col:
-            st.markdown("**🖨️ 연습용 가짜 QR** · 휴대폰에 띄우거나 출력해서 비춰 보세요")
-            cols = st.columns(len(PRACTICE))
-            for i, (col, (label, text)) in enumerate(zip(cols, PRACTICE.items())):
-                with col:
-                    try:
-                        png = _qr_png(text)
-                        st.image(png, caption=label, width=130)
-                        if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
-                                     help="웹캠이 없어도 이 QR 속 주소를 바로 읽어 살펴봐요."):
-                            st.session_state["qr_demo_text"] = text
-                        st.download_button("⬇️ 받기", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
+        texts = _scan_area()
+        st.markdown("**🖨️ 연습용 가짜 QR** · 휴대폰에 띄우거나 출력해서 비춰 보세요")
+        cols = st.columns(len(PRACTICE))
+        for i, (col, (label, text)) in enumerate(zip(cols, PRACTICE.items())):
+            with col:
+                try:
+                    png = _qr_png(text)
+                    st.image(png, caption=label, width=130)
+                    if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
+                                 help="웹캠이 없어도 이 QR 속 주소를 바로 읽어 살펴봐요."):
+                        st.session_state["qr_demo_text"] = text
+                    with st.expander("QR 저장·인쇄하기"):
+                        st.download_button("⬇️ QR 이미지 저장", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
                                            mime="image/png", key=f"qr_dl_{i}", width="stretch")
-                    except Exception:
-                        st.caption("연습용 QR을 만들지 못했어요.")
-            st.markdown('<div style="margin-top:6px;background:#FEF3C7;border-radius:10px;padding:6px 10px;font-size:.85rem;font-weight:700;color:#92400E;word-break:keep-all">'
-                        '📵 연습용 QR은 <b>가상 주소</b>라 휴대폰 카메라로 찍어도 사이트가 열리지 않아요(일부러 그렇게 만들었어요). '
-                        '‘🔎 바로 검사’를 누르거나 왼쪽 웹캠에 비춰 보세요.</div>', unsafe_allow_html=True)
-        with cam_col:
-            texts = _scan_area()
+                except Exception:
+                    st.caption("연습용 QR을 만들지 못했어요.")
+        st.markdown('<div style="margin-top:6px;background:#FEF3C7;border-radius:10px;padding:6px 10px;font-size:.85rem;font-weight:700;color:#92400E;word-break:keep-all">'
+                    '📵 연습용 QR은 <b>가상 주소</b>라 휴대폰 카메라로 찍어도 사이트가 열리지 않아요(일부러 그렇게 만들었어요). '
+                    '‘🔎 바로 검사’를 누르거나 위의 웹캠에 비춰 보세요.</div>', unsafe_allow_html=True)
         if not texts and st.session_state.get("qr_demo_text"):
             texts = [st.session_state["qr_demo_text"]]
         # 결과는 두 칸 아래에 넓게 보여 줘요(오른쪽에 빈 곳이 생기지 않게).
@@ -140,7 +138,7 @@ def _scan_area():
             '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px">'
             + "".join(f'<div style="background:#fff;border:2px solid #BFDBFE;border-radius:14px;padding:10px 8px;text-align:center">'
                       f'<div style="font-size:1.8rem">{icon}</div><div style="font-weight:900;color:#1E3A8A">{n}. {t}</div>'
-                      f'<div style="font-size:.8rem;color:#64748B;word-break:keep-all;line-height:1.4">{d}</div></div>'
+                      f'<div style="font-size:.95rem;font-weight:600;color:#475569;word-break:keep-all;line-height:1.4">{d}</div></div>'
                       for n, icon, t, d in steps)
             + "</div>",
             unsafe_allow_html=True,
