@@ -793,7 +793,7 @@ def show_voice_call(event, step):
         lines.append(["수사관", text, warn])
     number, _, shown = event["sender"].partition(" (")
     call_button({"name": shown.rstrip(")") or number, "number": number if shown else "", "avatar": "🕴️", "danger": True,
-                 "lines": lines, "pitch": {"수사관": [0.75, 1.05]}, "status": "통화 중",
+                 "lines": lines, "pitch": {"수사관": [0.9, 1.05]}, "gender": {"수사관": "m"}, "status": "통화 중",
                  "verdict": "📵 통화가 끝났어요. 할머니께 어떻게 말할지 골라 보세요."},
                 "할머니 폰에 걸려 온 전화 받아서 듣기", key=f"gp_call_{step}")
 
@@ -953,15 +953,36 @@ def show_play(game):
             current = "puzzled"
         else:
             current = "neutral"
-        mood = face_svg(current, 130)
         now = event["grandma_alert"] if (game["alert"] and not event["real"]) else event["grandma"]
         bubble = f'<div class="say prev">{esc(prev)}</div>' if prev else ""
-        st.markdown(
-            f'<div class="gp-grandma"><div class="face">{mood}</div>'
-            f"{bubble}"
-            f'<div class="say">{esc(now)}</div></div>',
-            unsafe_allow_html=True,
-        )
+        from pathlib import Path as _P
+        if (_P(__file__).resolve().parent.parent / "static" / "scene_grandma.jpg").exists():
+            # 할머니 댁 거실 그림 속 소파에 할머니가 앉아 있고, 표정이 상황에 따라 바뀌어요.
+            # 사기범을 믿는 정도가 높을수록 화면이 붉게 물들어 긴장감을 보여 줘요.
+            tint = "rgba(220,38,38,.22)" if (not event["real"] and belief > 70) else ("rgba(245,158,11,.16)" if (not event["real"] and belief > 45) else "rgba(0,0,0,0)")
+            st.markdown(
+                "<style>.gp-room{position:relative;border-radius:18px;overflow:hidden;border:3px solid #E2C98A;aspect-ratio:754/314;"
+                "background:url(app/static/scene_grandma.jpg) center/cover;box-shadow:0 4px 12px rgba(60,40,10,.15)}"
+                ".gp-room .tint{position:absolute;inset:0;transition:background .6s}"
+                ".gp-room .gm{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:27%;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}"
+                ".gp-room .gm img,.gp-room .gm svg{width:100%!important;height:auto!important;margin:0!important;border-radius:50%!important;border:4px solid #fff!important;box-shadow:0 0 0 3px #F2B6C6!important;aspect-ratio:1;object-fit:cover}"
+                ".gp-room .ph{position:absolute;left:62%;top:58%;font-size:clamp(1.2rem,3vw,2rem);animation:gp-buzz .6s ease-in-out infinite}"
+                "@keyframes gp-buzz{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}"
+                ".gp-room .tag{position:absolute;left:10px;bottom:8px;background:rgba(255,253,240,.95);border:2px solid #C9A86A;border-radius:999px;padding:2px 10px;font-weight:900;color:#5B3A12;font-size:.85rem}</style>"
+                f'<div class="gp-room"><div class="tint" style="background:{tint}"></div><div class="gm">{face_svg(current, 160)}</div>'
+                + ('<span class="ph">📱</span>' if not event["real"] else "")
+                + '<span class="tag">🏡 할머니 댁 거실</span></div>'
+                f'<div class="gp-grandma" style="margin-top:8px">{bubble}<div class="say">{esc(now)}</div></div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            mood = face_svg(current, 130)
+            st.markdown(
+                f'<div class="gp-grandma"><div class="face">{mood}</div>'
+                f"{bubble}"
+                f'<div class="say">{esc(now)}</div></div>',
+                unsafe_allow_html=True,
+            )
         st.write("")
         show_gauges(game)
 
@@ -1199,6 +1220,8 @@ def show_ending(game):
 
 with intro("01", suffix=""):
     st.title("✋ 잠깐! · 할머니 폰 지키기")
+    from mascot_ui import show_scene
+    show_scene("scene_grandma", "상수리동 · 할머니 댁 거실")  # 장소 그림 배너
     show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
     st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
