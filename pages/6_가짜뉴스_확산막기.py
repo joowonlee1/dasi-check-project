@@ -344,6 +344,7 @@ function intro(){
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
   ${stageMap()}
+  <button id="nl-launch" style="width:100%;margin:12px 0" onclick="openNewsLab()">📷 같은 사진, 다른 이야기 · 웹캠 체험</button>
   <div class="jk-k3"><div><div class="t"><i>1</i><em>🛡️</em>퍼지기 전, 1명 지키기</div><p>시작 전에 흰 동그라미 <b>1명</b>을 눌러 미리 알려 줘요.</p></div><div><div class="t"><i>2</i><em>📶</em>1차·2차…로 퍼짐</div><p>📢에서 시작해 <b>연결선을 따라</b> 한 칸씩 번져요. 결과에서 차수별로 몇 명이 새로 믿었는지 보여 줘요.</p></div><div class="key"><div class="t"><i>3</i><em>🃏</em>남은 카드로 막기</div><p>카드 1장 = 1명. ⚪ 아직 모르는 사람 → 🛡️ 지킴 · 🔴 속은 사람 → 💬 근거 있는 정정 문구</p></div></div>
   ${S && S.stageIndex === G.stage && S.phase !== "result" ? '<button class="ok" style="width:100%;margin-bottom:8px" onclick="resumeStage()">▶ 하던 활동 이어하기</button>' : ''}
   <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚪 도토리 광장 들어가기 · ${G.stage + 1}단계 ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>
@@ -639,7 +640,8 @@ let lastHeight = 0;
 function sendHost(type, payload = {}) { window.parent.postMessage({isStreamlitMessage: true, type, ...payload}, '*'); }
 function resize(force = false){
   const root = document.querySelector('main.wrap'); if (!root) return;
-  const height = Math.ceil(root.getBoundingClientRect().height) + 16;
+  const lab = document.getElementById("news-lab");
+  const height = Math.ceil((lab && lab.getClientRects().length ? lab : root).getBoundingClientRect().height) + 16;
   if (force || height !== lastHeight) { sendHost('streamlit:setFrameHeight', {height}); lastHeight = height; }
 }
 // 도토리시 통계: 파이썬이 보낸 다른 사람들의 기록(stats)을 받고, 게임 결과를 파이썬으로 보냅니다.
@@ -652,6 +654,16 @@ window.addEventListener('load', resize); window.addEventListener('resize', resiz
 intro();
 </script></body></html>
 '''
+
+from pathlib import Path
+
+# 게임과 별개인 선택 체험: 사진/문장은 브라우저 밖으로 보내지 않습니다.
+_camera_lab = Path(__file__).resolve().parents[1] / "news_camera_lab.html"
+if _camera_lab.is_file():
+    HTML = HTML.replace("</body>", _camera_lab.read_text(encoding="utf-8") + "</body>")
+else:
+    # 파일을 빠뜨려 업로드했어도 기존 게임은 계속 이용할 수 있습니다.
+    HTML = HTML.replace('onclick="openNewsLab()"', 'disabled title="news_camera_lab.html 파일을 저장소 첫 화면에 추가해 주세요"')
 
 import scene_ui
 page = bridge(HTML, "06").replace("__SCENEIMG__", scene_ui.data_url("scene_plaza")).replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))

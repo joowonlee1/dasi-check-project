@@ -388,6 +388,32 @@ CSS = """
 
 .jk-drum div {font-size:72px;animation:jk-bounce .5s ease-in-out infinite;}
 
+
+/* 문항 화면: 깡지와 질문, A/B 선택지 간격만 정리합니다. */
+.jk-path{margin:0 0 10px;padding:100px 26px 10px;min-height:146px;box-sizing:border-box;}
+.jk-line{left:44px;right:44px;bottom:25px;}
+.jk-walker{bottom:40px;width:82px;max-width:none;}
+.jk-walker img{width:82px!important;height:auto!important;max-width:none!important;object-fit:contain;}
+.jk-dots-cap{margin:8px 0 22px;line-height:1.6;}
+.jk-q3{gap:24px;margin:20px 0 24px;align-items:center;}
+.jk-q3-bubble{min-width:0;padding:26px 28px;}
+.jk-q3-top{flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+.jk-q3 .jk-q-text{line-height:1.65;overflow-wrap:anywhere;}
+.st-key-coping_choices{margin-top:12px;margin-bottom:20px;}
+.st-key-coping_choices button{height:auto!important;min-height:110px!important;padding:22px 24px 22px 68px!important;white-space:normal!important;}
+.st-key-coping_choices button p{line-height:1.65!important;overflow-wrap:anywhere;}
+@media(max-width:640px){
+ .jk-path{padding:82px 22px 10px;min-height:118px;}
+ .jk-line{left:34px;right:34px;bottom:20px;}
+ .jk-walker{bottom:30px;width:64px;}.jk-walker img{width:64px!important;}
+ .jk-q3{gap:16px;align-items:flex-start;}.jk-q3-kj{flex-basis:68px;}
+ .jk-q3-kj img{width:68px!important;max-width:100%;height:auto!important;}
+ .jk-q3-bubble{padding:18px 16px;}.jk-q3-icon{width:40px;height:40px;font-size:26px;flex-shrink:0;}
+ .jk-q3-top{gap:8px;margin-bottom:12px;}.jk-q3 .jk-q-text{font-size:1.15rem;}
+ .st-key-coping_choices [data-testid=stHorizontalBlock]{gap:16px!important;}
+ .st-key-coping_choices button{min-height:100px!important;padding:20px 16px 20px 64px!important;}
+}
+
 </style>
 
 """
@@ -578,7 +604,7 @@ def show_question(i):
     # 12칸 도토리 길: 깡지가 지금 문항 위에 서서 함께 걸어가요.
     try:
         from mascot_ui import mascot_img
-        walker = mascot_img("sneaker", 46).replace("display:block;margin:0 auto;", "")
+        walker = mascot_img("sneaker", 82).replace("display:block;margin:0 auto;", "")
         poses = ("think", "detective", "suspicious", "phone", "letter", "hint", "shield", "headset", "chat", "link", "app", "trophy")
         kj = mascot_img(poses[i % len(poses)], 150).replace("display:block;margin:0 auto;", "")
     except Exception:
@@ -600,7 +626,7 @@ def show_question(i):
 
     # A·B 답을 나란히 큰 카드로 보여 줘요.
     with st.container(key="coping_choices"):
-        cols = st.columns(2, gap="small")
+        cols = st.columns(2, gap="medium")
         for col, mark, value in zip(cols, ("A", "B"), options(q)):
             chosen = answers[i] == value
             with col:

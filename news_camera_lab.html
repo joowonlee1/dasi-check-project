@@ -1,0 +1,78 @@
+<!-- 가짜뉴스 페이지 내부에 삽입되는 브라우저 전용 체험. 사진/문장을 서버에 보내지 않습니다. -->
+<style>
+#news-lab{max-width:980px;margin:auto;color:#20483f;font:600 17px/1.65 'Malgun Gothic','Apple SD Gothic Neo',sans-serif;padding:8px 4px 20px}
+#news-lab [hidden]{display:none!important} #news-lab{display:none}
+#news-lab h2{font-size:1.55rem;margin:12px 0} #news-lab h3{font-size:1.1rem;margin:0 0 10px}
+#news-lab .nl-box{background:#fff;border:2px solid #dce8df;border-radius:18px;padding:18px;margin:14px 0}
+#news-lab .nl-tip{background:#fff5d9;border-left:5px solid #b68b36;padding:12px 16px;border-radius:12px;margin:12px 0}
+#news-lab .nl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+#news-lab .nl-grid>*{min-width:0} #news-lab canvas,#news-lab video{display:block;width:100%;height:auto;border-radius:12px;background:#edf4f0}
+#news-lab video{max-height:350px;object-fit:contain} #news-lab .nl-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+#news-lab button{white-space:normal;height:auto;min-height:48px;padding:12px 18px;line-height:1.5}
+#news-lab label{display:block;margin:12px 0 5px;font-weight:800}
+#news-lab input[type=text],#news-lab textarea{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:2px solid #a8c3b7;border-radius:10px;background:#fff;color:#173d35}
+#news-lab input[type=range]{width:100%;accent-color:#307267;min-height:30px}
+#news-lab .nl-title{font-size:1.2rem;font-weight:900;overflow-wrap:anywhere;margin:10px 0}
+#news-lab .nl-tag{display:inline-block;background:#eee9ff;color:#553691;border-radius:8px;padding:3px 9px;margin-bottom:8px}
+#news-lab .nl-muted{color:#52685f;font-size:.95rem} #news-lab .nl-status{min-height:1.65em;overflow-wrap:anywhere}
+@media(max-width:650px){#news-lab .nl-grid{grid-template-columns:1fr}#news-lab .nl-box{padding:14px}#news-lab{font-size:16px}}
+</style>
+<script>
+(() => {
+ 'use strict';
+ const root=document.createElement('section');root.id='news-lab';root.setAttribute('aria-label','같은 사진, 다른 이야기');
+ root.innerHTML=`
+ <button type="button" id="nl-back">← 가짜뉴스 게임 안내로</button>
+ <h2 tabindex="-1" id="nl-heading">📷 같은 사진, 다른 이야기</h2>
+ <p>사진은 그대로여도 <b>보여 주는 범위와 제목</b>을 바꾸면 이야기가 달라져요. 직접 편집하고 원본과 비교해 보세요.</p>
+ <div class="nl-tip">촬영은 선택이에요. 카메라는 버튼을 눌러 허용한 뒤에만 켜져요. 소리는 녹음하지 않고, 사진·입력 문장은 서버로 보내거나 저장하지 않아요. 뒤로 가면 사진은 지워져요.</div>
+ <div class="nl-box" id="nl-source"><h3>① 원본 준비하기</h3>
+ <p class="nl-muted">손으로 인사하는 모습과 주변 배경이 함께 보이게 찍어 보세요. 얼굴을 찍지 않아도 돼요.</p>
+ <div class="nl-actions"><button id="nl-start" type="button">📷 카메라 켜기</button><button id="nl-sample" type="button">🌳 예시 그림으로 체험</button><button id="nl-stop" type="button" hidden>카메라 끄기</button></div>
+ <p id="nl-status" class="nl-status" role="status" aria-live="polite">카메라가 꺼져 있어요.</p>
+ <video id="nl-video" autoplay muted playsinline hidden></video>
+ <button type="button" class="ok" id="nl-capture" hidden disabled>이 장면 촬영하기</button></div>
+ <div id="nl-editor" hidden>
+ <div class="nl-box" id="nl-controls"><h3>② 범위와 제목 바꾸기</h3><button type="button" id="nl-replace">사진 지우고 다시 준비하기</button>
+ <div class="nl-grid"><div><b>원본 전체 · 실제로 담긴 범위</b><canvas id="nl-original" width="800" height="450" aria-label="원본 전체 사진"></canvas>
+ <label for="nl-context">원본 상황을 사실대로 적기</label><input id="nl-context" type="text" maxlength="100" placeholder="예: 카메라를 향해 손을 흔들었다."></div>
+ <div><b>편집본 · 선택한 부분만 보기</b><canvas id="nl-crop" width="800" height="450" aria-label="잘라낸 사진"></canvas>
+ <label for="nl-zoom">확대해서 자르기 <output id="nl-z-label">1.0배</output></label><input id="nl-zoom" type="range" min="1" max="3" step="0.1" value="1">
+ <label for="nl-x">가로 위치</label><input id="nl-x" type="range" min="0" max="100" value="50">
+ <label for="nl-y">세로 위치</label><input id="nl-y" type="range" min="0" max="100" value="50"></div></div>
+ <label for="nl-title-input">같은 사진에 다른 인상을 주는 제목 붙이기</label><input id="nl-title-input" type="text" maxlength="80" placeholder="예: 손을 들어 촬영을 막는 사람?">
+ <p class="nl-muted">가상 연습용 제목이에요. 실제 사람을 비난하는 내용이나 개인정보는 적지 마세요.</p>
+ <button type="button" class="ok" id="nl-compare">③ 원본과 편집본 비교하기</button><p id="nl-validation" role="status"></p></div>
+ <div id="nl-result" class="nl-box" hidden><h3>③ 같은 사진인데, 무엇이 달라졌나요?</h3>
+ <div class="nl-grid"><div><span class="nl-tag">원본 설명</span><canvas id="nl-result-original" width="800" height="450"></canvas><p id="nl-result-context" class="nl-title"></p></div>
+ <div><span class="nl-tag">연습용 편집 게시물</span><canvas id="nl-result-crop" width="800" height="450"></canvas><p id="nl-result-title" class="nl-title"></p></div></div>
+ <p id="nl-observation" class="nl-tip"></p>
+ <label for="nl-reflection">편집본에서 빠진 맥락이나 제목만으로 단정한 것은 무엇인가요?</label><textarea id="nl-reflection" rows="2" maxlength="250" placeholder="예: 주변 사람이 안 보여 혼자 있는 것처럼 느껴졌다."></textarea>
+ <button type="button" id="nl-finish">내 확인 방법 정리하기</button><p id="nl-learning" role="status"></p>
+ <div class="nl-actions"><button type="button" id="nl-edit">다시 편집하기</button><button type="button" id="nl-delete">사진 지우고 다시 시작</button></div></div></div>`;
+ // AI 도우미가 수집하는 main.wrap 밖에 두어 개인 사진 설명을 전달하지 않습니다.
+ document.body.appendChild(root);
+ new ResizeObserver(()=>{if(typeof resize==='function')resize(true);}).observe(root);
+ const el=id=>root.querySelector('#nl-'+id);
+ const source=document.createElement('canvas');let stream=null,requestId=0,hasPhoto=false,open=false;
+ function status(s){el('status').textContent=s;}
+ function stop(){requestId++;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}el('video').srcObject=null;el('video').hidden=true;el('capture').hidden=true;el('capture').disabled=true;el('stop').hidden=true;el('start').disabled=false;}
+ function wipe(){stop();hasPhoto=false;source.width=1;source.height=1;root.querySelectorAll('canvas').forEach(c=>c.getContext('2d').clearRect(0,0,c.width,c.height));['context','title-input','reflection'].forEach(id=>el(id).value='');['result-context','result-title','observation','validation','learning'].forEach(id=>el(id).textContent='');el('editor').hidden=true;el('result').hidden=true;el('source').hidden=false;el('controls').hidden=false;status('카메라가 꺼져 있어요. 사진을 지웠어요.');}
+ function close(){open=false;wipe();root.style.display='none';document.getElementById('app').hidden=false;document.getElementById('nl-launch')?.focus();if(typeof resize==='function')resize(true);}
+ window.openNewsLab=()=>{open=true;document.getElementById('app').hidden=true;root.style.display='block';el('heading').focus();if(typeof toTop==='function')toTop();if(typeof resize==='function')resize(true);};
+ function paint(){if(!hasPhoto)return;const z=Number(el('zoom').value),w=source.width/z,h=source.height/z,x=(source.width-w)*Number(el('x').value)/100,y=(source.height-h)*Number(el('y').value)/100;const c=el('crop');c.getContext('2d').clearRect(0,0,c.width,c.height);c.getContext('2d').drawImage(source,x,y,w,h,0,0,c.width,c.height);el('z-label').textContent=z.toFixed(1)+'배';el('result').hidden=true;el('learning').textContent='';}
+ function ready(){hasPhoto=true;stop();el('zoom').value=1;el('x').value=el('y').value=50;el('context').value='';el('title-input').value='';el('reflection').value='';el('validation').textContent='';el('original').width=el('crop').width=source.width;el('original').height=el('crop').height=source.height;el('original').getContext('2d').drawImage(source,0,0);el('source').hidden=true;el('controls').hidden=false;el('editor').hidden=false;paint();status('원본이 준비됐어요. 카메라는 꺼졌어요. 아래에서 편집해 보세요.');}
+ el('start').onclick=async()=>{stop();const token=++requestId;el('start').disabled=true;status('브라우저의 카메라 권한 요청을 확인해 주세요. 원하지 않으면 예시 그림을 선택하세요.');
+ try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('unsupported');const next=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:960},height:{ideal:540}},audio:false});if(token!==requestId||!open){next.getTracks().forEach(t=>t.stop());return;}stream=next;el('video').hidden=false;el('stop').hidden=false;el('capture').hidden=false;el('video').srcObject=stream;await el('video').play();if(token===requestId&&stream){el('capture').disabled=false;status('미리보기 중이에요. 촬영 버튼을 누를 때만 한 장을 캡처해요.');}}
+ catch(e){if(token!==requestId)return;stop();status(e.name==='NotAllowedError'?'카메라 권한이 허용되지 않았어요. 주소창의 카메라 권한을 확인하거나 예시 그림으로 체험하세요.':'카메라를 사용할 수 없어요. 다른 앱에서 사용 중인지 확인하거나 예시 그림으로 체험하세요.');}};
+ el('capture').onclick=()=>{const v=el('video');if(!stream||!v.videoWidth){status('영상이 준비될 때까지 잠시 기다려 주세요.');return;}source.width=Math.min(v.videoWidth,960);source.height=Math.round(source.width*v.videoHeight/v.videoWidth);source.getContext('2d').drawImage(v,0,0,source.width,source.height);ready();};
+ el('sample').onclick=()=>{source.width=800;source.height=450;const c=source.getContext('2d');c.fillStyle='#dff2fb';c.fillRect(0,0,800,450);c.fillStyle='#b6d99a';c.fillRect(0,255,800,195);c.fillStyle='#fff8de';c.fillRect(40,35,340,75);c.fillStyle='#20483f';c.font='bold 26px sans-serif';c.fillText('도토리시 · 함께 공원 청소',58,82);
+ for(const [x,y,color] of [[180,230,'#d77d5c'],[420,210,'#608cab'],[660,240,'#8d75a8']]){c.fillStyle='#f4d9b0';c.beginPath();c.arc(x,y,32,0,Math.PI*2);c.fill();c.fillStyle=color;c.fillRect(x-28,y+34,56,85);c.strokeStyle=color;c.lineWidth=13;c.beginPath();c.moveTo(x-26,y+48);c.lineTo(x-70,y+95);c.moveTo(x+26,y+48);c.lineTo(x+65,y+85);c.stroke();c.fillStyle='#405f50';c.beginPath();c.ellipse(x+75,y+118,28,42,0,0,Math.PI*2);c.fill();}ready();el('context').value='세 사람이 함께 공원에서 쓰레기를 줍고 있다.';};
+ el('stop').onclick=()=>{stop();status('카메라를 껐어요.');};el('back').onclick=close;el('delete').onclick=wipe;el('replace').onclick=wipe;
+ ['zoom','x','y'].forEach(id=>el(id).oninput=paint);['context','title-input'].forEach(id=>el(id).oninput=()=>{el('result').hidden=true;});
+ el('compare').onclick=()=>{if(!hasPhoto)return;const a=el('context').value.trim(),b=el('title-input').value.trim();if(!a||!b){el('validation').textContent='원본 상황과 편집본 제목을 모두 적어 주세요.';return;}el('validation').textContent='';for(const [dest,src] of [['result-original','original'],['result-crop','crop']]){el(dest).width=el(src).width;el(dest).height=el(src).height;el(dest).getContext('2d').drawImage(el(src),0,0);}el('result-context').textContent=a;el('result-title').textContent=b;const z=Number(el('zoom').value);el('observation').textContent=z===1?'자르는 범위는 같아요. 제목만 바꿔도 해석이 달라지는지 비교해 보세요.':`편집본에는 원본 면적의 약 ${Math.round(100/(z*z))}%만 보여요. 잘린 주변 상황을 모르면 무엇을 오해할 수 있을까요?`;el('controls').hidden=true;el('result').hidden=false;if(typeof toTop==='function')toTop();};
+ el('finish').onclick=()=>{el('learning').textContent=el('reflection').value.trim()?'✅ 내 생각을 정리했어요. 사진을 잘랐다는 것만으로 거짓은 아니에요. 공유 전에는 원본 전체·촬영 날짜와 장소·제목의 근거를 확인하세요. 적은 내용은 자동 채점하지 않아요.':'먼저 빠진 맥락이나 단정한 내용을 한 가지 적어 주세요.';};
+ el('edit').onclick=()=>{el('result').hidden=true;el('controls').hidden=false;el('zoom').focus();};
+ window.addEventListener('pagehide',wipe);document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();status('화면을 벗어나 카메라를 껐어요.');}});
+})();
+</script>

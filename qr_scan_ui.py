@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 import streamlit as st
 import dotori_data as dd
 
-# 연습용 가짜 QR(교육용 가상 주소: example.com은 예시용으로 비워 둔 주소라 실제 사이트가 아니에요)
+# 교육용 예약 도메인으로 만든 가상 주소입니다. 실제 주소로 접속하지 않습니다.
 PRACTICE = {
     "🅿️ 주차요금 스티커 (사기 예시)": "http://dotori-parking-pay.example.com@login-secure.example.net/pay?fine=40000",
     "🏛️ 도토리시 공식 안내 (정상 예시)": "https://www.example.com/dotori/notice",
@@ -79,58 +79,76 @@ def _to_url_page(text):
 
 
 def show_qr_scanner():
-    # 연습용 QR 2장: 먼저 "찍어도 될까?"를 내가 판단하고, 그다음 QR 속 주소를 열어 맞았는지 확인해요.
+    """주소 공개 → 독립적인 기준과 비교 → 행동 선택. QR 외형을 채점하지 않습니다."""
     with st.container(border=True, key="qr_scan_box"):
-        st.markdown(
-            "<style>.st-key-qr_scan_box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4)}"
-            ".st-key-qr_scan_box [data-testid=stImage] img{border-radius:10px;border:2px solid #CBD5E1}"
-            "[class*=st-key-qr_card_]{background:#fff;border:2px solid #BFDBFE;border-radius:16px;padding:10px 12px;gap:6px!important}"
-            "[class*=st-key-qr_card_] button{min-height:44px!important;height:44px;border:2px solid #BFDBFE!important;background:#fff!important;border-radius:12px!important}"
-            "[class*=st-key-qr_card_] button p{font-weight:800!important;font-size:1rem!important;color:#1E3A8A!important}"
-            "[class*=st-key-qr_card_] button:hover{border-color:#3B82F6!important;background:#EFF6FF!important}"
-            ".st-key-qr_scan_box [data-testid=stPageLink] a{background:#fff;border:2px solid #93C5FD;border-radius:12px;justify-content:center;padding:6px 10px}"
-            ".st-key-qr_scan_box [data-testid=stPageLink] a p,.st-key-qr_scan_box [data-testid=stPageLink] a span{color:#1E3A8A!important;font-weight:800!important;opacity:1!important}"
-            "</style>"
-            '<div style="font-size:1.3rem;font-weight:900;color:#1E3A8A">🔲 이 QR, 찍어도 될까?</div>'
-            '<div style="color:#475569;font-size:.92rem;word-break:keep-all;margin:2px 0 4px">QR마다 <b>먼저 내 판단</b>을 고르면, QR 속 주소를 열어(접속은 안 해요) 맞았는지 알려 줘요. '
-            '가상 주소라 휴대폰으로 찍어도 열리지 않아요.</div>',
-            unsafe_allow_html=True,
-        )
-        guesses = st.session_state.setdefault("qr_guess", {})
-        cards = st.columns(len(PRACTICE), gap="small")
-        for i, (col, (label, text)) in enumerate(zip(cards, PRACTICE.items())):
-            with col, st.container(key=f"qr_card_{i}"):
-                try:
-                    png = _qr_png(text)
-                except Exception:
-                    st.caption("연습용 QR을 만들지 못했어요.")
-                    continue
-                # 이름표에서 정답(사기/정상) 표시는 빼고 장소만 보여 줘요. 정답은 판단한 뒤에 공개해요.
-                place = label.split(" (")[0]
-                pic, info = st.columns([1, 1.7], vertical_alignment="center", gap="small")
-                with pic:
-                    st.image(png, width=104)
-                with info:
-                    st.markdown(f'<div style="font-weight:900;color:#1E3A8A;font-size:1.05rem;word-break:keep-all">{escape(place)}</div>',
-                                unsafe_allow_html=True)
-                    if i in guesses:
-                        right = guesses[i] == (_answer(label) == "scam")
-                        st.markdown(f'<div style="font-weight:900;color:{"#166534" if right else "#B91C1C"}">'
-                                    f'{"⭕ 정답!" if right else "❌ 아쉬워요"} · {"🚫 사기 QR" if "사기" in label else "✅ 정상 QR"}</div>',
-                                    unsafe_allow_html=True)
-                    b1, b2 = st.columns(2, gap="small")
-                    if b1.button("✅ 괜찮아", key=f"qr_ok_{i}", width="stretch"):
-                        guesses[i] = False
-                        st.session_state["qr_demo_text"] = text
-                        st.session_state["qr_demo_i"] = i
-                        st.rerun()
-                    if b2.button("🚫 수상해", key=f"qr_bad_{i}", width="stretch"):
-                        guesses[i] = True
-                        st.session_state["qr_demo_text"] = text
-                        st.session_state["qr_demo_i"] = i
-                        st.rerun()
-        if st.session_state.get("qr_demo_text"):
-            _show_results([st.session_state["qr_demo_text"]])
+        st.markdown('''<style>
+        .st-key-qr_scan_box{background:#F3F8F5;padding:20px!important;}
+        .st-key-qr_scan_box button{height:auto!important;min-height:48px!important;white-space:normal!important;padding:12px 18px!important;}
+        .st-key-qr_scan_box button p{line-height:1.6!important;overflow-wrap:anywhere;}
+        .st-key-qr_scan_box [data-testid=stMarkdownContainer] p{line-height:1.7;}
+        .st-key-qr_scan_box [data-testid=stImage] img{border:1px solid #CBD5E1;border-radius:12px;}
+        .st-key-qr_scan_box [data-testid=stCode]{margin:10px 0;}
+        .st-key-qr_scan_box [data-testid=stAlert]{margin:12px 0;}
+        </style>''', unsafe_allow_html=True)
+        st.subheader("🔲 QR 속 주소, 확인하고 행동하기")
+        st.write("QR 모양이나 안내문 제목만으로 안전 여부를 알 수 없어요. 주소를 읽고, 별도로 확인한 공식 정보와 비교해 보세요.")
+        st.caption("교육용 가상 상황입니다. 아래 주소로 접속하거나 결제하지 않아요.")
+        selected = st.radio("연습할 안내문", ["안내문 A · 주차요금 납부 요청", "안내문 B · 행사 안내"], key="qr_case_v2")
+        i = 0 if selected.startswith("안내문 A") else 1
+        text = list(PRACTICE.values())[i]
+        read_key = f"qr_read_v2_{i}"
+        result_key = f"qr_result_v2_{i}"
+        st.markdown("**① QR 속 주소 읽기**")
+        try:
+            st.image(_qr_png(text), width=140)
+        except Exception:
+            st.caption("QR 그림을 만들지 못했어요. 아래 버튼으로 동일한 연습 주소를 확인할 수 있어요.")
+        if st.button("🔎 주소만 읽기 · 사이트에 접속하지 않아요", key=f"qr_read_btn_v2_{i}", width="stretch"):
+            st.session_state[read_key] = True
+        if not st.session_state.get(read_key):
+            return
+        st.code(text, language=None, wrap_lines=True)
+        st.markdown("**② 별도로 확인한 공식 정보와 비교하기**")
+        st.info("가상 상황에서 내가 직접 찾아 확인한 도토리시 공식 누리집의 호스트 이름은 www.example.com이에요. 안내문에 적힌 연락처를 통해 확인한 정보가 아니에요.")
+        st.caption("호스트는 주소에서 실제 연결할 서버 이름이에요. ‘@’가 있으면 그 뒤의 호스트를 확인하세요. 이름이 비슷하다는 이유만으로 같다고 판단하지 마세요.")
+        with st.form(f"qr_compare_form_v2_{i}"):
+            evidence = st.radio("주소를 비교한 결과는?", [
+                "실제 호스트가 공식 안내의 호스트와 다르다",
+                "호스트는 같지만, 이 요청이 실제 공지인지까지는 확인하지 못했다",
+                "제목이나 로고가 공식처럼 보이므로 안전하다",
+            ], index=None, key=f"qr_evidence_v2_{i}")
+            st.markdown("**③ 다음 행동 선택하기**")
+            action = st.radio("이제 어떻게 할까요?", [
+                "QR 이용을 멈추고, 별도로 찾은 공식 경로에서 납부 요청을 확인한다",
+                "QR로 바로 진행하지 않고, 공식 누리집에 직접 들어가 같은 행사 공지를 찾는다",
+                "주소가 그럴듯하니 QR에서 바로 결제하거나 개인정보를 입력한다",
+            ], index=None, key=f"qr_action_v2_{i}")
+            submitted = st.form_submit_button("비교 근거와 행동 확인", width="stretch")
+        if submitted:
+            if evidence is None or action is None:
+                st.warning("주소 비교 결과와 다음 행동을 모두 선택해 주세요.")
+                st.session_state.pop(result_key, None)
+            else:
+                evidence_ok = evidence.startswith("실제 호스트") if i == 0 else evidence.startswith("호스트는 같지만")
+                action_ok = action.startswith("QR 이용을 멈추고") if i == 0 else action.startswith("QR로 바로 진행하지")
+                st.session_state[result_key] = (evidence_ok, action_ok)
+                if evidence_ok and action_ok:
+                    dd.achieve("qr_scan")
+        result = st.session_state.get(result_key)
+        if result is not None:
+            if all(result):
+                st.success("주소의 근거와 다음 확인 행동을 연결했어요.")
+            else:
+                st.warning("마지막으로 제출한 답변을 다시 살펴보세요. " + ("호스트 비교를 확인해 주세요. " if not result[0] else "") + ("요청 내용을 공식 경로에서 확인하는 행동을 골라 주세요." if not result[1] else ""))
+            if i == 0:
+                st.write("**실제 호스트는 login-secure.example.net**이에요. @ 앞의 주차 관련 글자는 공식 목적지를 증명하지 않아요. 기준 호스트와 다르므로 이용을 멈추고 공식 경로에서 납부 사실을 확인해요.")
+            else:
+                st.write("**호스트 www.example.com은 기준과 같아요.** 하지만 주소만으로 행사 내용·개인정보 요청까지 안전하다고 보장할 수 없어요. 직접 찾은 공식 누리집에서 해당 공지를 다시 확인해요.")
+            st.caption("이 활동은 주소를 비교하는 연습이에요. 실제 사이트의 운영 상태나 악성 여부를 검사한 결과가 아니에요.")
+        with st.expander("주소 구성도 더 살펴보기"):
+            st.write("‘의심 URL 확인’에서는 주소의 구성과 주의할 특징을 더 살펴볼 수 있어요.")
+            _to_url_page(text)
+            st.page_link("pages/4_URL_확인.py", label="의심 URL 확인으로 이동", icon="🔗", width="stretch")
 
 
 def _answer(label):
