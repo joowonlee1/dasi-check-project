@@ -192,6 +192,18 @@ pre .k{color:#FFB385}pre .c{color:#8FD3B6}
 .row{display:flex;gap:8px;flex-wrap:wrap}.row>button{flex:1}
 .hint{background:#EEF2FF;border:2px solid #A5B4FC;border-radius:12px;padding:8px 12px;margin:8px 0;font-weight:700;word-break:keep-all;animation:pop .35s ease-out both}
 .toast{min-height:1.4em;font-weight:800;color:#B4471B;margin:6px 0;word-break:keep-all}
+.result.compact{padding:12px 14px}
+.result .rhead{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.result .rhead .big{font-size:2rem;margin:0}.result .rhead .t{font-size:1.35rem}.result .rhead .stars{font-size:1.5rem;letter-spacing:2px}
+.result .rhead .stamp{margin:0;font-size:1.05rem;padding:2px 12px;border-width:3px}
+.result .flow{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:.88rem;font-weight:800}
+.result .flow .fl{background:#F1F5F9;color:#94A3B8;border-radius:999px;padding:3px 10px}.result .flow .fl.ok{background:#DCFCE7;color:#166534}
+.result .flow .fl.now{background:#F97316;color:#fff;box-shadow:0 0 0 3px #FED7AA}.result .flow i{font-style:normal;color:#94A3B8}
+.result .must{background:#FFF7E6;border:2.5px solid #F59E0B;border-radius:12px;padding:8px 12px;font-weight:800;color:#92400E;margin:4px 0 8px}
+.result .go.big{width:100%;font-size:1.2rem;min-height:56px;margin:0 0 8px}
+.result .par{display:inline-block;background:#F1F5F9;border-radius:999px;padding:4px 14px;font-weight:800;margin:2px 0 4px}.result .par.good{background:#FEF3C7;color:#92400E}
+.result.compact .matrix{margin:6px auto}
+.matrix .fn b,.matrix .fp b{color:#B91C1C}
 .result{position:relative;overflow:hidden;border-radius:22px;padding:18px 14px;text-align:center;margin:12px 0;word-break:keep-all}
 .result.win{background:linear-gradient(135deg,#FFF1C2,#D9F2E6)}.result.lose{background:linear-gradient(135deg,#F3F5F4,#E2E9E5)}
 .result.fx{animation:pop .55s ease-out both}.result.lose.fx{animation:shake .5s ease-in-out both}
@@ -399,9 +411,17 @@ function resultHtml(st, res){
   const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 목표 블록 수를 달성했어요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
   const twins = s.best > 0 ? twinHtml(st) : '';
   const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">처음 보는 문자로 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
-  return `<section class="result win${go}"><div class="big">🛡️</div><b class="t">${G.hold[st]?.ok ? '연습·새 문자 시험 통과!' : '연습 문자 목표 달성!'}</b>
-    <div class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</div>
-    <div class="box"><b>① 연습 문자 → ② 새 문자 시험 → ③ 다음 단계</b><p>새 문자 시험까지 통과해야 다음 단계가 열려요. 틀리면 규칙을 고치고 연습·새 문자 시험을 다시 실행하세요.</p>${next}</div>${twins}<div style="font-weight:800">${esc(parMsg)}</div>${matrix}<span class="stamp">${G.hold[st]?.ok ? '시험 통과!' : '연습 통과!'}</span>${sp}${othersHtml(st)}${holdHtml(st)}</section>`;
+  // 결과 화면: 제목·별·도장을 한 줄로 모으고, 다음에 할 일(버튼)과 틀린 개수를 크게 보여 줘요.
+  const ok = !!(G.hold[st] && G.hold[st].ok);
+  const flow = ['① 연습 문자', '② 새 문자 시험', '③ 다음 단계'].map((t, k) => `<span class="fl${k === (ok ? 2 : 1) ? ' now' : ''}${k < (ok ? 2 : 1) ? ' ok' : ''}">${k < (ok ? 2 : 1) ? '✓ ' : ''}${t}</span>`).join('<i>→</i>');
+  return `<section class="result win compact${go}">
+    <div class="rhead"><span class="big">🛡️</span><b class="t">${ok ? '연습·새 문자 시험 통과!' : '연습 문자 목표 달성!'}</b>
+      <span class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</span><span class="stamp">${ok ? '시험 통과!' : '연습 통과!'}</span></div>
+    <div class="flow">${flow}</div>
+    ${ok ? '' : '<div class="must">🧪 아직 끝이 아니에요! <b>처음 보는 문자</b>로도 시험해야 다음 단계가 열려요.</div>'}
+    ${next.replace('class="go"', 'class="go big"')}
+    <div class="par ${res.blocks <= s.par ? 'good' : ''}">${res.blocks <= s.par ? '🏅' : '✂️'} ${esc(parMsg)}</div>
+    ${matrix}${twins}${sp}${othersHtml(st)}${holdHtml(st)}</section>`;
 }
 
 function twinHtml(st){
@@ -497,7 +517,13 @@ function run(){
 
 function holdHtml(st){
  const h=G.hold[st];if(!h)return '<p>현재 규칙으로 새 문자 시험도 마쳐야 해요.</p>';
- return '<section class="box"><h3>새 문자 시험</h3>'+h.rows.map(x=>'<p>'+esc(x.text)+'<br><b>'+(x.flag?'의심':'통과')+' · '+(x.flag===x.answer?'일치':'오차단·누락')+'</b><br>'+esc(x.proof)+'</p>').join('')+'<p>'+h.errors+'개 오차. '+(h.ok?'시험 통과':'규칙을 고치고 연습과 새 문자 시험을 다시 실행하세요.')+'</p></section>';
+ return '<section class="box" style="text-align:left"><h3>🧪 새 문자 시험 결과</h3>'+h.rows.map(x=>{const r=x.flag===x.answer;return '<div style="border:2px solid '+(r?'#BBF7D0':'#FCA5A5')+';background:'+(r?'#F0FDF4':'#FEF2F2')+';border-radius:12px;padding:8px 12px;margin:6px 0"><b>'+(r?'✅ 맞음':'❌ 틀림')+'</b> · '+esc(x.text)+'<br><small>내 필터: '+(x.flag?'🚫 막음':'✅ 통과')+(r?'':(x.answer?' → 미탐(가짜인데 통과)':' → 오탐(진짜인데 막음)'))+' · '+esc(x.proof)+'</small></div>';}).join('')+'<p>'+h.errors+'개 오차. '+(h.ok?'시험 통과':'규칙을 고치고 연습과 새 문자 시험을 다시 실행하세요.')+'</p></section>';
+}
+// 새 문자 시험 결과를 문자마다 한 줄로: 맞음 ✅ / 틀림 ❌(미탐: 가짜인데 통과, 오탐: 진짜인데 막음)
+function holdLines(rows){
+ return rows.map(x=>{const right=x.flag===x.answer;const what=x.flag?'🚫 막음':'✅ 통과';
+  const why=right?'':(x.answer?' <b style="color:#FCA5A5">← 미탐(가짜인데 통과)</b>':' <b style="color:#FDBA74">← 오탐(진짜인데 막음)</b>');
+  return (right?'✅ ':'❌ ')+'<span style="color:#ECFDF5">'+esc(x.text)+'</span> · '+what+why;});
 }
 function runHoldout(){
  const st=G.stage;if(!G.last||!starsFor(st,G.last))return;
@@ -506,8 +532,8 @@ function runHoldout(){
  if(!errors)G.best[st]={stars:starsFor(st,G.last),blocks:blocks(st)};
  sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
  render();
- monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 시험',title:`⚠️ 새 문자 ${errors}건 오분류`,body:'처음 보는 문자에서는 규칙이 맞지 않았어요. 특정 문자에만 맞춘 규칙은 아닌지 살펴보세요.',button:'규칙 다시 보기 ▶'}
-   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'다음 단계로 가 볼까요?'});
+ monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 시험',title:`⚠️ 새 문자 ${errors}건 오분류`,body:'처음 보는 문자에서 규칙이 틀린 곳이에요. 특정 문자에만 맞춘 규칙은 아닌지 살펴보세요.',lines:holdLines(rows),button:'규칙 다시 보기 ▶'}
+   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'다음 단계로 가 볼까요?',lines:holdLines(rows)});
 }
 function toFinal(){
  if(!G.best.every(Boolean))return;
