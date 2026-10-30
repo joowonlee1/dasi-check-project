@@ -135,7 +135,10 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .toast{min-height:1.6em;font-weight:900;font-size:1.2rem;color:#B4471B;text-align:center;margin:8px 0;word-break:keep-all}.toast:not(:empty){background:#FFF1E6;border:2px solid #F59E0B;border-radius:14px;padding:10px 14px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row button{flex:1}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
-.step{background:#fff;border:2px solid #D7E2DD;border-radius:18px;padding:14px 10px;text-align:center;animation:pop .45s ease-out both;word-break:keep-all}
+.step{background:#fff;border:2px solid #D7E2DD;border-radius:14px;padding:8px 10px;display:flex;align-items:flex-start;gap:8px;text-align:left;animation:pop .45s ease-out both;word-break:keep-all}
+.step .ic{font-size:26px!important;margin:0!important;flex:0 0 auto}.step .num{flex:0 0 auto}.step .txt b{font-size:.98rem}.step .txt p{margin:2px 0 0;font-size:.88rem;line-height:1.45}
+.map div small{display:block;font-size:.72rem;color:#52616B;font-weight:900}.map div.now{outline:3px solid #F59E0B;background:#FFF7E6}
+.mapnow{background:#FFF7E6;border:2px solid #F5C99B;border-radius:12px;padding:6px 12px;font-weight:700;margin:-2px 0 8px;word-break:keep-all}
 .step.key{border:3px solid #FF7A45;background:#FFF6EE;position:relative;box-shadow:0 6px 16px #FF7A4530}
 .step.key b{color:#B4471B}
 .badge3{position:absolute;top:-11px;right:10px;background:#FF7A45;color:#fff;border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:900;animation:bob 1.6s ease-in-out infinite}
@@ -285,7 +288,12 @@ function makeGraph(idx){
 
 // ───── 화면 ─────
 function stageMap(){
-  return '<div class="map">' + ST.map((s, i) => `<div class="${G.stars[i] ? 'done' : ''} ${i === G.stage ? 'now' : ''}"><em>${s.icon}</em>${esc(s.tactic)}<br>${'⭐'.repeat(G.stars[i]) + '☆'.repeat(3 - G.stars[i])}</div>`).join('') + '</div>';
+  // 단계마다 무슨 수법인지 한 줄 설명을 붙이고, 지금 고른 단계는 아래에 자세히 보여 줘요.
+  const DESC = ['공식 기관인 척하는 계정', '화나게 해서 먼저 공유하게', '사진·캡처를 조작한 증거', '우리 편·남의 편으로 갈라치기', '“숨겨진 진실” 같은 음모론'];
+  const tiles = ST.map((s, i) => `<div class="${G.stars[i] ? 'done' : ''} ${i === G.stage ? 'now' : ''}"><small>${i + 1}단계</small><em>${s.icon}</em>${esc(s.tactic)}<br>${'⭐'.repeat(G.stars[i]) + '☆'.repeat(3 - G.stars[i])}</div>`).join('');
+  const cur = ST[G.stage];
+  return '<div class="map">' + tiles + '</div>'
+    + `<div class="mapnow">${G.stage + 1}단계 ${cur.icon} <b>${esc(cur.tactic)}</b> · ${DESC[G.stage] || ''} · 주민 ${cur.n}명 · 카드 ${cur.cards}장</div>`;
 }
 
 // ───── 시작 화면 예시: 6명짜리 작은 마을 ─────
@@ -334,13 +342,11 @@ function intro(){
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
   ${stageMap()}
-  <details class="help"><summary>🔎 예시와 게임 방법 펼치기</summary>
+  <div class="jk-k3"><div><div class="t"><i>1</i><em>🛡️</em>퍼지기 전, 1명 지키기</div><p>시작 전에 흰 동그라미 <b>1명</b>을 눌러 미리 알려 줘요.</p></div><div><div class="t"><i>2</i><em>📶</em>1차·2차…로 퍼짐</div><p>📢에서 시작해 <b>연결선을 따라</b> 한 칸씩 번져요. 결과에서 차수별로 몇 명이 새로 믿었는지 보여 줘요.</p></div><div class="key"><div class="t"><i>3</i><em>🃏</em>남은 카드로 막기</div><p>카드 1장 = 1명. ⚪ 아직 모르는 사람 → 🛡️ 지킴 · 🔴 속은 사람 → 💬 근거 있는 정정 문구</p></div></div>
+  ${S && S.stageIndex === G.stage && S.phase !== "result" ? '<button class="ok" style="width:100%;margin-bottom:8px" onclick="resumeStage()">▶ 하던 활동 이어하기</button>' : ''}
+  <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚪 도토리 광장 들어가기 · ${G.stage + 1}단계 ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>
+  <details class="jk-more"><summary>📖 자세히 보기 · 예시와 목표·정정 문구 고르는 법</summary><div class="in">
   ${exampleHtml()}
-  <div class="steps">
-    <div class="step"><span class="num">1</span><div class="ic">🛡️</div><div class="txt"><b>퍼지기 전, 1명 지키기</b><p>시작 전에 흰 동그라미 <b style="display:inline">1명</b>을 눌러 미리 알려 줘요.</p></div></div>
-    <div class="step" style="animation-delay:.1s"><span class="num">2</span><div class="ic">📶</div><div class="txt"><b>시작하면 한 칸씩 퍼짐</b><p>📢에서 시작해 <b style="display:inline">연결선을 따라</b> 빨간색이 번져요.</p></div></div>
-    <div class="step key" style="animation-delay:.2s"><span class="badge3">핵심!</span><span class="num">3</span><div class="ic">🃏</div><div class="txt"><b>남은 카드로 막기</b><p>카드는 단계마다 4~5장. <b style="display:inline">1장으로 1명</b>에게 써요.<br>⚪ 아직 모르는 사람을 누르면 🛡️ 지킴<br>🔴 속은 사람을 누르면 💬 근거 있는 정정 문구 고르기</p></div></div>
-  </div>
   <div class="goal">🎯 목표: 안 속은 사람 75% 이상 ⭐⭐⭐ · 55% 이상 ⭐⭐</div>
   <div class="legend2">
     <div><em>⚪</em><b>아직 모르는 사람</b>소식을 아직 못 들었어요. <strong class="em">누르면 🛡️ 지킬 수 있어요.</strong></div>
@@ -353,9 +359,7 @@ function intro(){
     <ol><li><b>근거</b>가 있다: 원문, 공식 공지, 사진 원본 같은 확인한 자료</li>
     <li><b>확인 방법</b>을 알려 준다: “누리집에서 직접 확인해 봐”</li>
     <li><b>비난·느낌·추측</b>이 아니다: “사기꾼이네”, “합성 같아”, “일단 가 보자”는 ❌</li></ol></div>
-  </details>
-  ${S && S.stageIndex === G.stage && S.phase !== "result" ? '<button class="ok" style="width:100%;margin-bottom:8px" onclick="resumeStage()">▶ 하던 활동 이어하기</button>' : ''}
-  <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚪 도토리 광장 들어가기 · ${G.stage + 1}단계 ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>`;
+  </div></details>`;
 }
 
 // 단계 화면에서 바로 전 화면(단계 설명)으로 돌아가요. 퍼지던 시뮬레이션은 멈춰요.
@@ -389,7 +393,7 @@ function showGuide(){
 function render(){
   setPlayActive(true);
   const st = S.st, c = counts(), n = st.n;
-  const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}단계` : '';
+  const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}차 확산` : '';
   $('app').innerHTML = `
   <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="backIntro()">← 이전 화면으로</button>
   <button onclick="showGuide()">❔ 게임 방법 다시 보기</button>
@@ -510,7 +514,7 @@ function tick(){
   refresh();
   hot.forEach(([a, b]) => { const e = $(`e${Math.min(a, b)}_${Math.max(a, b)}`); if (e) e.classList.add('hot'); });
   next.forEach(j => { const nd = $('n' + j); if (nd) nd.classList.add('pulse'); fx(j, '', ''); });
-  toast(`📶 ${S.tickNo}단계: ${next.length}명이 새로 믿었어요!`);
+  toast(`📶 ${S.tickNo}차 확산: ${next.length}명이 새로 믿었어요!`);
 }
 
 function openQuiz(i){
@@ -565,10 +569,10 @@ function finish(){
   <section class="panel"><h3>🧠 연결이 가장 많은 사람 TOP 3</h3>
     <ul class="hubs">${deg.map(x => `<li>${S.g.emoji[x.i]} 주민 ${x.i + 1} · 친구 ${x.d}명 → ${S.state[x.i] === 'I' ? '🔴 믿어 버림' : S.state[x.i] === 'R' ? '🛡️ 지킴' : S.state[x.i] === 'C' ? '💬 정정됨' : '⚪ 소식이 닿지 않음'}</li>`).join('')}</ul>
     <p style="font-size:.9rem;color:#52616B">친구가 많은 사람은 한 번에 여러 명에게 퍼뜨려요. 이런 사람을 먼저 지키면 효과가 커요.</p></section>
-  <section class="panel"><h3>📶 단계별로 새로 믿은 사람</h3>
+  <section class="panel"><h3>📶 확산 차수별로 새로 믿은 사람</h3>
     ${S.levels.length ? `<div class="bars">${S.levels.map((v, k) => `<div style="height:${Math.max(6, v * 100 / Math.max(...S.levels))}%;animation-delay:${k * .08}s"><span>${v}</span></div>`).join('')}</div>
-    <div class="barlab">${S.levels.map((_, k) => `<span>${k + 1}단계</span>`).join('')}</div>` : '<p>처음 단계에서 모두 막았어요!</p>'}
-    <p style="font-size:.9rem;color:#52616B">한 단계마다 ‘방금 믿은 사람’의 친구에게 번져요. 컴퓨터가 그래프를 넓게 탐색하는 방식(너비 우선 탐색, BFS)과 같아요.</p></section>
+    <div class="barlab">${S.levels.map((_, k) => `<span>${k + 1}차</span>`).join('')}</div>` : '<p>첫 확산에서 모두 막았어요!</p>'}
+    <p style="font-size:.9rem;color:#52616B">한 번(1차) 퍼질 때마다 ‘방금 믿은 사람’의 친구에게 번져요. 컴퓨터가 그래프를 넓게 탐색하는 방식(너비 우선 탐색, BFS)과 같아요.</p></section>
   ${stageMap()}
   <div class="row"><button onclick="startStage(${G.stage})">🔄 다른 방법으로 다시 도전</button>
   <button class="go" onclick="${last ? 'final()' : `startStage(${G.stage + 1})`}">${last ? '🏆 최종 결과' : '다음 단계 ▶'}</button></div>`;

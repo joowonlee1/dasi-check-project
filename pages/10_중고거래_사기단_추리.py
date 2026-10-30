@@ -261,7 +261,7 @@ let hasInteracted=false;
 function enterMarket(){entered=true;hasInteracted=true;render();}
 function marketIntro(){
  setPlayActive(false);
- $('app').innerHTML='<section class="hero"><b>한정판 운동화, 진짜 판매자는 누구?</b><p>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</p></section><p>① 거래 기록 조사 → ② 추리 표 → ③ 진짜 판매자 지목</p><button class="go" style="width:100%" onclick="enterMarket()">🛒 중고마켓 들어가기 · 이어하기</button><details class="help"><summary>게임 방법과 표 작성 예시</summary>'+gridExample()+'</details>';
+ $('app').innerHTML='<section class="hero"><b>한정판 운동화, 진짜 판매자는 누구?</b><p>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</p></section><div class="jk-k3"><div><div class="t"><i>1</i><em>📜</em>거래 기록 조사</div><p>거래 3건의 자료를 읽고 결론과 근거를 골라요. 하나 풀 때마다 단서가 1개 생겨요.</p></div><div><div class="t"><i>2</i><em>🧩</em>추리 표 채우기</div><p>단서를 보고 판매자마다 맞는 칸은 ⭕, 아닌 칸은 ❌로 채워요.</p></div><div class="key"><div class="t"><i>3</i><em>🏁</em>진짜 지목</div><p>시장 그림에서 진짜라고 생각하는 판매자의 천막을 눌러요.</p></div></div><button class="go" style="width:100%" onclick="enterMarket()">🛒 중고마켓 들어가기 · 이어하기</button><details class="jk-more"><summary>📖 자세히 보기 · 추리 표 작성 예시</summary><div class="in">'+gridExample()+'</div></details>';
 }
 function marketHelp(){
  const box=document.createElement('div');box.className='ui-help';box.setAttribute('role','dialog');box.setAttribute('aria-label','게임 방법');
@@ -304,7 +304,7 @@ function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 
 function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
- $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px"><b style="font-size:1.1rem">🧭 거래 기록 3건을 풀어 단서를 얻자!</b><span style="font-weight:800">📄 자료 읽기 → 🎯 결론 → ✅ 근거 체크</span><span style="font-size:.9rem;color:#6B5A2E"><b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> = 이름을 가린 판매자 (위 1~5와 달라요)</span></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
+ $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px"><b style="font-size:1.1rem">🧭 거래 기록 3건을 풀어 단서를 얻자!</b><span style="font-weight:800">📄 자료 읽기 → 🎯 결론 → ✅ 근거 체크</span><span style="font-size:.92rem;font-weight:700;color:#7C2D12;background:#FFEDD5;border-radius:999px;padding:2px 10px">📄 읽을 수 있음 · 📖 읽음 · 🔒 앞 자료를 읽으면 열림 → 시간 순서대로 따라가요</span><span style="font-size:.9rem;color:#6B5A2E"><b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> = 이름을 가린 판매자 (위 1~5와 달라요) · <b>같은 이름표 자료끼리</b> 이어요. 판매자 말만 있는 자료는 함정일 수 있어요.</span></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
 }
 function iqComplete(i){unlock(i);}
 function iqHintUsed(i){G.hints[i]=true;}
@@ -436,6 +436,7 @@ function aiFloat(){
     window.addEventListener('pagehide', remove);
   }
   const can = !AI.wait;
+  { const old = D.getElementById('dotori-helper'); if (old) old.remove(); }  // 남아 있던 깡지 도우미와 겹치지 않게
   let launch = D.getElementById('jk-ai-launch');
   if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
   launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : '🤖 AI 탐정에게 물어보기';
@@ -444,12 +445,12 @@ function aiFloat(){
   if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
   let pocket=D.getElementById('jk-ai-pocket');
   if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
-  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;background:#fff;color:#4C1D95;border:2px solid #8B5CF6;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
+  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;background:#7C3AED;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
   pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
   pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
   // ‘넣기’ 버튼을 AI 탐정 상자 오른쪽 위 모서리에 걸쳐 둬요(깡지 도우미·나의 폰과 같은 모양).
   const placePocket=()=>{try{const r=launch.getBoundingClientRect();pocket.style.top=(r.top-17)+'px';pocket.style.right=(P.innerWidth-r.right+14)+'px';}catch(e){}};placePocket();setTimeout(placePocket,100);if(!P.__jkPocketRs){P.__jkPocketRs=1;P.addEventListener('resize',()=>{const l=D.getElementById('jk-ai-launch'),k=D.getElementById('jk-ai-pocket');if(l&&k){const r=l.getBoundingClientRect();k.style.top=(r.top-17)+'px';k.style.right=(P.innerWidth-r.right+14)+'px';}});}
-  {const o=D.getElementById('jk-pocket-style');if(o)o.remove();}if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{right:0!important;bottom:150px!important;width:96px!important;min-height:92px!important;padding:0!important;border-right:0!important;border-radius:22px 0 0 22px!important;font-size:0!important}#jk-ai-launch.pocket::before{left:50%!important;bottom:6px!important;transform:translateX(-50%);width:76px!important;height:80px!important}';D.head.appendChild(st);}
+  {const o=D.getElementById('jk-pocket-style');if(o)o.remove();}if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{right:0!important;bottom:150px!important;width:96px!important;height:96px!important;min-height:96px!important;padding:0!important;border-right:0!important;border-radius:22px 0 0 22px!important;font-size:0!important}#jk-ai-launch.pocket::before{left:50%!important;bottom:6px!important;transform:translateX(-50%);width:76px!important;height:80px!important}';D.head.appendChild(st);}
 
   launch.onclick = () => { P.__jkAiPocket=false; P.__jkAiOpen = true; aiFloat(); };
   let panel = D.getElementById('jk-ai-panel');

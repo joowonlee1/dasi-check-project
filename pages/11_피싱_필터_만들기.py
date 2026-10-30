@@ -35,7 +35,7 @@ VERIFIED = [
   "직접 연락한 카드사가 해당 정보 입력 요청을 부인함", "기존 가족 연락처로 본인의 메시지임을 확인함",
   "별도로 찾은 기관 연락처로 확인하니 해당 요구를 부인함", "주문 내역의 배송 기록과 일치함"]
 ]
-st.caption("💡 필터는 문자 겉모습만 봐요. 실제로는 번호·링크 유무만으로 안전을 확신할 수 없어요.")
+st.caption("💡 필터는 문자 겉모습(번호·링크·돈 요구 등)만 봐요. 정답은 문자마다 따로 확인한 결과로 정해져서, 겉모습만으로는 다 못 거를 수도 있어요. 실제로도 번호·링크 유무만으로 안전을 확신할 수 없어요.")
 DATA = {
     "conds": {
         "L": "🔗 링크 있음",
@@ -286,11 +286,9 @@ function render(){
 function renderIntro(){
   $('app').innerHTML = `
   <section class="hero"><span>   도토리 우체국 · 문자 필터실</span><b>도시로 들어오는 문자, 내가 만든 규칙으로 걸러라!</b><span>조건 블록을 조립하면 컴퓨터가 그대로 실행해요.</span></section>
-  <div class="steps">
-    <div class="step"><div class="ic">🏷️</div><div><b class="h">① 태그 보기</b><p>문자마다 ‘링크 있음’, ‘모르는 번호’ 같은 특징 태그가 붙어 있어요.</p></div></div>
-    <div class="step"><div class="ic">🧩</div><div><b class="h">② 규칙 조립</b><p>‘만약 A <b>그리고</b>/<b>또는</b> B면 의심’처럼 블록과 연결을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div></div>
-    <div class="step"><div class="ic">▶️</div><div><b class="h">③ 실행하고 고치기</b><p>문자가 하나씩 필터를 지나가요. 틀린 문자를 보고 규칙을 고쳐요.</p></div></div>
-  </div>
+  <div class="jk-k3"><div><div class="t"><i>1</i><em>🏷️</em>태그 보기</div><p>문자마다 ‘링크 있음’, ‘모르는 번호’ 같은 특징 태그가 붙어 있어요.</p></div><div><div class="t"><i>2</i><em>🧩</em>규칙 조립</div><p>‘만약 A <b>그리고</b>/<b>또는</b> B면 의심’처럼 블록을 고르고, 규칙 줄끼리는 <b>또는</b>으로 이어져요.</p></div><div class="key"><div class="t"><i>3</i><em>▶️</em>실행하고 고치기</div><p>문자가 하나씩 필터를 지나가요. 틀린 문자를 보고 규칙을 고쳐요.</p></div></div>
+  <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🤖 필터실 입장하기</button>
+  <details class="jk-more"><summary>📖 자세히 보기 · 예시와 별 받는 법</summary><div class="in">
   <section class="box"><h3>🔍 예시로 먼저 볼까요?</h3>
     규칙: <span class="kw">만약</span> 🔗 링크 있음 <span class="kw and">그리고</span> ❓ 모르는 번호 <span class="kw then">→ 🚫 의심</span>
     <div class="ex">
@@ -319,7 +317,7 @@ function renderIntro(){
     ⭐ 목표 달성 · ⭐ 블록을 목표보다 2개 넘게 쓰지 않기 · ⭐ 목표 블록 수 이하로 해내기<br>
     <span style="font-size:.92rem;color:#52616B">블록 = 고른 조건 하나. 같은 결과라면 짧은 규칙이 더 좋은 프로그램이에요.</span>
   </section>
-  <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🤖 필터실 입장하기</button>`;
+  </div></details>`;
 }
 
 // 필터실 안에서 바로 전 화면(시작 화면)으로 돌아가요. 만든 규칙과 기록은 그대로 남아요.

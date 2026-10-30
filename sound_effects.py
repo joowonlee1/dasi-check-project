@@ -100,8 +100,10 @@ if(!W.__jamkkanSound){
   const len=Math.floor(H.ctx.sampleRate*.5),buf=H.ctx.createBuffer(1,len,H.ctx.sampleRate),d=buf.getChannelData(0);
   for(let i=0;i<len;i++)d[i]=Math.random()*2-1;H.noise=buf;return buf;
  };
- H.play=kind=>{try{
-  if(!H.want||!H.ctx||H.ctx.state!=='running'||H.volume<=0)return;
+ H.play=(kind,again)=>{try{
+  if(!H.want||H.volume<=0)return;
+  // 소리 장치가 멈춰 있으면(음량 조절·다른 소리 재생 뒤 등) 한 번 깨운 다음 다시 들려줘요.
+  if(!H.ctx||H.ctx.state!=='running'){if(!again)H.activate().then(()=>H.play(kind,true)).catch(()=>{});return;}
   const notes=PATTERNS[kind]||PATTERNS.tap,now=Date.now(),priority=PRIORITY[kind]||0;
   if((now-H.last<65&&priority<=H.priority)||(now<H.busyUntil&&priority<H.priority))return;
   H.last=now;H.priority=priority;H.stop();
@@ -131,7 +133,9 @@ if(!W.__jamkkanSound){
  H.activate=async()=>{
   const AC=W.AudioContext||W.webkitAudioContext;if(!AC)return;
   if(!H.ctx||H.ctx.state==='closed')H.ctx=new AC();
-  if(H.ctx.state!=='running')await H.ctx.resume();
+  if(H.ctx.state!=='running'){try{await H.ctx.resume();}catch(e){}}
+  // 깨워도 계속 멈춰 있으면 소리 장치를 새로 만들어요(한 번 고장 나면 계속 안 들리던 문제).
+  if(H.ctx.state!=='running'){try{H.ctx.close();}catch(e){}H.ctx=new AC();H.noise=null;try{await H.ctx.resume();}catch(e){}}
   H.enabled=H.ctx.state==='running';
  };
  H.configure=c=>{

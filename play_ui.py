@@ -78,4 +78,20 @@ const JK_MASCOT=__MASCOTS__;
 function jkImg(name,size){return JK_MASCOT[name]?'<img src="'+JK_MASCOT[name]+'" alt="" style="width:'+(size||120)+'px;flex:0 0 '+(size||120)+'px;height:auto">':'';}
 """
     script = script.replace("__MASCOTS__", _mascot_urls(number))
+    # 게임 시작 화면 공통 틀: 핵심 3칸 카드(.jk-k3) + 자세히 보기 접기 상자(.jk-more)
+    k3_css = ("<style>.jk-k3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}"
+              ".jk-k3>div{position:relative;background:#fff;border:2px solid #D7E2DD;border-radius:16px;padding:10px 12px;word-break:keep-all}"
+              ".jk-k3>div.key{border-color:#F59E0B;background:#FFF8EC}"
+              ".jk-k3 .t{display:flex;align-items:center;gap:6px;font-weight:900;font-size:1.02rem;color:#1F3A33}"
+              ".jk-k3 .t i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#20483F;color:#fff;font-size:.8rem;flex:0 0 auto}"
+              ".jk-k3 .t em{font-style:normal;font-size:1.3rem}"
+              ".jk-k3 p{margin:4px 0 0;font-size:.9rem;line-height:1.5;color:#334155}"
+              "details.jk-more{margin:10px 0 0;border:2px dashed #C9DCD3;border-radius:14px;background:#FAFCFB}"
+              "details.jk-more>summary{cursor:pointer;font-weight:900;font-size:1.05rem;padding:10px 14px;color:#20483F;list-style:none}"
+              "details.jk-more>summary::-webkit-details-marker{display:none}"
+              "details.jk-more>summary::after{content:' ▾';color:#94A3B8}details.jk-more[open]>summary::after{content:' ▴'}"
+              "details.jk-more>.in{padding:0 12px 12px}"
+              "@media (max-width:640px){.jk-k3{grid-template-columns:1fr}}</style>")
+    if "</head>" in html_text:
+        html_text = html_text.replace("</head>", k3_css + "</head>", 1)
     return html_text.replace("<script>", "<script>"+script.replace("__NUMBER__", number), 1)

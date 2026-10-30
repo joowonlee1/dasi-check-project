@@ -311,9 +311,9 @@ st.markdown(
     .lock-banner .text {font-size:1rem;}
     .clock {font-variant-numeric:tabular-nums; font-weight:900; font-size:1.6rem; color:#B91C1C;}
     /* 게임 속 시각 · 남은 시간을 같은 모양의 카드로 나란히 */
-    .timebox {background:#1F2937; border:3px solid #F59E0B; border-radius:16px; padding:8px 14px; text-align:center; box-shadow:0 4px 0 #B45309,0 6px 16px rgba(0,0,0,.2);}
-    .timebox small {display:block; color:#FDE68A; font-weight:900; font-size:.95rem;}
-    .timebox b {font-variant-numeric:tabular-nums; font-size:2.3rem; font-weight:900; letter-spacing:.06em; font-family:ui-monospace,Consolas,monospace; text-shadow:0 0 12px rgba(253,230,138,.35);}
+    .timebox {background:#1F2937; border:2px solid #F59E0B; border-radius:12px; padding:4px 14px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 3px 0 #B45309;}
+    .timebox small {color:#FDE68A; font-weight:900; font-size:.85rem;}
+    .timebox b {font-variant-numeric:tabular-nums; font-size:1.5rem; font-weight:900; letter-spacing:.05em; font-family:ui-monospace,Consolas,monospace; text-shadow:0 0 12px rgba(253,230,138,.35);}
     .quiet {background:#F1F5F9; border:2px dashed #CBD5E1; border-radius:14px; padding:10px 14px; margin:6px 0 10px;
             font-size:1.1rem; font-weight:800; color:#334155; text-align:center;}
     /* 증거를 두 칸씩 놓아 스크롤을 절반으로 줄여요 */
@@ -534,7 +534,7 @@ def evidence_card(evidence_id):
             with rec_col:
                 call_button({"name": item["name"], "number": item["number"], "avatar": "👩", "ring": False, "status": "통화 녹음 재생",
                              "lines": [["상대", item["lines"][0], ""],
-                                       ["상대", item["lines"][1], "⚠️ 방금 그 말! 다른 가족에게 연락하지 말래요"]],
+                                       ["상대", item["lines"][1], ""]],
                              "pitch": VOICE_PITCH, "verdict": "🎧 녹음이 끝났어요. 이 통화에서 이상한 점을 증거와 비교해 보세요."},
                             "녹음 듣기", key=f"rec_{evidence_id}", tone="calm", icon="🎧")
             with act_col:
@@ -894,7 +894,7 @@ CALL_VOICE = {
     "dad_off": {"avatar": "👨", "voice": [["안내 음성", "전원이 꺼져 있어, 음성사서함으로 연결됩니다.", ""]],
                 "verdict": "📴 전원 꺼짐 · 출장 중 비행기 안일 수도 있어요"},
     "new_contact": {"avatar": "❓", "danger": True,
-                    "voice": [["상대", EVIDENCE["new_contact"]["lines"][0][1], "⚠️ 방금 그 말! 확인할 틈 없이 앱 설치부터 시켜요"]],
+                    "voice": [["상대", EVIDENCE["new_contact"]["lines"][0][1], ""]],
                     "verdict": "⚠️ 상대가 알려 준 새 번호로 건 통화예요"},
     "aunt": {"avatar": "👩", "safe": True, "voice": [[w, t, ""] for w, t in EVIDENCE["aunt"]["lines"]],
              "verdict": "✅ 원래 저장된 번호로 직접 확인한 통화예요"},
@@ -1024,6 +1024,7 @@ def room_picture(places):
             "D.addEventListener('click',W.__jkRoomGoH,true);})();</script>"
             f"<!-- {st.session_state['_room_go_n']} -->", height=0)
     if picked is not None:
+        st.session_state["_room_scroll"] = True  # 물건을 누르면 아래 자료가 있는 곳으로 자동으로 내려가요.
         go_place(places[picked])
 
 
@@ -1057,6 +1058,13 @@ def show_room():
 
     st.divider()
     place = game["place"]
+    if st.session_state.pop("_room_scroll", False):
+        import streamlit.components.v1 as components
+        components.html(
+            "<script>setTimeout(()=>{try{const D=parent.document,el=D.getElementById('room-now');"
+            "if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}}catch(e){}},350);</script>"
+            f"<!-- {st.session_state.get('_room_go_n', 0)} -->", height=0)
+    st.markdown('<div id="room-now" style="scroll-margin-top:70px"></div>', unsafe_allow_html=True)
     st.markdown(f'<div style="display:flex;align-items:center;gap:10px;background:#F1F7F4;border:2px solid #CFE3D9;border-radius:14px;'
                 f'padding:10px 16px;margin:4px 0 12px"><span style="font-size:1.6rem">📍</span>'
                 f'<div><small style="color:#52616B;font-weight:800">지금 조사 중</small><div style="font-size:1.3rem;font-weight:900;color:#20483F">{esc(place)}</div></div></div>',

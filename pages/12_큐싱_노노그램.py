@@ -183,12 +183,9 @@ function strip(clue, cells){ return `<div class="strip"><span class="n">${clue}<
 function renderIntro(){
   $('app').innerHTML = `
   <section class="hero"><span>🅿️ 도토리 공영주차장 · 증거 복원실</span><b>찢긴 QR 스티커, 숫자만으로 복원하라!</b><span>정산기에 덧붙은 수상한 스티커의 조각 데이터를 확보했어요.</span></section>
-  <div class="steps">
-    <div class="step"><div class="ic">🔢</div><div><b class="h">① 단서 읽기</b><p>줄 옆 숫자는 <b>연달아 칠한 칸 수</b>예요. ‘3 1’이면 3칸 묶음, 빈칸 하나 이상, 1칸 묶음.</p></div></div>
-    <div class="step"><div class="ic">✏️</div><div><b class="h">② 칠하고 ✕ 치기</b><p>확실한 칸은 칠하고, 확실히 빈칸은 ✕로 표시해요. 누른 채 끌면 여러 칸을 한 번에!</p></div></div>
-    <div class="step"><div class="ic">🖼️</div><div><b class="h">③ 그림 복원</b><p>모든 줄의 숫자를 맞추면 숨은 그림이 나타나고 수법이 공개돼요.</p></div></div>
-    <div class="step"><div class="ic">🔍</div><div><b class="h">④ 사실 조사</b><p>그림을 복원하면 <b>그 QR을 써도 되는지</b> 자료를 읽고 판단해요. 조사를 마쳐야 다음 조각이 열려요.</p></div></div>
-  </div>
+  <div class="jk-k3"><div><div class="t"><i>1</i><em>🔢</em>숫자 읽고 칠하기</div><p>줄 옆 숫자는 <b>연달아 칠한 칸 수</b>예요. 확실한 칸은 칠하고, 빈칸은 ✕. 누른 채 끌면 여러 칸!</p></div><div><div class="t"><i>2</i><em>🖼️</em>그림 복원</div><p>모든 줄의 숫자를 맞추면 숨은 그림이 나타나고 수법이 공개돼요.</p></div><div class="key"><div class="t"><i>3</i><em>🔍</em>사실 조사</div><p>그림을 복원하면 <b>그 QR을 써도 되는지</b> 자료를 읽고 판단해요. 조사를 마쳐야 다음 조각이 열려요.</p></div></div>
+  <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🧩 복원 시작하기</button>
+  <details class="jk-more"><summary>📖 자세히 보기 · 푸는 요령과 별 받는 법</summary><div class="in">
   <section class="box"><h3>🔍 예시로 감 잡기 (5칸짜리 줄)</h3>
     <div class="exs">
       <div class="ex"><b>① 숫자가 줄 길이와 같으면</b>${strip('5', '#####')}5칸 줄에 ‘5’ → 전부 칠해요.</div>
@@ -199,7 +196,7 @@ function renderIntro(){
     <p style="margin:10px 0 0">👉 가로줄에서 알아낸 칸이 세로줄의 실마리가 되고, 세로줄에서 알아낸 칸이 다시 가로줄의 실마리가 돼요. 이렇게 번갈아 따지면 <b>찍지 않고도</b> 끝까지 풀려요.</p>
   </section>
   <section class="box"><h3>⭐ 별 받는 법</h3>⭐ 그림 복원 · ⭐ 힌트 없이 · ⭐ ‘틀린 칸 검사’ 없이</section>
-  <button class="go" style="width:100%;font-size:1.15rem;min-height:56px" onclick="startStage(0)">🧩 복원 시작하기</button>`;
+  </div></details>`;
 }
 
 // 복원실 안에서 바로 전 화면(시작 화면)으로 돌아가요. 칠한 칸과 기록은 그대로 남아요.

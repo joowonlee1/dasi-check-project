@@ -758,16 +758,32 @@ def phone_html(step):
         voice = " voice" if event["kind"] == "call" else ""
         lines = "".join(f'<div class="gp-line{voice}">{esc(t)}</div>' for t in event["lines"])
         lines += "".join(f'<div class="gp-line voice">{esc(t)}</div>' for t in event.get("call_lines", []))
-        new = " new" if index == step else ""
-        items.append(
-            f'<div class="gp-item{new}"><div class="gp-head"><b>{esc(event["sender"])}</b>'
-            f'<span>{tag} {esc(event["time"])}</span></div>{lines}</div>'
-        )
+        if index == step:
+            items.append(
+                f'<div class="gp-item new"><div class="gp-head"><b>{esc(event["sender"])}</b>'
+                f'<span>{tag} {esc(event["time"])}</span></div>{lines}</div>'
+            )
+        else:
+            # 지난 연락은 한 줄로만 접어 둬서 폰이 길어지지 않게 해요(누르면 펼쳐져요).
+            first = (event["lines"] or [""])[0]
+            items.append(
+                f'<div class="gp-old"><b>{esc(event["sender"])}</b> <span class="t">{esc(event["time"])}</span>'
+                f'<div class="s">{esc(first)}</div></div>'
+            )
+    newest, older = items[-1], items[:-1]
+    old_html = (
+        f'<details class="gp-more"><summary>📨 지난 연락 {len(older)}개 보기</summary>{"".join(reversed(older))}</details>'
+        if older else ""
+    )
     return (
+        "<style>.gp-more{margin:6px 0 0}.gp-more summary{cursor:pointer;list-style:none;text-align:center;font-weight:800;font-size:.85rem;"
+        "color:#CBD5E1;background:rgba(255,255,255,.08);border-radius:10px;padding:5px}.gp-more summary::-webkit-details-marker{display:none}"
+        ".gp-old{background:rgba(255,255,255,.07);border-radius:10px;padding:6px 10px;margin-top:6px;color:#E2E8F0;font-size:.85rem}"
+        ".gp-old .t{color:#94A3B8;font-size:.78rem}.gp-old .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#CBD5E1}</style>"
         '<div class="gp-phone"><div class="notch"></div>'
         f'<div class="status"><span>{esc(EVENTS[step]["time"])}</span><span>📶 LTE 🔋 48%</span></div>'
         '<div class="gp-title">👵 할머니 휴대전화</div>'
-        + "".join(reversed(items))
+        + newest + old_html
         + "</div>"
     )
 
@@ -789,7 +805,7 @@ def show_voice_call(event, step):
     lines = []
     for text in said:
         text = text.replace("(수사관)", "").strip()
-        warn = "⚠️ 방금 그 말, 수상하지 않나요?" if any(w in text for w in VOICE_WARN) else ""
+        warn = ""  # 수상한 말인지는 플레이어가 직접 판단해요(힌트 없음)
         lines.append(["수사관", text, warn])
     number, _, shown = event["sender"].partition(" (")
     call_button({"name": shown.rstrip(")") or number, "number": number if shown else "", "avatar": "🕴️", "danger": True,
@@ -818,18 +834,35 @@ def clue_block(game, event):
 
 
 def show_gauges(game):
+    # 게이지 3개를 색깔 카드로 크게 보여 줘요(숫자는 크게, 막대는 굵게).
     stage = scam_stage(game["step"])
-    gauges = st.columns(3)
-    with gauges[0]:
-        st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
-        st.progress(game["belief"] / 100)
-    with gauges[1]:
-        st.markdown(f"**💛 할머니가 나를 믿는 정도 {game['trust']}**")
-        st.progress(game["trust"] / 100)
-    with gauges[2]:
-        st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**" + (" · ⚠️ 지금이 송금 직전이에요!" if stage == TOTAL_STAGES else ""))
-        st.progress(stage / TOTAL_STAGES)
-    st.caption(f"😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.")
+    belief, trust = game["belief"], game["trust"]
+    danger = stage == TOTAL_STAGES
+    cards = [
+        ("😟", "사기범을 믿는 정도", f"{belief}", belief, "#DC2626", "#FEF2F2", "#FECACA"),
+        ("💛", "할머니가 나를 믿는 정도", f"{trust}", trust, "#D97706", "#FFFBEB", "#FDE68A"),
+        ("💸", "송금까지", f"{stage}<small>/{TOTAL_STAGES}단계</small>", stage / TOTAL_STAGES * 100, "#7C3AED", "#F5F3FF", "#DDD6FE"),
+    ]
+    html_cards = "".join(
+        f'<div class="gp-g" style="background:{bg};border-color:{line}{";animation:gp-alarm 1s ease-in-out infinite" if (danger and i == 2) else ""}">'
+        f'<div class="gp-g-top"><span>{ic} {name}</span><b style="color:{col}">{val}</b></div>'
+        f'<div class="gp-g-bar"><i style="width:{pct:.0f}%;background:{col}"></i></div></div>'
+        for i, (ic, name, val, pct, col, bg, line) in enumerate(cards)
+    )
+    st.markdown(
+        "<style>.gp-gs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 2px}"
+        ".gp-g{border:2.5px solid;border-radius:16px;padding:10px 14px}"
+        ".gp-g-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-weight:900;color:#1F2937;font-size:1rem}"
+        ".gp-g-top b{font-size:1.9rem;line-height:1}.gp-g-top small{font-size:.9rem;margin-left:2px}"
+        ".gp-g-bar{height:14px;background:#fff;border-radius:999px;margin-top:8px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}"
+        ".gp-g-bar i{display:block;height:100%;border-radius:999px;transition:width .6s}"
+        "@keyframes gp-alarm{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}"
+        "@media (max-width:640px){.gp-gs{grid-template-columns:1fr}}</style>"
+        f'<div class="gp-gs">{html_cards}</div>'
+        f'<div style="font-size:.88rem;color:#64748B;margin-top:2px">😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.'
+        + (' <b style="color:#7C3AED">⚠️ 지금이 송금 직전이에요!</b>' if danger else "") + "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 def show_last_feedback(game):
@@ -880,7 +913,7 @@ def show_intro():
     show_tiles([
         ("😟", "사기범을 믿는 정도", "피싱 연락이 올 때마다 올라가요. 설득하면 내려가요."),
         ("💛", "할머니가 나를 믿는 정도", "높을수록 같은 말도 더 잘 통해요."),
-        ("💸", "송금까지", "4단계는 송금 직전! 일찍 멈출수록 좋은 결말이 나와요."),
+        ("💸", "송금까지", "피싱 연락마다 1단계씩 올라가요. 4단계는 송금 직전! 일찍 멈출수록 좋은 결말이 나와요."),
     ])
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
 

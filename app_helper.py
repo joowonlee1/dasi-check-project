@@ -89,6 +89,9 @@ _component = components.declare_component("dotori_app_helper", path=str(Path(__f
 def show_helper(page="home"):
     # 중고거래는 기존 질문·힌트 점수를 그대로 연결한 전용 탐정을 사용해요.
     if page == "10":
+        # 다른 페이지에서 남아 있던 깡지 도우미를 지워요(AI 탐정과 깡지가 두 개 보이던 문제).
+        import streamlit.components.v1 as components
+        components.html("<script>try{const D=parent.document;D.getElementById('dotori-helper')?.remove();}catch(e){}</script>", height=0)
         return
     page = page if page in GUIDES else "home"
     all_states = st.session_state.setdefault("dotori_helper_v1", {})
