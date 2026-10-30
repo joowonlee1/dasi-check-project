@@ -215,6 +215,17 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .node{transform-box:fill-box;transform-origin:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.exgrid{gap:5px}.ex{padding:6px 4px}.ex p{font-size:.7rem;line-height:1.4}.extag{font-size:.64rem;padding:2px 6px}.steps{grid-template-columns:1fr;gap:8px}.step{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px}.step .ic{font-size:30px;margin:0}.step .num{flex-shrink:0}.step b{font-size:1rem}.keys{grid-template-columns:repeat(2,1fr)}.hero b{font-size:1.2rem}.map{grid-template-columns:repeat(5,1fr)}.map div{font-size:.7rem}.post .txt{font-size:.98rem}}
+
+body{font-weight:600;color:#203C35}
+.step p,.howto,.legend2>div,.excard p,.story,.legend,.clue,.hint{font-size:1rem!important;line-height:1.65!important;color:#29483F}
+summary{cursor:pointer;font-size:1.05rem;font-weight:800;padding:10px 12px;background:#EDF5F0;border-radius:10px}
+details.help{margin:10px 0;border:1px solid #B8CFC4;border-radius:12px;padding:6px;background:#fff}
+.ui-nav{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ui-help{position:fixed;inset:0;z-index:10000;background:#172B3A88;padding:16px;display:flex;align-items:center;justify-content:center}
+.ui-help>div{background:#FFFEFA;border-radius:18px;padding:18px;max-height:85vh;overflow:auto;width:min(850px,100%);box-shadow:0 12px 40px #0004}
+.ui-help button{position:sticky;top:0;z-index:2;background:#20483F;color:#fff}
+@media(max-width:720px){.steps,.legend2,.exrow,.grids{grid-template-columns:1fr!important}.clues{grid-template-columns:1fr!important}}
+
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const DATA = __DATA__;
@@ -316,12 +327,14 @@ function exampleHtml(){
   </div></section>`;
 }
 
+let guideOpen = false;
 function intro(){
   setPlayActive(false);
   $('app').innerHTML = `
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
   ${stageMap()}
+  <details class="help"><summary>🔎 예시와 게임 방법 펼치기</summary>
   ${exampleHtml()}
   <div class="steps">
     <div class="step"><span class="num">1</span><div class="ic">🛡️</div><div class="txt"><b>퍼지기 전, 1명 지키기</b><p>시작 전에 흰 동그라미 <b style="display:inline">1명</b>을 눌러 미리 알려 줘요.</p></div></div>
@@ -340,7 +353,9 @@ function intro(){
     <ol><li><b>근거</b>가 있다: 원문, 공식 공지, 사진 원본 같은 확인한 자료</li>
     <li><b>확인 방법</b>을 알려 준다: “누리집에서 직접 확인해 봐”</li>
     <li><b>비난·느낌·추측</b>이 아니다: “사기꾼이네”, “합성 같아”, “일단 가 보자”는 ❌</li></ol></div>
-  <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚀 ${G.stage + 1}단계 시작 · ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>`;
+  </details>
+  ${S && S.stageIndex === G.stage && S.phase !== "result" ? '<button class="ok" style="width:100%;margin-bottom:8px" onclick="resumeStage()">▶ 하던 활동 이어하기</button>' : ''}
+  <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚪 도토리 광장 들어가기 · ${G.stage + 1}단계 ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>`;
 }
 
 // 단계 화면에서 바로 전 화면(단계 설명)으로 돌아가요. 퍼지던 시뮬레이션은 멈춰요.
@@ -349,7 +364,7 @@ function startStage(idx){
   clearInterval(timer); clearTimeout(timer); timer = null;
   G.stage = idx;
   const g = makeGraph(idx);
-  S = {g, st: ST[idx], state: g.pts.map(() => 'S'), cards: ST[idx].cards, phase: 'prep', pre: 1, tickNo: 0, levels: [], quizFor: null, used: [], read: false};
+  S = {stageIndex: idx, g, st: ST[idx], state: g.pts.map(() => 'S'), cards: ST[idx].cards, phase: 'prep', pre: 1, tickNo: 0, levels: [], quizFor: null, used: [], read: false};
   g.sources.forEach(s => S.state[s] = 'I');
   render();
   toTop();
@@ -361,12 +376,23 @@ function counts(){
   return c;
 }
 
+function resumeStage(){
+  render();toTop();
+  if(S.phase==='run') timer=setInterval(tick,S.st.tick);
+}
+function showGuide(){
+  if(guideOpen)return;guideOpen=true;
+  const box=document.createElement('div');box.className='ui-help';box.setAttribute('role','dialog');box.setAttribute('aria-label','게임 방법');
+  box.innerHTML='<div><button type="button">✕ 닫고 계속하기</button>'+exampleHtml()+'<p>흰 주민은 미리 지키고, 빨간 주민에게는 근거 있는 정정 문구를 보내요. 안내를 보는 동안 확산은 잠시 멈춰요.</p></div>';
+  box.querySelector('button').onclick=()=>{box.remove();guideOpen=false;};document.body.appendChild(box);box.querySelector('button').focus();
+}
 function render(){
   setPlayActive(true);
   const st = S.st, c = counts(), n = st.n;
   const phaseText = S.phase === 'prep' ? `🛡️ 사전 알림 ${S.pre}장 남음 · 퍼지기 전에 1명을 골라요` : S.phase === 'run' ? `📶 퍼지는 중… ${S.tickNo}단계` : '';
   $('app').innerHTML = `
   <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="backIntro()">← 이전 화면으로</button>
+  <button onclick="showGuide()">❔ 게임 방법 다시 보기</button>
   <section class="hero"><span>${G.stage + 1}단계 · 수법 ${esc(st.icon + ' ' + st.tactic)}</span><b>${S.phase === 'prep' ? '이 소식이 곧 퍼지려고 해요! 먼저 1명을 지켜요' : '소식이 마을에 퍼지고 있어요!'}</b></section>
   <div class="post"><div class="ava">📢</div><div><div class="acc">${esc(st.account)}</div><div class="txt">${esc(st.post)}</div></div></div>
   <div class="hud"><span class="cards">🃏 남은 카드 ${S.cards}장 (1장 = 1명 지키기·정정)</span><span>🔴 속은 사람 ${c.I}명</span><span>🛡️ 지킨 사람 ${c.R}명</span><span>💬 정정한 사람 ${c.C}명</span><span>⚪ 아직 모르는 사람 ${c.S}명</span>${S.phase === 'run' ? `<span>📶 ${S.tickNo}단계</span>` : ''}</div>
@@ -470,6 +496,7 @@ function run(){
 
 // ───── 한 단계 퍼지기: 너비 우선 탐색(BFS)처럼 '이번에 믿은 사람'의 이웃에게 번짐 ─────
 function tick(){
+  if (guideOpen) return;
   if (S.quizFor !== null) return; // 정정 문구를 고르는 동안은 멈춤
   const g = S.g, next = [], hot = [];
   S.state.forEach((s, i) => {
