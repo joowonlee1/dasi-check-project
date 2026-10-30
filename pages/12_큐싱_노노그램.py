@@ -16,6 +16,11 @@ from nonogram_component_ui import create_nonogram_component
 
 with intro("12", suffix=""):
     st.title("🧩 큐싱 노노그램")
+    from mascot_ui import show_scene
+    import scene_ui
+    SCENE_SLOT = st.empty() if scene_ui.ready("scene_kiosk") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
+    if SCENE_SLOT is None:
+        show_scene("scene_kiosk", "")
     show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림을 복원한 뒤 **출처·목적지·요구를 조사**하세요.", "🧩")
     show_mascot("puzzle", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
 
@@ -452,6 +457,13 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], -new["hints"]) > (old.get("stars", 0), -old.get("hints", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("nono_hall"))
+if SCENE_SLOT is not None:
+    got = st.session_state.setdefault("nono_scene_cleared", [])
+    if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2) and int(event["stage"]) not in got:
+        got.append(int(event["stage"]))
+    if event and event.get("type") == "final":
+        st.session_state["nono_scene_final"] = True
+    SCENE_SLOT.markdown(scene_ui.kiosk(got, st.session_state.get("nono_scene_final", False)), unsafe_allow_html=True)
 
 # 📷 진짜 QR 비춰 보기: 웹캠 사진 속 QR을 읽어 목적지만 보여 줘요(접속하지 않아요).
 from qr_scan_ui import show_qr_scanner
