@@ -4,7 +4,7 @@ primaryColor = "#0F766E"
 backgroundColor = "#FFFEF8"
 secondaryBackgroundColor = "#F0F5F4"
 textColor = "#172B3A"
-font = "sans serif"
+     font = "Pretendard Variable:https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css, sans-serif"
 
 [client]
 # 보는 사람 화면에서 개발자 메뉴(캐시 지우기 등)를 숨겨요.
