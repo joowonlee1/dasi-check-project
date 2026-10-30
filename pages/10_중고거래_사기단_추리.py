@@ -414,7 +414,7 @@ function aiFloat(){
   if (!D.getElementById('jk-ai-style')) {
     const st = D.createElement('style'); st.id = 'jk-ai-style';
     st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:64px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 26px;min-height:76px;font:900 22px Pretendard Variable,Pretendard,system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
-#jk-ai-launch{padding-left:112px}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
+#jk-ai-launch{padding-left:112px}#jk-ai-launch:not(.pocket):not(.wait)::after{content:'👆 물어보기';display:inline-block;margin-left:12px;background:#7C3AED;color:#fff;border-radius:999px;padding:4px 12px;font-size:16px;font-weight:900;box-shadow:0 2px 0 #5B21B6}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
 #jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}
 #jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 #jk-ai-panel .hd{background:#6D28D9;color:#fff;padding:12px 16px;font-weight:900;display:flex;align-items:center;gap:8px}
@@ -439,17 +439,17 @@ function aiFloat(){
   { const old = D.getElementById('dotori-helper'); if (old) old.remove(); }  // 남아 있던 깡지 도우미와 겹치지 않게
   let launch = D.getElementById('jk-ai-launch');
   if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
-  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : '🤖 AI 탐정에게 물어보기';
+  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : '🤖 AI 탐정';
   launch.classList.toggle('wait', AI.wait);
   launch.classList.toggle('pocket', !!P.__jkAiPocket);
   if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
   let pocket=D.getElementById('jk-ai-pocket');
   if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
-  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;background:#7C3AED;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
+  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;display:flex;align-items:center;height:30px;line-height:1;white-space:nowrap;background:#7C3AED;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
   pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
   pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
   // ‘넣기’ 버튼을 AI 탐정 상자 오른쪽 위 모서리에 걸쳐 둬요(깡지 도우미·나의 폰과 같은 모양).
-  const placePocket=()=>{try{const r=launch.getBoundingClientRect();pocket.style.top=(r.top-17)+'px';pocket.style.right=(P.innerWidth-r.right+14)+'px';}catch(e){}};placePocket();setTimeout(placePocket,100);if(!P.__jkPocketRs){P.__jkPocketRs=1;P.addEventListener('resize',()=>{const l=D.getElementById('jk-ai-launch'),k=D.getElementById('jk-ai-pocket');if(l&&k){const r=l.getBoundingClientRect();k.style.top=(r.top-17)+'px';k.style.right=(P.innerWidth-r.right+14)+'px';}});}
+  const placePocket=()=>{try{const r=launch.getBoundingClientRect();pocket.style.top=(r.top-16)+'px';pocket.style.right=(P.innerWidth-r.right+14)+'px';}catch(e){}};placePocket();setTimeout(placePocket,100);if(!P.__jkPocketRs){P.__jkPocketRs=1;P.addEventListener('resize',()=>{const l=D.getElementById('jk-ai-launch'),k=D.getElementById('jk-ai-pocket');if(l&&k){const r=l.getBoundingClientRect();k.style.top=(r.top-17)+'px';k.style.right=(P.innerWidth-r.right+14)+'px';}});}
   {const o=D.getElementById('jk-pocket-style');if(o)o.remove();}if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{right:0!important;bottom:150px!important;width:96px!important;height:96px!important;min-height:96px!important;padding:0!important;border-right:0!important;border-radius:22px 0 0 22px!important;font-size:0!important}#jk-ai-launch.pocket::before{left:50%!important;bottom:6px!important;transform:translateX(-50%);width:76px!important;height:80px!important}';D.head.appendChild(st);}
 
   launch.onclick = () => { P.__jkAiPocket=false; P.__jkAiOpen = true; aiFloat(); };
