@@ -509,7 +509,20 @@ def show_voice_reply(state, turns, offline):
     if offline:
         st.caption("🎙️ 말로 대답하기는 AI 연결이 필요해서 오프라인 대본 모드에서는 쓸 수 없어요.")
         return
-    audio = st.audio_input("마이크 버튼을 눌러 말하고, 다 말하면 다시 눌러요. 내 말이 글자로 바뀌어 바로 보내져요.", key=f"voice_reply_{turns}")
+    # 마이크 버튼을 크게(보라색 동그라미) 보여 줘요.
+    st.markdown(
+        "<style>[data-testid=stAudioInput]{border:3px solid #A78BFA!important;border-radius:18px!important;background:#F5F3FF!important;padding:10px 14px!important;min-height:96px}"
+        "[data-testid=stAudioInput] button{width:72px!important;height:72px!important;min-width:72px!important;border-radius:50%!important;"
+        "background:linear-gradient(135deg,#7C3AED,#5B21B6)!important;color:#fff!important;box-shadow:0 4px 0 #3B0764,0 6px 14px rgba(91,33,182,.35)!important}"
+        "[data-testid=stAudioInput] button svg{width:38px!important;height:38px!important;fill:#fff!important;color:#fff!important}"
+        "[data-testid=stAudioInput] button:hover{filter:brightness(1.1)}"
+        "[data-testid=stAudioInput]>div{height:auto!important;min-height:88px!important;padding:6px 8px!important;align-items:center!important;overflow:visible!important}"
+        "[data-testid=stAudioInput] [data-testid=stElementToolbar] button{width:auto!important;height:auto!important;min-width:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;color:inherit!important}"
+        "[data-testid=stAudioInput] [data-testid=stElementToolbar] button svg{width:18px!important;height:18px!important;fill:currentColor!important}"
+        "[data-testid=stAudioInput] label p{font-size:1.05rem!important;font-weight:800!important;color:#4C1D95!important}</style>",
+        unsafe_allow_html=True,
+    )
+    audio = st.audio_input("🎙️ 보라색 마이크 버튼을 눌러 말하고, 다 말하면 다시 눌러요. 내 말이 글자로 바뀌어 바로 보내져요.", key=f"voice_reply_{turns}")
     st.caption("🔒 녹음은 글자로 바꾸는 데만 AI(Gemini)로 보내고 저장하지 않아요. 실제 이름·번호는 말하지 마세요.")
     if audio is None:
         return
@@ -1237,7 +1250,22 @@ else:
 
     else:
         # 글로 대답하기 / 말로 대답하기를 탭으로 나눠 한 자리에서 골라요(화면이 길어지지 않게).
-        tab_text, tab_voice = st.tabs(["✍️ 글로 대답하기", "🎙️ 말로 대답하기"])
+        st.markdown(
+            "<style>.st-key-reply_tabs [data-testid=stTabs] [role=tablist]{gap:10px!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab]{flex:1;min-height:58px!important;border-radius:16px!important;border:3px solid #CBD5E1!important;background:#F8FAFC!important;justify-content:center}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab] p{font-size:1.15rem!important;font-weight:900!important;color:#334155!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab][data-key='1']{border-color:#A78BFA!important;background:linear-gradient(135deg,#F5F3FF,#EDE9FE)!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab][data-key='1'] p{color:#5B21B6!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab][aria-selected=true]{background:#20483F!important;border-color:#20483F!important;box-shadow:none!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab][data-key='1'][aria-selected=true]{background:linear-gradient(135deg,#7C3AED,#5B21B6)!important;border-color:#5B21B6!important;box-shadow:none!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist] [role=tab][aria-selected=true] p{color:#fff!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tablist]>div:not([role=tab]){display:none!important}"
+            ".st-key-reply_tabs [data-testid=stTabs] [role=tab]::after,.st-key-reply_tabs [data-testid=stTabs] [role=tab]::before,.st-key-reply_tabs [data-testid=stTabs] [role=tablist]::after{display:none!important;border:0!important}"
+            ".st-key-reply_tabs .react-aria-SelectionIndicator{display:none!important}</style>",
+            unsafe_allow_html=True,
+        )
+        with st.container(key="reply_tabs"):
+            tab_text, tab_voice = st.tabs(["✍️ 글로 대답하기", "🎙️ 말로 대답하기"])
         tab_text.__enter__()
         with st.form(
             "jamkkan_reply_form_v2",
