@@ -452,9 +452,10 @@ elif event and event.get("type") == "final":
     )
 dd.show_hall_note(st.session_state.get("nono_hall"))
 
-# 📷 진짜 QR 비춰 보기: 웹캠 사진 속 QR을 읽어 목적지만 보여 줘요(접속하지 않아요).
+# 🔲 연습용 QR 퀴즈: QR 속 주소를 읽어 목적지만 보여 줘요(접속하지 않아요).
 from qr_scan_ui import show_qr_scanner
 show_qr_scanner()
+
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(

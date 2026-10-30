@@ -1,8 +1,6 @@
-"""📷 웹캠으로 QR 비춰 보기: 사진 속 QR을 읽어 '어디로 데려가는지'만 보여 줘요.
+"""🔲 연습용 QR 퀴즈: QR 속 글자만 읽어 '어디로 데려가는지'를 보여 줘요(주소에 접속하지 않아요).
 
-- 주소에 접속하지 않아요. 글자만 읽고 생김새를 살펴봐요.
-- 사진은 QR을 읽는 데만 쓰고 저장하지 않아요(서버 메모리에서 바로 버려요).
-- QR 읽기는 zxing-cpp 라이브러리를 써요.
+- QR 만들기는 zxing-cpp 라이브러리를 써요.
 """
 import io
 import ipaddress
@@ -38,17 +36,6 @@ def _qr_png(text):
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return buffer.getvalue()
-
-
-def read_qr(file):
-    """사진에서 QR 글자를 읽어요. 못 찾으면 빈 목록."""
-    import zxingcpp
-    from PIL import Image, ImageOps
-    image = ImageOps.exif_transpose(Image.open(file)).convert("RGB")
-    found = zxingcpp.read_barcodes(image)
-    if not found:  # 좌우가 뒤집힌 웹캠 사진도 한 번 더 읽어 봐요.
-        found = zxingcpp.read_barcodes(ImageOps.mirror(image))
-    return [r.text for r in found if r.text]
 
 
 def describe(text):
@@ -98,7 +85,9 @@ def show_qr_scanner():
             "<style>.st-key-qr_scan_box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4)}"
             ".st-key-qr_scan_box [data-testid=stImage] img{border-radius:10px;border:2px solid #CBD5E1}"
             "[class*=st-key-qr_card_]{background:#fff;border:2px solid #BFDBFE;border-radius:16px;padding:10px 12px;gap:6px!important}"
-            "[class*=st-key-qr_card_] button{min-height:40px!important}"
+            "[class*=st-key-qr_card_] button{min-height:44px!important;height:44px;border:2px solid #BFDBFE!important;background:#fff!important;border-radius:12px!important}"
+            "[class*=st-key-qr_card_] button p{font-weight:800!important;font-size:1rem!important;color:#1E3A8A!important}"
+            "[class*=st-key-qr_card_] button:hover{border-color:#3B82F6!important;background:#EFF6FF!important}"
             ".st-key-qr_scan_box [data-testid=stPageLink] a{background:#fff;border:2px solid #93C5FD;border-radius:12px;justify-content:center;padding:6px 10px}"
             ".st-key-qr_scan_box [data-testid=stPageLink] a p,.st-key-qr_scan_box [data-testid=stPageLink] a span{color:#1E3A8A!important;font-weight:800!important;opacity:1!important}"
             "</style>"
@@ -135,7 +124,7 @@ def show_qr_scanner():
                         st.session_state["qr_demo_text"] = text
                         st.session_state["qr_demo_i"] = i
                         st.rerun()
-                    if b2.button("🚫 수상해", key=f"qr_bad_{i}", width="stretch", type="primary"):
+                    if b2.button("🚫 수상해", key=f"qr_bad_{i}", width="stretch"):
                         guesses[i] = True
                         st.session_state["qr_demo_text"] = text
                         st.session_state["qr_demo_i"] = i
@@ -146,23 +135,6 @@ def show_qr_scanner():
 
 def _answer(label):
     return "scam" if "사기" in label else "ok"
-
-
-def _scan_area():
-    if not st.toggle("📷 웹캠 켜기", key="qr_cam_on", help="켜면 브라우저가 카메라 사용 허락을 물어봐요."):
-        return None
-    shot = st.camera_input("QR이 화면 가운데에 크게 오게 비추고 ‘사진 찍기’를 눌러요", key="qr_cam")
-    if shot is None:
-        return None
-    try:
-        texts = read_qr(shot)
-    except Exception:
-        st.error("사진을 읽지 못했어요. 다시 찍어 주세요.")
-        return None
-    if not texts:
-        st.warning("QR을 찾지 못했어요. 더 가까이, 밝은 곳에서, 흔들리지 않게 찍어 주세요.")
-        return None
-    return texts
 
 
 def _show_results(texts):
