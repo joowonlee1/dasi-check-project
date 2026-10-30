@@ -344,7 +344,7 @@ if not S["done"]:
     # 문에 붙은 안내서를 그림으로 보여 줘요. 판정을 맞히면 그 위에 도장이 찍혀요.
     _checked=S["checks"].get(i,{})
     if i in S["answers"]:
-        _say=("hooray","도장 쾅! 위의 문 버튼으로 다음 문에 가 보자!")
+        _say=("hooray","도장 쾅! 위 복도에서 다음 문을 눌러 가 보자!")
     elif not _checked:
         _say=("letter","이 안내서, 진짜일까? 아래 🧰 도구로 하나씩 확인해 보자!")
     else:
