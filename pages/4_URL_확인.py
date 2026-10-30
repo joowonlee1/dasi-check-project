@@ -432,9 +432,7 @@ def show_structure(result):
 
 
 st.title("🔗 잠깐! · 의심 URL 확인")
-show_mascot("link", "누르기 전에 주소부터 살펴봐요. 검사 결과가 안전을 보장하지는 않아요.")
-show_key_question("누르기 전에 **주소부터** 확인해요. 붙여넣으면 살펴볼 특징을 설명해 드려요.", "🔗")
-st.caption("입력 주소에 접속하거나 파일을 내려받지 않습니다.")
+show_mascot("link", "주소를 붙여넣으면 살펴볼 특징을 알려 줘요. 접속은 하지 않아요!")
 
 with st.form("url_check_form"):
     raw_url = st.text_input(

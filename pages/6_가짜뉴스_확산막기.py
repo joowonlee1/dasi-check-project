@@ -1,10 +1,10 @@
-from play_ui import intro, bridge
 """가짜뉴스 확산 막기: 주민 연결망(그래프) 위에서 퍼지는 가짜 소식을 카드로 막는 전략 게임.
 
 - 퍼지는 방식은 너비 우선 탐색(BFS)처럼 한 단계씩 이웃에게 번집니다.
 - 연결이 많은 사람(허브)을 먼저 지키는 것이 핵심 전략입니다.
 - 모든 인물·소식·기관은 가상의 도토리시 이야기입니다.
 """
+from play_ui import intro, bridge
 import json
 
 import streamlit as st
@@ -14,11 +14,6 @@ from river_component_ui import create_river_component
 
 with intro("06", suffix=""):
     st.title("🌐 가짜뉴스 확산 막기")
-    from mascot_ui import show_scene
-    import scene_ui
-    SCENE_SLOT = st.empty() if scene_ui.ready("scene_plaza") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
-    if SCENE_SLOT is None:
-        show_scene("scene_plaza", "")
     show_key_question("가짜 소식은 **사람과 사람 사이를 타고** 번져요. 카드 몇 장으로 **누구를 먼저 지킬지** 골라 보세요.", "🌐")
 
 # 단계: 수법, 마을 크기, 카드 수, 퍼지는 간격(ms), 처음 올린 계정 수, 가짜 소식, 진실, 수법 공개, 정정 문구 퀴즈
@@ -101,7 +96,7 @@ button:focus-visible,.node:focus-visible{outline:3px solid #FF7A45;outline-offse
 .go:hover:not(:disabled){background:linear-gradient(135deg,#FF6A30,#FFA530)}
 .ok{background:#0F766E;color:#fff}.ok:hover:not(:disabled){background:#0B655B}
 main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
-.hero{background:linear-gradient(135deg,#1F5F55,#2E8B78);color:#fff;border-radius:22px;padding:18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:18px;text-align:center;animation:pop .5s ease-out both}
 .hero b{display:block;font-size:1.45rem;font-weight:900;word-break:keep-all}
 .hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .hud{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
@@ -119,7 +114,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .readme .rm-tip{font-weight:700;color:#33524A}
 .board.locked{min-height:400px}
 @media (max-width:560px){.readme{gap:10px;padding:12px}.readme .rm-post{padding:12px 14px}.readme .rm-post .txt{font-size:1.1rem}}
-.board{position:relative;background:radial-gradient(circle at 30% 20%,#F4FBF7,#E2EFE8);border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
+.board{position:relative;background:linear-gradient(rgba(244,251,247,.62),rgba(226,239,232,.62)),url(__SCENEIMG__) center/cover;border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
 svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .edge{stroke:#B7CBC2;stroke-width:2.5}
 .edge.hot{stroke:#E5484D;stroke-width:4;animation:flash .7s ease-out}
@@ -135,7 +130,7 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .ring{fill:none;stroke:#E5484D;stroke-width:3;animation:ring .8s ease-out forwards;pointer-events:none}
 .ring.g{stroke:#0F766E}.ring.b{stroke:#5B6FD6}
 .float{font-weight:900;font-size:20px;pointer-events:none;animation:float 1s ease-out forwards;text-anchor:middle}
-.toast{min-height:1.6em;font-weight:800;color:#B4471B;text-align:center;margin:6px 0;word-break:keep-all}
+.toast{min-height:1.6em;font-weight:900;font-size:1.2rem;color:#B4471B;text-align:center;margin:8px 0;word-break:keep-all}.toast:not(:empty){background:#FFF1E6;border:2px solid #F59E0B;border-radius:14px;padding:10px 14px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row button{flex:1}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
 .step{background:#fff;border:2px solid #D7E2DD;border-radius:18px;padding:14px 10px;text-align:center;animation:pop .45s ease-out both;word-break:keep-all}
@@ -190,8 +185,8 @@ svg{display:block;width:100%;height:auto;touch-action:manipulation}
 .result b{display:block;font-size:1.5rem;font-weight:900;word-break:keep-all}
 .meter{height:16px;background:#E8EFE6;border-radius:999px;overflow:hidden;margin:10px auto;max-width:420px}
 .meter div{height:100%;background:linear-gradient(90deg,#0F766E,#7FD1B9);width:0;transition:width 1s ease-out}
-.bars{display:flex;align-items:flex-end;gap:6px;height:90px;padding:6px 0;border-bottom:2px solid #D7E2DD}
-.bars div{flex:1;background:#E5484D;border-radius:6px 6px 0 0;position:relative;min-height:4px;animation:grow .6s ease-out both}
+.bars{display:flex;align-items:flex-end;justify-content:center;gap:14px;height:90px;padding:6px 0;border-bottom:2px solid #D7E2DD}
+.bars div{flex:1;max-width:70px;background:#E5484D;border-radius:6px 6px 0 0;position:relative;min-height:4px;animation:grow .6s ease-out both}
 .bars div span{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:.78rem;font-weight:800;color:#20483F}
 .barlab{display:flex;gap:6px;font-size:.72rem;color:#52616B}.barlab span{flex:1;text-align:center}
 .hubs li{margin:4px 0}
@@ -543,7 +538,7 @@ function finish(){
     <p style="font-size:.9rem;color:#52616B">친구가 많은 사람은 한 번에 여러 명에게 퍼뜨려요. 이런 사람을 먼저 지키면 효과가 커요.</p></section>
   <section class="panel"><h3>📶 단계별로 새로 믿은 사람</h3>
     ${S.levels.length ? `<div class="bars">${S.levels.map((v, k) => `<div style="height:${Math.max(6, v * 100 / Math.max(...S.levels))}%;animation-delay:${k * .08}s"><span>${v}</span></div>`).join('')}</div>
-    <div class="barlab">${S.levels.map((_, k) => `<span>${k + 1}</span>`).join('')}</div>` : '<p>처음 단계에서 모두 막았어요!</p>'}
+    <div class="barlab">${S.levels.map((_, k) => `<span>${k + 1}단계</span>`).join('')}</div>` : '<p>처음 단계에서 모두 막았어요!</p>'}
     <p style="font-size:.9rem;color:#52616B">한 단계마다 ‘방금 믿은 사람’의 친구에게 번져요. 컴퓨터가 그래프를 넓게 탐색하는 방식(너비 우선 탐색, BFS)과 같아요.</p></section>
   ${stageMap()}
   <div class="row"><button onclick="startStage(${G.stage})">🔄 다른 방법으로 다시 도전</button>
@@ -569,10 +564,31 @@ function final(){
   const avg = Math.round(G.best.reduce((a, b) => a + b, 0) / ST.length);
   const title = total >= 13 ? '🛡️ 마을 수호자' : total >= 9 ? '🔍 팩트체크 요원' : '🌱 새내기 확인러';
   sendResult({game: 'fakenews', type: 'final', stars: total, avg});
+  // 결과표: 단계마다 지킨 비율 막대·별, 가장 약했던 단계는 '다시 도전' 버튼. 칭호 3단계 중 어디까지 왔는지도 보여 줘요.
+  const weak = G.best.indexOf(Math.min(...G.best));
+  const ranks = [['🌱 새내기 확인러', 0], ['🔍 팩트체크 요원', 9], ['🛡️ 마을 수호자', 13]];
+  const next = ranks.find(r => r[1] > total);
+  const rows = ST.map((s, i) => `<div class="fr-row${i === weak ? ' weak' : ''}"><span class="fr-ic">${s.icon}</span><b>${esc(s.tactic)}</b>
+    <span class="fr-bar"><i style="width:${G.best[i]}%"></i></span><span class="fr-pct">${G.best[i]}%</span>
+    <span class="fr-star">${'⭐'.repeat(G.stars[i])}${'☆'.repeat(3 - G.stars[i])}</span>
+    ${i === weak && G.stars[i] < 3 ? `<button class="fr-retry" onclick="G.stage=${i};startStage(${i})">🔁 다시</button>` : '<span></span>'}</div>`).join('');
   $('app').innerHTML = `
-  <section class="final"><div class="big">🏆</div><b style="font-size:1.6rem;display:block">${title}</b>
-  <span>별 ${total} / 15 · 평균 ${avg}%의 주민을 지켰어요</span></section>
-  ${stageMap()}
+  <style>.final2{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#2F5D50,#4E8B75);color:#fff;border-radius:22px;padding:16px 22px;margin-bottom:10px}
+  .final2 .t{font-size:1.7rem;font-weight:900}.final2 .s{opacity:.95;margin-top:2px}
+  .ladder{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.ladder span{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:3px 10px;font-weight:800;font-size:.85rem}
+  .ladder span.on{background:#FDE68A;color:#5B3A12;border-color:#FDE68A}
+  .fr{background:#fff;border:2px solid #E5ECE9;border-radius:18px;padding:8px 14px;margin-bottom:10px}
+  .fr-row{display:grid;grid-template-columns:30px 90px 1fr 48px 72px 84px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px dashed #E5ECE9}
+  .fr-row:last-child{border-bottom:0}.fr-row.weak{background:#FFF7ED;border-radius:10px}
+  .fr-ic{font-size:1.4rem;text-align:center}.fr-bar{height:14px;background:#EEF2F1;border-radius:99px;overflow:hidden}.fr-bar i{display:block;height:100%;background:linear-gradient(90deg,#34D399,#059669);border-radius:99px}
+  .fr-pct{font-weight:900;color:#065F46;text-align:right}.fr-star{white-space:nowrap}
+  .fr-retry{background:#F97316;color:#fff;border:0;border-radius:999px;padding:6px 10px;font-weight:900;cursor:pointer;white-space:nowrap}
+  @media(max-width:560px){.fr-row{grid-template-columns:26px 1fr 44px 64px}.fr-row .fr-bar,.fr-row .fr-retry{grid-column:1/-1}}</style>
+  <section class="final2">${jkImg(total >= 13 ? 'trophy' : 'hooray', 120)}<div style="flex:1;min-width:0"><div class="t">${title}</div>
+  <div class="s">별 ${total} / 15 · 평균 ${avg}%의 주민을 지켰어요${next ? ` · 별 ${next[1] - total}개만 더 모으면 <b>${next[0]}</b>!` : ' · 최고 칭호를 달성했어요!'}</div>
+  <div class="ladder">${ranks.map(r => `<span class="${total >= r[1] ? 'on' : ''}">${r[0]} · ⭐${r[1]}+</span>`).join('')}</div></div></section>
+  <section class="fr"><h3 style="margin:.3rem 0">📋 단계별 결과표</h3>${rows}
+  <p style="font-size:.9rem;color:#52616B;margin:.4rem 0 .2rem">🟧 주황 줄은 가장 많이 퍼진 단계예요. ‘다시’를 눌러 그 단계만 다시 해 볼 수 있어요.</p></section>
   <section class="panel"><h3>🧠 오늘 배운 것</h3>
   <p>🛡️ <b>미리 알리기</b>: 퍼진 뒤 고치는 것보다 퍼지기 전에 알려 주는 게 훨씬 효과적이에요.</p>
   <p>🕸️ <b>연결이 많은 사람</b>: 친구가 많은 사람이 믿으면 한꺼번에 퍼져요. 나도 누군가에겐 연결이 많은 사람이에요.</p>
@@ -603,7 +619,8 @@ intro();
 </script></body></html>
 '''
 
-page = bridge(HTML, "06").replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
+import scene_ui
+page = bridge(HTML, "06").replace("__SCENEIMG__", scene_ui.data_url("scene_plaza")).replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
 spread_component = create_river_component(page)
 value = spread_component(key="jamkkan_spread_v1", default=None, stats=dd.stats("fakenews"))
 
@@ -622,13 +639,6 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], new["avg"]) > (old.get("stars", 0), old.get("avg", 0)),
     )
 dd.show_hall_note(st.session_state.get("fakenews_hall"))
-if SCENE_SLOT is not None:
-    if event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
-        best = st.session_state.setdefault("fakenews_scene_stars", {})
-        best[int(event["stage"])] = max(best.get(int(event["stage"]), 0), int(event.get("stars", 1)))
-        st.session_state["fakenews_scene_pct"] = max(0, min(100, int(event.get("pct", 0))))
-    SCENE_SLOT.markdown(scene_ui.plaza(st.session_state.get("fakenews_scene_pct"), sum(st.session_state.get("fakenews_scene_stars", {}).values())),
-                        unsafe_allow_html=True)
 
 with st.expander("🧠 이 게임 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
@@ -637,4 +647,3 @@ with st.expander("🧠 이 게임 속 알고리즘 (정보 과목 연계)"):
         "- **연결 수(차수 중심성)**: 친구가 많은 사람일수록 막았을 때 효과가 커요. 결과 화면에서 TOP 3를 보여 줘요.\n"
         "- **전략**: 카드가 적어서 ‘퍼지는 길목(연결을 끊는 사람)’을 찾아야 해요."
     )
-st.caption("교육용 가상 이야기입니다. 진행은 새로고침·페이지 이동 시 초기화되며 저장하지 않습니다.")

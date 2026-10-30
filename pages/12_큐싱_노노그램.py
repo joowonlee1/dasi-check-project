@@ -1,4 +1,3 @@
-from play_ui import intro, bridge
 """큐싱 노노그램: 숫자 단서로 칸을 칠해 사기단이 붙인 가짜 QR 스티커 그림을 복원하는 퍼즐.
 
 - 1단계 5×5(스마트폰), 2단계 8×8(자물쇠), 3단계 10×10(QR 코드 모양)
@@ -6,6 +5,7 @@ from play_ui import intro, bridge
 - 마지막에 노노그램 단서가 런 길이 부호화(RLE)와 같은 원리라는 것을 공개합니다.
 모든 장소·스티커·주소는 교육용 가상 내용입니다.
 """
+from play_ui import intro, bridge
 import json
 from investigation_ui import attach
 
@@ -16,11 +16,6 @@ from nonogram_component_ui import create_nonogram_component
 
 with intro("12", suffix=""):
     st.title("🧩 큐싱 노노그램")
-    from mascot_ui import show_scene
-    import scene_ui
-    SCENE_SLOT = st.empty() if scene_ui.ready("scene_kiosk") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
-    if SCENE_SLOT is None:
-        show_scene("scene_kiosk", "")
     show_key_question("숫자 단서로 칸을 칠해 **찢긴 QR 스티커**를 복원하세요. 그림을 복원한 뒤 **출처·목적지·요구를 조사**하세요.", "🧩")
     show_mascot("puzzle", "숫자는 ‘연달아 칠한 칸 수’예요. 줄마다 따져 보면 찍지 않아도 끝까지 풀려요!", width=100)
 
@@ -79,7 +74,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 @keyframes flash{0%,100%{box-shadow:inset 0 0 0 0 #E5484D}50%{box-shadow:inset 0 0 0 4px #E5484D}}
 @keyframes glow{0%,100%{box-shadow:inset 0 0 0 3px #FF7A45}50%{box-shadow:inset 0 0 0 3px #FFD3BD}}
 @keyframes wave{0%{transform:scale(.4)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-.hero{background:linear-gradient(135deg,#20483F,#2E7D6B);color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
 .box h3{margin:0 0 8px;font-size:1.12rem}
@@ -437,7 +432,8 @@ render();
 </script></body></html>
 '''
 
-page = bridge(attach(HTML), "12").replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+import scene_ui
+page = bridge(attach(HTML), "12").replace("__SCENEIMG__", scene_ui.data_url("scene_kiosk")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_nonogram_component(page)(key="jamkkan_qr_nonogram_v1", default=None, stats=dd.stats("nono"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
@@ -457,13 +453,6 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], -new["hints"]) > (old.get("stars", 0), -old.get("hints", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("nono_hall"))
-if SCENE_SLOT is not None:
-    got = st.session_state.setdefault("nono_scene_cleared", [])
-    if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2) and int(event["stage"]) not in got:
-        got.append(int(event["stage"]))
-    if event and event.get("type") == "final":
-        st.session_state["nono_scene_final"] = True
-    SCENE_SLOT.markdown(scene_ui.kiosk(got, st.session_state.get("nono_scene_final", False)), unsafe_allow_html=True)
 
 # 📷 진짜 QR 비춰 보기: 웹캠 사진 속 QR을 읽어 목적지만 보여 줘요(접속하지 않아요).
 from qr_scan_ui import show_qr_scanner
@@ -475,4 +464,3 @@ with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
         "- **런 길이 부호화(RLE)**: 노노그램 단서는 같은 색이 이어지는 길이를 적는 압축 방식에서 나왔어요. 마지막 화면에서 그림마다 얼마나 줄어드는지 비교해요.\n"
         "- **제약 전파**: 가로줄에서 확정한 칸이 세로줄의 실마리가 되는 과정을 반복하는 방식이에요. 세 퍼즐 모두 이 방법만으로 끝까지 풀리고 답이 하나뿐인지 프로그램으로 확인했어요."
     )
-st.caption("교육용 가상 이야기입니다. 실제 장소·QR 코드·주소와 관계없으며, 진행은 새로고침하면 초기화됩니다.")

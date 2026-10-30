@@ -1,5 +1,5 @@
-from play_ui import intro, bridge
 """거래 기록 세 묶음의 근거를 연결한 뒤 기존 논리 표로 판매자를 찾는 교육용 게임."""
+from play_ui import intro, bridge
 import json
 from investigation_ui import attach
 
@@ -10,11 +10,6 @@ from puzzle_component_ui import create_puzzle_component
 
 with intro("10", suffix=""):
     st.title("🔐 중고거래 사기단 추리")
-    from mascot_ui import show_scene
-    import scene_ui
-    SCENE_SLOT = st.empty() if scene_ui.ready("scene_market") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
-    if SCENE_SLOT is None:
-        show_scene("scene_market", "")
     show_key_question("판매자 5명 중 **진짜는 단 1명**. 거래 기록을 **비교**하고, 단서로 **진짜 판매자**를 찾아내세요.", "🔐")
     show_mascot("sneaker", "거래 기록을 연결할 때마다 새 단서가 나와요. 단서를 모두 모아야 범인이 가려져요!", width=100)
 
@@ -111,6 +106,18 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .tabs button.on{background:#20483F;color:#fff;border-color:#20483F}
 .story{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:pop .45s ease-out both}
 .sellers{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0}
+.mk{position:relative;aspect-ratio:759/314;background-size:cover;background-position:center;border-radius:18px;border:3px solid #E2C98A;margin:8px 0;container-type:inline-size;box-shadow:0 4px 12px rgba(60,40,10,.15)}
+.mk>*{position:absolute}
+.mk-t{top:3%;transform:translateX(-50%);width:17.5%;display:flex;flex-direction:column;align-items:center;gap:.6cqw;background:none;border:0;padding:0;cursor:default;font-family:inherit}
+.mk-t b{background:#FFFDF5;border:.3cqw solid #8A5A2B;border-radius:1.2cqw;padding:.4cqw 1cqw;font-size:1.75cqw;color:#5B3A12;white-space:nowrap;box-shadow:0 .3cqw 0 rgba(0,0,0,.15)}
+.mk-c{display:flex;flex-direction:column;gap:.4cqw;align-items:center;margin-top:14cqw}
+.mk-c i{font-style:normal;background:rgba(32,72,63,.92);color:#fff;border-radius:999px;padding:.2cqw .9cqw;font-size:1.45cqw;font-weight:800;white-space:nowrap}
+.mk-c i.q{background:rgba(15,23,42,.6)}
+.mk-t.pickable{cursor:pointer}.mk-t.pickable:hover b{background:#20483F;color:#fff}
+.mk-t.on b{background:#16A34A;color:#fff;border-color:#fff;box-shadow:0 0 0 .5cqw rgba(22,163,74,.4)}
+.mk-pin{position:static!important;background:#F97316;color:#fff;border-radius:999px;padding:.3cqw 1cqw;font-weight:900;font-size:1.5cqw;animation:bob 1.4s ease-in-out infinite}
+.mk-st{right:1.5%;bottom:4%;background:rgba(32,72,63,.94);color:#fff;border:.25cqw solid #F6D55C;border-radius:1.2cqw;padding:.5cqw 1.2cqw;font-weight:900;font-size:1.6cqw}
+.mk-place{left:1.5%;bottom:4%;background:rgba(255,253,240,.95);border:.25cqw solid #C9A86A;border-radius:999px;padding:.3cqw 1.2cqw;font-weight:900;color:#5B3A12;font-size:1.6cqw}
 .sellers div{background:#F4F8F6;border-radius:14px;padding:8px 4px;text-align:center;font-weight:800;font-size:.85rem;animation:pop .45s ease-out both}
 .sellers div em{display:block;font-style:normal;font-size:26px;animation:bob 2.4s ease-in-out infinite}
 .memo{position:relative;background:repeating-linear-gradient(#FFFDF4,#FFFDF4 31px,#EFE6C8 32px);border:2px solid #E6D9A8;border-radius:16px;padding:16px 16px 14px;margin:12px 0;box-shadow:0 6px 16px #8a6d1e18;animation:pop .45s ease-out both}
@@ -243,7 +250,7 @@ function render(){
   <section class="hero"><span>🔐 추리 퍼즐 · 거래 기록 조사 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
   <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</span></section>
   <div class="sellhead">🛍️ 연락해 온 판매자 5명 (중고거래 앱 닉네임)</div>
-  <div class="sellers">${D.sellers.map((s, i) => `<div style="animation-delay:${i * .07}s"><em style="animation-delay:${i * .3}s">${D.emoji[i]}</em><small>판매자 ${i + 1}</small>${esc(s)}</div>`).join('')}</div>
+  ${marketBoard(false)}
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
   <div class="chips"><span class="hot">📜 검증한 거래 기록 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
   <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="goBack()">← 이전 화면으로</button>
@@ -269,7 +276,7 @@ function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 
 function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
- $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB"><b style="font-size:1.08rem">🧭 시작하기 전에 · 이렇게 풀어요</b><p style="margin:.4rem 0 .2rem">거래 기록은 <b>누구의 거래인지 이름을 가려 둔</b> 조사 자료예요. 대신 판매자마다 <b>익명 판매자 가·나·다·라</b> 이름표를 붙여 두었어요. <b>위의 판매자 1~5와는 다른 이름표</b>라서, 누가 누구인지는 추리 표로 찾아야 해요. (예: <b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> 거래라고 적힌 자료들은 모두 같은 판매자와의 거래 이야기)</p><ol style="margin:.3rem 0 .2rem 1.2rem;padding:0;line-height:1.7"><li><b>자료 버튼</b>을 눌러 하나씩 읽어요. 앞 자료를 읽어야 열리는 자료도 있어요. 실제 조사처럼 <b>시간 순서대로</b> 따라가야 무엇이 바뀌었는지 보이거든요.</li><li><b>같은 익명 판매자의 자료</b>끼리 이어요. 다른 익명 판매자의 자료나 판매자의 말만 있는 자료는 헷갈리라고 넣은 자료일 수 있어요.</li><li>이어 보니 알게 된 사실을 <b>결론</b>에서 고르고, 그 결론을 직접 뒷받침하는 <b>자료에 체크</b>해서 제출해요.</li><li>세 거래를 모두 풀면 단서 세 개가 생겨요. 그 단서로 <b>추리 표</b>를 채워 진짜 판매자를 찾아요.</li></ol><small style="color:#6B5A2E">💡 막히면 ‘비교할 지점 힌트’를 눌러 보세요. 정답 자료를 처음부터 다 보여 주지는 않아요.</small></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
+ $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px"><b style="font-size:1.1rem">🧭 거래 기록 3건을 풀어 단서를 얻자!</b><span style="font-weight:800">📄 자료 읽기 → 🎯 결론 → ✅ 근거 체크</span><span style="font-size:.9rem;color:#6B5A2E"><b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> = 이름을 가린 판매자 (위 1~5와 달라요)</span></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
 }
 function iqComplete(i){unlock(i);}
 function iqHintUsed(i){G.hints[i]=true;}
@@ -472,11 +479,27 @@ function checkGrid(){
   else { toastMsg = `❌ 빨간 테두리 칸 ${wrong}개가 틀렸어요. 단서를 다시 확인해요.`; render(); }
 }
 
+// ───── 🛒 장터 보드: 천막 5개 = 판매자 5명. 추리 표에서 ⭕한 내용이 천막마다 채워지고, 지목할 때는 천막을 눌러요 ─────
+const MK_X = [12.4, 33.8, 51.6, 69.4, 87.6];
+function marketBoard(pickMode){
+  const tents = D.sellers.map((s, i) => {
+    const known = KINDS.map(k => D.attrs[k].values.find(v => G.grid[cellKey(k, s, v)] === 2)).filter(Boolean);
+    const chips = known.length ? known.map(v => `<i>${esc(v)}</i>`).join('') : '<i class="q">❓ 아직 몰라요</i>';
+    const on = pickMode && G.pick === s ? ' on' : '';
+    return `<button type="button" class="mk-t${on}${pickMode ? ' pickable' : ''}" style="left:${MK_X[i]}%" ${pickMode ? `onclick="G.pick='${esc(s)}';render()"` : 'tabindex="-1"'}>
+      <b>${D.emoji[i]} ${esc(s)}</b><span class="mk-c">${chips}</span>${on ? '<span class="mk-pin">🔍 지목!</span>' : ''}</button>`;
+  }).join('');
+  const done = D.sellers.filter(s => KINDS.every(k => D.attrs[k].values.some(v => G.grid[cellKey(k, s, v)] === 2))).length;
+  return `<div class="mk" style="background-image:url(__MARKETIMG__)">${tents}
+    <span class="mk-st">${pickMode ? '👆 진짜라고 생각하는 판매자의 천막을 눌러요' : `📝 추리 표로 알아낸 판매자 ${done} / 5`}</span>
+    <span class="mk-place">📍 개암골 · 도토리 중고마켓</span></div>`;
+}
+
 // ───── ③ 진짜 지목 ─────
 function pickTab(){
   $('body').innerHTML = `
   <div class="story">🏁 진짜 판매자라고 생각하는 사람을 골라요. <b>앱 밖으로 나가자고 하지 않고, 안전하게 거래하는 판매자</b>는 누구였을까요?</div>
-  <div class="pick" id="pk">${D.sellers.map((s, i) => `<button class="${G.pick === s ? 'on' : ''}" onclick="G.pick='${esc(s)}';render()"><em>${D.emoji[i]}</em>${esc(s)}</button>`).join('')}</div>
+  <div id="pk">${marketBoard(true)}</div>
   <button class="go" style="width:100%" ${G.pick && G.gridChecked && G.solved.every(Boolean) ? '' : 'disabled'} onclick="answer()">🔍 이 판매자가 진짜예요!</button>
   ${G.gridChecked ? '' : '<p style="font-size:.88rem;color:#52616B">거래 기록 3건을 조사하고 추리표를 완성해야 최종 지목할 수 있어요.</p>'}`;
 }
@@ -588,7 +611,14 @@ def ask_ai(question, snap):
 
 answers = st.session_state.setdefault(AI_KEY, [])
 from game_phone import _btn_img  # AI 탐정 버튼에 붙일 로봇 깡지 그림
-page = bridge(attach(HTML), "10").replace("__AIBTNIMG__", _btn_img("btn_ai.png")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+def _scene_url(name):
+    import base64
+    from pathlib import Path
+    try:
+        return "data:image/jpeg;base64," + base64.b64encode((Path(__file__).resolve().parent.parent / "static" / f"{name}.jpg").read_bytes()).decode("ascii")
+    except OSError:
+        return ""
+page = bridge(attach(HTML), "10").replace("__AIBTNIMG__", _btn_img("btn_ai.png")).replace("__MARKETIMG__", _scene_url("scene_market")).replace("__SCENEIMG__", _scene_url("scene_market")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"),
                                       ai={"answers": answers, "left": AI_MAX - len(answers)})
 
@@ -615,12 +645,6 @@ elif event and event.get("type") == "finish":
         lambda old, new: (new["stars"], -new["hints"], -new["wrong"]) > (old.get("stars", 0), -old.get("hints", 10**6), -old.get("wrong", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("memo_hall"))
-if SCENE_SLOT is not None:
-    if event and event.get("type") == "finish":
-        st.session_state["memo_scene_done"] = True
-    SCENE_SLOT.markdown(scene_ui.market(list(DATA["solution"]), DATA["emoji"], DATA["real"], st.session_state.get("memo_scene_done", False)),
-                        unsafe_allow_html=True)
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown("- 같은 익명 판매자 이름표로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
-st.caption("교육용 가상 이야기입니다. 실제 거래 앱·판매자와 관계없으며, 진행은 새로고침하면 초기화됩니다.")

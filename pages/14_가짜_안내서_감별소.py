@@ -1,6 +1,6 @@
+"""안내서 3건의 주장과 별도 공식 확인 결과를 대조하는 교육용 가상 활동."""
 from play_ui import intro, bridge
 from notice_inquiry import DATA as INQUIRY
-"""안내서 3건의 주장과 별도 공식 확인 결과를 대조하는 교육용 가상 활동."""
 import streamlit as st
 import dotori_data as dd
 from card_ui import show_result_card
@@ -80,7 +80,6 @@ with intro("14", suffix=""):
 <style>@media (max-width:1100px){.nv-how{grid-template-columns:repeat(2,1fr)!important}}@media (max-width:640px){.nv-how{grid-template-columns:1fr!important}}</style>
 <div style="margin-top:8px;font-size:.95rem;color:#374151">🚪 101호 → 102호 → 103호, 안내서 3장을 차례로 감별해요. <b>처음 제출에서 맞힌 개수</b>가 점수예요. 필요한 기록을 다 모은 뒤에 제출하세요.</div>
 </div>""", unsafe_allow_html=True)
-    st.caption("모든 기관·등기번호·응답은 교육용 가상 자료예요. 실제 웹사이트 접속이나 전화 연결은 하지 않아요.")
 
 
 # ───────── 그림으로 보여 주기(판정 로직은 그대로) ─────────
@@ -160,25 +159,25 @@ def hallway_doors(i):
         '<div class="hd">' + "".join(doors) + "</div>",
         unsafe_allow_html=True,
     )
+    # 문을 누르면 화면 밖에 숨겨 둔 버튼(문마다 하나)을 대신 눌러요(입력칸 없이 확실히 눌리게).
     with st.container(key="hall_go_bridge"):
         st.markdown("<style>.st-key-hall_go_bridge{position:absolute!important;left:-10000px!important;top:0;width:300px;height:1px;overflow:hidden}</style>",
                     unsafe_allow_html=True)
-        with st.form("hall_go_form", clear_on_submit=True):
-            picked = st.text_input("hall go", key="hall_go_input", label_visibility="collapsed")
-            go = st.form_submit_button("go")
+        picked = None
+        for k in range(len(CASES)):
+            if st.button(f"go{k}", key=f"hall_go_{k}"):
+                picked = k
         st.session_state["_hall_go_n"] = st.session_state.get("_hall_go_n", 0) + 1
         components.html(
-            "<script>(()=>{const D=parent.document,W=parent;if(W.__jkHallGo)return;W.__jkHallGo=1;"
-            "D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.hd-door');if(!b||b.disabled)return;e.preventDefault();"
-            "const box=D.querySelector('.st-key-hall_go_bridge'),inp=box&&box.querySelector('input'),btn=box&&box.querySelector('button');if(!inp||!btn)return;"
-            "const v=inp.ownerDocument.defaultView;Object.getOwnPropertyDescriptor(v.HTMLInputElement.prototype,'value').set.call(inp,b.dataset.k);"
-            "inp.dispatchEvent(new v.Event('input',{bubbles:true}));setTimeout(()=>btn.click(),80);},true);})();</script>"
+            "<script>(()=>{const W=parent,D=W.document;"
+            "if(W.__jkHallGoH)D.removeEventListener('click',W.__jkHallGoH,true);"
+            "W.__jkHallGoH=e=>{const b=e.target.closest&&e.target.closest('.hd-door');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();"
+            "const btn=D.querySelector('.st-key-hall_go_'+b.dataset.k+' button');if(btn)btn.click();};"
+            "D.addEventListener('click',W.__jkHallGoH,true);})();</script>"
             f"<!-- {st.session_state['_hall_go_n']} -->", height=0)
-    if go and (picked or "").strip().isdigit():
-        k = int(picked.strip())
-        if 0 <= k <= reach and k < len(CASES) and k != i:
-            _go_door(k)
-            st.rerun()
+    if picked is not None and picked <= reach and picked != i:
+        _go_door(picked)
+        st.rerun()
 
 
 def door_strip(i):
@@ -252,14 +251,14 @@ def kkangji_say(pose, text, width=110):
             f'<div style="flex:1;position:relative;background:#fff;border:2.5px solid #F1C96B;border-radius:16px;padding:10px 14px;'
             f'font-weight:800;color:#5B4300;line-height:1.55;word-break:keep-all;box-shadow:0 3px 8px #0001">{text}</div></div>')
 
-def phone_screen(app, color, body_html, sub=""):
-    """작은 휴대폰 화면 모양(공식 앱·통화 화면)."""
-    return (f'<div style="width:100%;max-width:340px;margin:0 auto 14px;background:#111827;border-radius:38px;padding:12px;box-shadow:0 14px 30px #0005">'
-            f'<div style="background:#F8FAFC;border-radius:28px;overflow:hidden">'
-            f'<div style="height:22px;display:flex;justify-content:center;align-items:center"><span style="width:90px;height:6px;border-radius:9px;background:#CBD5E1"></span></div>'
-            f'<div style="background:{color};color:#fff;padding:12px 16px;font-weight:900;font-size:1.05rem">{app}'
-            + (f'<div style="font-size:.82rem;font-weight:700;opacity:.9">{sub}</div>' if sub else "") + '</div>'
-            f'<div style="padding:14px 16px 18px;font-size:1.02rem;line-height:1.7;color:#111827;min-height:120px">{body_html}</div></div></div>')
+def phone_screen(app, color, body_html, sub="", foot=""):
+    """조사 결과 화면(공식 앱·통화 화면). 검정 틀 없이 부드러운 앱 카드로 보여 줘요."""
+    return (f'<div style="width:100%;margin:0 0 10px;background:#fff;border:2.5px solid {color}55;border-radius:22px;overflow:hidden;box-shadow:0 8px 20px {color}26">'
+            f'<div style="background:linear-gradient(135deg,{color},{color}CC);color:#fff;padding:12px 16px;font-weight:900;font-size:1.1rem">{app}'
+            + (f'<div style="font-size:.85rem;font-weight:700;opacity:.92">{sub}</div>' if sub else "") + '</div>'
+            f'<div style="padding:14px 16px;font-size:1.05rem;line-height:1.7;color:#111827;background:{color}0D">{body_html}</div>'
+            + (f'<div style="padding:8px 16px;background:#ECFDF3;border-top:1.5px dashed #86EFAC;font-weight:800;color:#166534">{foot}</div>' if foot else "")
+            + '</div>')
 
 TOOL_VIEW = {
     # q: (제목, 깡지 자세, 깡지 한마디, 화면 종류)
@@ -283,28 +282,24 @@ def tool_popup(i, kind, q):
     else:
         title, pose, line, view = TOOL_VIEW[q]
         text = _esc(INQUIRY["responses"][i][q])
-        left, right = st.columns([1.05, 1], vertical_alignment="center", gap="small")
-        with left:
-            if view == "app":
-                body = f'<div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;padding:10px 12px">🔎 조회 결과<br><b>{text}</b></div>'
-                st.markdown(phone_screen(title, "#0F766E", body, "내가 직접 찾아 연 공식 경로"), unsafe_allow_html=True)
-            elif view == "call":
-                official = q == "procedure"
-                body = (f'<div style="text-align:center;font-size:2.4rem">{"🏤" if official else "❓"}</div>'
-                        f'<div style="text-align:center;color:#64748B;font-weight:800;margin-bottom:8px">통화 중 · 0{2 if official else 1}:1{4 if official else 8}</div>'
-                        f'<div style="background:#fff;border-radius:4px 14px 14px 14px;padding:10px 12px;box-shadow:0 1px 3px #0002">{text}</div>')
-                st.markdown(phone_screen(title, "#1E3A8A" if official else "#9A3412", body,
-                                         "공식 경로로 확인" if official else "⚠️ 안내서 속 번호 · 진위 확인 아님"), unsafe_allow_html=True)
-            else:
-                st.markdown('<div style="width:min(100%,330px);aspect-ratio:1;margin:0 auto;border-radius:50%;border:14px solid #475569;'
-                            'background:repeating-linear-gradient(115deg,#FFFDF6 0 22px,#F3EEDF 22px 24px);display:flex;align-items:center;justify-content:center;'
-                            f'padding:34px;box-shadow:0 10px 24px #0004;text-align:center;font-size:1.05rem;line-height:1.6;font-weight:700">{text}</div>', unsafe_allow_html=True)
-        with right:
-            st.markdown(f'<div style="text-align:center">{mascot_img(pose, 190)}</div>'
-                        f'<div style="background:#fff;border:2.5px solid #F1C96B;border-radius:16px;padding:10px 14px;margin-top:8px;'
-                        f'font-weight:800;color:#5B4300;line-height:1.55;word-break:keep-all">💬 {line}</div>'
-                        '<div style="margin-top:8px;background:#ECFDF3;border:2px solid #86EFAC;border-radius:12px;padding:8px 12px;'
-                        'font-weight:800;color:#166534">📁 확인 기록 보관함에 넣었어요.</div>', unsafe_allow_html=True)
+        foot = "📁 확인 기록 보관함에 넣었어요."
+        st.markdown(kkangji_say(pose, line, 150), unsafe_allow_html=True)
+        st.markdown('<div style="height:10px"></div>', unsafe_allow_html=True)
+        if view == "app":
+            body = f'<div style="font-weight:800;color:#0F766E;margin-bottom:4px">🔎 조회 결과</div><b>{text}</b>'
+            st.markdown(phone_screen(title, "#0F766E", body, "내가 직접 찾아 연 공식 경로", foot), unsafe_allow_html=True)
+        elif view == "call":
+            official = q == "procedure"
+            color = "#1E3A8A" if official else "#9A3412"
+            body = (f'<div style="display:flex;align-items:center;gap:12px"><div style="font-size:2.4rem">{"🏤" if official else "❓"}</div>'
+                    f'<div style="flex:1"><div style="color:#64748B;font-weight:800;font-size:.9rem">📞 통화 중 · 0{2 if official else 1}:1{4 if official else 8}</div>'
+                    f'<div style="background:#fff;border-radius:4px 14px 14px 14px;padding:10px 12px;box-shadow:0 1px 3px #0002;margin-top:4px">{text}</div></div></div>')
+            st.markdown(phone_screen(title, color, body, "공식 경로로 확인" if official else "⚠️ 안내서 속 번호 · 진위 확인 아님", foot), unsafe_allow_html=True)
+        else:
+            body = ('<div style="display:flex;align-items:center;gap:14px"><div style="flex:0 0 74px;height:74px;border-radius:50%;border:7px solid #C8A96B;'
+                    'background:radial-gradient(circle at 35% 35%,#fff,#EAF4FF);box-shadow:0 4px 10px #0002;display:flex;align-items:center;justify-content:center;font-size:2rem">🔍</div>'
+                    f'<div style="flex:1;font-weight:700">{text}</div></div>')
+            st.markdown(phone_screen(title, "#8A6A2E", body, "겉모습 살펴보기", foot), unsafe_allow_html=True)
     if st.button("확인했어요 ▶", type="primary", width="stretch", key=f"nv_popup_ok_{i}"):
         st.rerun()
 
@@ -404,19 +399,42 @@ if not S["done"]:
     else:
         st.caption("아직 모은 기록이 없어요. 위의 도구를 눌러 확인해 보세요.")
     st.markdown('<div style="font-size:1.3rem;font-weight:900;margin:22px 0 8px">🔏 판정 도장 찍기</div>', unsafe_allow_html=True)
-    st.markdown('<style>.st-key-nv_judge [data-testid=stRadio] [role=radiogroup]{gap:8px!important}'
-                '.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label{border:2px solid #D6DDE2;border-radius:12px;padding:8px 14px;background:#fff;font-weight:800}'
-                '.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:has(input:checked){border-color:#20483F;background:#EAF6F0}</style>',
-                unsafe_allow_html=True)
+    st.markdown("""<style>
+.st-key-nv_judge [data-testid=stForm]{background:linear-gradient(180deg,#FFFBEF,#F3FAF6);border:2.5px solid #F1C96B;border-radius:22px;padding:14px 16px 16px}
+.st-key-nv_judge [data-testid=stRadio],.st-key-nv_judge [data-testid=stButtonGroup],.st-key-nv_judge .nv-empty{width:100%!important;box-sizing:border-box;background:#fff;border-radius:16px;padding:10px 14px 12px;box-shadow:0 2px 0 #E8E2CF;margin-bottom:4px}
+.st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stRadio]),.st-key-nv_judge [data-testid=stElementContainer]:has([data-testid=stButtonGroup]),.st-key-nv_judge [data-testid=stRadio] [role=radiogroup]{width:100%!important}
+.st-key-nv_judge [data-testid=stWidgetLabel] p{font-size:1.1rem!important;font-weight:900!important;color:#20483F}
+.st-key-nv_judge [role=radiogroup]{gap:6px!important;align-items:stretch!important}
+.st-key-nv_judge [role=radiogroup] > label{max-width:none!important;flex:1 1 auto}
+.st-key-nv_judge [role=radiogroup] label{border:2px solid #E2E8F0;border-radius:12px;padding:8px 12px;background:#FAFBFC;font-weight:700;transition:.12s;width:100%}
+.st-key-nv_judge [role=radiogroup] label:hover{border-color:#3BA99C;background:#F0FBF8}
+.st-key-nv_judge [role=radiogroup] label:has(input:checked){border-color:#16A34A;background:#ECFDF3;box-shadow:0 0 0 3px #BBF7D0}
+.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:nowrap}
+.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label{flex:1;justify-content:center;font-size:1.05rem;font-weight:900;padding:12px 8px}
+.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(2):has(input:checked){border-color:#DC2626;background:#FEE2E2;box-shadow:0 0 0 3px #FECACA}
+.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup] label:nth-child(3):has(input:checked){border-color:#D97706;background:#FEF3C7;box-shadow:0 0 0 3px #FDE68A}
+.st-key-nv_judge [data-testid=stButtonGroup] button{font-weight:800;border-radius:999px;border:2px solid #CFE3DA;padding:6px 14px}
+.st-key-nv_judge [data-testid=stFormSubmitButton] button{min-height:54px;border-radius:16px;font-size:1.15rem;font-weight:900;box-shadow:0 4px 0 #14532D}
+@media (max-width:640px){.st-key-nv_judge [data-testid=stRadio]:first-of-type [role=radiogroup]{flex-wrap:wrap}}
+</style>""", unsafe_allow_html=True)
+    st.markdown(kkangji_say("think", "①→④ 차례로 골라 봐! 헷갈리면 위 기록 보관함을 다시 보자.", 110), unsafe_allow_html=True)
     with st.container(key="nv_judge"), st.form(f"nv_answer_{i}"):
-        verdict=st.radio("현재 근거로 내릴 수 있는 판단",VERDICTS,index=None,horizontal=True)
-        reason=st.radio("판단 이유",case["options"],index=None)
-        evidence=st.multiselect("판단을 직접 뒷받침하는 확인 기록",list(checked),format_func=INQUIRY["questions"].get,placeholder="먼저 필요한 자료를 확인하세요")
-        action=st.radio("다음 행동",INQUIRY["actions"],index=None)
-        submitted=st.form_submit_button("근거를 연결해 판단 제출",disabled=i in S["answers"])
+        verdict=st.radio("① 지금 모은 근거로 보면, 이 안내서는?",VERDICTS,index=None,horizontal=True,
+                         help="확인한 내용만으로 결론을 내기 어렵다면 ‘판단 보류’도 좋은 답이에요.")
+        reason=st.radio("② 그렇게 판단한 이유는?",case["options"],index=None)
+        if checked:
+            evidence=st.pills("③ 내 판단의 증거가 되는 확인 기록을 모두 눌러 줘 (여러 개 가능)",list(checked),
+                              selection_mode="multi",format_func=lambda q: "📁 "+INQUIRY["questions"].get(q,q))
+        else:
+            evidence=[]
+            st.markdown('<div class="nv-empty"><div style="font-weight:900;color:#20483F;font-size:1.1rem">③ 내 판단의 증거가 되는 확인 기록</div>'
+                        '<div style="background:#FEF3C7;border-radius:10px;padding:8px 12px;font-weight:700;color:#92400E">'
+                        '📭 아직 모은 기록이 없어요. 위의 확인 도구를 먼저 눌러 기록을 모아 오세요.</div></div>', unsafe_allow_html=True)
+        action=st.radio("④ 그럼 이제 어떻게 할까?",INQUIRY["actions"],index=None)
+        submitted=st.form_submit_button("🔏 근거를 연결해 판정 도장 찍기",type="primary",disabled=i in S["answers"],width="stretch")
     if submitted:
         if verdict is None or reason is None or action is None or not evidence:
-            st.warning("판단·이유·근거·다음 행동을 모두 선택하세요.")
+            st.warning("①~④를 모두 골라 주세요. ③은 위 기록 보관함에 모은 기록 중에서 증거가 되는 것을 눌러요.")
         else:
             S["attempts"][i]=S["attempts"].get(i,0)+1
             needed=set(INQUIRY["required"][i])
@@ -428,8 +446,7 @@ if not S["done"]:
                 st.rerun()
             else:
                 queue_effect("notice")
-                st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 기록 보관함을 한 번 더 살펴봐.",130), unsafe_allow_html=True)
-                st.warning("아직 자료와 결론이 충분히 연결되지 않았어요. 같은 번호·주소·시각인지, 조회가 완료됐는지, 추가 요구까지 확인했는지 다시 살펴보세요.")
+                st.markdown(kkangji_say("retry","괜찮아, 다시 해 보자! 아직 기록과 결론이 딱 맞게 이어지지 않았어. 👉 번호·주소·시각이 같은지, 조회가 끝까지 됐는지, 추가 요구까지 확인했는지 기록 보관함을 다시 봐!",120), unsafe_allow_html=True)
     if S.get("stamp_pop")==i and not S.get("popup"):
         S.pop("stamp_pop")
         stamp_popup(i)

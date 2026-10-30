@@ -26,7 +26,8 @@ def show_badges():
         cells.append(f'<div class="bd{" on" if on else ""}"><div class="bd-i">{icon if on else "🔒"}</div>'
                      f'<b>{escape(name)}</b><small>{escape(how)}</small>{when}</div>')
     st.markdown(
-        "<style>.bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:4px 0 8px}"
+        "<style>.bd-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:4px 0 8px}"  # 배지 10개: 넓은 화면 5칸×2줄, 좁은 화면 2칸×5줄(빈칸 없이)
+        "@media (max-width:760px){.bd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}"
         ".bd{background:#F8FAFC;border:2px dashed #CBD5E1;border-radius:16px;padding:12px 10px;text-align:center;color:#64748B}"
         ".bd b{display:block;color:#475569;margin-top:6px;word-break:keep-all}.bd small{display:block;font-size:.8rem;line-height:1.4;margin-top:3px;word-break:keep-all}"
         ".bd-i{width:54px;height:54px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;background:#E2E8F0;filter:grayscale(1)}"
@@ -39,7 +40,7 @@ def show_badges():
     if dd.citizen() and st.session_state.get(dd.PENDING_BADGES):
         st.caption("⚠️ 새로 받은 배지 일부를 계정에 아직 저장하지 못했어요. 이번 창에서는 그대로 보여요.")
     elif not dd.citizen():
-        st.caption("배지도 시민증이 없으면 이번 창에만 남아요. 시민증을 만들면 함께 저장돼요.")
+        pass
 
 
 def show_stamps():
@@ -88,7 +89,7 @@ def show_stamps():
     elif st.session_state.get("admin_open"):
         st.caption("관리자 도장은 서버에 저장되며 관리자 코드로 다시 인증한 뒤 불러와요. 저장 오류가 표시되면 재시도해 주세요.")
     else:
-        st.caption("도장은 시민증이 없어도 모을 수 있어요. 다만 저장되지 않아서 창을 닫으면 처음부터 다시 모아야 해요. 시민증을 만들면 지금까지 모은 도장도 함께 저장돼요.")
+        st.caption("💾 시민증이 없으면 도장·배지는 이번 창에만 남아요. 시민증을 만들면 지금까지 모은 것도 함께 저장돼요.")
     if len(got) == total:
         # 모든 곳을 모으면 깡지와 함께하는 명예 시민증 카드를 사진으로 저장할 수 있어요.
         me = dd.citizen()
@@ -163,15 +164,13 @@ if account:
         dd.logout()
         st.rerun()
 else:
-    show_mascot("id", "로그인하지 않아도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
+    show_mascot("id", "로그인 없이도 모든 게임을 할 수 있어요. 기록을 남기고 싶을 때만 만들어요!", width=100)
     dd.show_login_forms("page")
 
     st.markdown("#### 알아 두세요")
     st.markdown(
-        "- **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요.\n"
-        "- 한 번 만든 닉네임은 **그 사람만 계속** 쓸 수 있어요. 창을 닫았다가 와도 **닉네임 + 비밀 숫자**로 다시 들어오면 돼요.\n"
-        "- 비밀 숫자는 이 앱이 저장하지 않고 Firebase가 암호화해서 보관해요. **다른 곳에서 쓰는 비밀번호나 생일은 쓰지 마세요.**\n"
-        "- 비밀 숫자를 잊으면 원래 숫자는 누구도 볼 수 없어요. 관리자에게 말하면 새 비밀 숫자로 바꿔 줄 수 있어요.\n"
+        "- **닉네임은 명예의 전당에 공개돼요.** 실제 이름·학교는 넣지 마세요.\n"
+        "- 비밀 숫자는 암호화해 보관해요. **다른 곳의 비밀번호·생일은 쓰지 마세요.** 잊으면 관리자가 새로 바꿔 줄 수 있어요.\n"
         "- 다른 사람이 불쾌할 수 있는 닉네임은 쓰지 않아요."
     )
 

@@ -311,9 +311,9 @@ st.markdown(
     .lock-banner .text {font-size:1rem;}
     .clock {font-variant-numeric:tabular-nums; font-weight:900; font-size:1.6rem; color:#B91C1C;}
     /* 게임 속 시각 · 남은 시간을 같은 모양의 카드로 나란히 */
-    .timebox {background:#FFFFFF; border:2px solid #E5ECE9; border-radius:14px; padding:6px 12px; text-align:center;}
-    .timebox small {display:block; color:#52616B; font-weight:800; font-size:.82rem;}
-    .timebox b {font-variant-numeric:tabular-nums; font-size:1.55rem; font-weight:900;}
+    .timebox {background:#1F2937; border:3px solid #F59E0B; border-radius:16px; padding:8px 14px; text-align:center; box-shadow:0 4px 0 #B45309,0 6px 16px rgba(0,0,0,.2);}
+    .timebox small {display:block; color:#FDE68A; font-weight:900; font-size:.95rem;}
+    .timebox b {font-variant-numeric:tabular-nums; font-size:2.3rem; font-weight:900; letter-spacing:.06em; font-family:ui-monospace,Consolas,monospace; text-shadow:0 0 12px rgba(253,230,138,.35);}
     .quiet {background:#F1F5F9; border:2px dashed #CBD5E1; border-radius:14px; padding:10px 14px; margin:6px 0 10px;
             font-size:1.1rem; font-weight:800; color:#334155; text-align:center;}
     /* 증거를 두 칸씩 놓아 스크롤을 절반으로 줄여요 */
@@ -600,7 +600,7 @@ def show_status_bar():
         left, right = st.columns(2)
         with left:
             st.markdown(
-                f'<div class="timebox"><small>🕘 게임 속 시각</small><b style="color:#B91C1C;">{clock_text(game["clock"])}</b></div>',
+                f'<div class="timebox"><small>🕘 게임 속 시각</small><b style="color:#FCA5A5;">{clock_text(game["clock"])}</b></div>',
                 unsafe_allow_html=True,
             )
         with right:
@@ -986,8 +986,6 @@ def room_picture(places):
             state = "🔓 열림" if game["unlocked"] >= 1 else "🔒 잠김"
         elif place == "🚪 출입문":
             state = f"🔐 {game['unlocked']}/3"
-        elif place in game["visited"]:
-            state = "✓ 조사함"
         cls = "rm-spot" + (" now" if place == game["place"] else "") + (" seen" if place in game["visited"] else "")
         spots.append(f'<button type="button" class="{cls}" data-i="{i}" style="left:{x}%;top:{y}%;">'
                      f'<span class="ic">{icon}</span><b>{esc(name)}</b>{f"<small>{state}</small>" if state else ""}</button>')
@@ -1009,24 +1007,24 @@ def room_picture(places):
         '<div class="rm-wrap"><div class="rm"><img src="app/static/minseo_room.jpg" alt="민서네 거실">' + "".join(spots) + "</div></div>",
         unsafe_allow_html=True,
     )
+    # 물건을 누르면 화면 밖에 숨겨 둔 버튼(물건마다 하나)을 대신 눌러요. 입력칸을 쓰지 않아 배포된 앱에서도 확실히 눌려요.
     with st.container(key="room_go_bridge"):
         st.markdown("<style>.st-key-room_go_bridge{position:absolute!important;left:-10000px!important;top:0;width:300px;height:1px;overflow:hidden}</style>",
                     unsafe_allow_html=True)
-        with st.form("room_go_form", clear_on_submit=True):
-            picked = st.text_input("room go", key="room_go_input", label_visibility="collapsed")
-            go = st.form_submit_button("go")
+        picked = None
+        for i in range(len(places)):
+            if st.button(f"go{i}", key=f"room_go_{i}"):
+                picked = i
         st.session_state["_room_go_n"] = st.session_state.get("_room_go_n", 0) + 1
         components.html(
-            "<script>(()=>{const D=parent.document,W=parent;if(W.__jkRoomGo)return;W.__jkRoomGo=1;"
-            "D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.rm-spot');if(!b)return;e.preventDefault();"
-            "const box=D.querySelector('.st-key-room_go_bridge'),inp=box&&box.querySelector('input'),btn=box&&box.querySelector('button');if(!inp||!btn)return;"
-            "const v=inp.ownerDocument.defaultView;Object.getOwnPropertyDescriptor(v.HTMLInputElement.prototype,'value').set.call(inp,b.dataset.i);"
-            "inp.dispatchEvent(new v.Event('input',{bubbles:true}));setTimeout(()=>btn.click(),80);},true);})();</script>"
+            "<script>(()=>{const W=parent,D=W.document;"
+            "if(W.__jkRoomGoH)D.removeEventListener('click',W.__jkRoomGoH,true);"
+            "W.__jkRoomGoH=e=>{const b=e.target.closest&&e.target.closest('.rm-spot');if(!b)return;e.preventDefault();e.stopPropagation();"
+            "const btn=D.querySelector('.st-key-room_go_'+b.dataset.i+' button');if(btn)btn.click();};"
+            "D.addEventListener('click',W.__jkRoomGoH,true);})();</script>"
             f"<!-- {st.session_state['_room_go_n']} -->", height=0)
-    if go and (picked or "").strip().isdigit():
-        i = int(picked.strip())
-        if 0 <= i < len(places):
-            go_place(places[i])
+    if picked is not None:
+        go_place(places[picked])
 
 
 def show_room():
@@ -1256,7 +1254,7 @@ def countdown():
     if left <= 0:
         st.rerun(scope="app")
     minutes, seconds = divmod(int(left), 60)
-    color = "#B91C1C" if left <= 300 else "#172B3A"
+    color = "#F87171" if left <= 300 else "#FFFFFF"  # 어두운 시계판 위라 밝은 글자
     note = " · 서두르세요!" if left <= 300 else ""
     st.markdown(
         f'<div class="timebox"><small>⏳ 남은 시간 (진짜 타이머){note}</small>'
@@ -1373,7 +1371,6 @@ def show_game_guide():
                 "- 기록에 적힌 시각이 ‘무슨 일이 일어난 시각’인지 따져 보는 습관\n"
                 "- 의심스러울 때 어떤 경로로 확인해야 안전한지"
             )
-            st.caption("모든 인물·번호·링크는 교육용 가상 자료예요. 게임 속 번호로 실제 전화를 걸지 마세요.")
 
         with how:
             st.markdown("### 화면 구성")

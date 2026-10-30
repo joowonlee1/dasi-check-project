@@ -1,8 +1,8 @@
-from play_ui import intro, bridge
 """단톡방 마피아: 친구 5명 중 마피아(사칭 계정) 1명을 조사 3번으로 찾아내는 추리 게임.
 
 모든 인물·대화·링크는 교육용 가상 내용입니다. 실제 접속·송금·인증은 일어나지 않습니다.
 """
+from play_ui import intro, bridge
 import copy
 import time
 from html import escape
@@ -453,7 +453,6 @@ def show_setup():
             cols[i].text_input(f"플레이어 {i + 1}", key=f"{KEY}_name_{i}", max_chars=8, placeholder=f"플레이어 {i + 1}")
         st.caption("조사는 함께 의논해서 고르고, 투표는 한 명씩 몰래 해요.")
     st.button("🔍 수사 시작", type="primary", width="stretch", on_click=start_game, key=KEY + "_start")
-    st.caption("모든 인물·대화·링크는 교육용 가상 내용이에요. 실제 접속이나 인증은 일어나지 않아요.")
 
 
 def show_play():

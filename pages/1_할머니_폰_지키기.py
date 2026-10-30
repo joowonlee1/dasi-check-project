@@ -798,6 +798,25 @@ def show_voice_call(event, step):
                 "할머니 폰에 걸려 온 전화 받아서 듣기", key=f"gp_call_{step}")
 
 
+def clue_block(game, event):
+    """단서 버튼·단서 상자. 휴대폰 아래 빈 곳에 두어 오른쪽(할머니·게이지)과 높이를 맞춰요."""
+    if game["clue_open"]:
+        with st.container(border=True):
+            st.markdown("**🔎 눈에 보이는 단서**")
+            st.markdown("\n".join(f"- {clue}" for clue in event["clues"]))
+            st.caption("단서는 사실만 보여 줘요. 진짜인지 피싱인지는 직접 판단하세요.")
+    else:
+        # 판단 전에 꼭 눌러 보면 좋은 버튼이라 크고 눈에 띄게 보여 줘요.
+        st.markdown(
+            """<style>.st-key-gp_clue button {background:#FFF4D6 !important;border:2px solid #E2A93B !important;
+            min-height:56px !important;box-shadow:0 3px 10px rgba(226,169,59,.25);}
+            .st-key-gp_clue button p {font-size:1.12rem !important;font-weight:900 !important;color:#7A4B00 !important;}</style>""",
+            unsafe_allow_html=True,
+        )
+        st.button("🔎 단서 살펴보기 (판단 전에 눌러 보세요)", on_click=open_clues, key="gp_clue", width="stretch")
+        st.caption("단서를 보고 말하면 설득이 1.5배 더 잘 통해요. ‘수상한 점을 하나 짚어 준다’는 단서를 봐야 고를 수 있어요.")
+
+
 def show_gauges(game):
     stage = scam_stage(game["step"])
     st.markdown(f"**😟 사기범을 믿는 정도 {game['belief']}**")
@@ -844,24 +863,23 @@ def show_last_feedback(game):
 
 def show_intro():
     show_hero(f"📱 가족 지키기 게임 · 연락 {len(EVENTS)}개", "할머니 휴대폰을 지켜라",
-              "주말 오전, 할머니 댁에 놀러 왔어요. 할머니 휴대전화에 연락이 하나씩 들어와요.", tone="pink")
+              "", tone="pink")
     show_mascot("grandma", "모르겠으면 잠깐 멈추고, 할머니와 함께 확인해요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, key="grandma_start_top", width="stretch")
-    st.caption("처음이라면 아래 설명을 먼저 읽어 보세요.")
     st.markdown("#### 🎯 미션: 할머니의 돈을 지켜라")
     show_tiles([
         ("🔀", "진짜와 피싱이 섞여 있어요", "무엇이 피싱인지 직접 판단해요."),
-        ("🔎", "단서 살펴보기", "판단에 도움이 되는 사실을 보여 줘요. 정답은 알려 주지 않아요. 단서를 보고 말하면 설득이 더 잘 통해요."),
-        ("🗣️", "어떻게 말할지가 중요", "모든 연락에 같은 선택지가 나와요. 지켜볼지, 끼어들지, 어떻게 말할지 골라요."),
-        ("✍️", "내 말로 직접 설득하기", "‘수상한 점 짚기’와 ‘함께 확인하자고 하기’는 내 말로 직접 써요. AI가 단서와 맞는지 0~2점으로 채점하고, 잘 맞을수록 할머니가 더 잘 설득돼요."),
-        ("💔", "다그치면 안 통해요", "다그치거나 몰래 막거나 진짜 연락까지 막으면 할머니가 나를 덜 믿어요."),
-        ("🔁", "사기범은 다시 와요", "한 번 멈춰도 다시 연락해요. 마지막 송금까지 지켜 내야 해요."),
+        ("🔎", "단서 살펴보기", "정답 대신 사실을 보여 줘요. 단서를 짚으면 설득이 더 잘 통해요."),
+        ("🗣️", "어떻게 말할지가 중요", "지켜볼지, 끼어들지, 어떻게 말할지 골라요."),
+        ("✍️", "내 말로 직접 설득하기", "내 말로 쓰면 AI가 0~2점으로 채점해요. 잘 맞을수록 더 잘 통해요."),
+        ("💔", "다그치면 안 통해요", "다그치거나 진짜 연락까지 막으면 할머니가 나를 덜 믿어요."),
+        ("🔁", "사기범은 다시 와요", "마지막 송금까지 지켜 내야 해요."),
     ])
     st.markdown("#### 📊 게이지 읽는 법")
     show_tiles([
         ("😟", "사기범을 믿는 정도", "피싱 연락이 올 때마다 올라가요. 설득하면 내려가요."),
         ("💛", "할머니가 나를 믿는 정도", "높을수록 같은 말도 더 잘 통해요."),
-        ("💸", "송금까지", "피싱 연락이 올 때마다 1단계씩 올라가요. 4단계는 송금 직전! 1~2단계에서 일찍 멈추게 할수록 좋은 결말이 나와요."),
+        ("💸", "송금까지", "4단계는 송금 직전! 일찍 멈출수록 좋은 결말이 나와요."),
     ])
     st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
@@ -938,6 +956,7 @@ def show_play(game):
     with phone_col:
         st.markdown(phone_html(step), unsafe_allow_html=True)
         show_voice_call(event, step)
+        clue_block(game, event)
     with side_col:
         log = game["log"]
         prev = log[-1]["reaction"] if log else None
@@ -986,22 +1005,6 @@ def show_play(game):
         st.write("")
         show_gauges(game)
 
-    if game["clue_open"]:
-        with st.container(border=True):
-            st.markdown("**🔎 눈에 보이는 단서**")
-            st.markdown("\n".join(f"- {clue}" for clue in event["clues"]))
-            st.caption("단서는 사실만 보여 줘요. 진짜인지 피싱인지는 직접 판단하세요.")
-    else:
-        # 판단 전에 꼭 눌러 보면 좋은 버튼이라 크고 눈에 띄게 보여 줘요.
-        st.markdown(
-            """<style>.st-key-gp_clue button {background:#FFF4D6 !important;border:2px solid #E2A93B !important;
-            min-height:56px !important;box-shadow:0 3px 10px rgba(226,169,59,.25);}
-            .st-key-gp_clue button p {font-size:1.12rem !important;font-weight:900 !important;color:#7A4B00 !important;}</style>""",
-            unsafe_allow_html=True,
-        )
-        st.button("🔎 단서 살펴보기 (판단 전에 눌러 보세요)", on_click=open_clues, key="gp_clue", width="stretch")
-        st.caption("단서를 보고 말하면 설득이 1.5배 더 잘 통해요. ‘수상한 점을 하나 짚어 준다’는 단서를 봐야 고를 수 있어요.")
-
     st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
     options = list(FINAL_OPTIONS if event.get("final") else NORMAL_OPTIONS)
     # 선택지 순서를 연락마다 섞어서 '몇 번째만 누르면 되는' 요령이 생기지 않게 해요.
@@ -1010,18 +1013,31 @@ def show_play(game):
     if typing:
         show_typing_box(game, event, typing)
         return
+    # '직접 말하기' 선택지는 내 말로 써서 설득하는 핵심 선택지라 초록 테두리·배지로 눈에 띄게 해요.
+    st.markdown(
+        """<style>[class*="st-key-gp_typed_"] button{background:linear-gradient(135deg,#ECFDF5,#F0FDF4)!important;border:3px solid #16A34A!important;
+        border-radius:14px!important;min-height:58px!important;box-shadow:0 3px 0 #86EFAC!important;}
+        [class*="st-key-gp_typed_"] button p{font-weight:900!important;color:#14532D!important;font-size:1.05rem!important;}
+        [class*="st-key-gp_typed_"] button p::before{content:"✍️ 직접 말하기";display:inline-block;background:#16A34A;color:#fff;border-radius:999px;
+        padding:2px 10px;margin-right:8px;font-size:.88rem;vertical-align:1px}
+        [class*="st-key-gp_typed_"] button:disabled{background:#F1F5F9!important;border-color:#CBD5E1!important;box-shadow:none!important}
+        [class*="st-key-gp_typed_"] button:disabled p{color:#64748B!important}
+        [class*="st-key-gp_typed_"] button:disabled p::before{background:#94A3B8}</style>""",
+        unsafe_allow_html=True,
+    )
     for key in options:
         # 수상한 점은 단서를 봐야 알 수 있으니, 단서를 보기 전에는 이 선택지를 잠가 둬요.
         locked = key == "reason" and not game["clue_open"]
         typed = key in TYPED_KEYS
-        st.button(
-            ("✍️ 직접 말하기 · " if typed else "") + APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else ""),
-            key=f"gp3_btn_{step}_{key}",
-            on_click=start_typing if typed else act,
-            args=(key,),
-            disabled=locked,
-            use_container_width=True,
-        )
+        with st.container(key=f"gp_typed_{step}_{key}" if typed else None):
+            st.button(
+                APPROACHES[key]["label"] + (" · 🔒 단서를 먼저 보세요" if locked else ""),
+                key=f"gp3_btn_{step}_{key}",
+                on_click=start_typing if typed else act,
+                args=(key,),
+                disabled=locked,
+                use_container_width=True,
+            )
 
 
 def show_typing_box(game, event, key):
@@ -1226,7 +1242,6 @@ with intro("01", suffix=""):
         # 시작 화면: 소파의 할머니, 울리는 휴대폰, 차례로 도착하는 연락 알림
         st.markdown(scene_ui.grandma_cover(face_svg("neutral", 160)), unsafe_allow_html=True)
     show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
-    st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
 if KEY not in st.session_state:
     st.session_state[KEY] = new_game()

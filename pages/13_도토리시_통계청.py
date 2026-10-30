@@ -26,7 +26,6 @@ CODES = [a + b + c + d for a in "QS" for b in "RE" for c in "IT" for d in "HB"]
 
 st.title("📈 도토리시 통계청")
 show_key_question("시민들이 게임에서 남긴 **진짜 기록**으로, 사람들이 **어디서 많이 속는지** 살펴봐요.", "📊")
-show_mascot("chart", "숫자는 처음엔 0이에요. 누군가 게임을 끝낼 때마다 하나씩 늘어나요!", width=100)
 dd.stamp("13")
 
 
@@ -214,7 +213,7 @@ with tab_stats:
                 "안내서", "판단과 근거 일치 비율(%)")
         st.caption("새 3건 활동만 집계해요. 이전 5장 활동 기록은 삭제하지 않고 별도로 보존돼요. 명예의 전당은 맞힌 비율로 비교해요.")
 
-    st.caption("방금 끝낸 게임의 결과는 여기에 보이기까지 최대 1분쯤 걸릴 수 있어요(1분마다 새로 읽어요). 이름 없이 숫자만 모은 교육용 기록이에요.")
+    st.caption("⏱️ 방금 끝낸 게임은 1분쯤 뒤에 반영돼요.")
 
 with tab_hall:
     hall_game = st.pills("게임 고르기", list(dd.HALL_SORT), default="filter", key="hall_game",

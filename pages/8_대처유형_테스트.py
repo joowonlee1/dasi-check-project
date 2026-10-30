@@ -1,5 +1,5 @@
-from play_ui import intro, bridge
 """12문항, 4개 축, 16가지 교육용 대처 유형. 답변은 저장하지 않고, 결과 유형만 이름 없이 숫자로 통계에 더합니다."""
+from play_ui import intro, bridge
 
 import base64
 
@@ -13,6 +13,7 @@ import streamlit as st
 
 from pledge_wall import show_pledge_wall
 import dotori_data as dd
+from sound_effects import queue_effect
 
 PREFIX = "coping_v1_"
 
@@ -228,11 +229,11 @@ CSS = """
 
   font-size:1.05rem;letter-spacing:.05em;animation:jk-wiggle .6s .5s ease-in-out 2;}
 
-.jk-emblem {width:160px;height:150px;margin:12px auto 6px;border-radius:50%;background:rgba(255,255,255,.88);
+.jk-emblem {width:min(100%,330px);height:220px;margin:4px auto 0;border-radius:50%;background:rgba(255,255,255,.88);
 
   display:flex;align-items:center;justify-content:center;font-size:64px;animation:jk-bounce 1.8s 1s ease-in-out infinite;}
 
-.jk-emblem {background:transparent;} .jk-emblem img {width:116px;height:116px;object-fit:contain;border-radius:0;} .jk-mascot-mini{display:flex;justify-content:center;align-items:center;width:100%;margin:0 auto 12px;} .jk-mascot-mini svg{display:block;width:min(100%,240px);height:auto;aspect-ratio:3 / 2;}
+.jk-emblem {background:transparent;} .jk-emblem svg {max-width:100%;height:auto;} .jk-emblem img {width:230px;height:230px;object-fit:contain;border-radius:0;} .jk-mascot-mini{display:flex;justify-content:center;align-items:center;width:100%;margin:0 auto 12px;} .jk-mascot-mini svg{display:block;width:min(100%,240px);height:auto;aspect-ratio:3 / 2;}
 
 .jk-name {font-size:2.1rem;font-weight:900;margin:6px 0 2px;word-break:keep-all;}
 
@@ -253,6 +254,26 @@ CSS = """
 .jk-q-num {color:#3BA99C;font-weight:800;margin-top:4px;}
 
 .jk-q-text {font-size:1.45rem;font-weight:800;color:#20483F;margin-top:6px;word-break:keep-all;line-height:1.5;}
+.jk-dots {display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:6px 0 2px;}
+.jk-dot {width:30px;height:30px;border-radius:50%;background:#EEF2F1;color:#94A3B8;font-weight:800;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.jk-dot.on {background:#3BA99C;color:#fff;}
+.jk-dot.now {transform:scale(1.2);margin:0 4px;box-shadow:0 0 0 3px #FFE3C2,0 0 0 5px #F59E0B;background:#F59E0B;color:#fff;}
+.jk-dots-cap {text-align:center;color:#52616B;font-weight:700;font-size:.9rem;margin-bottom:6px;}
+.jk-q2 {display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#FFE9D2,#E3F5EC)!important;border:2px solid #F5D9B5!important;padding:18px 20px!important;text-align:left!important;}
+.jk-q-kj {flex:0 0 110px;}
+.jk-q-main {flex:1;min-width:0;text-align:center;}
+.jk-q-icon2 {display:inline-flex;width:84px;height:84px;border-radius:50%;background:#fff;align-items:center;justify-content:center;font-size:48px;box-shadow:0 4px 12px rgba(0,0,0,.08);animation:jk-float 2.4s ease-in-out infinite;}
+.jk-q-num2 {display:inline-block;margin-top:8px;background:#20483F;color:#fff;border-radius:999px;padding:2px 12px;font-weight:800;font-size:.85rem;}
+.st-key-coping_choices [data-testid=stHorizontalBlock] {align-items:stretch;}
+[class*="st-key-coping_opt_"] button {min-height:110px!important;border-radius:20px!important;border:3px solid #DCE8D6!important;background:#fff!important;
+  box-shadow:0 4px 0 #DCE8D6!important;transition:transform .12s;padding:16px 18px 16px 64px!important;position:relative;justify-content:flex-start!important;text-align:left!important;}
+[class*="st-key-coping_opt_"] button:hover {transform:translateY(-2px);border-color:#3BA99C!important;}
+[class*="st-key-coping_opt_"] button p {font-size:1.15rem!important;font-weight:800!important;color:#20483F!important;word-break:keep-all;white-space:normal!important;text-align:left!important;}
+[class*="st-key-coping_opt_"] button::before {position:absolute;left:16px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:12px;color:#fff;font-weight:900;font-size:1.1rem;display:flex;align-items:center;justify-content:center;}
+.st-key-coping_opt_A button::before,.st-key-coping_opt_A_on button::before {content:"A";background:#F97316;}
+.st-key-coping_opt_B button::before,.st-key-coping_opt_B_on button::before {content:"B";background:#3B82F6;}
+.st-key-coping_opt_A_on button,.st-key-coping_opt_B_on button {background:#ECFDF5!important;border-color:#16A34A!important;box-shadow:0 4px 0 #86EFAC!important;}
+@media (max-width:640px){.jk-q-kj{display:none}.st-key-coping_choices [data-testid=stHorizontalBlock]{flex-direction:column!important}.st-key-coping_choices [data-testid=stColumn]{width:100%!important}}
 
 .jk-intro {background:linear-gradient(135deg,#FFE3C2,#D6F2E6);border-radius:28px;padding:28px 20px;text-align:center;
 
@@ -537,39 +558,39 @@ def show_question(i):
     st.button("← 이전 화면으로", on_click=back_step, key=PREFIX + "quit",
               help="앞 문항으로 돌아가요. 고른 답은 그대로 남아요. 첫 문항이면 처음 화면으로 가요.")
 
-    st.progress(done / 12, text=f"{done} / 12 완료")
+    # 12칸 진행 표시: 답한 문항은 채워지고, 지금 문항은 크게 빛나요.
+    dots = "".join(
+        f'<span class="jk-dot{" on" if answers[k] is not None else ""}{" now" if k == i else ""}" style="display:inline-flex;width:32px;height:32px;min-width:32px;font-size:.85rem">{k + 1}</span>' for k in range(12))
+    st.markdown(f'<div class="jk-dots">{dots}</div><div class="jk-dots-cap">{done} / 12 완료</div>', unsafe_allow_html=True)
 
+    try:
+        from mascot_ui import mascot_img
+        kj = mascot_img("think", 110).replace("display:block;margin:0 auto;", "")
+    except Exception:
+        kj = ""
     st.markdown(
-
-        f'<div class="jk-q" id="q{i}"><div class="jk-q-icon">{QUESTION_ICONS[i]}</div>'
-
-        f'<div class="jk-q-num">Q{i + 1}</div>'
-
-        f'<div class="jk-q-text">{escape(q[1])}</div></div>',
-
+        f'<div class="jk-q jk-q2" id="q{i}"><div class="jk-q-kj">{kj}</div>'
+        f'<div class="jk-q-main"><div class="jk-q-icon2">{QUESTION_ICONS[i]}</div>'
+        f'<div class="jk-q-num2">질문 {i + 1} / 12</div>'
+        f'<div class="jk-q-text">{escape(q[1])}</div></div></div>',
         unsafe_allow_html=True,
-
     )
 
-    for mark, value in zip(("🅰", "🅱"), options(q)):
-
-        chosen = answers[i] == value
-
-        st.button(
-
-            f"{mark}  {q[2 + value]}" + ("  ✓" if chosen else ""),
-
-            key=f"{PREFIX}btn_{i}_{value}",
-
-            type="primary" if chosen else "secondary",
-
-            width="stretch",
-
-            on_click=answer,
-
-            args=(i, value),
-
-        )
+    # A·B 답을 나란히 큰 카드로 보여 줘요.
+    with st.container(key="coping_choices"):
+        cols = st.columns(2, gap="small")
+        for col, mark, value in zip(cols, ("A", "B"), options(q)):
+            chosen = answers[i] == value
+            with col:
+                with st.container(key=f"coping_opt_{mark}{'_on' if chosen else ''}"):
+                    st.button(
+                        f"{q[2 + value]}" + ("  ✓" if chosen else ""),
+                        key=f"{PREFIX}btn_{i}_{value}",
+                        type="primary" if chosen else "secondary",
+                        width="stretch",
+                        on_click=answer,
+                        args=(i, value),
+                    )
 
     left, right = st.columns(2)
 
@@ -705,7 +726,7 @@ def hero_html(code, labels):
     emoji, c1, c2, catch = TYPE_LOOK[code]
 
 
-    emblem = mascot_svg(code, size=150)
+    emblem = mascot_svg(code, size=330).replace('height="330"', 'height="220"', 1)
 
     chips = "".join(
 
@@ -822,6 +843,8 @@ def show_result(answers):
         dd.stamp("08")
 
         drumroll()
+
+        queue_effect("fanfare")
 
         st.balloons()
 
@@ -957,7 +980,7 @@ def main():
 
         show_question(min(step, 11))
 
-    st.button("처음부터 다시", on_click=reset)
+    st.button("🔄 처음부터 다시", on_click=reset, key=PREFIX + "reset_btn")
 
 if __name__ == "__main__":
 

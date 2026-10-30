@@ -1,4 +1,3 @@
-from play_ui import intro, bridge
 """피싱 필터 만들기: 조건 블록(그리고·또는)을 조립해 문자를 거르는 규칙을 만드는 코딩 퍼즐.
 
 - 규칙 한 줄 = 조건 1~2개를 '그리고(AND)'로 묶음, 규칙 줄끼리는 '또는(OR)'
@@ -7,6 +6,7 @@ from play_ui import intro, bridge
   1단계 최소 2블록, 2단계 최소 4블록, 3단계는 어떤 규칙으로도 1개는 틀릴 수밖에 없고 최소 3블록.
 모든 번호·이름·기관·링크는 교육용 가상 내용입니다.
 """
+from play_ui import intro, bridge
 import json
 from filter_trials import HOLDOUT
 
@@ -17,11 +17,6 @@ from filter_component_ui import create_filter_component
 
 with intro("11", suffix=""):
     st.title("🤖 피싱 필터 만들기")
-    from mascot_ui import show_scene
-    import scene_ui
-    SCENE_SLOT = st.empty() if scene_ui.ready("scene_post") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
-    if SCENE_SLOT is None:
-        show_scene("scene_post", "")
     show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
     show_mascot("postman", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
 
@@ -40,9 +35,7 @@ VERIFIED = [
   "직접 연락한 카드사가 해당 정보 입력 요청을 부인함", "기존 가족 연락처로 본인의 메시지임을 확인함",
   "별도로 찾은 기관 연락처로 확인하니 해당 요구를 부인함", "주문 내역의 배송 기록과 일치함"]
 ]
-st.info("이 활동은 제한된 특징으로 필터를 만드는 코딩 실험이에요. 문자만으로 진위를 확정하지 않아요. "
-        "문자별 ‘별도 확인 결과’가 교육용 정답의 근거이며, 필터는 그 정보를 사용하지 못해요. "
-        "실제 상황에서는 저장된 번호나 링크 유무만으로 안전을 보장할 수 없어요.")
+st.caption("💡 필터는 문자 겉모습만 봐요. 실제로는 번호·링크 유무만으로 안전을 확신할 수 없어요.")
 DATA = {
     "conds": {
         "L": "🔗 링크 있음",
@@ -145,7 +138,7 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 @keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
 @keyframes scan{0%{background-position:-200px 0}100%{background-position:200px 0}}
-.hero{background:linear-gradient(135deg,#20483F,#2E7D6B);color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
 .box h3{margin:0 0 8px;font-size:1.12rem}
@@ -553,7 +546,8 @@ render();
 </script></body></html>
 '''
 
-page = bridge(HTML, "11").replace("__HOLDOUT__",json.dumps(HOLDOUT,ensure_ascii=False).replace("<","\\u003c")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
+import scene_ui
+page = bridge(HTML, "11").replace("__SCENEIMG__", scene_ui.data_url("scene_post")).replace("__HOLDOUT__",json.dumps(HOLDOUT,ensure_ascii=False).replace("<","\\u003c")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_filter_component(page)(key="jamkkan_phishing_filter_v1", default=None, stats=dd.stats("filter"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
@@ -575,10 +569,6 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], -new["blocks"]) > (old.get("stars", 0), -old.get("blocks", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("filter_hall"))
-if SCENE_SLOT is not None:
-    if event and event.get("type") == "run" and event.get("stage") in (0, 1, 2):
-        st.session_state["filter_scene_last"] = {"stage": int(event["stage"]), "clear": bool(event.get("clear")), "wrong": list(event.get("wrong", []))}
-    SCENE_SLOT.markdown(scene_ui.post(st.session_state.get("filter_scene_last")), unsafe_allow_html=True)
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
@@ -586,4 +576,3 @@ with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
         "- **오탐·미탐과 혼동 행렬**: 결과 표는 실제 스팸 필터와 인공지능 분류 모델을 평가할 때 쓰는 2×2 표와 같아요.\n"
         "- **새 자료 시험**: 같은 규칙을 연습 문자와 새 문자에 적용해요. 목표 블록 수는 권장 목표이며, 3단계 동일 태그 두 문자는 별도 확인이 필요해요."
     )
-st.caption("교육용 가상 문자입니다. 실제 번호·기관·링크와 관계없으며, 진행은 새로고침하면 초기화됩니다.")
