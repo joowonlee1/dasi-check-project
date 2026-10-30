@@ -212,6 +212,23 @@ td.c button.bad{outline:3px solid #E5484D}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:560px){.exrow{grid-template-columns:1fr}.sellers,.pick{grid-template-columns:repeat(5,1fr);gap:4px}.sellers div,.pick button{font-size:.68rem}.pick button em,.sellers div em{font-size:22px}.tabs button{font-size:.85rem;padding:8px 4px}.code{font-size:1.05rem}.digits span{width:36px;height:46px;font-size:1.3rem}.lamp{width:50px}}
  .toast,.msg-toast{font-size:1.2rem!important;font-weight:900!important;padding:18px!important;line-height:1.6!important;}
+
+body{font-weight:600;color:#203C35}
+.step p,.howto,.legend2>div,.excard p,.story,.legend,.clue,.hint{font-size:1rem!important;line-height:1.65!important;color:#29483F}
+summary{cursor:pointer;font-size:1.05rem;font-weight:800;padding:10px 12px;background:#EDF5F0;border-radius:10px}
+details.help{margin:10px 0;border:1px solid #B8CFC4;border-radius:12px;padding:6px;background:#fff}
+.ui-nav{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ui-help{position:fixed;inset:0;z-index:10000;background:#172B3A88;padding:16px;display:flex;align-items:center;justify-content:center}
+.ui-help>div{background:#FFFEFA;border-radius:18px;padding:18px;max-height:85vh;overflow:auto;width:min(850px,100%);box-shadow:0 12px 40px #0004}
+.ui-help button{position:sticky;top:0;z-index:2;background:#20483F;color:#fff}
+@media(max-width:720px){.steps,.legend2,.exrow,.grids{grid-template-columns:1fr!important}.clues{grid-template-columns:1fr!important}}
+
+.mk .mk-t,.mk .mk-t:hover:not(:disabled),.mk .mk-t:active:not(:disabled){background:transparent;transform:translateX(-50%);box-shadow:none}
+.mk .mk-t{pointer-events:none}.mk .mk-t.pickable{pointer-events:auto}
+.market-scroll{overflow-x:auto}.market-scroll .mk{min-width:640px}
+.tabs{position:sticky;top:0;z-index:5;background:#FFFEFA;padding:8px 0}
+.grids{gap:14px}th{font-size:.9rem;line-height:1.45}td.c button{min-height:42px}
+
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const D = __DATA__;
@@ -239,19 +256,30 @@ let fresh = true;  // 탭을 처음 열 때만 튀어나오는 효과를 보여 
 
 function cluesOpen(){ return G.solved.filter(Boolean).length; }
 
+let entered=false;
 let hasInteracted=false;
-document.addEventListener('click',e=>{if(e.target.closest('button')){hasInteracted=true;setPlayActive(true);}},true);
+function enterMarket(){entered=true;hasInteracted=true;render();}
+function marketIntro(){
+ setPlayActive(false);
+ $('app').innerHTML='<section class="hero"><b>한정판 운동화, 진짜 판매자는 누구?</b><p>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</p></section><p>① 거래 기록 조사 → ② 추리 표 → ③ 진짜 판매자 지목</p><button class="go" style="width:100%" onclick="enterMarket()">🛒 중고마켓 들어가기 · 이어하기</button><details class="help"><summary>게임 방법과 표 작성 예시</summary>'+gridExample()+'</details>';
+}
+function marketHelp(){
+ const box=document.createElement('div');box.className='ui-help';box.setAttribute('role','dialog');box.setAttribute('aria-label','게임 방법');
+ box.innerHTML='<div><button>✕ 닫고 계속하기</button>'+gridExample()+'</div>';box.querySelector('button').onclick=()=>box.remove();document.body.appendChild(box);box.querySelector('button').focus();
+}
+
 function render(){
-  setPlayActive(hasInteracted);
+  if(!entered){marketIntro();return;}
+  setPlayActive(true);
   const app = $('app');
   if (G.done) return;
   app.classList.toggle('still', !fresh); fresh = false;
   app.innerHTML = `
-  <section class="hero"><span>🔐 추리 퍼즐 · 거래 기록 조사 → 논리 표 → 지목</span><b>한정판 운동화, 진짜 판매자는 누구?</b>
-  <span>정가 18만 원짜리 운동화를 사려는데 판매자 5명이 연락해 왔어요. 나머지 4명은 저마다 다른 수법을 쓰는 사기단이에요.</span></section>
-  <div class="sellhead">🛍️ 연락해 온 판매자 5명 (중고거래 앱 닉네임)</div>
+  <div class="ui-nav"><button onclick="entered=false;render()">← 시작 안내</button><button onclick="marketHelp()">❔ 게임 방법 다시 보기</button></div>
+  <details class="help" ${G.tab === 'memo' ? 'open' : ''}><summary>🛍️ 판매자 5명과 가격표</summary>
   ${marketBoard(false)}
   <div class="prices">💰 판매자들이 부른 가격(가격표): ${D.attrs.p.values.map(v => `<span>${esc(v)}</span>`).join('')} · 누가 얼마를 불렀는지는 단서로 찾아요.</div>
+  </details>
   <div class="chips"><span class="hot">📜 검증한 거래 기록 ${cluesOpen()} / 3</span><span>🔎 쓸 수 있는 단서 ${D.base.length + cluesOpen()} / ${D.base.length + 3}</span><span>💡 사용한 힌트 ${G.hints.filter(Boolean).length + G.stepHint}번</span></div>
   <button style="background:#fff;border:2px solid #20483F;color:#20483F;margin:0 0 8px" onclick="goBack()">← 이전 화면으로</button>
   <div class="tabs">
@@ -268,7 +296,7 @@ function go(t){ G.tab = t; fresh = true; render(); }
 // 바로 전 화면으로: 추리 표 → 거래 기록, 지목 → 추리 표, 거래 기록 → 바깥의 게임 설명 화면. 진행은 그대로 남아요.
 function goBack(){ const order = ['memo', 'grid', 'pick'], k = order.indexOf(G.tab);
   if (k > 0) { go(order[k - 1]); return; }
-  hasInteracted = false; setPlayActive(false); try { window.parent.scrollTo({top: 0, behavior: 'smooth'}); } catch (e) {} }
+  entered=false;render(); hasInteracted = false; setPlayActive(false); try { window.parent.scrollTo({top: 0, behavior: 'smooth'}); } catch (e) {} }
 function toast(t, el){ const x = $('toast'); if (x) x.textContent = t; if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
 
 // ───── ① 거래 기록 조사 ─────
@@ -350,7 +378,7 @@ function gridTab(){
   $('body').innerHTML = `
   <div class="story"><b>판매자 한 명당 연락 방식·요구 사항·가격은 각각 하나씩이에요. 각 항목도 한 사람에게만 대응해요. 한 표의 각 행·열마다 ⭕는 하나예요.</b><br>👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
-  ${gridExample()}
+  <details class="help"><summary>🔎 추리 표 작성 예시 다시 보기</summary>${gridExample()}</details>
   <h3 style="margin:8px 2px">🔎 단서 (${D.base.length + cluesOpen()} / ${D.base.length + 3})</h3>
   <div class="legend">흰색 = 처음부터 알고 있던 단서 · <span style="background:#FFFBEA;border:1.5px solid #E6D9A8;border-radius:6px;padding:0 6px">노란색</span> = 📜 거래 기록을 조사해서 얻은 단서(3개)</div>
   <div class="clues">${clueHtml}</div>
@@ -368,7 +396,7 @@ function clueBtn(id, text, locked, memo){
 let AI = {answers: [], left: 5, wait: false};
 function aiBox(){
   const qa = AI.answers.map((x, i) => `<div class="qa"><b>🙋 질문 ${i + 1}:</b> ${esc(x.q)}<br><b>🤖</b> ${esc(x.a)}</div>`).join('');
-  const can = AI.left > 0 && !AI.wait;
+  const can = !AI.wait;
   return `<section class="ai"><h4>🤖 막혔어요! AI에게 물어보기 (남은 횟수 ${AI.left} / 5)</h4>
   <div style="font-size:.88rem;margin-bottom:6px;word-break:keep-all">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
   ${qa}
@@ -381,8 +409,8 @@ function aiBox(){
 // 같은 보라색 상자 디자인을 그대로 쓰고, 어느 탭에서든 열 수 있어요. 게임이 끝나거나 다른 페이지로 가면 사라져요.
 function aiFloat(){
   let P, D; try { P = window.parent; D = P.document; } catch (e) { return; }
-  const remove = () => { ['jk-ai-launch','jk-ai-panel'].forEach(id => { const el = D.getElementById(id); if (el) el.remove(); }); };
-  if (G.done) { remove(); return; }
+  const remove = () => { ['jk-ai-launch','jk-ai-panel','jk-ai-pocket'].forEach(id => { const el = D.getElementById(id); if (el) el.remove(); }); };
+  // 결과 화면에서도 도우미를 다시 열 수 있어요.
   if (!D.getElementById('jk-ai-style')) {
     const st = D.createElement('style'); st.id = 'jk-ai-style';
     st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 30px;min-height:76px;font:900 25px system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
@@ -407,18 +435,27 @@ function aiFloat(){
     P.__jkAiCleanup = P.setInterval(() => { if (P.location.pathname !== path) { remove(); P.clearInterval(P.__jkAiCleanup); P.__jkAiCleanup = null; } }, 800);
     window.addEventListener('pagehide', remove);
   }
-  const can = AI.left > 0 && !AI.wait;
+  const can = !AI.wait;
   let launch = D.getElementById('jk-ai-launch');
   if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
   launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : `🤖 AI 탐정에게 물어보기 · ${AI.left}/5`;
   launch.classList.toggle('wait', AI.wait);
-  launch.onclick = () => { P.__jkAiOpen = true; aiFloat(); };
+  launch.classList.toggle('pocket', !!P.__jkAiPocket);
+  if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
+  let pocket=D.getElementById('jk-ai-pocket');
+  if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
+  pocket.textContent='🎒 주머니에 넣기';pocket.style.cssText='position:fixed;right:22px;bottom:60px;z-index:999990;background:#fff;color:#3730A3;border:2px solid #8B5CF6;border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer';
+  pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
+  pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
+  if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{width:54px!important;min-height:54px!important;padding:6px!important;border-radius:50%!important;font-size:25px!important}#jk-ai-launch.pocket::before{display:none!important}';D.head.appendChild(st);}
+
+  launch.onclick = () => { P.__jkAiPocket=false; P.__jkAiOpen = true; aiFloat(); };
   let panel = D.getElementById('jk-ai-panel');
   if (!P.__jkAiOpen) { if (panel) panel.remove(); launch.style.display = ''; return; }
   launch.style.display = 'none';
   if (!panel) { panel = D.createElement('div'); panel.id = 'jk-ai-panel'; D.body.appendChild(panel); }
   const qa = AI.answers.map(x => `<div class="q">🙋 ${esc(x.q)}</div><div class="a">🤖 ${esc(x.a)}</div>`).join('');
-  panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정 · 남은 질문 ${AI.left} / 5<button type="button" data-x>닫기 ✕</button></div>
+  panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정 · 남은 질문 ${AI.left} / 5<button type="button" data-pocket>🎒 넣기</button><button type="button" data-x>닫기 ✕</button></div>
    <div class="bd"><div class="tip">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
    ${qa}${AI.wait ? '<div class="a">🤖 생각하는 중이에요…</div>' : ''}</div>
    <div class="ft"><input maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : (AI.left ? '답을 기다리는 중…' : '질문 5번을 모두 썼어요')}" ${can ? '' : 'disabled'}><button type="button" ${can ? '' : 'disabled'}>물어보기</button></div></div>`;
@@ -427,6 +464,7 @@ function aiFloat(){
   input.oninput = () => { G.aiDraft = input.value; };
   input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); send.click(); } };
   send.onclick = () => { G.aiDraft = input.value; ask(); };
+  panel.querySelector('[data-pocket]').onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
   panel.querySelector('[data-x]').onclick = () => { P.__jkAiOpen = false; aiFloat(); };
   const bd = panel.querySelector('.bd'); bd.scrollTop = bd.scrollHeight;
   if (can) input.focus({preventScroll: true});
@@ -441,7 +479,7 @@ function ask(){
   const q = (G.aiDraft || '').trim();
   if (!q) { toast('궁금한 점을 먼저 적어 주세요.'); return; }
   if (/\d{6,}/.test(q.replace(/[\s-]/g, ''))) { toast('🔒 긴 숫자는 개인정보일 수 있어서 보내지 않았어요.'); return; }
-  AI.wait = true; G.stepHint++; G.aiDraft = '';
+  AI.wait = true; G.aiDraft = ''; // 힌트 횟수는 실제 답변의 charged 값으로 반영해요.
   sendResult({type: 'ask', question: q.slice(0, 120), state: snapshot()});
   render();
 }
@@ -490,9 +528,9 @@ function marketBoard(pickMode){
       <b>${D.emoji[i]} ${esc(s)}</b><span class="mk-c">${chips}</span>${on ? '<span class="mk-pin">🔍 지목!</span>' : ''}</button>`;
   }).join('');
   const done = D.sellers.filter(s => KINDS.every(k => D.attrs[k].values.some(v => G.grid[cellKey(k, s, v)] === 2))).length;
-  return `<div class="mk" style="background-image:url(__MARKETIMG__)">${tents}
+  return `<div class="market-scroll"><div class="mk" style="background-image:url(__MARKETIMG__)">${tents}
     <span class="mk-st">${pickMode ? '👆 진짜라고 생각하는 판매자의 천막을 눌러요' : `📝 추리 표로 알아낸 판매자 ${done} / 5`}</span>
-    <span class="mk-place">📍 개암골 · 도토리 중고마켓</span></div>`;
+    <span class="mk-place">📍 개암골 · 도토리 중고마켓</span></div></div>`;
 }
 
 // ───── ③ 진짜 지목 ─────
@@ -544,7 +582,7 @@ function final(){
     body:`앱 안에서 안전결제로 거래한 판매자만 진짜였어요. 나머지 4명은 외부 메신저·선입금·상품권·신분증 사진을 요구했죠.<br><b style="font-size:1.3rem">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</b>`,
     button:'판매자별 수법 보기 ▶'});
 }
-function restart(){ iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
+function restart(){ entered=false; iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
@@ -554,8 +592,8 @@ function resize(force = false){ const root = document.querySelector('main.wrap')
 let STATS = {};
 function sendResult(obj){ sendHost('streamlit:setComponentValue', {value: Object.assign({id: Date.now() + '-' + Math.random().toString(36).slice(2)}, obj), dataType: 'json'}); }
 window.addEventListener('message', ev => { if (ev.source === window.parent && ev.data && ev.data.type === 'streamlit:render') { const a = ev.data.args || {}; if (a.stats) STATS = a.stats;
-  if (a.ai) { const before = AI.answers.length; AI.answers = a.ai.answers || []; AI.left = a.ai.left; G.stepHint = AI.answers.length + (AI.wait && AI.answers.length === before ? 1 : 0);
-    if (AI.answers.length > before) AI.wait = false; if (!G.done) render(); }
+  if (a.ai) { const before = AI.answers.length; AI.answers = a.ai.answers || []; AI.left = a.ai.left; G.stepHint = a.ai.used ?? AI.answers.filter(x=>x.charged!==false).length;
+    if (AI.answers.length > before) AI.wait = false; if (!G.done) render(); else aiFloat(); }
   requestAnimationFrame(() => resize(true)); } });
 sendHost('streamlit:componentReady', {apiVersion: 1});
 new ResizeObserver(() => requestAnimationFrame(resize)).observe(document.querySelector('main.wrap'));
@@ -566,6 +604,7 @@ render();
 
 AI_KEY = "memo_ai_answers"
 AI_MAX = 5
+from app_helper import basic_reply
 AI_RULES = (
     "너는 고등학생이 푸는 논리 퍼즐(중고거래 판매자 5명 × 연락 방식·요구한 것·가격)을 돕는 친절한 도우미야. "
     "학생의 질문에 쉬운 해요체로 2~4문장만 답해. 정답 표 전체나 진짜 판매자가 누구인지는 절대 직접 말하지 마. "
@@ -620,15 +659,20 @@ def _scene_url(name):
         return ""
 page = bridge(attach(HTML), "10").replace("__AIBTNIMG__", _btn_img("btn_ai.png")).replace("__MARKETIMG__", _scene_url("scene_market")).replace("__SCENEIMG__", _scene_url("scene_market")).replace("__DATA__", json.dumps(DATA, ensure_ascii=False).replace("<", "\\u003c"))
 value = create_puzzle_component(page)(key="jamkkan_memo_puzzle_v1", default=None, stats=dd.stats("memo"),
-                                      ai={"answers": answers, "left": AI_MAX - len(answers)})
+                                      ai={"answers": answers, "left": max(0, AI_MAX - sum(x.get("charged", True) for x in answers)), "used": sum(x.get("charged", True) for x in answers)})
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
 event = dd.take_event(value)
 if event and event.get("type") == "ask":
-    if len(answers) < AI_MAX:
-        question = str(event.get("question", ""))[:120]
+    question = str(event.get("question", ""))[:120]
+    local = basic_reply(question, "10")
+    if local:
+        answers.append({"q": question, "a": local, "charged": False})
+    elif sum(x.get("charged", True) for x in answers) < AI_MAX:
         with st.spinner("🤖 AI가 생각하고 있어요…"):
-            answers.append({"q": question, "a": ask_ai(question, event.get("state"))})
+            answers.append({"q": question, "a": ask_ai(question, event.get("state")), "charged": True})
+    else:
+        answers.append({"q": question, "a": "AI 질문 5회를 모두 썼어요. ‘사용법’과 ‘이 화면 설명’은 계속 물어볼 수 있어요.", "charged": False})
     st.rerun()
 elif event and event.get("type") == "ai_reset":
     st.session_state[AI_KEY] = []
