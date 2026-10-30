@@ -96,7 +96,7 @@ button:focus-visible,.node:focus-visible{outline:3px solid #FF7A45;outline-offse
 .go:hover:not(:disabled){background:linear-gradient(135deg,#FF6A30,#FFA530)}
 .ok{background:#0F766E;color:#fff}.ok:hover:not(:disabled){background:#0B655B}
 main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
-.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,#1E5B4F,#2E8B75)!important;color:#fff;border-radius:18px;padding:10px 16px;text-align:center;animation:pop .5s ease-out both}
 .hero b{display:block;font-size:1.45rem;font-weight:900;word-break:keep-all}
 .hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .hud{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
@@ -114,8 +114,10 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .readme .rm-tip{font-weight:700;color:#33524A}
 .board.locked{min-height:400px}
 @media (max-width:560px){.readme{gap:10px;padding:12px}.readme .rm-post{padding:12px 14px}.readme .rm-post .txt{font-size:1.1rem}}
-.board{position:relative;background:linear-gradient(rgba(244,251,247,.62),rgba(226,239,232,.62)),url(__SCENEIMG__) center/cover;border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
+.board{position:relative;background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.12)),url(__SCENEIMG__) center/cover;border:2px solid #D7E2DD;border-radius:22px;overflow:hidden;margin:10px 0}
 svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.board .edge{stroke:#FFFFFF;stroke-width:4;filter:drop-shadow(0 0 2px rgba(0,0,0,.55))}
+.board .node .body{filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
 .edge{stroke:#B7CBC2;stroke-width:2.5}
 .edge.hot{stroke:#E5484D;stroke-width:4;animation:flash .7s ease-out}
 .node{cursor:pointer}
