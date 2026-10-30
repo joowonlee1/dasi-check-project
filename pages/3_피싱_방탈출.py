@@ -534,7 +534,7 @@ def evidence_card(evidence_id):
             with rec_col:
                 call_button({"name": item["name"], "number": item["number"], "avatar": "👩", "ring": False, "status": "통화 녹음 재생",
                              "lines": [["상대", item["lines"][0], ""],
-                                       ["상대", item["lines"][1], "⚠️ 방금 그 말! 다른 가족에게는 연락하지 말라고 해요"]],
+                                       ["상대", item["lines"][1], "⚠️ 방금 그 말! 다른 가족에게 연락하지 말래요"]],
                              "pitch": VOICE_PITCH, "verdict": "🎧 녹음이 끝났어요. 이 통화에서 이상한 점을 증거와 비교해 보세요."},
                             "녹음 듣기", key=f"rec_{evidence_id}", tone="calm", icon="🎧")
             with act_col:
@@ -886,7 +886,7 @@ def collected_numbers():
 
 # 통화 목소리 연출(나의 폰에서 전화를 걸면 통화 화면이 열리고 대사를 목소리로 읽어 줘요). 모두 교육용 가상 대사예요.
 # 누가 말하는지에 따라 목소리 높이·빠르기를 다르게 해요.
-VOICE_PITCH = {"상대": [1.15, 1.05], "이모": [1.3, 1.0], "엄마": [1.05, 1.0], "안내 음성": [1.0, 0.95]}
+VOICE_PITCH = {"상대": [1.0, 1.05], "이모": [1.08, 1.0], "엄마": [1.0, 1.0], "안내 음성": [1.0, 0.95]}  # 높이를 크게 바꾸면 기계 소리처럼 들려서 1 가까이로 둬요
 # 통화마다: 얼굴 그림, 목소리로 읽을 줄([누가, 대사, 그 말이 나올 때 띄울 경고]), 통화가 끝나고 띄울 한 줄
 CALL_VOICE = {
     "no_answer": {"avatar": "👩", "voice": [["안내 음성", "고객이 전화를 받지 않아, 삐 소리 후 음성사서함으로 연결됩니다.", ""]],
@@ -894,7 +894,7 @@ CALL_VOICE = {
     "dad_off": {"avatar": "👨", "voice": [["안내 음성", "전원이 꺼져 있어, 음성사서함으로 연결됩니다.", ""]],
                 "verdict": "📴 전원 꺼짐 · 출장 중 비행기 안일 수도 있어요"},
     "new_contact": {"avatar": "❓", "danger": True,
-                    "voice": [["상대", EVIDENCE["new_contact"]["lines"][0][1], "⚠️ 방금 그 말! 목소리 확인도 없이 앱 설치부터 시켜요"]],
+                    "voice": [["상대", EVIDENCE["new_contact"]["lines"][0][1], "⚠️ 방금 그 말! 확인할 틈 없이 앱 설치부터 시켜요"]],
                     "verdict": "⚠️ 상대가 알려 준 새 번호로 건 통화예요"},
     "aunt": {"avatar": "👩", "safe": True, "voice": [[w, t, ""] for w, t in EVIDENCE["aunt"]["lines"]],
              "verdict": "✅ 원래 저장된 번호로 직접 확인한 통화예요"},
@@ -971,6 +971,64 @@ def go_place(place):
     st.rerun()
 
 
+# 민서네 거실 그림 위 물건 자리(그림 가로·세로 %). 순서는 PLACES와 같아요.
+ROOM_SPOTS = [(57.5, 70.5), (11.5, 73.0), (71.0, 21.0), (8.6, 27.5), (78.0, 72.0), (88.0, 58.0)]  # 물건을 가리지 않게 옆에 둬요
+
+
+def room_picture(places):
+    """민서네 거실 그림에서 물건을 눌러 조사해요. 누르면 숨은 입력칸으로 장소 번호를 보내요."""
+    import streamlit.components.v1 as components
+    spots = []
+    for i, (place, (x, y)) in enumerate(zip(places, ROOM_SPOTS)):
+        icon, _, name = place.partition(" ")
+        state = ""
+        if place == "🗄️ 잠긴 서랍":
+            state = "🔓 열림" if game["unlocked"] >= 1 else "🔒 잠김"
+        elif place == "🚪 출입문":
+            state = f"🔐 {game['unlocked']}/3"
+        elif place in game["visited"]:
+            state = "✓ 조사함"
+        cls = "rm-spot" + (" now" if place == game["place"] else "") + (" seen" if place in game["visited"] else "")
+        spots.append(f'<button type="button" class="{cls}" data-i="{i}" style="left:{x}%;top:{y}%;">'
+                     f'<span class="ic">{icon}</span><b>{esc(name)}</b>{f"<small>{state}</small>" if state else ""}</button>')
+    st.markdown(
+        "<style>.rm{position:relative;width:100%;border-radius:20px;overflow:hidden;border:3px solid #E2C98A;box-shadow:0 6px 18px rgba(60,40,10,.15);container-type:inline-size;margin:4px 0 6px}"
+        ".rm>img{display:block;width:100%!important;height:auto!important;margin:0!important;max-width:none!important}"
+        ".rm-spot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:.2cqw;cursor:pointer;"
+        "background:rgba(255,253,245,.94);border:.3cqw solid #20483F;border-radius:1.6cqw;padding:.5cqw 1cqw;box-shadow:0 .4cqw 1cqw rgba(0,0,0,.25);"
+        "font-family:inherit;color:#20483F;animation:rm-bob 2s ease-in-out infinite;min-width:7cqw}"
+        ".rm-spot .ic{font-size:2.4cqw;line-height:1}.rm-spot b{font-size:1.45cqw;font-weight:900;white-space:nowrap}"
+        ".rm-spot small{font-size:1.1cqw;font-weight:800;color:#B42318;white-space:nowrap}"
+        ".rm-spot.seen{animation:none;border-color:#94A3B8;background:rgba(248,250,252,.92)}.rm-spot.seen small{color:#166534}"
+        ".rm-spot.now{animation:none;background:#20483F;border-color:#F6D55C;color:#fff;box-shadow:0 0 0 .5cqw rgba(246,213,92,.6)}.rm-spot.now small{color:#FDE68A}"
+        ".rm-spot:hover{transform:translate(-50%,-50%) scale(1.08)}"
+        "@keyframes rm-bob{0%,100%{translate:0 0}50%{translate:0 -.5cqw}}"
+        "@media (max-width:640px){.rm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:20px}.rm-wrap .rm{min-width:620px}}"
+        "@media (prefers-reduced-motion:reduce){.rm-spot{animation:none}}</style>"
+        '<div style="font-weight:800;color:#20483F;margin:2px 0">👆 방 안의 물건을 눌러 조사하세요. 처음 조사하는 물건은 게임 시계가 1분 흐릅니다.</div>'
+        '<div class="rm-wrap"><div class="rm"><img src="app/static/minseo_room.jpg" alt="민서네 거실">' + "".join(spots) + "</div></div>",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="room_go_bridge"):
+        st.markdown("<style>.st-key-room_go_bridge{position:absolute!important;left:-10000px!important;top:0;width:300px;height:1px;overflow:hidden}</style>",
+                    unsafe_allow_html=True)
+        with st.form("room_go_form", clear_on_submit=True):
+            picked = st.text_input("room go", key="room_go_input", label_visibility="collapsed")
+            go = st.form_submit_button("go")
+        st.session_state["_room_go_n"] = st.session_state.get("_room_go_n", 0) + 1
+        components.html(
+            "<script>(()=>{const D=parent.document,W=parent;if(W.__jkRoomGo)return;W.__jkRoomGo=1;"
+            "D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.rm-spot');if(!b)return;e.preventDefault();"
+            "const box=D.querySelector('.st-key-room_go_bridge'),inp=box&&box.querySelector('input'),btn=box&&box.querySelector('button');if(!inp||!btn)return;"
+            "const v=inp.ownerDocument.defaultView;Object.getOwnPropertyDescriptor(v.HTMLInputElement.prototype,'value').set.call(inp,b.dataset.i);"
+            "inp.dispatchEvent(new v.Event('input',{bubbles:true}));setTimeout(()=>btn.click(),80);},true);})();</script>"
+            f"<!-- {st.session_state['_room_go_n']} -->", height=0)
+    if go and (picked or "").strip().isdigit():
+        i = int(picked.strip())
+        if 0 <= i < len(places):
+            go_place(places[i])
+
+
 def show_room():
     st.info("📌 보고서에 사용할 자료라면 ‘증거 보관함에 넣기’를 눌러 주세요.")
     st.markdown(
@@ -979,21 +1037,25 @@ def show_room():
     )
 
     places = list(PLACES)
-    # 자료를 읽는 곳(4곳)과 잠금 장치가 있는 곳(서랍·출입문)을 나눠서 헷갈리지 않게 해요.
-    st.markdown("**🔎 조사할 곳**")
-    with st.container(key="room_places"):
-        columns = st.columns(4)
-        for column, place in zip(columns, places[:4]):
-            with column:
-                if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
-                    go_place(place)
-    st.markdown("**🔐 잠금 장치가 있는 곳**")
-    with st.container(key="room_locks"):
-        columns = st.columns(2)
-        for column, place in zip(columns, places[4:]):
-            with column:
-                if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
-                    go_place(place)
+    from pathlib import Path as _P
+    if (_P(__file__).resolve().parent.parent / "static" / "minseo_room.jpg").exists():
+        room_picture(places)
+    else:
+        # 그림이 없을 때: 예전처럼 버튼으로 골라요.
+        st.markdown("**🔎 조사할 곳**")
+        with st.container(key="room_places"):
+            columns = st.columns(4)
+            for column, place in zip(columns, places[:4]):
+                with column:
+                    if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
+                        go_place(place)
+        st.markdown("**🔐 잠금 장치가 있는 곳**")
+        with st.container(key="room_locks"):
+            columns = st.columns(2)
+            for column, place in zip(columns, places[4:]):
+                with column:
+                    if st.button(place, use_container_width=True, key=f"escape_place_{place}"):
+                        go_place(place)
 
     st.divider()
     place = game["place"]
@@ -1017,7 +1079,7 @@ def show_room():
                 with column:
                     evidence_card(evidence_id)
         if len(items) > 2:
-            st.caption("⬆️ 다른 장소를 보려면 위의 ‘조사할 곳’ 버튼을 눌러요.")
+            st.caption("⬆️ 다른 물건을 조사하려면 위의 방 그림에서 눌러요.")
 
 
 def show_inventory():
