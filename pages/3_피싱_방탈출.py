@@ -1005,7 +1005,7 @@ def room_picture(places):
         "@keyframes rm-bob{0%,100%{translate:0 0}50%{translate:0 -.5cqw}}"
         "@media (max-width:640px){.rm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:20px}.rm-wrap .rm{min-width:620px}}"
         "@media (prefers-reduced-motion:reduce){.rm-spot{animation:none}}</style>"
-        '<div style="font-weight:800;color:#20483F;margin:2px 0">👆 방 안의 물건을 눌러 조사하세요. 처음 조사하는 물건은 게임 시계가 1분 흐릅니다.</div>'
+        ''
         '<div class="rm-wrap"><div class="rm"><img src="app/static/minseo_room.jpg" alt="민서네 거실">' + "".join(spots) + "</div></div>",
         unsafe_allow_html=True,
     )
@@ -1032,7 +1032,7 @@ def room_picture(places):
 def show_room():
     st.info("📌 보고서에 사용할 자료라면 ‘증거 보관함에 넣기’를 눌러 주세요.")
     st.markdown(
-        "장소를 눌러 조사하세요. 처음 가는 곳은 게임 시계가 1분 흐릅니다. "
+        "방 안의 물건(장소)을 눌러 조사하세요. 처음 조사하는 곳은 게임 시계가 1분 흐릅니다. "
         ":orange-background[**⚠️ 사건과 상관없는 자료도 섞여 있어요.**]"
     )
 
@@ -1382,7 +1382,7 @@ def show_game_guide():
                 "| ⏳ 남은 시간 | 진짜 제한 시간. 0이 되면 실패 |\n"
                 "| 🕘 게임 속 시각 | 행동할 때마다 흐르는 게임 속 시계 |\n"
                 "| 📱 나의 폰 (오른쪽 아래 버튼) | 💬 문자: 상대가 보내는 재촉 문자가 쌓여요 · 📞 전화: 번호를 눌러 전화를 걸어요 |\n"
-                "| 🔎 방 조사 탭 | 장소를 골라 자료를 읽고 증거를 수집 |\n"
+                "| 🔎 방 조사 탭 | 거실 그림에서 물건을 눌러 자료를 읽고 증거를 수집 |\n"
                 "| 📁 증거 보관함 탭 | 수집한 증거를 모아 보고 비교 |\n"
                 "| 🔐 잠금 해제 탭 | 지금 풀어야 할 잠금 하나가 나타남 |"
             )
