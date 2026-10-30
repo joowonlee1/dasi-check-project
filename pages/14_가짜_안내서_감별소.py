@@ -38,6 +38,8 @@ def fresh():
 S=st.session_state.setdefault(KEY,fresh())
 with intro("14", suffix=""):
     st.title("📬 가짜 안내서 감별소")
+    from mascot_ui import show_scene
+    show_scene("scene_hallway", "다람쥐동 · 다람쥐아파트 복도")  # 장소 그림 배너
     show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
     # 이 게임은 시작 이야기가 없어서 짧은 이야기 상자를 넣었어요.
     st.markdown(
@@ -106,8 +108,77 @@ NV_CSS = """<style>
 def _go_door(k):
     S["i"] = k
 
+# 복도 그림 속 문 3개 자리(가로 가운데 %, 위 %, 너비 %, 높이 %)
+HALL_DOORS = [(33.0, 12.0, 15.5, 62.0), (56.5, 12.0, 15.5, 62.0), (79.5, 12.0, 15.5, 62.0)]
+
+
+def hallway_doors(i):
+    """다람쥐아파트 복도 그림에서 문을 눌러 고르는 화면. 문마다 안내서가 붙어 있고, 감별을 마친 문에는 도장이 찍혀요."""
+    import streamlit.components.v1 as components
+    reach = len(S["answers"])
+    doors = []
+    for k, (c, (x, y, w, h)) in enumerate(zip(CASES, HALL_DOORS)):
+        if k in S["answers"]:
+            label, color = STAMP[CASES[k]["answer"]]
+            state, cls, mark = "감별 완료", "done", f'<span class="hd-stamp" style="color:{color};border-color:{color}">{label}</span>'
+        elif k == i:
+            state, cls, mark = "감별 중", "now", ""
+        elif k <= reach:
+            state, cls, mark = "눌러서 감별", "open", ""
+        else:
+            state, cls, mark = "잠김", "lock", '<span class="hd-lock">🔒</span>'
+        doors.append(f'<button type="button" class="hd-door {cls}" data-k="{k}" {"disabled" if cls == "lock" else ""} '
+                     f'style="left:{x}%;top:{y}%;width:{w}%;height:{h}%">'
+                     f'<span class="hd-plate">{_esc(c["door"])}</span><span class="hd-paper">📮</span>{mark}'
+                     f'<span class="hd-state">{state}</span></button>')
+    st.markdown(
+        "<style>.hd{position:relative;border-radius:18px;overflow:hidden;border:3px solid #E2C98A;container-type:inline-size;aspect-ratio:758/330;"
+        "background:url(app/static/scene_hallway.jpg) center/cover;box-shadow:0 6px 16px rgba(60,40,10,.15);margin:4px 0 8px}"
+        ".hd-door{position:absolute;transform:translateX(-50%);border:.4cqw solid transparent;border-radius:1cqw;background:transparent;cursor:pointer;padding:0;font-family:inherit}"
+        ".hd-door:hover:not([disabled]){border-color:#F6D55C;background:rgba(246,213,92,.12)}"
+        ".hd-door.now{border-color:#F6D55C;box-shadow:0 0 0 .5cqw rgba(246,213,92,.55),0 0 3cqw rgba(246,213,92,.7);animation:hd-glow 1.6s ease-in-out infinite}"
+        ".hd-door.lock{background:rgba(15,23,42,.45);cursor:not-allowed}"
+        ".hd-door.done{background:rgba(255,255,255,.08)}"
+        ".hd-plate{position:absolute;left:50%;top:-1.2cqw;transform:translateX(-50%);background:#FFF8E1;border:.25cqw solid #8A5A2B;border-radius:.8cqw;padding:.1cqw 1cqw;font-weight:900;font-size:1.8cqw;color:#5B3A12;white-space:nowrap}"
+        ".hd-paper{position:absolute;left:50%;top:22%;transform:translateX(-50%) rotate(-4deg);background:#FFFDF5;border:.2cqw solid #D6C7A1;border-radius:.4cqw;width:60%;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:3cqw;box-shadow:0 .3cqw .6cqw rgba(0,0,0,.25)}"
+        ".hd-door.lock .hd-paper{opacity:.5}"
+        ".hd-stamp{position:absolute;left:50%;top:36%;transform:translateX(-50%) rotate(-14deg);border:.35cqw solid;border-radius:.8cqw;padding:.2cqw .8cqw;font-weight:900;font-size:1.7cqw;background:rgba(255,255,255,.85);white-space:nowrap}"
+        ".hd-lock{position:absolute;left:50%;top:40%;transform:translateX(-50%);font-size:4cqw}"
+        ".hd-state{position:absolute;left:50%;bottom:-.4cqw;transform:translateX(-50%);background:#20483F;color:#fff;border-radius:999px;padding:.2cqw 1.1cqw;font-weight:900;font-size:1.5cqw;white-space:nowrap}"
+        ".hd-door.lock .hd-state{background:#475569}.hd-door.done .hd-state{background:#166534}.hd-door.open .hd-state{background:#B45309}"
+        "@keyframes hd-glow{0%,100%{box-shadow:0 0 0 .5cqw rgba(246,213,92,.55),0 0 2cqw rgba(246,213,92,.5)}50%{box-shadow:0 0 0 .8cqw rgba(246,213,92,.8),0 0 4cqw rgba(246,213,92,.9)}}"
+        "@media (prefers-reduced-motion:reduce){.hd-door.now{animation:none}}</style>"
+        '<div style="font-weight:800;color:#20483F">👆 복도의 문을 눌러 안내서를 감별하세요. 잠긴 문은 앞 안내서를 감별하면 열려요.</div>'
+        '<div class="hd">' + "".join(doors) + "</div>",
+        unsafe_allow_html=True,
+    )
+    with st.container(key="hall_go_bridge"):
+        st.markdown("<style>.st-key-hall_go_bridge{position:absolute!important;left:-10000px!important;top:0;width:300px;height:1px;overflow:hidden}</style>",
+                    unsafe_allow_html=True)
+        with st.form("hall_go_form", clear_on_submit=True):
+            picked = st.text_input("hall go", key="hall_go_input", label_visibility="collapsed")
+            go = st.form_submit_button("go")
+        st.session_state["_hall_go_n"] = st.session_state.get("_hall_go_n", 0) + 1
+        components.html(
+            "<script>(()=>{const D=parent.document,W=parent;if(W.__jkHallGo)return;W.__jkHallGo=1;"
+            "D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.hd-door');if(!b||b.disabled)return;e.preventDefault();"
+            "const box=D.querySelector('.st-key-hall_go_bridge'),inp=box&&box.querySelector('input'),btn=box&&box.querySelector('button');if(!inp||!btn)return;"
+            "const v=inp.ownerDocument.defaultView;Object.getOwnPropertyDescriptor(v.HTMLInputElement.prototype,'value').set.call(inp,b.dataset.k);"
+            "inp.dispatchEvent(new v.Event('input',{bubbles:true}));setTimeout(()=>btn.click(),80);},true);})();</script>"
+            f"<!-- {st.session_state['_hall_go_n']} -->", height=0)
+    if go and (picked or "").strip().isdigit():
+        k = int(picked.strip())
+        if 0 <= k <= reach and k < len(CASES) and k != i:
+            _go_door(k)
+            st.rerun()
+
+
 def door_strip(i):
     """문 3개를 버튼으로: 감별을 마친 문과 지금 문은 눌러서 오갈 수 있고, 아직 차례가 아닌 문은 잠겨 있어요."""
+    from pathlib import Path as _P
+    if (_P(__file__).resolve().parent.parent / "static" / "scene_hallway.jpg").exists():
+        hallway_doors(i)
+        return
     reach = len(S["answers"])  # 지금까지 맞힌 수 = 새로 열 수 있는 문 번호
     st.markdown('<style>.st-key-nv_doors button{min-height:50px!important;border-radius:12px!important}'
                 '.st-key-nv_doors button p{font-weight:900!important;font-size:1.02rem!important}</style>', unsafe_allow_html=True)
