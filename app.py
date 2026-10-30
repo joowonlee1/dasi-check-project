@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="잠깐!",
     page_icon="✋",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",  # 컴퓨터는 메뉴를 펼치고, 휴대폰은 접어서 버튼을 가리지 않게 해요
 )
 
 
@@ -618,27 +618,32 @@ def show_home():
         guide_img = ""
     if nxt:
         n_icon, n_town, n_place, n_intro = PLACES[nxt]
-        say = (f'<div class="ci-say">🗺️ 다음엔 <b class="ci-place">{n_icon} {html.escape(n_town)} · {html.escape(n_place)}</b>에 가 볼까?'
+        say = (f'<div class="ci-say go">🗺️ 다음엔 <b class="ci-place">{n_icon} {html.escape(n_town)} · {html.escape(n_place)}</b>에 가 볼까?'
                f'<span>{html.escape(n_intro)}</span></div>')
     else:
         guide_img = mascot_img("trophy", 140).replace("display:block;margin:0 auto;", "") or guide_img
         say = '<div class="ci-say">🎖️ 14곳 도장을 모두 모았어요! <b class="ci-place">도토리시 명예 시민</b>이 된 걸 축하해요!</div>'
-    st.markdown(
-        "<style>.city-intro.has-kj{display:flex;align-items:center;gap:16px;padding:12px 18px}"
-        ".city-intro .ci-kj{width:150px;height:auto;flex-shrink:0}"
-        ".city-intro .ci-say{margin-top:8px;background:#fff;border:2px solid #20483F;border-radius:16px 16px 16px 4px;padding:8px 14px;font-weight:800;color:#20483F;line-height:1.6}"
-        ".city-intro .ci-say .ci-place{display:inline;font-size:1.05rem;color:#B42318;margin:0}"
-        ".city-intro .ci-say span{display:block;font-weight:600;color:#475569;font-size:.92rem}"
-        ".st-key-guide_go{margin-top:-6px}.st-key-guide_go a{background:#20483F!important;border-radius:999px!important;padding:8px 18px!important;width:fit-content;box-shadow:0 3px 0 #0F2A24}"".st-key-guide_go a p,.st-key-guide_go a span{color:#fff!important;font-weight:800!important}.st-key-guide_go a:hover{background:#2D6457!important}"
-        "@media (max-width:640px){.city-intro.has-kj{flex-direction:column;text-align:center}.city-intro .ci-kj{width:110px}}</style>"
-        f'<div class="city-intro has-kj">{guide_img}<div><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}{say}</div></div>',
-        unsafe_allow_html=True,
-    )
-    if nxt:
-        path = {row[0]: row[3] for row in FEATURES}.get(nxt)
-        if path:
-            with st.container(key="guide_go"):
-                st.page_link(path, label=f"깡지가 추천한 {PLACES[nxt][2]}(으)로 가기", icon="➡️")
+    # 환영 상자 안에 깡지·말풍선·'추천한 곳으로 가기' 버튼을 함께 넣어요(버튼이 상자 밖에 떠 있지 않게).
+    with st.container(key="city_intro_box"):
+        st.markdown(
+            "<style>.st-key-city_intro_box{background:linear-gradient(135deg,#FFF4D6,#E8F4EC);border:2px solid #E2C98A;border-radius:20px;padding:12px 18px 14px;margin:4px 0 12px;gap:6px!important}"
+            ".st-key-city_intro_box .city-intro.has-kj{display:flex;align-items:center;gap:16px;padding:0;margin:0;background:none;border:0}"
+            ".city-intro .ci-kj{width:150px;height:auto;flex-shrink:0}"
+            ".city-intro .ci-say{margin-top:8px;background:#fff;border:2px solid #20483F;border-radius:16px 16px 16px 4px;padding:8px 14px;font-weight:800;color:#20483F;line-height:1.6}"
+            ".city-intro .ci-say .ci-place{display:inline;font-size:1.05rem;color:#B42318;margin:0}"
+            ".city-intro .ci-say span{display:block;font-weight:600;color:#475569;font-size:.92rem}"
+            ".st-key-city_intro_box .city-intro .ci-say.go{padding-right:310px!important;min-height:62px}.st-key-city_intro_box{position:relative}.st-key-guide_go{position:absolute!important;right:34px;bottom:26px;width:auto!important;z-index:2}.st-key-guide_go a{background:#20483F!important;border-radius:999px!important;padding:8px 18px!important;width:fit-content;box-shadow:0 3px 0 #0F2A24}"
+            ".st-key-guide_go a p,.st-key-guide_go a span{color:#fff!important;font-weight:800!important}.st-key-guide_go a:hover{background:#2D6457!important}"
+            "@media (max-width:640px){.st-key-city_intro_box .city-intro.has-kj{flex-direction:column;text-align:center}.city-intro .ci-kj{width:110px}"
+            ".st-key-guide_go{position:static!important}.st-key-city_intro_box .city-intro .ci-say.go{padding-right:14px!important}.st-key-guide_go a{margin:0 auto}}</style>"
+            f'<div class="city-intro has-kj">{guide_img}<div><b>도토리시에 오신 걸 환영해요!</b>{html.escape(CITY_INTRO)}{say}</div></div>',
+            unsafe_allow_html=True,
+        )
+        if nxt:
+            path = {row[0]: row[3] for row in FEATURES}.get(nxt)
+            if path:
+                with st.container(key="guide_go"):
+                    st.page_link(path, label=f"깡지가 추천한 {PLACES[nxt][2]}(으)로 가기", icon="➡️")
     # 장소 버튼 목록 대신, 동네별로 장소가 어디 있는지 한눈에 보는 지도예요(누르는 곳이 아니에요).
     # 들어가는 버튼은 아래 ‘어떤 활동을 해볼까요?’ 카드에 있어요.
     got = dd.stamps()
