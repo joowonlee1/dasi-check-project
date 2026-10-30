@@ -339,7 +339,7 @@ function check3(){
 function cellKey(kind, s, v){ return kind + '|' + s + '|' + v; }
 function gridTab(){
   const clueHtml = D.base.map((t, i) => clueBtn('b' + i, t, false, false))
-    .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 메모 ${i + 1}의 근거를 연결하면 열려요`, !G.solved[i], true))).join('');
+    .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 거래 ${'ABC'[i]} 조사를 마치면 열려요`, !G.solved[i], true))).join('');
   $('body').innerHTML = `
   <div class="story"><b>판매자 한 명당 연락 방식·요구 사항·가격은 각각 하나씩이에요. 각 항목도 한 사람에게만 대응해요. 한 표의 각 행·열마다 ⭕는 하나예요.</b><br>👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
