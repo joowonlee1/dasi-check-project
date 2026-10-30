@@ -39,7 +39,15 @@ S=st.session_state.setdefault(KEY,fresh())
 with intro("14", suffix=""):
     st.title("📬 가짜 안내서 감별소")
     from mascot_ui import show_scene
-    show_scene("scene_hallway", "다람쥐동 · 다람쥐아파트 복도")  # 장소 그림 배너
+    import scene_ui
+    if scene_ui.ready("scene_hallway"):
+        # 시작 화면: 문마다 붙은 안내서와 깡지
+        try:
+            from mascot_ui import _pose_data
+            _kj = "data:image/png;base64," + _pose_data("letter")
+        except Exception:
+            _kj = ""
+        st.markdown(scene_ui.hallway_cover(_kj), unsafe_allow_html=True)
     show_key_question("안내서의 주장과 **별도로 확인한 기록**을 대조해요. 근거가 부족하면 **판단을 보류**할 수 있어요.","📬")
     # 이 게임은 시작 이야기가 없어서 짧은 이야기 상자를 넣었어요.
     st.markdown(
