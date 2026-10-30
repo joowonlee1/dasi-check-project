@@ -223,3 +223,19 @@ def show_tiles(tiles):
         ) + "</div>",
         unsafe_allow_html=True,
     )
+
+
+def show_scene(name, place):
+    """게임 시작 화면 위쪽에 그 장소의 그림을 배너로 보여 줘요(static 폴더의 그림). 그림이 없으면 아무것도 안 그려요."""
+    if not (Path(__file__).resolve().parent / "static" / f"{name}.jpg").exists():
+        return
+    st.markdown(
+        '<div style="position:relative;border-radius:20px;overflow:hidden;border:3px solid #E2C98A;'
+        'box-shadow:0 6px 16px rgba(60,40,10,.15);margin:2px 0 10px">'
+        f'<img src="app/static/{name}.jpg" alt="{html.escape(place, quote=True)}" '
+        'style="display:block;width:100%;height:clamp(150px,22vw,230px);object-fit:cover;object-position:center 35%;margin:0">'
+        '<span style="position:absolute;left:14px;bottom:12px;background:rgba(255,253,240,.95);border:2px solid #C9A86A;'
+        'border-radius:999px;padding:4px 14px;font-weight:900;color:#5B3A12;font-size:1.02rem;box-shadow:0 2px 0 rgba(0,0,0,.12)">'
+        f'📍 {html.escape(place)}</span></div>',
+        unsafe_allow_html=True,
+    )
