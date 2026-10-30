@@ -9,3 +9,6 @@ font = "sans serif"
 [client]
 # 보는 사람 화면에서 개발자 메뉴(캐시 지우기 등)를 숨겨요.
 toolbarMode = "viewer"
+[server]
+# static 폴더의 그림(도토리시 지도)을 앱에서 바로 불러와요.
+enableStaticServing = true
