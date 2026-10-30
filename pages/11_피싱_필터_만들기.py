@@ -17,6 +17,11 @@ from filter_component_ui import create_filter_component
 
 with intro("11", suffix=""):
     st.title("🤖 피싱 필터 만들기")
+    from mascot_ui import show_scene
+    import scene_ui
+    SCENE_SLOT = st.empty() if scene_ui.ready("scene_post") else None  # 장면 보드 자리(게임 결과를 처리한 뒤 그려요)
+    if SCENE_SLOT is None:
+        show_scene("scene_post", "")
     show_key_question("**조건 블록**을 조립해 수상한 문자만 걸러 내는 **필터 규칙**을 만들어 보세요.", "🤖")
     show_mascot("postman", "진짜 문자는 통과시키고, 가짜 문자만 막아야 해요. 적은 블록으로 다 맞히면 별 3개!", width=100)
 
@@ -570,6 +575,10 @@ elif event and event.get("type") == "final":
         lambda old, new: (new["stars"], -new["blocks"]) > (old.get("stars", 0), -old.get("blocks", 10**6)),
     )
 dd.show_hall_note(st.session_state.get("filter_hall"))
+if SCENE_SLOT is not None:
+    if event and event.get("type") == "run" and event.get("stage") in (0, 1, 2):
+        st.session_state["filter_scene_last"] = {"stage": int(event["stage"]), "clear": bool(event.get("clear")), "wrong": list(event.get("wrong", []))}
+    SCENE_SLOT.markdown(scene_ui.post(st.session_state.get("filter_scene_last")), unsafe_allow_html=True)
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown(
