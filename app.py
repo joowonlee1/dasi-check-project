@@ -285,8 +285,11 @@ st.markdown(
         padding-bottom: 0.3rem;
     }
 
+    .route {display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;}
+    .route .place {font-weight:900;}
+    .route .route-steps {font-weight:700;color:#0F766E;}
     .route {
-        padding: 10px 16px;
+        padding: 8px 16px;
         border: 1px solid #CBDAD2;
         border-left: 5px solid #0F766E;
         border-radius: 12px;
@@ -597,8 +600,7 @@ def show_home():
             ".zoom-tip kbd{background:#fff;border:1px solid #9FB4D6;border-bottom-width:3px;border-radius:6px;"
             "padding:0 6px;font-family:inherit;font-weight:800;color:#1E3A5F;}"
             "@media (max-width:640px){.zoom-tip{display:none;}}</style>"
-            '<div class="zoom-tip">💻 <b>노트북·컴퓨터라면</b> <kbd>Ctrl</kbd>을 누른 채 마우스 휠을 <b>아래로</b> 내리면 '
-            "화면이 작아져서 <b>한눈에 더 넓게</b> 볼 수 있어요.</div>",
+            '<div class="zoom-tip">💻 <kbd>Ctrl</kbd> + 마우스 휠 <b>아래로</b> → 화면을 <b>한눈에</b> 보기</div>',
             unsafe_allow_html=True,
         )
 
@@ -685,7 +687,7 @@ def show_home():
         "표시(노란 테두리)는 도장을 받은 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>"
         if not art_map_ready() else
         '<div style="color:#3E4A46;font-size:1.08rem;font-weight:700;line-height:1.7;margin-top:6px;">'
-        "🐾 노란 발자국은 도장을 받은 곳, <b>?</b>는 아직 안 가 본 곳이에요. 장소에 들어가려면 아래 ‘어떤 활동을 해볼까요?’에서 골라요.</div>",
+        "🐾 발자국 = 도장 받은 곳 · <b>?</b> = 아직 안 간 곳</div>",
         unsafe_allow_html=True,
     )
 
@@ -694,9 +696,6 @@ def show_home():
                 unsafe_allow_html=True)
     with st.container(key="activity_head"):
         st.subheader("어떤 활동을 해볼까요?")
-        st.caption(
-            "원하는 활동부터 시작해도 괜찮아요."
-        )
 
     # 활동이 많아져 스크롤이 길어지지 않게, 묶음별 탭 + 두 칸짜리 작은 카드로 보여 줘요.
     groups = [
@@ -918,6 +917,17 @@ with st.sidebar:
             else:
                 st.page_link(citizen_page, label="시민증 만들기", icon="✨", width="stretch")
 
+    # 위 카드는 메뉴 위에 띄워 둔 상자라, 카드 높이(관리자증·버튼 쌓임 등)에 맞춰 메뉴를 그만큼 아래로 내려요.
+    components.html(
+        "<script>(()=>{try{const D=parent.document,W=parent;"
+        "const fit=()=>{const c=D.querySelector('.st-key-citizen_top'),n=D.querySelector('[data-testid=stSidebarNav]');"
+        "if(!c||!n)return;const h=c.getBoundingClientRect().height;if(h>0)n.style.marginTop=Math.max(140,Math.ceil(h+30))+'px';};"
+        "fit();if(W.__jkSideRO)W.__jkSideRO.disconnect();const c=D.querySelector('.st-key-citizen_top');"
+        "if(c&&W.ResizeObserver){W.__jkSideRO=new W.ResizeObserver(fit);W.__jkSideRO.observe(c);}"
+        "setTimeout(fit,300);setTimeout(fit,1200);}catch(e){}})();</script>",
+        height=0,
+    )
+
     # 큰 글씨 모드: 글씨가 작아 읽기 힘든 사람(어르신 등)도 쓸 수 있게 화면 전체를 키워요.
     big_text = st.toggle("🔠 큰 글씨로 보기", key="big_text", help="본문 글씨와 버튼을 크게 보여 줘요.")
     if big_text:
@@ -979,9 +989,9 @@ with st.sidebar:
     # 깡지는 왼쪽, 구호는 오른쪽에 세 줄로 나란히 (좁은 사이드바에서도 글자가 깡지 밑으로 밀리지 않아요)
     from mascot_ui import mascot_img as _side_img
     st.markdown(
-        '<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E9DD;border-radius:18px;padding:8px 12px;margin:2px 0 6px">'
-        f'<div style="flex:0 0 92px">{_side_img("stop", 92)}</div>'
-        '<div style="line-height:1.55;font-weight:900;color:#24443B;font-size:1.02rem;word-break:keep-all">'
+        '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E4E9DD;border-radius:18px;padding:6px 10px;margin:2px 0 6px">'
+        f'<div style="flex:0 0 44%;max-width:130px">{_side_img("stop", 130).replace("width:130px", "width:100%")}</div>'
+        '<div style="flex:1;min-width:0;line-height:1.5;font-weight:900;color:#24443B;font-size:1.22rem;word-break:keep-all;white-space:nowrap">'
         '✋ 멈추고,<br>🔍 확인하고,<br>✅ 판단하기</div></div>',
         unsafe_allow_html=True,
     )
@@ -996,10 +1006,6 @@ with st.sidebar:
         "원작 캐릭터를 바탕으로 AI를 활용해 제작했습니다."
     )
 
-    st.caption(
-        "처음이라면 ‘할머니 폰 지키기’를 추천해요. "
-        "원하는 활동부터 이용해도 괜찮아요."
-    )
 
 
 
@@ -1109,17 +1115,15 @@ if current:
         place_html = (
             ""
             if number == "07"
-            else f'<span class="place">{place_icon} 도토리시 {html.escape(town)} · {html.escape(place)}</span>'
-            f'<p class="place-line">{html.escape(place_line)}</p>'
+            else f'<span class="place">{place_icon} {html.escape(town)} · {html.escape(place)}</span>'
         )
         st.markdown(
             (
                 '<div class="route">'
                 f"{place_html}"
                 # 번호는 보여 주지 않고, 긴급 안내(07)만 표시를 붙입니다.
-                f"<strong>{'🚨 긴급 안내 · ' if number == '07' else ''}"
-                f"{html.escape(title)} 이용 순서</strong>"
-                f"<p>{html.escape(steps)}</p>"
+                f"{'<strong>🚨 긴급 안내</strong>' if number == '07' else ''}"
+                f"<span class=\"route-steps\">🧭 {html.escape(steps)}</span>"
                 "</div>"
             ),
             unsafe_allow_html=True,
@@ -1174,17 +1178,10 @@ if current:
             )
 
         elif number == "04":
-            st.info(
-                "**확인 범위** · 주소의 특징을 설명하는 도구입니다. "
-                "‘특징 없음’이 ‘안전함’을 뜻하지는 않습니다."
-            )
+            st.info("**‘특징 없음’이 ‘안전함’은 아니에요.** 주소의 특징만 설명해요.")
 
         elif number == "05":
-            st.info(
-                "**자료 읽기** · 통계의 기준 연도와 출처를 "
-                "함께 확인하세요. 현재 자료는 "
-                "실시간 자동 갱신 통계가 아닙니다."
-            )
+            st.caption("📅 통계는 기준 연도·출처를 함께 보세요. 실시간 자료가 아니에요.")
 
 
 # ─────────────────────────────────────

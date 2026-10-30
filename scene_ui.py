@@ -95,22 +95,42 @@ def kiosk(cleared, final):
 
 
 # ───── 피싱 필터 만들기: 우체국 컨베이어 ─────
-def post(last):
-    """last: 마지막 실행 결과 {stage, clear, wrong}"""
-    lamp = "#9CA3AF"
-    status = "📮 필터를 만들고 실행해 보세요<small>진짜 문자는 통과, 가짜 문자는 차단</small>"
-    if last:
-        wrong = len(last.get("wrong", []))
-        lamp = "#22C55E" if last.get("clear") else "#EF4444"
-        status = (f"✅ {last['stage'] + 1}단계 통과!<small>모든 문자를 바르게 분류했어요</small>" if last.get("clear")
-                  else f"🚨 {last['stage'] + 1}단계 · 잘못 분류 {wrong}통<small>규칙을 고쳐 다시 실행해요</small>")
-    css = ("<style>.pl{left:44%;top:19.5%;transform:translate(-50%,-50%);width:6%;aspect-ratio:1;border-radius:50%;border:.4cqw solid #fff;"
-           f"background:{lamp};box-shadow:0 0 3cqw {lamp},0 0 0 .4cqw rgba(0,0,0,.2);animation:pl-blink 1s ease-in-out infinite}}"
-           "@keyframes pl-blink{50%{opacity:.55}}"
-           ".pe{top:76%;font-size:3cqw;animation:pe-move 6s linear infinite;filter:drop-shadow(0 .3cqw .3cqw rgba(0,0,0,.3))}"
-           "@keyframes pe-move{0%{left:-6%}100%{left:100%}}</style>")
-    envs = "".join(f'<span class="pe" style="animation-delay:{-k * 1.5}s">{e}</span>' for k, e in enumerate(("✉️", "💬", "✉️", "💬")))
-    return css + board("scene_post", "시청로 · 도토리 우체국 문자 필터실", '<span class="pl"></span>' + envs, "409/220", status, "center 60%")
+def post(last, stages):
+    """우체국 컨베이어: 그 단계 문자들이 봉투로 놓이고, 필터를 실행하면 맞게 분류한 봉투는 초록, 잘못 분류한 봉투는 빨강이 돼요.
+    last: 마지막 실행 결과 {stage, clear, wrong}, stages: 단계별 문자 목록"""
+    stage = last["stage"] if last else 0
+    msgs = (stages[stage].get("msgs", []) if stage < len(stages) else [])[:12]
+    wrong = set(int(w) for w in (last or {}).get("wrong", []))
+    tiles = []
+    for k, m in enumerate(msgs):
+        fake = bool(m[4])
+        if not last:
+            cls, mark = "", "?"
+        elif k in wrong:
+            cls, mark = "bad", ("❌ 놓침" if fake else "❌ 잘못 막음")
+        else:
+            cls, mark = "ok", ("🚫 차단" if fake else "✅ 통과")
+        tiles.append(f'<span class="pt {cls}" style="animation-delay:{k * .06}s"><b>{"💬" if k % 2 else "✉️"} {k + 1}</b><small>{mark}</small></span>')
+    lamp = "" if not last else ('<span class="pl" style="background:#22C55E;box-shadow:0 0 3cqw #22C55E"></span>' if last.get("clear")
+                                else '<span class="pl" style="background:#EF4444;box-shadow:0 0 3cqw #EF4444"></span>')
+    if not last:
+        status = f"📮 1단계 문자 {len(msgs)}통이 기다려요<small>아래에서 필터를 만들어 실행하면 여기서 분류돼요</small>"
+    elif last.get("clear"):
+        status = f"✅ {stage + 1}단계 통과!<small>문자 {len(msgs)}통을 모두 바르게 분류했어요</small>"
+    else:
+        status = f"🚨 {stage + 1}단계 · 잘못 분류 {len(wrong)}통<small>빨간 봉투를 보고 규칙을 고쳐요</small>"
+    css = ("<style>.pl{left:44%;top:19.5%;transform:translate(-50%,-50%);width:5%;aspect-ratio:1;border-radius:50%;border:.4cqw solid #fff;animation:pl-blink 1s ease-in-out infinite}"
+           "@keyframes pl-blink{50%{opacity:.6}}"
+           ".pts{left:2%;right:2%;bottom:16%;display:grid;grid-template-columns:repeat(6,1fr);gap:.8cqw}"
+           ".pt{position:static!important;background:rgba(255,253,245,.96);border:.3cqw solid #94A3B8;border-radius:1cqw;padding:.4cqw .2cqw;text-align:center;"
+           "box-shadow:0 .3cqw .6cqw rgba(0,0,0,.25);animation:pt-in .4s ease-out both}"
+           ".pt b{display:block;font-size:1.7cqw;color:#1F2937}.pt small{display:block;font-size:1.4cqw;font-weight:900;color:#64748B}"
+           ".pt.ok{border-color:#16A34A;background:#F0FDF4}.pt.ok small{color:#15803D}"
+           ".pt.bad{border-color:#DC2626;background:#FEF2F2;animation:pt-in .4s ease-out both,pt-shake .5s .5s 2}.pt.bad small{color:#B91C1C}"
+           "@keyframes pt-in{from{opacity:0;translate:0 1cqw}to{opacity:1;translate:0 0}}"
+           "@keyframes pt-shake{25%,75%{translate:-.5cqw 0}50%{translate:.5cqw 0}}</style>")
+    inner = lamp + '<span class="pts">' + "".join(tiles) + "</span>"
+    return css + board("scene_post", "시청로 · 도토리 우체국 문자 필터실", inner, "409/220", status, "center 60%")
 
 
 # ───── 가짜뉴스 확산 막기: 광장에 퍼지는 소문 ─────
@@ -176,3 +196,12 @@ def hallway_cover(kj_url):
     inner = papers + kj + '<span class="hc-say">문마다 우편물 안내서가 붙었어요! 진짜일까?</span>'
     status = "📮 안내서 3장 도착<small>적힌 번호로 전화하기 전에 문을 하나씩 감별해요</small>"
     return css + board("scene_hallway", "다람쥐동 · 다람쥐아파트 복도", inner, "758/330", status, cls="stat-left place-right")
+
+
+def data_url(name):
+    """게임 화면(iframe) 안에서 쓸 장소 그림(data URL). 그림이 없으면 빈 문자열."""
+    import base64
+    try:
+        return "data:image/jpeg;base64," + base64.b64encode((Path(__file__).resolve().parent / "static" / f"{name}.jpg").read_bytes()).decode("ascii")
+    except OSError:
+        return ""

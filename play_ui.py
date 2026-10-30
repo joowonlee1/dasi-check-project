@@ -26,7 +26,7 @@ def intro(number, route=False, suffix=""):
         yield
 
 # 게임 화면(iframe) 안에서 쓸 깡지(작게 줄여 전송량을 줄여요). 게임마다 다른 깡지를 써요.
-BRIDGE_MASCOTS = {"10": ("sneaker", "hooray", "think"), "11": ("postman", "hooray", "think"), "12": ("puzzle", "hooray", "detective")}
+BRIDGE_MASCOTS = {"06": ("trophy", "hooray", "news"), "10": ("sneaker", "hooray", "think"), "11": ("postman", "hooray", "think"), "12": ("puzzle", "hooray", "detective")}
 
 
 def _mascot_urls(number):

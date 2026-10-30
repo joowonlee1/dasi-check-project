@@ -83,11 +83,12 @@ const PATTERNS={
  unlock:[n(0,.03,{t:'noise',v:.6,at:0}),n(200,.05,{t:'square',v:.4,at:0}),n(784,.09,{t:'triangle',at:.08}),n(1175,.22,{t:'triangle',at:.17})],
  success:[n(523,.09,{t:'triangle'}),n(659,.09,{t:'triangle'}),n(784,.09,{t:'triangle'}),n(1047,.32,{t:'triangle'}),n(784,.32,{v:.5,at:.36}),n(659,.32,{v:.5,at:.36})],
  result:[n(392,.1,{t:'triangle'}),n(523,.1,{t:'triangle'}),n(659,.1,{t:'triangle'}),n(784,.12,{t:'triangle'}),n(1047,.45,{t:'triangle',at:.52}),n(784,.45,{v:.6,at:.52}),n(659,.45,{v:.6,at:.52}),n(523,.45,{v:.5,at:.52})],
+ fanfare:[n(0,.5,{t:'noise',v:.35,at:0}),n(392,.09,{t:'square',v:.35,at:0}),n(392,.09,{t:'square',v:.35,at:.12}),n(392,.09,{t:'square',v:.35,at:.24}),n(523,.5,{t:'square',v:.4,at:.36}),n(659,.5,{t:'triangle',v:.6,at:.36}),n(784,.5,{t:'triangle',v:.5,at:.36}),n(698,.12,{t:'triangle',at:.9}),n(784,.12,{t:'triangle',at:1.04}),n(880,.12,{t:'triangle',at:1.18}),n(1047,.9,{t:'square',v:.4,at:1.32}),n(1319,.9,{t:'triangle',v:.6,at:1.32}),n(1568,.9,{t:'triangle',v:.5,at:1.32}),n(784,.9,{t:'sine',v:.6,at:1.32}),n(2093,.08,{v:.35,at:1.5}),n(2637,.08,{v:.3,at:1.62}),n(3136,.08,{v:.3,at:1.74}),n(2637,.08,{v:.3,at:1.86}),n(3520,.25,{v:.3,at:1.98}),n(0,.6,{t:'noise',v:.45,at:1.32})],
  fail:[n(392,.2,{t:'triangle',to:370}),n(370,.2,{t:'triangle',to:330}),n(330,.2,{t:'triangle',to:290}),n(262,.5,{t:'triangle',to:150})],
  stamp:[n(0,.06,{t:'noise',v:.9,at:0}),n(170,.1,{to:80,at:0}),n(1047,.12,{t:'triangle',at:.1}),n(1319,.26,{t:'triangle',at:.2})]
 };
 PATTERNS.preview=PATTERNS.success;
-const PRIORITY={tap:0,cell:0,toggle:0,back:0,reset:0,next:1,start:1,clue:1,confirm:1,message:2,correct:2,notice:3,warn:3,coin:3,wrong:3,success:3,result:3,fail:3,unlock:4,stamp:4,preview:4};
+const PRIORITY={tap:0,cell:0,toggle:0,back:0,reset:0,next:1,start:1,clue:1,confirm:1,message:2,correct:2,notice:3,warn:3,coin:3,wrong:3,success:3,result:3,fail:3,fanfare:5,unlock:4,stamp:4,preview:4};
 const CLICKABLE='button,[role="button"],input[type="radio"],input[type="checkbox"],summary,.cell[data-r],'
  +'label[data-testid="stRadioOption"],[data-testid="stToggle"] label,[data-testid="stCheckbox"] label,'
  +'a[data-testid="stPageLink-NavLink"],[data-testid="stSidebarNav"] a,[data-testid="stSidebarNavLink"]';

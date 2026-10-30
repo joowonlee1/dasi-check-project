@@ -112,12 +112,20 @@ def show_qr_scanner():
                     try:
                         png = _qr_png(text)
                         st.image(png, caption=label, width=130)
+                        if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
+                                     help="웹캠이 없어도 이 QR 속 주소를 바로 읽어 살펴봐요."):
+                            st.session_state["qr_demo_text"] = text
                         st.download_button("⬇️ 받기", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
-                                           mime="image/png", key=f"qr_dl_{i}")
+                                           mime="image/png", key=f"qr_dl_{i}", width="stretch")
                     except Exception:
                         st.caption("연습용 QR을 만들지 못했어요.")
+            st.markdown('<div style="margin-top:6px;background:#FEF3C7;border-radius:10px;padding:6px 10px;font-size:.85rem;font-weight:700;color:#92400E;word-break:keep-all">'
+                        '📵 연습용 QR은 <b>가상 주소</b>라 휴대폰 카메라로 찍어도 사이트가 열리지 않아요(일부러 그렇게 만들었어요). '
+                        '‘🔎 바로 검사’를 누르거나 왼쪽 웹캠에 비춰 보세요.</div>', unsafe_allow_html=True)
         with cam_col:
             texts = _scan_area()
+        if not texts and st.session_state.get("qr_demo_text"):
+            texts = [st.session_state["qr_demo_text"]]
         # 결과는 두 칸 아래에 넓게 보여 줘요(오른쪽에 빈 곳이 생기지 않게).
         if texts:
             _show_results(texts)
