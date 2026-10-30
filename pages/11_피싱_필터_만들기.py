@@ -138,7 +138,10 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 @keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--x),var(--y)) scale(1.2);opacity:0}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
 @keyframes scan{0%{background-position:-200px 0}100%{background-position:200px 0}}
-.hero{background:linear-gradient(135deg,rgba(20,50,44,.86),rgba(40,110,95,.72)),url(__SCENEIMG__) center/cover!important;color:#fff;border-radius:22px;padding:16px 18px;text-align:center;animation:pop .5s ease-out both}
+.hero{background:linear-gradient(135deg,#1E5B4F,#2E8B75)!important;color:#fff;border-radius:18px;padding:10px 16px;text-align:center;animation:pop .5s ease-out both}
+.cols{background:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,.18)),url(__SCENEIMG__) center/cover;border-radius:20px;padding:14px;box-shadow:inset 0 0 0 2px #D7E2DD}
+.cols .msg{box-shadow:0 4px 10px rgba(0,0,0,.18)}
+.cols .rule{background:rgba(244,248,246,.95)}
 .hero b{display:block;font-size:1.4rem;font-weight:900;word-break:keep-all}.hero span{opacity:.92;font-weight:600;word-break:keep-all}
 .box{background:#fff;border:1.5px solid #D7E2DD;border-radius:18px;padding:14px 16px;margin:10px 0;word-break:keep-all;animation:rise .4s ease-out both}
 .box h3{margin:0 0 8px;font-size:1.12rem}
