@@ -92,46 +92,41 @@ def _to_url_page(text):
 
 
 def show_qr_scanner():
-    # 한 상자 안에: 왼쪽은 설명·웹캠, 오른쪽 두 칸은 연습용 QR 카드. 빈 곳 없이 한 줄에 보이게 배치해요.
+    # 연습용 QR 2장을 가로로 나란히: 왼쪽 QR 그림, 오른쪽 이름·버튼. (웹캠은 여기서 쓰지 않아요)
     with st.container(border=True, key="qr_scan_box"):
         st.markdown(
             "<style>.st-key-qr_scan_box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4)}"
-            ".st-key-qr_scan_box [data-testid=stImage]{display:flex;justify-content:center}"
             ".st-key-qr_scan_box [data-testid=stImage] img{border-radius:10px;border:2px solid #CBD5E1}"
-            ".st-key-qr_scan_box [data-testid=stImageCaption]{font-weight:800;color:#1E3A8A;text-align:center}"
-            "[class*=st-key-qr_card_]{background:#fff;border:2px solid #BFDBFE;border-radius:16px;padding:8px 10px}"
-            "[class*=st-key-qr_card_] [data-testid=stDownloadButton] button{min-height:32px;padding:2px 8px;font-size:.85rem}</style>",
+            "[class*=st-key-qr_card_]{background:#fff;border:2px solid #BFDBFE;border-radius:16px;padding:10px 12px}"
+            "[class*=st-key-qr_card_] [data-testid=stDownloadButton] button{min-height:34px;padding:2px 8px;font-size:.88rem}</style>"
+            '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">'
+            '<span style="font-size:1.3rem;font-weight:900;color:#1E3A8A">🔲 연습용 QR 검사</span>'
+            '<span style="color:#475569;font-size:.92rem;word-break:keep-all">QR 속 주소에 <b>들어가지 않고</b> 어디로 데려가는지만 살펴봐요. '
+            '가상 주소라 휴대폰으로 찍어도 열리지 않아요.</span></div>',
             unsafe_allow_html=True,
         )
-        left, *cards = st.columns([1.3] + [1] * len(PRACTICE), gap="small")
-        with left:
-            st.markdown(
-                '<div style="font-size:1.3rem;font-weight:900;color:#1E3A8A">📷 진짜 QR 비춰 보기</div>'
-                '<div style="color:#475569;font-size:.92rem;word-break:keep-all;margin:2px 0 6px">QR을 웹캠에 비추면 <b>주소에 들어가지 않고</b> 어디로 데려가는지만 알려 줘요. 사진은 저장하지 않아요.</div>'
-                '<div style="display:flex;flex-wrap:wrap;gap:4px;font-size:.85rem;font-weight:800;color:#1E3A8A">'
-                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">① 📷 웹캠 켜기</span>'
-                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">② 🔲 QR 비추고 찍기</span>'
-                '<span style="background:#fff;border:1.5px solid #BFDBFE;border-radius:999px;padding:2px 9px">③ 🔎 목적지 확인</span></div>'
-                '<div style="margin-top:8px;background:#FEF3C7;border-radius:10px;padding:5px 9px;font-size:.82rem;font-weight:700;color:#92400E;word-break:keep-all">'
-                '📵 연습용 QR은 가상 주소라 휴대폰으로 찍어도 열리지 않아요. ‘바로 검사’를 눌러 보세요.</div>',
-                unsafe_allow_html=True,
-            )
-            texts = _scan_area()
+        texts = None
+        cards = st.columns(len(PRACTICE), gap="small")
         for i, (col, (label, text)) in enumerate(zip(cards, PRACTICE.items())):
             with col, st.container(key=f"qr_card_{i}"):
                 try:
                     png = _qr_png(text)
-                    st.image(png, caption=label, width=110)
-                    if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
-                                 help="웹캠이 없어도 이 QR 속 주소를 바로 읽어 살펴봐요."):
-                        st.session_state["qr_demo_text"] = text
-                    st.download_button("⬇️ QR 저장", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
-                                       mime="image/png", key=f"qr_dl_{i}", width="stretch")
+                    pic, info = st.columns([1, 1.6], vertical_alignment="center", gap="small")
+                    with pic:
+                        st.image(png, width=110)
+                    with info:
+                        st.markdown(f'<div style="font-weight:900;color:#1E3A8A;font-size:1.02rem;word-break:keep-all;margin-bottom:6px">{escape(label)}</div>',
+                                    unsafe_allow_html=True)
+                        if st.button("🔎 바로 검사", key=f"qr_try_{i}", type="primary", width="stretch",
+                                     help="이 QR 속 주소를 읽어 살펴봐요."):
+                            st.session_state["qr_demo_text"] = text
+                        st.download_button("⬇️ QR 저장", png, file_name=("practice_qr_scam.png" if "사기" in label else "practice_qr_ok.png"),
+                                           mime="image/png", key=f"qr_dl_{i}", width="stretch")
                 except Exception:
                     st.caption("연습용 QR을 만들지 못했어요.")
-        if not texts and st.session_state.get("qr_demo_text"):
+        if st.session_state.get("qr_demo_text"):
             texts = [st.session_state["qr_demo_text"]]
-        # 결과는 세 칸 아래에 넓게 보여 줘요.
+        # 결과는 두 칸 아래에 넓게 보여 줘요.
         if texts:
             _show_results(texts)
 

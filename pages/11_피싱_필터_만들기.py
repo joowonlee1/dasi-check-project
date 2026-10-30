@@ -517,17 +517,17 @@ function run(){
 
 function holdHtml(st){
  const h=G.hold[st];if(!h)return '<p>현재 규칙으로 새 문자 시험도 마쳐야 해요.</p>';
- return '<section class="box" style="text-align:left"><h3>🧪 새 문자 시험 결과</h3>'+h.rows.map(x=>{const r=x.flag===x.answer;return '<div style="border:2px solid '+(r?'#BBF7D0':'#FCA5A5')+';background:'+(r?'#F0FDF4':'#FEF2F2')+';border-radius:12px;padding:8px 12px;margin:6px 0"><b>'+(r?'✅ 맞음':'❌ 틀림')+'</b> · '+esc(x.text)+'<br><small>내 필터: '+(x.flag?'🚫 막음':'✅ 통과')+(r?'':(x.answer?' → 미탐(가짜인데 통과)':' → 오탐(진짜인데 막음)'))+' · '+esc(x.proof)+'</small></div>';}).join('')+'<p>'+h.errors+'개 오차. '+(h.ok?'시험 통과':'규칙을 고치고 연습과 새 문자 시험을 다시 실행하세요.')+'</p></section>';
+ return '<section class="box" style="text-align:left"><h3>🧪 새 문자 시험 결과</h3>'+h.rows.map(x=>{const r=x.flag===x.answer;return '<div style="border:2px solid '+(r?'#BBF7D0':'#FCA5A5')+';background:'+(r?'#F0FDF4':'#FEF2F2')+';border-radius:12px;padding:8px 12px;margin:6px 0"><b>'+(r?'✅ 맞음':'❌ 틀림')+'</b> · <b>'+esc(x.sender||'')+'</b> · '+esc(x.text)+'<div class="tags" style="margin:4px 0">'+(x.tags||[]).map(c=>'<span class="tag">'+esc(D.conds[c]||c)+'</span>').join('')+'</div><small>내 필터: '+(x.flag?'🚫 막음':'✅ 통과')+(r?'':(x.answer?' → 미탐(가짜인데 통과)':' → 오탐(진짜인데 막음)'))+' · '+esc(x.proof)+'</small></div>';}).join('')+(h.ok?'<p><b>🎉 처음 보는 문자도 모두 맞혔어요!</b></p>':'<p style="background:#FFF7E6;border:2px solid #F59E0B;border-radius:12px;padding:8px 12px;font-weight:800;color:#92400E">💡 틀린 문자의 <b>특징 태그</b>를 보고 규칙을 고쳐요. 연습 문자에만 맞춘 규칙이면 처음 보는 문자에서 틀려요. 고친 뒤 ▶ 필터 실행 → 🧪 새 문자 시험을 다시 해요.</p>')+'</section>';
 }
 // 새 문자 시험 결과를 문자마다 한 줄로: 맞음 ✅ / 틀림 ❌(미탐: 가짜인데 통과, 오탐: 진짜인데 막음)
 function holdLines(rows){
  return rows.map(x=>{const right=x.flag===x.answer;const what=x.flag?'🚫 막음':'✅ 통과';
   const why=right?'':(x.answer?' <b style="color:#FCA5A5">← 미탐(가짜인데 통과)</b>':' <b style="color:#FDBA74">← 오탐(진짜인데 막음)</b>');
-  return (right?'✅ ':'❌ ')+'<span style="color:#ECFDF5">'+esc(x.text)+'</span> · '+what+why;});
+  return (right?'✅ ':'❌ ')+esc(x.sender||'')+' · <span style="color:#ECFDF5">'+esc(x.text)+'</span><br>&nbsp;&nbsp;&nbsp;특징: '+(x.tags||[]).map(c=>esc(D.conds[c]||c)).join(' · ')+' → 내 필터 '+what+why;});
 }
 function runHoldout(){
  const st=G.stage;if(!G.last||!starsFor(st,G.last))return;
- const rows=HOLD[st].map(m=>({text:m[2],flag:flagged(st,m),answer:m[4],proof:m[4]?'별도로 연락한 당사자·기관이 해당 요구를 부인한 교육용 사례':'기존 연락처나 직접 연 공식 기록에서 요청을 확인한 교육용 사례'}));
+ const rows=HOLD[st].map(m=>({text:m[2],sender:m[0],tags:[m[1]].concat(m[3].split('')),flag:flagged(st,m),answer:m[4],proof:m[4]?'별도로 연락한 당사자·기관이 해당 요구를 부인한 교육용 사례':'기존 연락처나 직접 연 공식 기록에서 요청을 확인한 교육용 사례'}));
  const errors=rows.filter(x=>x.flag!==x.answer).length;G.hold[st]={rows,errors,ok:errors===0};
  if(!errors)G.best[st]={stars:starsFor(st,G.last),blocks:blocks(st)};
  sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
