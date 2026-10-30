@@ -1221,7 +1221,10 @@ def show_ending(game):
 with intro("01", suffix=""):
     st.title("✋ 잠깐! · 할머니 폰 지키기")
     from mascot_ui import show_scene
-    show_scene("scene_grandma", "상수리동 · 할머니 댁 거실")  # 장소 그림 배너
+    import scene_ui
+    if scene_ui.ready("scene_grandma"):
+        # 시작 화면: 소파의 할머니, 울리는 휴대폰, 차례로 도착하는 연락 알림
+        st.markdown(scene_ui.grandma_cover(face_svg("neutral", 160)), unsafe_allow_html=True)
     show_key_question("내가 아니라 **옆에 있는 가족이 속고 있을 때**, 어떻게 말하고 언제 끼어들어야 할까요?", "🤔")
     st.caption("교육용 가상 사례입니다. 실제 전화, 문자, 링크 접속, 송금은 일어나지 않습니다.")
 
