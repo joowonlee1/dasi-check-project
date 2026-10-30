@@ -16,6 +16,7 @@ _CSS = (
     "font-weight:900;color:#5B3A12;font-size:1.7cqw;white-space:nowrap}"
     ".sb .sb-status{right:1.6%;top:4%;background:rgba(32,72,63,.94);color:#fff;border:.25cqw solid #F6D55C;border-radius:1.4cqw;padding:.5cqw 1.4cqw;"
     "font-weight:900;font-size:1.7cqw;max-width:46%;line-height:1.35;word-break:keep-all}"
+    ".sb.stat-left .sb-status{right:auto;left:1.6%;max-width:23%}.sb.place-right .sb-place{left:auto;right:1.6%}"
     ".sb .sb-status small{display:block;font-weight:700;color:#FDE68A;font-size:1.35cqw}"
     "@keyframes sb-bob{0%,100%{translate:0 0}50%{translate:0 -.6cqw}}"
     "@keyframes sb-pop{0%{transform:translate(-50%,-50%) scale(2) rotate(-20deg);opacity:0}100%{transform:translate(-50%,-50%) scale(1) rotate(-10deg);opacity:1}}"
@@ -27,10 +28,10 @@ def ready(name):
     return (Path(__file__).resolve().parent / "static" / f"{name}.jpg").exists()
 
 
-def board(name, place, inner, ratio, status="", pos="center"):
+def board(name, place, inner, ratio, status="", pos="center", cls=""):
     """그림 + 장소 이름표 + 오른쪽 위 진행 상황 + 그 위에 얹을 표시(inner)."""
     return (
-        _CSS + f'<div class="sb" style="background-image:url(app/static/{name}.jpg);aspect-ratio:{ratio};background-position:{pos}">'
+        _CSS + f'<div class="sb {cls}" style="background-image:url(app/static/{name}.jpg);aspect-ratio:{ratio};background-position:{pos}">'
         + inner
         + f'<span class="sb-place">📍 {html.escape(place)}</span>'
         + (f'<span class="sb-status">{status}</span>' if status else "")
@@ -113,15 +114,15 @@ def post(last):
 
 
 # ───── 가짜뉴스 확산 막기: 광장에 퍼지는 소문 ─────
-_BUBBLES = [(30, 40), (70, 38), (18, 22), (82, 20), (40, 18), (60, 16), (10, 48), (90, 46), (50, 8)]
+_BUBBLES = [(28, 42), (72, 40), (16, 22), (58, 62), (38, 16), (46, 60), (12, 56), (88, 58), (50, 32)]
 
 
 def plaza(last_pct, stars_total):
     """last_pct: 마지막 단계에서 지킨 비율(%) 또는 None"""
     left = len(_BUBBLES) if last_pct is None else round(len(_BUBBLES) * (100 - last_pct) / 100)
-    css = ("<style>.pb{transform:translate(-50%,-50%);background:#fff;border:.3cqw solid #94A3B8;border-radius:2cqw;width:7%;aspect-ratio:1.5;"
+    css = ("<style>.pb{transform:translate(-50%,-50%);background:#fff;border:.3cqw solid #DC2626;border-radius:2cqw;padding:.4cqw 1cqw;font-weight:900;font-size:1.45cqw;color:#B91C1C;white-space:nowrap;"
            "box-shadow:0 .3cqw .6cqw rgba(0,0,0,.2);animation:pb-spread 3.2s ease-out infinite}"
-           ".pb::after{content:'';position:absolute;left:20%;bottom:-.9cqw;border:.6cqw solid transparent;border-top-color:#94A3B8}"
+           ".pb::after{content:'';position:absolute;left:20%;bottom:-1.1cqw;border:.6cqw solid transparent;border-top-color:#DC2626}"
            ".pb.gone{animation:none;opacity:0}"
            "@keyframes pb-spread{0%{left:50%;top:60%;opacity:0;scale:.3}25%{opacity:1}100%{opacity:1;scale:1}}"
            ".ps{transform:translate(-50%,-50%);font-size:4.4cqw;filter:drop-shadow(0 .3cqw .3cqw rgba(0,0,0,.3));animation:sb-bob 2s ease-in-out infinite}</style>")
@@ -131,7 +132,47 @@ def plaza(last_pct, stars_total):
         if gone:
             marks.append(f'<span class="ps" style="left:{x}%;top:{y}%">🛡️</span>')
         else:
-            marks.append(f'<span class="pb" style="left:{x}%;top:{y}%;animation-delay:{k * .25}s"></span>')
-    status = ("📣 광장에 소문이 퍼지려 해요<small>누구를 먼저 지킬지 골라요</small>" if last_pct is None
+            word = ("💰 지원금 준대!", "🔗 이 링크 눌러", "😱 오늘까지래", "📢 다들 공유해", "💸 선착순!")[k % 5]
+            marks.append(f'<span class="pb" style="left:{x}%;top:{y}%;animation-delay:{k * .25}s">{word}</span>')
+    status = ("📣 광장에 가짜 소문이 퍼지는 중!<small>아래 게임에서 주민을 지키면 말풍선이 🛡️ 방패로 바뀌어요</small>" if last_pct is None
               else f"🛡️ 지난 단계 {last_pct}% 지킴<small>모은 별 {stars_total}개 · 막은 소문은 방패로 바뀌어요</small>")
-    return css + board("scene_plaza", "중앙동 · 도토리 광장", "".join(marks), "611/350", status)
+    return css + board("scene_plaza", "중앙동 · 도토리 광장", "".join(marks), "611/230", status, "center 55%")
+
+
+# ───── 할머니 폰 지키기 시작 화면: 소파의 할머니와 울리는 휴대폰 ─────
+def grandma_cover(face_html):
+    css = ("<style>.gc-face{left:50%;top:50%;transform:translate(-50%,-50%);width:16%}"
+           ".gc-face img,.gc-face svg{width:100%!important;height:auto!important;margin:0!important;border-radius:50%!important;border:.4cqw solid #fff!important;box-shadow:0 0 0 .3cqw #F2B6C6,0 .5cqw 1cqw rgba(0,0,0,.25)!important;aspect-ratio:1;object-fit:cover}"
+           ".gc-phone{left:61%;top:60%;transform:translate(-50%,-50%);font-size:3.6cqw;animation:gc-buzz .5s ease-in-out infinite}"
+           ".gc-ring{left:61%;top:60%;width:6cqw;aspect-ratio:1;border-radius:50%;border:.3cqw solid #DC2626;transform:translate(-50%,-50%);animation:gc-ring 1.4s ease-out infinite}"
+           "@keyframes gc-buzz{0%,100%{rotate:0deg}25%{rotate:-14deg}75%{rotate:14deg}}"
+           "@keyframes gc-ring{0%{scale:.6;opacity:1}100%{scale:2;opacity:0}}"
+           ".gc-say{left:63%;top:22%;background:#fff;border:.3cqw solid #20483F;border-radius:1.6cqw 1.6cqw 1.6cqw .3cqw;padding:.6cqw 1.3cqw;font-weight:900;font-size:1.6cqw;color:#20483F;white-space:nowrap}"
+           ".gc-noti{left:2%;top:6%;width:30%;display:flex;flex-direction:column;gap:.6cqw}"
+           ".gc-noti span{position:static;display:block;background:rgba(255,255,255,.96);border-left:.6cqw solid #DC2626;border-radius:1cqw;padding:.5cqw 1cqw;font-size:1.3cqw;font-weight:800;color:#1F2937;box-shadow:0 .3cqw .8cqw rgba(0,0,0,.2);opacity:0;animation:gc-in .5s ease-out forwards}"
+           ".gc-noti span:nth-child(1){border-left-color:#16A34A}"
+           "@keyframes gc-in{from{opacity:0;translate:-1cqw 0}to{opacity:1;translate:0 0}}</style>")
+    inner = (f'<span class="gc-face">{face_html}</span><span class="gc-ring"></span><span class="gc-phone">📱</span>'
+             '<span class="gc-say">어머, 또 연락이 왔네?</span>'
+             '<span class="gc-noti"><span style="animation-delay:.3s">💳 [○○은행] 승인 12,800원</span>'
+             '<span style="animation-delay:1.2s">📞 발신 표시: 서울중앙지검</span>'
+             '<span style="animation-delay:2.1s">💬 링크 눌러서 앱부터 설치하세요</span></span>')
+    status = "👵 할머니 폰이 계속 울려요<small>진짜 연락과 사기를 가려 할머니를 도와요</small>"
+    return css + board("scene_grandma", "상수리동 · 할머니 댁 거실", inner, "754/314", status)
+
+
+# ───── 가짜 안내서 감별소 시작 화면: 문마다 붙은 안내서 ─────
+def hallway_cover(kj_url):
+    css = ("<style>.hc-paper{transform:translate(-50%,-50%) rotate(-4deg);top:38%;width:7.5%;aspect-ratio:3/4;background:#FFFDF5;border:.2cqw solid #D6C7A1;border-radius:.4cqw;"
+           "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3cqw;font-size:2.6cqw;box-shadow:0 .4cqw .8cqw rgba(0,0,0,.3);animation:sb-bob 2.4s ease-in-out infinite}"
+           ".hc-paper b{font-size:1.1cqw;color:#B91C1C}"
+           ".hc-plate{transform:translate(-50%,0);top:6%;background:#FFF8E1;border:.25cqw solid #8A5A2B;border-radius:.8cqw;padding:.1cqw 1cqw;font-weight:900;font-size:1.7cqw;color:#5B3A12}"
+           ".hc-kj{left:1%;bottom:0;width:15%;display:flex;align-items:flex-end}"
+           ".hc-kj img{width:100%!important;height:auto!important;margin:0!important;filter:drop-shadow(0 .4cqw .4cqw rgba(0,0,0,.3))}"
+           ".hc-say{left:14%;bottom:24%;background:#fff;border:.3cqw solid #20483F;border-radius:1.6cqw 1.6cqw 1.6cqw .3cqw;padding:.6cqw 1.3cqw;font-weight:900;font-size:1.5cqw;color:#20483F;white-space:nowrap}</style>")
+    papers = "".join(f'<span class="hc-plate" style="left:{x}%">{d}</span><span class="hc-paper" style="left:{x}%;animation-delay:{k * .3}s">📮<b>진짜?</b></span>'
+                     for k, (x, d) in enumerate(zip((33.0, 56.5, 79.5), ("101호", "102호", "103호"))))
+    kj = f'<span class="hc-kj"><img src="{kj_url}" alt="깡지"></span>' if kj_url else ""
+    inner = papers + kj + '<span class="hc-say">문마다 우편물 안내서가 붙었어요! 진짜일까?</span>'
+    status = "📮 안내서 3장 도착<small>적힌 번호로 전화하기 전에 문을 하나씩 감별해요</small>"
+    return css + board("scene_hallway", "다람쥐동 · 다람쥐아파트 복도", inner, "758/330", status, cls="stat-left place-right")
