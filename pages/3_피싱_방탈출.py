@@ -923,7 +923,7 @@ def show_dial_bridge():
 
 def show_dialer():
     st.subheader("📞 확인 장치 · 다이얼")
-    st.caption("전화는 ‘📱 나의 폰’의 📞 전화 탭에서 걸어요. 한 번 걸 때마다 게임 시계가 흐릅니다. 모든 연결은 가상입니다.")
+    st.caption("전화는 ‘📱 나의 폰’의 📞 전화 탭에서 걸어요. 한 번 걸 때마다 게임 시계가 흘러요.")
     st.caption("나의 폰에는 직접 수집한 증거에 나온 번호가 버튼으로 떠요. 누르면 입력칸에 들어가요. 목록은 정답 표시가 아니에요.")
     # 나의 폰을 '전화' 탭으로 바로 열어요.
     st.session_state["_open_call_n"] = st.session_state.get("_open_call_n", 0) + 1

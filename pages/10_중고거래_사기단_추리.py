@@ -242,7 +242,7 @@ function marketPop(o, then){
      <div style="flex:1"><div style="font-size:1.35rem;font-weight:900;color:#7C2D12;line-height:1.35">${o.title}</div>
      <div style="margin-top:8px;background:#fff;border-radius:4px 16px 16px 16px;padding:10px 12px;box-shadow:0 1px 3px #0002;font-size:1.02rem;line-height:1.7;color:#1F2937">${o.body}</div></div></div>
     ${o.extra||''}
-    <div style="padding:0 18px 18px"><button data-close style="width:100%;min-height:52px;border:0;border-radius:14px;background:${o.bar||'#F97316'};color:#fff;font:800 1.1rem system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div>
+    <div style="padding:0 18px 18px"><button data-close style="width:100%;min-height:52px;border:0;border-radius:14px;background:${o.bar||'#F97316'};color:#fff;font:800 1.1rem Pretendard Variable,Pretendard,system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div>
    </div></div>`, then);
 }
 
@@ -385,23 +385,23 @@ function gridTab(){
   <div class="tools"><button onclick="resetGrid()">↺ 표 지우기</button></div>
   <div class="grids">${KINDS.map(gridHtml).join('')}</div>
   <button class="ok bigcheck" onclick="checkGrid()">✅ 표 채점하기 (⭕ 15개를 모두 채우면)</button>
-  <div class="hint" style="background:#F5F3FF;border:2px solid #C4B5FD;color:#3730A3">🤖 막히면 화면 <b>오른쪽 아래 ‘AI 탐정’ 버튼</b>을 눌러 궁금한 걸 물어보세요. (남은 질문 ${AI.left} / 5)</div>
+  <div class="hint" style="background:#F5F3FF;border:2px solid #C4B5FD;color:#3730A3">🤖 막히면 화면 <b>오른쪽 아래 ‘AI 탐정’ 버튼</b>을 눌러 궁금한 걸 물어보세요.</div>
   ${cluesOpen() < 3 ? '<div class="hint">💡 단서 7개만으로는 답이 하나로 안 정해져요. 거래 기록을 조사해서 단서를 더 모아요!</div>' : ''}`;
 }
 function clueBtn(id, text, locked, memo){
   const src = memo ? `<span class="src">📜 거래 ${'ABC'[+id.slice(1)]} 조사에서 얻은 단서</span>` : '';
   return `<button class="clue ${locked ? 'lock' : ''} ${memo ? 'memo' : ''} ${G.used[id] ? 'used' : ''}" ${locked ? 'disabled' : `onclick="G.used['${id}']=!G.used['${id}'];render()"`}><span>${src}${esc(text)}</span></button>`;
 }
-// ───── 🤖 AI에게 물어보기 (정해진 힌트 대신, 내가 궁금한 걸 5번까지) ─────
+// ───── 🤖 AI에게 물어보기 (정해진 힌트 대신, 내가 궁금한 걸 자유롭게) ─────
 let AI = {answers: [], left: 5, wait: false};
 function aiBox(){
   const qa = AI.answers.map((x, i) => `<div class="qa"><b>🙋 질문 ${i + 1}:</b> ${esc(x.q)}<br><b>🤖</b> ${esc(x.a)}</div>`).join('');
   const can = !AI.wait;
-  return `<section class="ai"><h4>🤖 막혔어요! AI에게 물어보기 (남은 횟수 ${AI.left} / 5)</h4>
+  return `<section class="ai"><h4>🤖 막혔어요! AI에게 물어보기</h4>
   <div style="font-size:.88rem;margin-bottom:6px;word-break:keep-all">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
   ${qa}
   ${AI.wait ? '<div class="qa">🤖 생각하는 중이에요…</div>' : ''}
-  <div class="ask"><input id="aiq" maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : (AI.left ? '답을 기다리는 중…' : '질문 5번을 모두 썼어요')}" value="${esc(G.aiDraft || '')}" oninput="G.aiDraft=this.value" ${can ? '' : 'disabled'} onkeydown="if(event.key==='Enter')ask()">
+  <div class="ask"><input id="aiq" maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : '답을 기다리는 중…'}" value="${esc(G.aiDraft || '')}" oninput="G.aiDraft=this.value" ${can ? '' : 'disabled'} onkeydown="if(event.key==='Enter')ask()">
   <button class="ok" onclick="ask()" ${can ? '' : 'disabled'}>물어보기</button></div></section>`;
 }
 
@@ -413,19 +413,19 @@ function aiFloat(){
   // 결과 화면에서도 도우미를 다시 열 수 있어요.
   if (!D.getElementById('jk-ai-style')) {
     const st = D.createElement('style'); st.id = 'jk-ai-style';
-    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 30px;min-height:76px;font:900 25px system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
+    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:96px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 30px;min-height:76px;font:900 25px Pretendard Variable,Pretendard,system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
 #jk-ai-launch{padding-left:112px}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
-#jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:system-ui,sans-serif}
+#jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}
 #jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 #jk-ai-panel .hd{background:#6D28D9;color:#fff;padding:12px 16px;font-weight:900;display:flex;align-items:center;gap:8px}
-#jk-ai-panel .hd button{margin-left:auto;background:#fff2;color:#fff;border:0;border-radius:10px;padding:6px 10px;font:800 14px system-ui;cursor:pointer}
+#jk-ai-panel .hd button{margin-left:auto;background:#fff2;color:#fff;border:0;border-radius:10px;padding:6px 10px;font:800 14px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
 #jk-ai-panel .bd{padding:12px 14px;overflow:auto;min-height:120px}
 #jk-ai-panel .tip{font-size:.88rem;color:#4C1D95;line-height:1.55;margin-bottom:8px;word-break:keep-all}
 #jk-ai-panel .q{background:#E9D5FF;border-radius:14px 14px 4px 14px;padding:8px 12px;margin:8px 0 4px auto;max-width:85%;word-break:keep-all}
 #jk-ai-panel .a{background:#fff;border-radius:14px 14px 14px 4px;padding:8px 12px;margin:4px auto 8px 0;max-width:90%;box-shadow:0 1px 3px #0002;word-break:keep-all;line-height:1.6}
 #jk-ai-panel .ft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #DDD6FE;background:#fff}
 #jk-ai-panel .ft input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:2px solid #C4B5FD;border-radius:12px;outline:none}#jk-ai-panel .ft input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px #DDD6FE}
-#jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px system-ui;cursor:pointer}
+#jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
 #jk-ai-panel .ft button:disabled{opacity:.5;cursor:default}
 @media(max-width:600px){#jk-ai-launch{right:12px;bottom:92px;font-size:19px;min-height:60px;padding:12px 18px 12px 78px}#jk-ai-launch::before{width:64px;height:72px;left:8px}#jk-ai-panel{right:12px;bottom:12px}}`;
     D.head.appendChild(st);
@@ -438,13 +438,13 @@ function aiFloat(){
   const can = !AI.wait;
   let launch = D.getElementById('jk-ai-launch');
   if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
-  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : `🤖 AI 탐정에게 물어보기 · ${AI.left}/5`;
+  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : '🤖 AI 탐정에게 물어보기';
   launch.classList.toggle('wait', AI.wait);
   launch.classList.toggle('pocket', !!P.__jkAiPocket);
   if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
   let pocket=D.getElementById('jk-ai-pocket');
   if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
-  pocket.textContent='🎒 주머니에 넣기';pocket.style.cssText='position:fixed;right:22px;bottom:60px;z-index:999990;background:#fff;color:#3730A3;border:2px solid #8B5CF6;border-radius:10px;padding:6px 12px;font-weight:800;cursor:pointer';
+  pocket.textContent='🎒 주머니에 넣기';pocket.style.cssText='position:fixed;right:22px;bottom:60px;z-index:999990;background:#fff;color:#3730A3;border:2.5px solid #8B5CF6;border-radius:999px;padding:8px 18px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px #0003';
   pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
   pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
   if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{width:54px!important;min-height:54px!important;padding:6px!important;border-radius:50%!important;font-size:25px!important}#jk-ai-launch.pocket::before{display:none!important}';D.head.appendChild(st);}
@@ -455,10 +455,10 @@ function aiFloat(){
   launch.style.display = 'none';
   if (!panel) { panel = D.createElement('div'); panel.id = 'jk-ai-panel'; D.body.appendChild(panel); }
   const qa = AI.answers.map(x => `<div class="q">🙋 ${esc(x.q)}</div><div class="a">🤖 ${esc(x.a)}</div>`).join('');
-  panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정 · 남은 질문 ${AI.left} / 5<button type="button" data-pocket>🎒 넣기</button><button type="button" data-x>닫기 ✕</button></div>
+  panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정<button type="button" data-pocket>🎒 넣기</button><button type="button" data-x>닫기 ✕</button></div>
    <div class="bd"><div class="tip">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
    ${qa}${AI.wait ? '<div class="a">🤖 생각하는 중이에요…</div>' : ''}</div>
-   <div class="ft"><input maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : (AI.left ? '답을 기다리는 중…' : '질문 5번을 모두 썼어요')}" ${can ? '' : 'disabled'}><button type="button" ${can ? '' : 'disabled'}>물어보기</button></div></div>`;
+   <div class="ft"><input maxlength="120" placeholder="${can ? '궁금한 점을 적어 주세요' : '답을 기다리는 중…'}" ${can ? '' : 'disabled'}><button type="button" ${can ? '' : 'disabled'}>물어보기</button></div></div>`;
   const input = panel.querySelector('.ft input'), send = panel.querySelector('.ft button');
   input.value = G.aiDraft || '';
   input.oninput = () => { G.aiDraft = input.value; };
@@ -668,11 +668,9 @@ if event and event.get("type") == "ask":
     local = basic_reply(question, "10")
     if local:
         answers.append({"q": question, "a": local, "charged": False})
-    elif sum(x.get("charged", True) for x in answers) < AI_MAX:
+    else:
         with st.spinner("🤖 AI가 생각하고 있어요…"):
             answers.append({"q": question, "a": ask_ai(question, event.get("state")), "charged": True})
-    else:
-        answers.append({"q": question, "a": "AI 질문 5회를 모두 썼어요. ‘사용법’과 ‘이 화면 설명’은 계속 물어볼 수 있어요.", "charged": False})
     st.rerun()
 elif event and event.get("type") == "ai_reset":
     st.session_state[AI_KEY] = []

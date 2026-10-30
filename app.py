@@ -271,6 +271,16 @@ st.markdown(
         padding-top: 2.6rem;
     }
 
+    /* 화면에 안 보이는 요소(스타일만 있는 칸·높이 0 연결 칸)가 간격만 차지해 위쪽이 비지 않게 접어요. */
+    [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] > style:only-child),
+    [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[height="0"]),
+    [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"][height="0"]),
+    [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(> iframe[data-testid="stIFrame"]:not([height])),
+    [data-testid="stMainBlockContainer"] div:has(> .st-key-dotori_helper),
+    [data-testid="stMainBlockContainer"] .st-key-login_resume_bridge {
+        position: absolute !important; width: 1px !important; height: 0 !important; overflow: hidden !important; margin: 0 !important;
+    }
+
     [data-testid="stMainBlockContainer"] h1 {
         padding-top: 0.2rem;
         padding-bottom: 0.4rem;
@@ -1233,6 +1243,15 @@ navigation.run()
 dd.show_stamp_popup()
 dd.show_badge_popup()  # 업적 배지 알림(처음 받을 때 한 번)
 from sound_effects import flush_effect
+# 게임 화면(iframe) 안에도 웹앱과 같은 글꼴(Pretendard)을 입혀 전체 글꼴을 하나로 맞춰요.
+components.html(
+    "<script>(()=>{try{const P=parent,D=P.document,H='https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';"
+    "const add=d=>{try{if(!d||!d.head||d.getElementById('jk-font'))return;const l=d.createElement('link');l.id='jk-font';l.rel='stylesheet';l.href=H;d.head.appendChild(l);"
+    "const s=d.createElement('style');s.textContent='body,button,input,select,textarea{font-family:\"Pretendard Variable\",Pretendard,system-ui,sans-serif}';d.head.appendChild(s);}catch(e){}};"
+    "const scan=()=>{D.querySelectorAll('iframe').forEach(f=>{add(f.contentDocument);if(!f.__jkF){f.__jkF=1;f.addEventListener('load',()=>add(f.contentDocument));}});};"
+    "add(D);scan();if(!P.__jkFontMO){let t=0;P.__jkFontMO=new P.MutationObserver(()=>{clearTimeout(t);t=setTimeout(scan,300);});P.__jkFontMO.observe(D.body,{childList:true,subtree:true});}}catch(e){}})();</script>",
+    height=0,
+)
 flush_effect()  # 페이지에서 예약한 효과음(queue_effect)을 들려줘요. (전에는 이 줄이 없어 예약한 소리가 나지 않았어요)
 if dd.citizen() and st.session_state.get(dd.PENDING_STAMPS):
     st.warning("아직 계정에 저장되지 않은 도장이 있어요. 새로고침하지 말고 다른 메뉴로 이동한 뒤, 사이드바의 ‘도장 저장 다시 시도’를 눌러 주세요.")

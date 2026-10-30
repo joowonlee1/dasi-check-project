@@ -29,7 +29,7 @@ MAX_QUESTIONS = 5
 def basic_reply(question, page):
     q = re.sub(r"[\s.!?~]+", "", question).lower()
     if q in {"안녕", "안녕하세요", "야호", "ㅎㅎ", "ㅇㅇ", "고마워", "감사합니다", "hi", "hello"}:
-        return "안녕하세요! 도움이 필요한 부분을 물어보세요. 인사와 기본 사용법 안내는 질문 횟수를 쓰지 않아요."
+        return "안녕하세요! 도움이 필요한 부분을 물어보세요."
     if q in {"사용법", "게임방법", "어떻게해", "어떻게해요", "다음에뭘해야해?", "다음에뭘해야해", "다음에뭘해야하나요"}:
         return GUIDES.get(page, GUIDES["home"])[1]
     if q in {"이화면은뭐야", "이화면설명", "화면설명"}:
@@ -70,7 +70,7 @@ def answer(question, page, visible=""):
             raise RuntimeError("empty")
         return result[:1200], True
     except Exception:
-        return "AI 연결이 어려워 기본 안내를 보여 드려요. 질문 횟수는 차감하지 않았어요.\n" + guide, False
+        return "AI 연결이 어려워 기본 안내를 보여 드려요.\n" + guide, False
 
 def progress_context(page):
     """현재 세션에서 확인 가능한 진행 수치만 포함해요. 계정·비밀번호·정답은 제외해요."""
@@ -110,12 +110,8 @@ def show_helper(page="home"):
     question = str(event.get("question", "")).strip()[:300]
     if not question:
         return
-    local = basic_reply(question, page)
-    if not local and state["used"] >= MAX_QUESTIONS:
-        reply, charged = "이 페이지의 AI 질문 5회를 모두 썼어요. ‘사용법’과 ‘이 화면 설명’은 계속 볼 수 있어요.", False
-    else:
-        context = json.dumps(progress_context(page), ensure_ascii=False) + "\n" + str(event.get("visible", ""))[:5500]
-        reply, charged = answer(question, page, context)
+    context = json.dumps(progress_context(page), ensure_ascii=False) + "\n" + str(event.get("visible", ""))[:5500]
+    reply, charged = answer(question, page, context)
     state["used"] += int(charged)
     state["answers"] = (state["answers"] + [{"q": question, "a": reply}])[-20:]
     st.rerun(scope="fragment")

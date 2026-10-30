@@ -22,7 +22,7 @@ def intro(number, route=False, suffix=""):
     key = ("route_" if route else "intro_") + number + suffix
     with st.container(key=key):
         if is_playing(number):
-            st.markdown(f"<style>.st-key-{key} {{display:none!important}}</style>", unsafe_allow_html=True)
+            st.markdown(f"<style>.st-key-{key},div:has(> .st-key-{key}) {{display:none!important}}</style>", unsafe_allow_html=True)
         yield
 
 # 게임 화면(iframe) 안에서 쓸 깡지(작게 줄여 전송량을 줄여요). 게임마다 다른 깡지를 써요.
@@ -57,7 +57,7 @@ function setPlayActive(active){
   const doc=parent.document, id='play-intro-__NUMBER__';
   let style=doc.getElementById(id);
   if(!style){style=doc.createElement('style');style.id=id;doc.head.appendChild(style);}
-  style.textContent=active?'.st-key-route___NUMBER__,[class*="st-key-intro___NUMBER__"]{display:none!important}':'';
+  style.textContent=active?'.st-key-route___NUMBER__,[class*="st-key-intro___NUMBER__"],div:has(> .st-key-route___NUMBER__),div:has(> [class*="st-key-intro___NUMBER__"]){display:none!important}':'';
  }catch(e){}
 }
 // 결과 큰 창: 앱 화면 가운데에 띄워요. 창 안의 모양은 게임마다 따로 만들어 넘겨요(세계관이 달라요).
@@ -65,7 +65,7 @@ function jkOverlay(inner, then){
  try{
   const D=parent.document; const old=D.getElementById('jk-bigpop'); if(old) old.remove();
   const w=D.createElement('div'); w.id='jk-bigpop';
-  w.style.cssText='position:fixed;inset:0;z-index:999998;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,sans-serif';
+  w.style.cssText='position:fixed;inset:0;z-index:999998;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif';
   w.innerHTML='<style>@keyframes jkpop{from{transform:scale(.85) translateY(10px);opacity:0}to{transform:none;opacity:1}}#jk-bigpop .jk-panel{animation:jkpop .35s ease-out;max-width:640px;width:100%;max-height:88vh;overflow:auto}</style>'+inner;
   const close=()=>{w.remove(); if(then) then();};
   w.querySelectorAll('[data-close]').forEach(b=>b.onclick=close);

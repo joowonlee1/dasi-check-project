@@ -158,7 +158,7 @@ function boardPop(o, then){
      <div style="flex:1"><div style="font-size:1.4rem;font-weight:900;color:#3F2A12">${o.title}</div>
      <div style="margin-top:6px;line-height:1.7;color:#1F2937">${o.body}</div></div></div>
     ${o.extra||''}
-    <button data-close style="margin-top:14px;width:100%;min-height:50px;border:0;border-radius:10px;background:#7C5A34;color:#FFF7E6;font:800 1.05rem system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div></div>`, then);
+    <button data-close style="margin-top:14px;width:100%;min-height:50px;border:0;border-radius:10px;background:#7C5A34;color:#FFF7E6;font:800 1.05rem Pretendard Variable,Pretendard,system-ui;cursor:pointer">${o.button||'확인했어요 ▶'}</button></div></div>`, then);
 }
 
 const $ = id => document.getElementById(id);

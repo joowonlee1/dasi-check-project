@@ -15,7 +15,7 @@ CALL_JS = r'''
  const want=!!(H&&H.want&&(H.volume||0)>0);
  const synth=SW&&SW.speechSynthesis;
  const root=D.createElement('div');root.id='jk-call';root.setAttribute('translate','no');root.className='notranslate';
- root.innerHTML='<style>#jk-call{position:fixed;inset:0;z-index:1000002;background:rgba(8,15,25,.9);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,sans-serif}'
+ root.innerHTML='<style>#jk-call{position:fixed;inset:0;z-index:1000002;background:rgba(8,15,25,.9);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}'
  +'#jk-call .cd{width:min(470px,100%);max-height:92dvh;overflow:auto;background:linear-gradient(180deg,#1e293b,#0b1220);color:#fff;border-radius:30px;padding:22px 20px 18px;text-align:center;box-shadow:0 20px 60px #000a;border:2px solid #334155;box-sizing:border-box}'
  +'#jk-call .stt{font-weight:800;color:#93c5fd;font-size:.95rem}#jk-call .av{width:92px;height:92px;border-radius:50%;margin:14px auto 8px;display:flex;align-items:center;justify-content:center;font-size:46px;background:#334155;box-shadow:0 0 0 0 #60a5fa88;animation:jkc-pulse 1.6s infinite}'
  +'#jk-call .nm{font-size:1.5rem;font-weight:900}#jk-call .no{color:#cbd5e1;font-size:.95rem;margin-top:2px}'
@@ -24,7 +24,7 @@ CALL_JS = r'''
  +'#jk-call .sub{background:#f8fafc;color:#0f172a;border-radius:18px;padding:14px 16px;min-height:64px;text-align:left;font-size:1.18rem;line-height:1.6;font-weight:700;word-break:keep-all}#jk-call .sub b{display:inline-block;background:#1e3a8a;color:#fff;border-radius:999px;padding:1px 10px;font-size:.85rem;margin-right:6px;vertical-align:2px}'
  +'#jk-call .wn{display:none;margin:10px 0 0;background:#fee2e2;color:#991b1b;border:3px solid #dc2626;border-radius:14px;padding:10px 14px;font-weight:900;font-size:1.05rem;line-height:1.45;text-align:left;word-break:keep-all;text-wrap:balance;animation:jkc-shake .5s 2}#jk-call .wn.ok{background:#dcfce7;color:#14532d;border-color:#16a34a;animation:none}'
  +'#jk-call .hs{margin-top:10px;text-align:left;max-height:150px;overflow:auto}#jk-call .hs div{color:#cbd5e1;font-size:.92rem;line-height:1.5;padding:4px 2px;border-top:1px dashed #334155}#jk-call .hs div.w{color:#fca5a5}'
- +'#jk-call .nt{color:#94a3b8;font-size:.8rem;margin-top:8px}#jk-call .end{margin-top:14px;width:100%;min-height:56px;border:0;border-radius:999px;background:#dc2626;color:#fff;font:900 1.15rem system-ui;cursor:pointer}#jk-call .end.done{background:#16a34a}'
+ +'#jk-call .nt{color:#94a3b8;font-size:.8rem;margin-top:8px}#jk-call .end{margin-top:14px;width:100%;min-height:56px;border:0;border-radius:999px;background:#dc2626;color:#fff;font:900 1.15rem Pretendard Variable,Pretendard,system-ui;cursor:pointer}#jk-call .end.done{background:#16a34a}'
  +'@keyframes jkc-pulse{0%{box-shadow:0 0 0 0 #60a5fa88}100%{box-shadow:0 0 0 22px #60a5fa00}}@keyframes jkc-bar{0%,100%{height:6px}50%{height:26px}}@keyframes jkc-shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}'
  +'@media (prefers-reduced-motion:reduce){#jk-call *{animation:none!important}}</style>'
  +'<div class="cd" role="dialog" aria-modal="true" aria-label="통화 화면"><div class="stt">📞 <span class="st">연결 중…</span> · <span class="tm">00:00</span></div>'
@@ -69,7 +69,7 @@ CALL_JS = r'''
  };
  const begin=()=>{voice=pickVoice('');speak=!!(want&&synth&&voice);
   if(!speak)nt.textContent=!want?'🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)':'이 기기에는 한국어 목소리가 없어서 자막으로만 보여 줘요.';
-  else nt.textContent='🔊 교육용 가상 통화예요. 목소리는 컴퓨터가 읽어 주는 소리예요.';
+  else{nt.textContent='';nt.style.display='none';}
   stt.textContent=data.status||'통화 중';t0=Date.now();q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');next();};
  const start=()=>{if(data.ring===false){begin();return;}ring();stt.textContent='연결 중…';later(begin,2400);};
  // 목소리 목록은 늦게 불러와질 수 있어서 잠깐 기다려요.
@@ -78,8 +78,8 @@ CALL_JS = r'''
 '''
 
 _BUTTON_HTML = r'''<!doctype html><html lang="ko"><meta charset="utf-8"><style>
-body{margin:0;font-family:system-ui,sans-serif}
-button{width:100%;height:52px;box-sizing:border-box;border-radius:14px;border:2px solid __BORDER__;background:__BG__;color:__FG__;font:800 1.08rem system-ui;cursor:pointer;box-shadow:0 2px 0 __SHADOW__;display:flex;align-items:center;justify-content:center;gap:8px}
+body{margin:0;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}
+button{width:100%;height:52px;box-sizing:border-box;border-radius:14px;border:2px solid __BORDER__;background:__BG__;color:__FG__;font:800 1.08rem Pretendard Variable,Pretendard,system-ui;cursor:pointer;box-shadow:0 2px 0 __SHADOW__;display:flex;align-items:center;justify-content:center;gap:8px}
 button:active{transform:translateY(1px);box-shadow:0 1px 0 __SHADOW__}
 @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
 .ic{display:inline-block;animation:ring 1s ease-in-out infinite}

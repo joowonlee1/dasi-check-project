@@ -244,9 +244,9 @@ function monitorPop(o, then){
     <b style="letter-spacing:.06em">📮 도토리 우체국 · 문자 필터실 모니터</b><span style="margin-left:auto;color:#6EE7B7">${o.tag||''}</span></div>
    <div style="display:flex;gap:14px;align-items:center">${jkImg(o.mascot,145)}
     <div style="flex:1"><div style="font-size:1.4rem;font-weight:900;color:${o.ok?'#86EFAC':'#FCA5A5'}">${o.title}</div>
-    <div style="margin-top:6px;line-height:1.7;font-family:system-ui,sans-serif;color:#ECFDF5">${o.body}</div></div></div>
+    <div style="margin-top:6px;line-height:1.7;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif;color:#ECFDF5">${o.body}</div></div></div>
    ${o.lines?'<div style="margin-top:12px;background:#06140F;border-radius:10px;padding:10px 12px;line-height:1.9">'+o.lines.map(l=>'&gt; '+l).join('<br>')+'</div>':''}
-   <button data-close style="margin-top:14px;width:100%;min-height:50px;border:2px solid ${lamp};border-radius:12px;background:#0F2E26;color:#ECFDF5;font:800 1.05rem system-ui;cursor:pointer">${o.button||'모니터 닫기 ▶'}</button></div>`, then);
+   <button data-close style="margin-top:14px;width:100%;min-height:50px;border:2px solid ${lamp};border-radius:12px;background:#0F2E26;color:#ECFDF5;font:800 1.05rem Pretendard Variable,Pretendard,system-ui;cursor:pointer">${o.button||'모니터 닫기 ▶'}</button></div>`, then);
 }
 
 const $ = id => document.getElementById(id);

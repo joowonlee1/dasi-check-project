@@ -829,10 +829,7 @@ def show_gauges(game):
     with gauges[2]:
         st.markdown(f"**💸 송금까지 {stage} / {TOTAL_STAGES}단계**" + (" · ⚠️ 지금이 송금 직전이에요!" if stage == TOTAL_STAGES else ""))
         st.progress(stage / TOTAL_STAGES)
-    st.caption(
-        f"사기범을 믿는 정도가 {STOP_LINE} 이하로 내려가면 할머니가 스스로 멈춰요. "
-        "수치는 게임 속 상태이며 실제 확률이 아니에요."
-    )
+    st.caption(f"😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.")
 
 
 def show_last_feedback(game):
@@ -885,7 +882,6 @@ def show_intro():
         ("💛", "할머니가 나를 믿는 정도", "높을수록 같은 말도 더 잘 통해요."),
         ("💸", "송금까지", "4단계는 송금 직전! 일찍 멈출수록 좋은 결말이 나와요."),
     ])
-    st.caption("교육용 가상 상황입니다. 실제 전화·문자·링크·송금은 일어나지 않아요.")
     st.button("👵 할머니 댁 들어가기", type="primary", on_click=start_game, width="stretch")
 
 
@@ -956,11 +952,10 @@ def show_play(game):
                      help="앞 연락을 고르기 전으로 돌아가요. 첫 연락이면 게임 설명 화면으로 가요.")
     show_last_feedback(game)
 
-    phone_col, side_col = st.columns([1.1, 1])
+    phone_col, side_col = st.columns([1.1, 1], vertical_alignment="center")
     with phone_col:
         st.markdown(phone_html(step), unsafe_allow_html=True)
         show_voice_call(event, step)
-        clue_block(game, event)
     with side_col:
         log = game["log"]
         prev = log[-1]["reaction"] if log else None
@@ -1006,6 +1001,7 @@ def show_play(game):
                 f'<div class="say">{esc(now)}</div></div>',
                 unsafe_allow_html=True,
             )
+        clue_block(game, event)
     show_gauges(game)
 
     st.markdown(f"#### {event['time']} · 새 연락이 왔어요. 어떻게 할까요?")
@@ -1018,14 +1014,11 @@ def show_play(game):
         return
     # '직접 말하기' 선택지는 내 말로 써서 설득하는 핵심 선택지라 초록 테두리·배지로 눈에 띄게 해요.
     st.markdown(
-        """<style>[class*="st-key-gp_typed_"] button{background:linear-gradient(135deg,#ECFDF5,#F0FDF4)!important;border:3px solid #16A34A!important;
-        border-radius:14px!important;min-height:58px!important;box-shadow:0 3px 0 #86EFAC!important;}
-        [class*="st-key-gp_typed_"] button p{font-weight:900!important;color:#14532D!important;font-size:1.05rem!important;}
-        [class*="st-key-gp_typed_"] button p::before{content:"✍️ 직접 말하기";display:inline-block;background:#16A34A;color:#fff;border-radius:999px;
-        padding:2px 10px;margin-right:8px;font-size:.88rem;vertical-align:1px}
-        [class*="st-key-gp_typed_"] button:disabled{background:#F1F5F9!important;border-color:#CBD5E1!important;box-shadow:none!important}
-        [class*="st-key-gp_typed_"] button:disabled p{color:#64748B!important}
-        [class*="st-key-gp_typed_"] button:disabled p::before{background:#94A3B8}</style>""",
+        """<style>
+        [class*="st-key-gp_typed_"] button p::before{content:"✍️ 직접 말하기";display:inline-block;background:linear-gradient(135deg,#16A34A,#22C55E);color:#fff;border-radius:999px;
+        padding:3px 12px;margin-right:8px;font-size:.92rem;font-weight:900;vertical-align:1px;box-shadow:0 2px 0 #15803D;animation:gp-badge 1.6s ease-in-out infinite}
+        @keyframes gp-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+        [class*="st-key-gp_typed_"] button:disabled p::before{background:#94A3B8;box-shadow:none;animation:none}</style>""",
         unsafe_allow_html=True,
     )
     for key in options:

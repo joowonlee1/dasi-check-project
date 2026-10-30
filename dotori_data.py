@@ -482,10 +482,10 @@ let box=D.getElementById('jk-badges');if(!box){box=D.createElement('div');box.id
 box.innerHTML='<style>#jk-badges{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:1000001;display:flex;flex-direction:column;gap:10px;pointer-events:none;width:min(440px,calc(100vw - 24px))}'
 +'#jk-badges .b{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#1f2937,#111827);color:#fff;border:3px solid #f6d55c;border-radius:20px;padding:12px 16px;box-shadow:0 12px 30px #0007;animation:jkb-in 4.6s ease-out forwards}'
 +'#jk-badges .i{width:60px;height:60px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;background:radial-gradient(circle,#fff7d1,#f6d55c);box-shadow:0 0 0 4px #f6d55c55;animation:jkb-pop .6s .2s ease-out both}'
-+'#jk-badges small{display:block;color:#f6d55c;font-weight:900;font-size:.85rem;letter-spacing:.04em}#jk-badges b{display:block;font-size:1.15rem;font-family:system-ui,sans-serif}#jk-badges em{display:block;font-style:normal;color:#cbd5e1;font-size:.85rem}'
++'#jk-badges small{display:block;color:#f6d55c;font-weight:900;font-size:.85rem;letter-spacing:.04em}#jk-badges b{display:block;font-size:1.15rem;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}#jk-badges em{display:block;font-style:normal;color:#cbd5e1;font-size:.85rem}'
 +'@keyframes jkb-in{0%{transform:translateY(-30px);opacity:0}10%{transform:none;opacity:1}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}@keyframes jkb-pop{0%{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1)}}'
 +'@media (prefers-reduced-motion:reduce){#jk-badges .b,#jk-badges .i{animation:none}}</style>';D.body.appendChild(box);}
-items.forEach((it,k)=>{setTimeout(()=>{const b=D.createElement('div');b.className='b';b.style.fontFamily='system-ui,sans-serif';
+items.forEach((it,k)=>{setTimeout(()=>{const b=D.createElement('div');b.className='b';b.style.fontFamily='Pretendard Variable,Pretendard,system-ui,sans-serif';
  const i=D.createElement('div');i.className='i';i.textContent=it.icon;const t=D.createElement('div');
  const s=D.createElement('small');s.textContent='🏅 업적 달성! ('+(have-items.length+k+1)+' / '+total+')';const n=D.createElement('b');n.textContent=it.name;const e=D.createElement('em');e.textContent=it.how;
  t.append(s,n,e);b.append(i,t);box.appendChild(b);setTimeout(()=>b.remove(),4700);
