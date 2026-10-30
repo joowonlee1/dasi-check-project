@@ -881,6 +881,8 @@ with st.sidebar:
         if st.session_state.get("admin_open"):
             from admin_ui import card
             card(compact=True)
+            # 관리자증은 일반 시민증보다 길어서, 그림이 늦게 그려져도 메뉴가 가려지지 않게 미리 넉넉히 내려 둬요.
+            st.markdown("<style>[data-testid='stSidebarNav']{margin-top:380px!important;}</style>", unsafe_allow_html=True)
         if me:
             stamps = len(dd.stamps())
             records = len(st.session_state.get(dd.MY, []))
@@ -921,7 +923,7 @@ with st.sidebar:
     components.html(
         "<script>(()=>{try{const D=parent.document,W=parent;"
         "const fit=()=>{const c=D.querySelector('.st-key-citizen_top'),n=D.querySelector('[data-testid=stSidebarNav]');"
-        "if(!c||!n)return;const h=c.getBoundingClientRect().height;if(h>0)n.style.marginTop=Math.max(140,Math.ceil(h+30))+'px';};"
+        "if(!c||!n)return;const h=c.getBoundingClientRect().height;if(h>0)n.style.setProperty('margin-top',Math.max(140,Math.ceil(h+30))+'px','important');};"
         "fit();if(W.__jkSideRO)W.__jkSideRO.disconnect();const c=D.querySelector('.st-key-citizen_top');"
         "if(c&&W.ResizeObserver){W.__jkSideRO=new W.ResizeObserver(fit);W.__jkSideRO.observe(c);}"
         "setTimeout(fit,300);setTimeout(fit,1200);}catch(e){}})();</script>",
