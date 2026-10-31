@@ -248,14 +248,14 @@ const D = __DATA__;
 // 문자 필터실 관제 모니터 모양의 큰 창 (피싱 필터 전용)
 function monitorPop(o, then){
   const lamp = o.ok ? '#22C55E' : '#EF4444';
-  jkOverlay(`<div class="jk-panel" style="background:#0B1F1A;border:4px solid #1F4D42;border-radius:18px;padding:16px 18px;color:#D1FAE5;box-shadow:0 20px 50px #0008;font-family:ui-monospace,Consolas,monospace">
+  jkOverlay(`<style>#jk-bigpop .filter-pop-body{display:flex;gap:14px;align-items:center}#jk-bigpop .filter-pop-body>div{min-width:0;overflow-wrap:anywhere}#jk-bigpop .filter-pop-lines{overflow-wrap:anywhere} @media(max-width:600px){#jk-bigpop .filter-pop-body{align-items:flex-start;gap:10px}#jk-bigpop .filter-pop-body img{width:64px!important;flex:0 0 64px!important}#jk-bigpop .filter-pop-body>div>div:first-child{font-size:1.15rem!important}}</style><div class="jk-panel" style="background:#0B1F1A;border:4px solid #1F4D42;border-radius:18px;padding:16px 18px;color:#D1FAE5;box-shadow:0 20px 50px #0008;font-family:ui-monospace,Consolas,monospace">
    <div style="display:flex;align-items:center;gap:10px;border-bottom:1px dashed #1F4D42;padding-bottom:8px;margin-bottom:12px">
     <span style="width:14px;height:14px;border-radius:50%;background:${lamp};box-shadow:0 0 12px ${lamp}"></span>
     <b style="letter-spacing:.06em">📮 도토리 우체국 · 문자 필터실 모니터</b><span style="margin-left:auto;color:#6EE7B7">${o.tag||''}</span></div>
-   <div style="display:flex;gap:14px;align-items:center">${jkImg(o.mascot,145)}
+   <div class="filter-pop-body">${jkImg(o.mascot,145)}
     <div style="flex:1"><div style="font-size:1.4rem;font-weight:900;color:${o.ok?'#86EFAC':'#FCA5A5'}">${o.title}</div>
     <div style="margin-top:6px;line-height:1.7;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif;color:#ECFDF5">${o.body}</div></div></div>
-   ${o.lines?'<div style="margin-top:12px;background:#06140F;border-radius:10px;padding:10px 12px;line-height:1.9">'+o.lines.map(l=>'&gt; '+l).join('<br>')+'</div>':''}
+   ${o.lines?'<div class="filter-pop-lines" style="margin-top:12px;background:#06140F;border-radius:10px;padding:10px 12px;line-height:1.9">'+o.lines.map(l=>'&gt; '+l).join('<br>')+'</div>':''}
    <button data-close style="margin-top:14px;width:100%;min-height:50px;border:2px solid ${lamp};border-radius:12px;background:#0F2E26;color:#ECFDF5;font:800 1.05rem Pretendard Variable,Pretendard,system-ui;cursor:pointer">${o.button||'모니터 닫기 ▶'}</button></div>`, then);
 }
 
@@ -410,7 +410,7 @@ function resultHtml(st, res){
   const sp = ['✨', '⭐', '🛡️', '🎉', '✨', '💫', '⭐', '🎉'].map((ic, k) => { const a = k * Math.PI / 4; return `<span class="spark" style="--x:${Math.round(Math.cos(a) * 140)}px;--y:${Math.round(Math.sin(a) * 100)}px;animation-delay:${.45 + k * .03}s">${ic}</span>`; }).join('');
   const parMsg = res.blocks <= s.par ? `블록 ${res.blocks}개로 해냈어요. 목표 블록 수를 달성했어요!` : `블록 ${res.blocks}개를 썼어요. 목표는 ${s.par}개 이하! 더 짧게 줄여 볼까요?`;
   const twins = s.best > 0 ? twinHtml(st) : '';
-  const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">처음 보는 문자로 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
+  const next = (!G.hold[st] || !G.hold[st].ok) ? '<button class="go" onclick="runHoldout()">내 필터로 새 문자 시험하기</button>' : st < D.stages.length - 1 ? `<button class="go" style="width:100%;margin-top:10px" onclick="startStage(${st + 1})">다음 단계로 ➡️</button>` : `<button class="go" style="width:100%;margin-top:10px" onclick="toFinal()">🏆 최종 결과 보기</button>`;
   // 결과 화면: 제목·별·도장을 한 줄로 모으고, 다음에 할 일(버튼)과 틀린 개수를 크게 보여 줘요.
   const ok = !!(G.hold[st] && G.hold[st].ok);
   const flow = ['① 연습 문자', '② 새 문자 시험', '③ 다음 단계'].map((t, k) => `<span class="fl${k === (ok ? 2 : 1) ? ' now' : ''}${k < (ok ? 2 : 1) ? ' ok' : ''}">${k < (ok ? 2 : 1) ? '✓ ' : ''}${t}</span>`).join('<i>→</i>');
@@ -418,7 +418,9 @@ function resultHtml(st, res){
     <div class="rhead"><span class="big">🛡️</span><b class="t">${ok ? '연습·새 문자 시험 통과!' : '연습 문자 목표 달성!'}</b>
       <span class="stars">${[0, 1, 2].map(k => `<i style="animation-delay:${.3 + k * .2}s">${k < stars ? '⭐' : '☆'}</i>`).join('')}</span><span class="stamp">${ok ? '시험 통과!' : '연습 통과!'}</span></div>
     <div class="flow">${flow}</div>
-    ${ok ? '' : '<div class="must">🧪 아직 끝이 아니에요! <b>처음 보는 문자</b>로도 시험해야 다음 단계가 열려요.</div>'}
+    ${ok ? '' : `<div class="must" style="text-align:left;line-height:1.75">🧪 <b>이제 내가 만든 필터를 새 문자 ${HOLD[st].length}개에 적용해요.</b><br>
+    문자를 하나씩 직접 고르는 시험이 아니에요. 아래 버튼을 누르면 <b>지금 만든 규칙 그대로 컴퓨터가 자동 분류</b>해요.<br>
+    틀린 개수는 <b>필터가 잘못 막거나 통과시킨 문자 수</b>예요. 틀린 이유를 보고 규칙을 고친 뒤 다시 시험할 수 있어요.</div>`}
     ${next.replace('class="go"', 'class="go big"')}
     <div class="par ${res.blocks <= s.par ? 'good' : ''}">${res.blocks <= s.par ? '🏅' : '✂️'} ${esc(parMsg)}</div>
     ${matrix}${twins}${sp}${othersHtml(st)}${holdHtml(st)}</section>`;
@@ -508,33 +510,57 @@ function run(){
     const lines = [`잘 막은 가짜 문자 ${res.tp}건`, `잘 통과한 진짜 문자 ${res.tn}건`, `놓친 가짜 문자(미탐) ${res.fn}건`, `잘못 막은 진짜 문자(오탐) ${res.fp}건`, `사용한 블록 ${res.blocks}개 (목표 ${s.par}개 이하)`];
     if (stars) monitorPop({ok:true, mascot:'postman', tag:`${st + 1}단계 · ${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}`,
       title: s.best > 0 ? '✅ 규칙으로 할 수 있는 최선!' : '✅ 필터 가동 성공!',
-      body: s.best > 0 ? '어떤 규칙으로도 1개는 틀릴 수밖에 없는 단계예요. 결과 화면의 설명 상자를 꼭 읽어 보세요.' : '이제 처음 보는 문자로도 시험해 봐요.', lines});
-    else monitorPop({ok:false, mascot:'think', tag:`${st + 1}단계 · 경고`, title:`⚠️ ${res.errors}건 잘못 분류됨`,
+      body: s.best > 0 ? '어떤 규칙으로도 1개는 틀릴 수밖에 없는 단계예요. 결과 화면의 설명 상자를 꼭 읽어 보세요.' : '다음에는 지금 만든 필터가 새 문자를 자동 분류해요. 모니터를 닫고 ‘내 필터로 새 문자 시험하기’를 누르면 시작해요.', lines});
+    else monitorPop({ok:false, mascot:'think', tag:`${st + 1}단계 · 경고`, title:`⚠️ 내 필터가 연습 문자 ${res.errors}개를 잘못 분류했어요`,
       body:'빨간 테두리 문자를 보고 규칙을 고쳐 보세요. 놓친 가짜 문자는 막고, 진짜 문자는 통과시켜야 해요.', lines, button:'규칙 고치러 가기 ▶'});
   }, s.msgs.length * 260 + 500);
 }
 
 
-function holdHtml(st){
- const h=G.hold[st];if(!h)return '<p>현재 규칙으로 새 문자 시험도 마쳐야 해요.</p>';
- return '<section class="box" style="text-align:left"><h3>🧪 새 문자 시험 결과</h3>'+h.rows.map(x=>{const r=x.flag===x.answer;return '<div style="border:2px solid '+(r?'#BBF7D0':'#FCA5A5')+';background:'+(r?'#F0FDF4':'#FEF2F2')+';border-radius:12px;padding:8px 12px;margin:6px 0"><b>'+(r?'✅ 맞음':'❌ 틀림')+'</b> · <b>'+esc(x.sender||'')+'</b> · '+esc(x.text)+'<div class="tags" style="margin:4px 0">'+(x.tags||[]).map(c=>'<span class="tag">'+esc(D.conds[c]||c)+'</span>').join('')+'</div><small>내 필터: '+(x.flag?'🚫 막음':'✅ 통과')+(r?'':(x.answer?' → 미탐(가짜인데 통과)':' → 오탐(진짜인데 막음)'))+' · '+esc(x.proof)+'</small></div>';}).join('')+(h.ok?'<p><b>🎉 처음 보는 문자도 모두 맞혔어요!</b></p>':'<p style="background:#FFF7E6;border:2px solid #F59E0B;border-radius:12px;padding:8px 12px;font-weight:800;color:#92400E">💡 틀린 문자의 <b>특징 태그</b>를 보고 규칙을 고쳐요. 연습 문자에만 맞춘 규칙이면 처음 보는 문자에서 틀려요. 고친 뒤 ▶ 필터 실행 → 🧪 새 문자 시험을 다시 해요.</p>')+'</section>';
+// 실행 당시의 규칙과 조건 충족 여부를 설명합니다. 판정은 기존 matches/flagged 그대로 사용합니다.
+function holdReason(st, msg){
+ const reasons=[];
+ G.rules[st].forEach((rule,ri)=>{
+  const conds=rule.filter(Boolean);if(!conds.length)return;
+  const op=G.ops[st][ri]==='or'?' 또는 ':' 그리고 ';
+  const checks=conds.map(c=>(D.conds[c]||c)+' ['+(has(msg,c)?'해당':'해당 안 됨')+']');
+  reasons.push('규칙 '+(ri+1)+': '+checks.join(op)+' → '+(matches(st,ri,msg)?'조건 충족':'조건 불충족'));
+ });
+ return reasons.join(' / ')+(flagged(st,msg)?' · 한 줄 이상 충족해서 막음':' · 어느 줄도 충족하지 않아 통과');
 }
-// 새 문자 시험 결과를 문자마다 한 줄로: 맞음 ✅ / 틀림 ❌(미탐: 가짜인데 통과, 오탐: 진짜인데 막음)
+function editHoldoutFilter(){
+ const builder=document.querySelector('.builder');
+ if(builder){builder.scrollIntoView({block:'start',behavior:'smooth'});const select=builder.querySelector('select');if(select)select.focus({preventScroll:true});}
+}
+function holdHtml(st){
+ const h=G.hold[st];
+ if(!h)return '<p style="font-weight:700">새 문자 시험은 아직 실행하지 않았어요. 위의 버튼을 눌러 시작하세요.</p>';
+ return '<section class="box" style="text-align:left"><h3>🧪 내 필터의 새 문자 자동 분류 결과</h3>'+
+ '<p>내가 새 문자에 답한 결과가 아니라, <b>내 규칙을 컴퓨터가 실행한 결과</b>예요. 총 '+h.rows.length+'개 중 '+h.errors+'개를 잘못 분류했어요.</p>'+
+ h.rows.map(x=>{const right=x.flag===x.answer;return '<div style="border:2px solid '+(right?'#BBF7D0':'#FCA5A5')+';background:'+(right?'#F0FDF4':'#FEF2F2')+';border-radius:12px;padding:14px;margin:12px 0;line-height:1.75;overflow-wrap:anywhere">'+
+ '<b>'+(right?'✅ 필터가 맞게 분류':'🔧 필터 수정 필요')+'</b> · <b>'+esc(x.sender||'')+'</b><div>'+esc(x.text)+'</div><div class="tags" style="margin:8px 0">'+(x.tags||[]).map(c=>'<span class="tag">'+esc(D.conds[c]||c)+'</span>').join('')+'</div>'+
+ '<div><b>내 필터:</b> '+(x.flag?'🚫 막음':'✅ 통과')+' · <b>확인된 결과:</b> '+(x.answer?'가짜 문자 → 막아야 해요':'진짜 문자 → 통과시켜야 해요')+'</div>'+
+ '<div style="margin-top:8px"><b>왜 이렇게 분류했나요?</b><br>'+esc(x.reason||'')+'</div>'+
+ '<div style="margin-top:8px"><b>별도 확인 근거:</b> '+esc(x.proof)+'</div></div>';}).join('')+
+ (h.ok?'<p><b>🎉 내 필터가 새 문자를 모두 맞게 분류했어요!</b></p>':'<div style="background:#FFF7E6;border:2px solid #F59E0B;border-radius:12px;padding:14px;font-weight:700;line-height:1.7">특징과 적용 조건을 비교해 필터를 고쳐요. 고친 뒤 <b>필터 실행 → 내 필터로 새 문자 시험하기</b> 순서로 다시 확인하세요.<br><button style="margin-top:10px" onclick="editHoldoutFilter()">필터 수정하고 다시 시험하기</button></div>')+'</section>';
+}
 function holdLines(rows){
- return rows.map(x=>{const right=x.flag===x.answer;const what=x.flag?'🚫 막음':'✅ 통과';
-  const why=right?'':(x.answer?' <b style="color:#FCA5A5">← 미탐(가짜인데 통과)</b>':' <b style="color:#FDBA74">← 오탐(진짜인데 막음)</b>');
-  return (right?'✅ ':'❌ ')+esc(x.sender||'')+' · <span style="color:#ECFDF5">'+esc(x.text)+'</span><br>&nbsp;&nbsp;&nbsp;특징: '+(x.tags||[]).map(c=>esc(D.conds[c]||c)).join(' · ')+' → 내 필터 '+what+why;});
+ return rows.map(x=>{const right=x.flag===x.answer;return (right?'✅ ':'🔧 ')+esc(x.sender||'')+' · '+esc(x.text)+
+ '<br>내 필터: '+(x.flag?'막음':'통과')+' / 확인된 결과: '+(x.answer?'가짜 문자':'진짜 문자')+
+ '<br>적용 이유: '+esc(x.reason);});
 }
 function runHoldout(){
- const st=G.stage;if(!G.last||!starsFor(st,G.last))return;
- const rows=HOLD[st].map(m=>({text:m[2],sender:m[0],tags:[m[1]].concat(m[3].split('')),flag:flagged(st,m),answer:m[4],proof:m[4]?'별도로 연락한 당사자·기관이 해당 요구를 부인한 교육용 사례':'기존 연락처나 직접 연 공식 기록에서 요청을 확인한 교육용 사례'}));
+ const st=G.stage;if(G.running||!G.last||!starsFor(st,G.last))return;
+ const rows=HOLD[st].map(m=>({text:m[2],sender:m[0],tags:[m[1]].concat(m[3].split('')),flag:flagged(st,m),answer:m[4],reason:holdReason(st,m),proof:m[4]?'별도로 연락한 당사자·기관이 해당 요구를 부인한 교육용 사례':'기존 연락처나 직접 연 공식 기록에서 요청을 확인한 교육용 사례'}));
  const errors=rows.filter(x=>x.flag!==x.answer).length;G.hold[st]={rows,errors,ok:errors===0};
  if(!errors)G.best[st]={stars:starsFor(st,G.last),blocks:blocks(st)};
  sendResult({game:'filter',type:'run',stage:st,clear:errors===0,trial:true,wrong:[]});
  render();
- monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 시험',title:`⚠️ 새 문자 ${errors}건 오분류`,body:'처음 보는 문자에서 규칙이 틀린 곳이에요. 특정 문자에만 맞춘 규칙은 아닌지 살펴보세요.',lines:holdLines(rows),button:'규칙 다시 보기 ▶'}
-   :{ok:true,mascot:'hooray',tag:'새 문자 시험',title:'🎉 처음 보는 문자도 통과!',body:'다음 단계로 가 볼까요?',lines:holdLines(rows)});
+ monitorPop(errors?{ok:false,mascot:'think',tag:'새 문자 · 자동 분류',title:`내 필터가 새 문자 ${errors}개를 잘못 분류했어요`,
+ body:'문자를 직접 고른 결과가 아니에요. 연습에서 만든 규칙을 컴퓨터가 새 문자에 그대로 적용한 결과예요. 아래 적용 이유를 보고 필터를 고쳐 보세요.',lines:holdLines(rows),button:'필터 수정하고 다시 시험하기'}
+ :{ok:true,mascot:'hooray',tag:'새 문자 · 자동 분류',title:'내 필터가 새 문자를 모두 맞게 분류했어요!',body:'다음 단계로 가 볼까요?',lines:holdLines(rows)},errors?editHoldoutFilter:undefined);
 }
+
 function toFinal(){
  if(!G.best.every(Boolean))return;
  if(!G.review.includes(2)||!G.review.includes(3)||G.review.length!==2||G.reviewRoute!=='separate'){

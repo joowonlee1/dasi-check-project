@@ -589,6 +589,19 @@ def show_intro():
 
     st.button("🚀 테스트 시작하기", key=PREFIX + "start_bottom", type="primary", width="stretch", on_click=start)
 
+@st.cache_data(show_spinner=False)
+def coping_guide_img(width=82):
+    """대처유형 전용 깡지. 원본 투명 PNG를 그대로 사용합니다."""
+    path = Path(__file__).resolve().parents[1] / "assets" / "ggangji_coping_guide.png"
+    if not path.is_file():
+        from mascot_ui import mascot_img
+        return mascot_img("think", width)
+    data = base64.b64encode(path.read_bytes()).decode("ascii")
+    return (f'<img src="data:image/png;base64,{data}" '
+            f'alt="상황 카드를 읽으며 내 대응을 생각하는 깡지" '
+            f'style="display:block;width:{int(width)}px;max-width:100%;height:auto;object-fit:contain;">')
+
+
 def show_question(i):
 
     q = QUESTIONS[i]
@@ -604,7 +617,7 @@ def show_question(i):
     # 12칸 도토리 길: 깡지가 지금 문항 위에 서서 함께 걸어가요.
     try:
         from mascot_ui import mascot_img
-        walker = mascot_img("sneaker", 82).replace("display:block;margin:0 auto;", "")
+        walker = coping_guide_img(82)
         poses = ("think", "detective", "suspicious", "phone", "letter", "hint", "shield", "headset", "chat", "link", "app", "trophy")
         kj = mascot_img(poses[i % len(poses)], 150).replace("display:block;margin:0 auto;", "")
     except Exception:

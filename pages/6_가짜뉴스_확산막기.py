@@ -231,6 +231,15 @@ details.help{margin:10px 0;border:1px solid #B8CFC4;border-radius:12px;padding:6
 .ui-help button{position:sticky;top:0;z-index:2;background:#20483F;color:#fff}
 @media(max-width:720px){.steps,.legend2,.exrow,.grids{grid-template-columns:1fr!important}.clues{grid-template-columns:1fr!important}}
 
+
+.news-photo-entry{display:flex;align-items:center;gap:18px;background:linear-gradient(125deg,#F1EDFF,#E5F5EF);border:3px solid #8D75C5;border-radius:20px;padding:20px;margin:16px 0;box-shadow:0 5px 0 #E1D9F0;text-align:left}
+.news-photo-entry>div:last-child{flex:1;min-width:0}.news-photo-icon{font-size:54px;background:#fff;border-radius:18px;padding:12px}
+.news-photo-label{font-weight:800;color:#604194;font-size:.95rem}.news-photo-entry h3{margin:5px 0;font-size:1.3rem;line-height:1.5}
+.news-photo-entry p{margin:8px 0 14px;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
+.news-photo-entry button{display:block;width:100%;background:#624298;color:#fff;border:2px solid #4D2F7A;padding:14px 18px;font-size:1.05rem;white-space:normal;line-height:1.6;height:auto;}
+.news-photo-entry button:hover:not(:disabled){background:#50337F}.news-photo-entry small{display:block;margin-top:10px;color:#4C5C56}
+@media(max-width:600px){.news-photo-entry{padding:16px;gap:12px;align-items:flex-start}.news-photo-icon{font-size:30px;padding:6px}.news-photo-entry h3{font-size:1.15rem}}
+
 </style></head><body><main class="wrap" id="app"></main>
 <script>
 const DATA = __DATA__;
@@ -344,10 +353,17 @@ function intro(){
   <section class="hero"><span>🌐 전략 게임 · 수법 5단계</span><b>도토리시에 가짜 소식이 퍼지고 있다!</b>
   <span>퍼지기 전에 막을수록, 연결이 많은 사람을 지킬수록 마을이 지켜져요.</span></section>
   ${stageMap()}
-  <button id="nl-launch" style="width:100%;margin:12px 0" onclick="openNewsLab()">📷 같은 사진, 다른 이야기 · 웹캠 체험</button>
   <div class="jk-k3"><div><div class="t"><i>1</i><em>🛡️</em>퍼지기 전, 1명 지키기</div><p>시작 전에 흰 동그라미 <b>1명</b>을 눌러 미리 알려 줘요.</p></div><div><div class="t"><i>2</i><em>📶</em>1차·2차…로 퍼짐</div><p>📢에서 시작해 <b>연결선을 따라</b> 한 칸씩 번져요. 결과에서 차수별로 몇 명이 새로 믿었는지 보여 줘요.</p></div><div class="key"><div class="t"><i>3</i><em>🃏</em>남은 카드로 막기</div><p>카드 1장 = 1명. ⚪ 아직 모르는 사람 → 🛡️ 지킴 · 🔴 속은 사람 → 💬 근거 있는 정정 문구</p></div></div>
   ${S && S.stageIndex === G.stage && S.phase !== "result" ? '<button class="ok" style="width:100%;margin-bottom:8px" onclick="resumeStage()">▶ 하던 활동 이어하기</button>' : ''}
   <button class="go" style="width:100%" onclick="startStage(${G.stage})">🚪 도토리 광장 들어가기 · ${G.stage + 1}단계 ${esc(ST[G.stage].icon + ' ' + ST[G.stage].tactic)}</button>
+  <section class="news-photo-entry" aria-label="사진으로 확인하는 가짜뉴스">
+    <div class="news-photo-icon" aria-hidden="true">📷</div><div>
+    <span class="news-photo-label">선택 체험 · 노트북 웹캠으로 직접</span>
+    <h3>사진이 진짜여도, 이야기는 달라질까요?</h3>
+    <p>확산을 막기 전에, <b>같은 사진의 범위와 제목</b>을 바꿔 보세요. 사진만 보고 믿으면 어떤 맥락을 놓치는지 직접 확인해요.</p>
+    <button id="nl-launch" onclick="openNewsLab()">📷 직접 찍고 비교하기 — 같은 사진, 다른 이야기</button>
+    <small>촬영 없이 예시 그림으로도 체험할 수 있어요.</small></div>
+  </section>
   <details class="jk-more"><summary>📖 자세히 보기 · 예시와 목표·정정 문구 고르는 법</summary><div class="in">
   ${exampleHtml()}
   <div class="goal">🎯 목표: 안 속은 사람 75% 이상 ⭐⭐⭐ · 55% 이상 ⭐⭐</div>
