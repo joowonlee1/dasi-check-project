@@ -34,10 +34,13 @@ CALL_JS = r'''
  D.body.appendChild(root);
  const q=s=>root.querySelector(s),sub=q('.sub'),wn=q('.wn'),hs=q('.hs'),wave=q('.wave'),stt=q('.st'),tm=q('.tm'),end=q('.end'),nt=q('.nt');
  q('.av').textContent=data.avatar||'👤';q('.nm').textContent=data.name||'';q('.no').textContent=data.number||'';
- const retry=D.createElement('button');retry.type='button';retry.textContent='🔊 다시 듣기';retry.className='end';retry.style.background='#2563eb';retry.hidden=true;end.before(retry);
- let alive=true,t0=Date.now(),timers=[],currentUtterance=null,attempt=0;
+ const retry=D.createElement('button');retry.type='button';retry.textContent='🔊 음성 재생하기';retry.className='end';retry.style.background='#2563eb';retry.hidden=true;end.before(retry);
+ let alive=true,t0=null,elapsed=0,heard=false,completed=false,timers=[],currentUtterance=null,attempt=0;
+ const pauseTime=()=>{if(t0!==null){elapsed+=Date.now()-t0;t0=null;}};
+ const startTime=()=>{if(t0===null)t0=Date.now();};
+ const retryLabel=()=>{retry.textContent=completed&&heard?"🔊 다시 듣기":heard?"🔊 이어 듣기":"🔊 음성 재생하기";};
  const later=(f,ms)=>{const id=SW.setTimeout(()=>{if(alive)f();},ms);timers.push(id);return id;};
- const clock=SW.setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);tm.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},500);
+ const clock=SW.setInterval(()=>{const s=Math.floor((elapsed+(t0===null?0:Date.now()-t0))/1000);tm.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},500);
  const stop=()=>{alive=false;attempt++;currentUtterance=null;SW.clearInterval(clock);timers.forEach(i=>SW.clearTimeout(i));try{synth&&synth.cancel();}catch(e){}};
  root.__stop=stop;
  const close=()=>{stop();root.remove();};
@@ -51,7 +54,7 @@ CALL_JS = r'''
  const pitch=data.pitch||{};
  const lines=data.lines||[];
  let i=0,voice=null,speak=false;
- const finish=()=>{wave.classList.remove('on');stt.textContent='통화 종료';q('.av').style.animation='none';
+ const finish=()=>{pauseTime();completed=true;retryLabel();retry.hidden=false;wave.classList.remove('on');stt.textContent=heard?'통화 종료':'자막 보기 완료';q('.av').style.animation='none';
   if(data.verdict){wn.textContent=data.verdict;wn.className='wn'+(data.safe?' ok':'');wn.style.display='block';}
   end.textContent='닫기';end.classList.add('done');};
  const next=(replay=false)=>{
@@ -64,25 +67,25 @@ CALL_JS = r'''
   if(warn){later(()=>{wn.textContent=warn;wn.className='wn';wn.style.display='block';try{H&&H.play&&want&&H.play('warn');}catch(e){}},Math.min(2200,300+text.length*45));}
   const token=++attempt;
   let moved=false,started=false;
-  const fail=(message)=>{if(!alive||token!==attempt||moved)return;moved=true;attempt++;wave.classList.remove('on');stt.textContent='음성 재생 대기';nt.style.display='block';nt.textContent=message;retry.hidden=false;i--;currentUtterance=null;try{synth&&synth.cancel();}catch(e){}};
+  const fail=(message)=>{if(!alive||token!==attempt||moved)return;moved=true;attempt++;wave.classList.remove('on');pauseTime();stt.textContent=heard?'음성 재생 중단':'음성 준비 중';retryLabel();nt.style.display='block';nt.textContent=message+(heard?' 이어 듣기를 누르면 중단된 대사의 처음부터 재생해요.':' 음성 재생하기를 눌러 주세요.');retry.hidden=false;i--;currentUtterance=null;try{synth&&synth.cancel();}catch(e){}};
   const go=()=>{if(!alive||token!==attempt||moved)return;moved=true;currentUtterance=null;wave.classList.remove('on');later(()=>next(),warn?1500:600);};
   const guess=1600+text.length*190;
   if(speak){
    try{const u=new SW.SpeechSynthesisUtterance(text);currentUtterance=u;u.lang='ko-KR';const vv=pickVoice(who)||voice;if(vv)u.voice=vv;const p=pitch[who]||[1,1];const male=vv&&MALE.test(vv.name);u.pitch=(male&&(data.gender||{})[who]==='m')?1:p[0];u.rate=p[1];u.volume=Math.min(1,(H&&H.volume)||.8);
-    u.onstart=()=>{if(alive&&token===attempt){started=true;wave.classList.add('on');}};u.onend=go;
-    u.onerror=()=>fail('목소리를 재생하지 못했어요. 아래 다시 듣기를 직접 눌러 주세요.');
+    u.onstart=()=>{if(alive&&token===attempt){started=true;heard=true;startTime();stt.textContent=data.status||'통화 중';wave.classList.add('on');}};u.onend=go;
+    u.onerror=()=>fail('목소리를 재생하지 못했어요.');
     synth.speak(u);
-    later(()=>{if(!started)fail('음성이 시작되지 않았어요. 아래 다시 듣기를 직접 눌러 주세요.');},3500);
-    later(()=>fail('음성 재생이 멈췄어요. 다시 듣기를 누르면 이 대사부터 재생해요.'),Math.max(20000,guess+12000));
-   }catch(e){fail('이 브라우저에서 음성을 시작하지 못했어요. 다시 듣기를 눌러 주세요.');}
+    later(()=>{if(!started)fail('음성이 시작되지 않았어요.');},3500);
+    later(()=>fail('음성 재생이 멈췄어요.'),Math.max(20000,guess+12000));
+   }catch(e){fail('이 브라우저에서 음성을 시작하지 못했어요.');}
   }else{wave.classList.add('on');later(go,guess);}
  };
- retry.onclick=()=>{if(!alive)return;voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);if(!speak){nt.style.display='block';nt.textContent=!soundOn()?'사이드바에서 효과음을 켜고 음량을 올린 뒤 다시 눌러 주세요.':'한국어 목소리를 불러오지 못했어요. 잠시 후 다시 눌러 주세요.';return;}retry.hidden=true;nt.style.display='none';stt.textContent=data.status||'통화 중';next(true);};
+ retry.onclick=()=>{if(!alive)return;retryLabel();voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);if(!speak){nt.style.display='block';nt.textContent=!soundOn()?'사이드바에서 효과음을 켜고 음량을 올린 뒤 다시 눌러 주세요.':'한국어 목소리를 불러오지 못했어요. 잠시 후 다시 눌러 주세요.';return;}if(completed){i=0;completed=false;heard=false;elapsed=0;t0=null;tm.textContent='00:00';hs.innerHTML='';delete sub.dataset.has;delete sub.dataset.w;end.textContent='📵 통화 끊기';end.classList.remove('done');q('.av').style.animation='';}retry.hidden=true;nt.style.display='none';stt.textContent='음성 준비 중';next(true);};
 
  const begin=()=>{voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);
-  stt.textContent=data.status||'통화 중';t0=Date.now();q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');
-  if(soundOn()&&!speak){nt.style.display='block';nt.textContent='한국어 목소리를 준비하지 못했어요. 잠시 후 다시 듣기를 눌러 주세요.';retry.hidden=false;sub.textContent='음성을 준비하고 있어요.';return;}
-  if(!speak)nt.textContent='🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)';
+  stt.textContent=speak?'음성 준비 중':soundOn()?'음성 준비 중':'자막 재생 중';q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');
+  if(soundOn()&&!speak){nt.style.display='block';nt.textContent='한국어 목소리를 준비하지 못했어요. 잠시 후 음성 재생하기를 눌러 주세요.';retry.hidden=false;sub.textContent='음성을 준비하고 있어요.';return;}
+  if(!speak){startTime();nt.textContent='🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)';}
   else{nt.textContent='';nt.style.display='none';}
   next();};
  // iPad에서도 사용자 터치와 같은 호출 안에서 음성을 시작합니다.
