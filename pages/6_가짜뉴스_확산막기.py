@@ -676,7 +676,13 @@ from pathlib import Path
 # 게임과 별개인 선택 체험: 사진/문장은 브라우저 밖으로 보내지 않습니다.
 _camera_lab = Path(__file__).resolve().parents[1] / "news_camera_lab.html"
 if _camera_lab.is_file():
-    HTML = HTML.replace("</body>", _camera_lab.read_text(encoding="utf-8") + "</body>")
+    import base64
+    _sample_path = Path(__file__).resolve().parents[1] / "assets" / "ggangji_news_cleanup.png"
+    _sample_url = ""
+    if _sample_path.is_file():
+        _sample_url = "data:image/png;base64," + base64.b64encode(_sample_path.read_bytes()).decode("ascii")
+    _lab_html = _camera_lab.read_text(encoding="utf-8").replace("__NEWS_SAMPLE__", _sample_url)
+    HTML = HTML.replace("</body>", _lab_html + "</body>")
 else:
     # 파일을 빠뜨려 업로드했어도 기존 게임은 계속 이용할 수 있습니다.
     HTML = HTML.replace('onclick="openNewsLab()"', 'disabled title="news_camera_lab.html 파일을 저장소 첫 화면에 추가해 주세요"')
