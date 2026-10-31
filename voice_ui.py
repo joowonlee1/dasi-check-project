@@ -80,14 +80,15 @@ CALL_JS = r'''
    }catch(e){fail('이 브라우저에서 음성을 시작하지 못했어요.');}
   }else{wave.classList.add('on');later(go,guess);}
  };
- retry.onclick=()=>{if(!alive)return;retryLabel();voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);if(!speak){nt.style.display='block';nt.textContent=!soundOn()?'사이드바에서 효과음을 켜고 음량을 올린 뒤 다시 눌러 주세요.':'한국어 목소리를 불러오지 못했어요. 잠시 후 다시 눌러 주세요.';return;}if(completed){i=0;completed=false;heard=false;elapsed=0;t0=null;tm.textContent='00:00';hs.innerHTML='';delete sub.dataset.has;delete sub.dataset.w;end.textContent='📵 통화 끊기';end.classList.remove('done');q('.av').style.animation='';}retry.hidden=true;nt.style.display='none';stt.textContent='음성 준비 중';next(true);};
+ retry.onclick=()=>{if(!alive)return;retryLabel();voice=pickVoice('');speak=!!(soundOn()&&synth&&typeof SW.SpeechSynthesisUtterance==='function');if(!speak){nt.style.display='block';nt.textContent=!soundOn()?'사이드바에서 효과음을 켜고 음량을 올린 뒤 다시 눌러 주세요.':'이 브라우저에서 음성 기능을 사용할 수 없어요. 다른 브라우저로 열어 주세요.';return;}if(completed){i=0;completed=false;heard=false;elapsed=0;t0=null;tm.textContent='00:00';hs.innerHTML='';delete sub.dataset.has;delete sub.dataset.w;end.textContent='📵 통화 끊기';end.classList.remove('done');q('.av').style.animation='';}retry.hidden=true;nt.style.display='none';stt.textContent='음성 준비 중';next(true);};
 
- const begin=()=>{voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);
+ const begin=()=>{voice=pickVoice('');speak=!!(soundOn()&&synth&&typeof SW.SpeechSynthesisUtterance==='function');
   stt.textContent=speak?'음성 준비 중':soundOn()?'음성 준비 중':'자막 재생 중';q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');
-  if(soundOn()&&!speak){nt.style.display='block';nt.textContent='한국어 목소리를 준비하지 못했어요. 잠시 후 음성 재생하기를 눌러 주세요.';retry.hidden=false;sub.textContent='음성을 준비하고 있어요.';return;}
+  if(soundOn()&&!speak){nt.style.display='block';nt.textContent='이 브라우저에서 음성 기능을 사용할 수 없어요. 자막으로 보여 드려요.';speak=false;startTime();stt.textContent='자막 재생 중';next();return;}
   if(!speak){startTime();nt.textContent='🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)';}
   else{nt.textContent='';nt.style.display='none';}
   next();};
+ // 목소리 목록이 비어 있어도 lang=ko-KR로 기본 한국어 음성을 요청합니다.
  // iPad에서도 사용자 터치와 같은 호출 안에서 음성을 시작합니다.
  // 연결음·목소리 목록 타이머 뒤로 음성 시작을 미루지 않습니다.
  begin();
@@ -103,6 +104,12 @@ button:active{transform:translateY(1px);box-shadow:0 1px 0 __SHADOW__}
 .ic{display:inline-block;animation:ring 1s ease-in-out infinite}
 </style><button type="button" id="b"><span class="__ICCLASS__">__ICON__</span><span>__LABEL__</span></button><script>
 const data=__DATA__;const play=__CALLJS__;
+// 화면이 열릴 때 목록 로딩을 먼저 요청합니다. 실제 발화는 클릭 때만 합니다.
+const preloadVoices=()=>{try{window.speechSynthesis?.getVoices();}catch(e){}};
+preloadVoices();
+try{window.speechSynthesis?.addEventListener('voiceschanged',preloadVoices);}catch(e){}
+window.addEventListener('pagehide',()=>{try{window.speechSynthesis?.removeEventListener('voiceschanged',preloadVoices);}catch(e){}});
+
 document.getElementById('b').onclick=()=>{let D=document,H=null;try{D=parent.document;H=parent.__jamkkanSound||null;}catch(e){}
  const go=()=>play(D,window,H,data);
  go(); /* 음성을 터치 이벤트 안에서 바로 시작해요. */};
