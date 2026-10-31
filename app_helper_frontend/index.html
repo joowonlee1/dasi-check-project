@@ -7,7 +7,13 @@ let size=(()=>{try{const v=parent.__dhSize;return v===undefined?2:+v}catch(e){re
 let root,doc;try{doc=parent.document;}catch(e){doc=document;}
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function remove(){if(root)root.remove();}
+function activity(){
+ if(args.page!=='06')return '';
+ for(const frame of doc.querySelectorAll('iframe')){try{const d=frame.contentDocument,lab=d?.getElementById('news-lab');if(lab&&lab.getClientRects().length){for(const stage of ['source','edit','check','repair','done']){const section=d.getElementById('nl-'+stage);if(section&&!section.hidden)return 'photo-'+stage;}}}catch(e){}}
+ return '';
+}
 function snapshot(){
+ if(activity())return "사진 체험 단계: "+activity()+". 사진과 입력 내용은 읽지 않아요.";
  let found=[];
  // 게임 iframe의 현재 보이는 글만 읽어요. 입력칸·숨겨진 정답 데이터는 읽지 않아요.
  for(const frame of doc.querySelectorAll('iframe')){
@@ -19,7 +25,7 @@ function snapshot(){
 function ask(q){
  q=q.trim();if(!q||pending)return;
  pending=true;const visible=snapshot();render();
- send('streamlit:setComponentValue',{dataType:'json',value:{id:Date.now()+'-'+Math.random(),page:args.page,question:q,visible}});
+ send('streamlit:setComponentValue',{dataType:'json',value:{id:Date.now()+'-'+Math.random(),page:args.page,activity:activity(),question:q,visible}});
 }
 function render(){
  {const _o=doc.getElementById('dotori-helper-style');if(_o)_o.remove();}if(!doc.getElementById('dotori-helper-style')){
@@ -41,14 +47,15 @@ function render(){
  root.classList.toggle('pocketed',!open&&pocket);root.style.zIndex=open?'999995':'';const av=args.avatar?'<img alt="깡지" src="'+esc(args.avatar)+'">':'🤖';
  if(!open){root.innerHTML=pocket?`<button class="launch tab" aria-label="주머니에서 깡지 도우미 꺼내기" title="깡지 도우미 꺼내기">${av}</button>`:`<div class="dh-box"><button class="launch" aria-label="깡지 도우미 열기">${av}🤖 깡지 도우미</button><button class="dh-pocket" title="주머니에 넣기">🎒 넣기 ⌄</button></div>`;
  root.querySelector('.launch').onclick=()=>{open=true;pocket=false;render();};root.querySelector('.dh-pocket')?.addEventListener('click',()=>{pocket=true;render();});return;}
- root.innerHTML=`<section class="panel" aria-label="깡지 도우미" style="width:min(${SIZES[size].w}px,calc(100vw - 24px));max-height:${SIZES[size].h}vh;font-size:${SIZES[size].f}px"><div class="head">🤖 깡지 도우미<span class="dh-size"><button data-smaller ${size===0?'disabled':''} aria-label="창 작게" title="창 작게">가−</button><span class="dh-lv">${SIZES.map((_,i)=>`<i class="${i<=size?'on':''}" data-lv="${i}" title="${i+1}단계"></i>`).join('')}</span><button data-bigger ${size===SIZES.length-1?'disabled':''} aria-label="창 크게" title="창 크게">가+</button></span><button data-pocket>🎒 넣기</button><button data-close>닫기 ✕</button></div><div class="body"><div class="note">${esc(args.title||'홈')} 안내예요. 개인정보는 입력하지 마세요. AI 질문과 현재 보이는 게임 글은 답변을 위해 전송돼요.</div>${(args.answers||[]).map(x=>`<div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div>`).join('')}${pending?'<p>답변을 준비하고 있어요…</p>':''}</div><div class="quick"><button>사용법</button><button>이 화면 설명</button><button>힌트 줘</button></div><form><input maxlength="300" placeholder="도움이 필요한 부분을 물어보세요" aria-label="깡지에게 질문" ${pending?'disabled':''}><button ${pending?'disabled':''}>물어보기</button></form></section>`;
+ root.innerHTML=`<section class="panel" aria-label="깡지 도우미" style="width:min(${SIZES[size].w}px,calc(100vw - 24px));max-height:${SIZES[size].h}vh;font-size:${SIZES[size].f}px"><div class="head">🤖 깡지 도우미<span class="dh-size"><button data-smaller ${size===0?'disabled':''} aria-label="창 작게" title="창 작게">가−</button><span class="dh-lv">${SIZES.map((_,i)=>`<i class="${i<=size?'on':''}" data-lv="${i}" title="${i+1}단계"></i>`).join('')}</span><button data-bigger ${size===SIZES.length-1?'disabled':''} aria-label="창 크게" title="창 크게">가+</button></span><button data-pocket>🎒 넣기</button><button data-close>닫기 ✕</button></div><div class="body"><div class="note">${esc(activity()?'같은 사진, 다른 이야기':(args.title||'홈'))} 안내예요. 개인정보는 입력하지 마세요. AI 질문과 현재 보이는 게임 글은 답변을 위해 전송돼요.</div>${(args.answers||[]).filter(x=>(x.activity||'')===activity()).map(x=>`<div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div>`).join('')}${pending?'<p>답변을 준비하고 있어요…</p>':''}</div><div class="quick"><button>사용법</button><button>이 화면 설명</button><button>힌트 줘</button></div><form><input maxlength="300" placeholder="도움이 필요한 부분을 물어보세요" aria-label="깡지에게 질문" ${pending?'disabled':''}><button ${pending?'disabled':''}>물어보기</button></form></section>`;
  root.querySelector('[data-close]').onclick=()=>{open=false;render();};const rs=d=>{size=Math.max(0,Math.min(SIZES.length-1,size+d));try{parent.__dhSize=size}catch(e){}render();};root.querySelector('[data-smaller]').onclick=()=>rs(-1);root.querySelectorAll('[data-lv]').forEach(x=>x.onclick=()=>rs(+x.dataset.lv-size));root.querySelector('[data-bigger]').onclick=()=>rs(1);root.querySelector('[data-pocket]').onclick=()=>{open=false;pocket=true;render();};
  root.querySelectorAll('.quick button').forEach(b=>{b.disabled=pending;b.onclick=()=>ask(b.textContent);});
  root.querySelector('form').onsubmit=e=>{e.preventDefault();ask(root.querySelector('input').value);};
  const body=root.querySelector('.body');body.scrollTop=body.scrollHeight;
 }
 window.addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='streamlit:render')return;const next=e.data.args||{};if(next.page!==args.page){open=false;pending=false;}if(next.revision!==args.revision||(next.answers||[]).length!==lastCount){pending=false;}lastCount=(next.answers||[]).length;args=next;render();});
-window.addEventListener('pagehide',remove);
+let lastActivity='';const activityTimer=setInterval(()=>{const next=activity();if(next!==lastActivity){lastActivity=next;if(open)render();}},600);
+window.addEventListener('pagehide',()=>{clearInterval(activityTimer);remove();});
 // 페이지를 옮겨도 이 칸이 그대로 쓰이면 도우미를 지우지 않아요(전에는 처음 페이지를 옮길 때 도우미가 사라졌어요). 칸이 없어질 때만 지워요.
 send('streamlit:componentReady',{apiVersion:1});send('streamlit:setFrameHeight',{height:0});
 </script></body></html>

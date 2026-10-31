@@ -24,6 +24,8 @@ GUIDES = {
  "13": ("통계청", "게임별 통계와 명예의 전당을 살펴봐요. 저장·갱신 상태는 화면의 안내를 확인해요."),
  "14": ("가짜 안내서 감별소", "① 안내서 조사에서 도구로 기록을 모으고, ② 판단하기에서 판단·이유·증거·행동을 제출해요. 판단 화면에서도 안내서와 기록을 다시 펼칠 수 있어요."),
 }
+PHOTO_GUIDES = {'photo-source': ('같은 사진, 다른 이야기 · 사진 준비', '카메라로 한 장을 촬영하거나 깡지 예시를 선택해요. 사진을 준비한 뒤 범위와 제목을 바꿔 봐요.'), 'photo-edit': ('같은 사진, 다른 이야기 · 편집', '원본에서 보이는 상황을 적고, 확대·가로·세로 위치로 범위를 바꿔요. 다른 인상을 주는 제목을 적은 뒤 근거 확인으로 가요.'), 'photo-check': ('같은 사진, 다른 이야기 · 근거 확인', '깡지 예시 원본과 잘린 사진을 비교해요. 직접 보이는 행동과 사진만으로 알 수 없는 이유·마음을 구분한 뒤, 내가 만든 편집본에서 고칠 부분을 선택해요.'), 'photo-repair': ('같은 사진, 다른 이야기 · 고쳐 쓰기', '선택한 문제에 맞게 사진 범위를 넓히거나 제목을 실제로 고쳐요. 빠진 맥락과 고친 점을 적고 원본 비교 확인란을 체크해요. 화면의 안내가 남으면 그 조건을 확인해요.'), 'photo-done': ('같은 사진, 다른 이야기 · 전후 비교', '수정 전과 후의 사진·제목을 비교해요. 공유 전에는 원본 전체와 촬영 날짜·장소, 제목의 근거를 확인해요. 다시 고치거나 게임 안내로 돌아갈 수 있어요.')}
+GUIDES.update(PHOTO_GUIDES)
 MAX_QUESTIONS = 5
 
 def basic_reply(question, page):
@@ -39,6 +41,8 @@ def basic_reply(question, page):
 
 def answer(question, page, visible=""):
     """(답변, 실제 AI 응답 여부). 실패/기본 안내는 횟수에 포함하지 않아요."""
+    if page in PHOTO_GUIDES and re.sub(r"[\s.!?~]+", "", question) in {"힌트줘", "힌트"}:
+        return PHOTO_GUIDES[page][1], False
     ready = basic_reply(question, page)
     if ready:
         return ready, False
@@ -114,7 +118,11 @@ def show_helper(page="home"):
     if not question:
         return
     context = json.dumps(progress_context(page), ensure_ascii=False) + "\n" + str(event.get("visible", ""))[:5500]
-    reply, charged = answer(question, page, context)
+    activity = str(event.get("activity", ""))
+    active_page = activity if page == "06" and activity in PHOTO_GUIDES else page
+    if active_page in PHOTO_GUIDES:
+        context = "현재 사진 체험 단계: " + PHOTO_GUIDES[active_page][0] + " (사진과 개인 입력 내용은 전달하지 않음)"
+    reply, charged = answer(question, active_page, context)
     state["used"] += int(charged)
-    state["answers"] = (state["answers"] + [{"q": question, "a": reply}])[-20:]
+    state["answers"] = (state["answers"] + [{"q": question, "a": reply, "activity": activity if active_page in PHOTO_GUIDES else ""}])[-20:]
     st.rerun(scope="fragment")
