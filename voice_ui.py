@@ -12,7 +12,8 @@ import streamlit.components.v1 as components
 CALL_JS = r'''
 (function(D,SW,H,data){
  try{const old=D.getElementById('jk-call');if(old){if(old.__stop)old.__stop();old.remove();}}catch(e){}
- const want=!!(H&&H.want&&(H.volume||0)>0);
+ const soundOn=()=>!!(H&&H.want&&(H.volume||0)>0);
+ const want=soundOn();
  const synth=SW&&SW.speechSynthesis;
  const root=D.createElement('div');root.id='jk-call';root.setAttribute('translate','no');root.className='notranslate';
  root.innerHTML='<style>#jk-call{position:fixed;inset:0;z-index:1000002;background:rgba(8,15,25,.9);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}'
@@ -33,10 +34,11 @@ CALL_JS = r'''
  D.body.appendChild(root);
  const q=s=>root.querySelector(s),sub=q('.sub'),wn=q('.wn'),hs=q('.hs'),wave=q('.wave'),stt=q('.st'),tm=q('.tm'),end=q('.end'),nt=q('.nt');
  q('.av').textContent=data.avatar||'👤';q('.nm').textContent=data.name||'';q('.no').textContent=data.number||'';
- let alive=true,t0=Date.now(),timers=[];
+ const retry=D.createElement('button');retry.type='button';retry.textContent='🔊 다시 듣기';retry.className='end';retry.style.background='#2563eb';retry.hidden=true;end.before(retry);
+ let alive=true,t0=Date.now(),timers=[],currentUtterance=null,attempt=0;
  const later=(f,ms)=>{const id=SW.setTimeout(()=>{if(alive)f();},ms);timers.push(id);return id;};
  const clock=SW.setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);tm.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},500);
- const stop=()=>{alive=false;SW.clearInterval(clock);timers.forEach(i=>SW.clearTimeout(i));try{synth&&synth.cancel();}catch(e){}};
+ const stop=()=>{alive=false;attempt++;currentUtterance=null;SW.clearInterval(clock);timers.forEach(i=>SW.clearTimeout(i));try{synth&&synth.cancel();}catch(e){}};
  root.__stop=stop;
  const close=()=>{stop();root.remove();};
  end.onclick=close;root.addEventListener('keydown',e=>{if(e.key==='Escape')close();});end.focus({preventScroll:true});
@@ -52,28 +54,41 @@ CALL_JS = r'''
  const finish=()=>{wave.classList.remove('on');stt.textContent='통화 종료';q('.av').style.animation='none';
   if(data.verdict){wn.textContent=data.verdict;wn.className='wn'+(data.safe?' ok':'');wn.style.display='block';}
   end.textContent='닫기';end.classList.add('done');};
- const next=()=>{
+ const next=(replay=false)=>{
   if(!alive)return;
   if(i>=lines.length){finish();return;}
   const [who,text,warn]=lines[i++];
-  if(sub.dataset.has){const h=D.createElement('div');h.textContent=sub.dataset.has;if(sub.dataset.w)h.className='w';hs.prepend(h);}
+  if(sub.dataset.has&&!replay){const h=D.createElement('div');h.textContent=sub.dataset.has;if(sub.dataset.w)h.className='w';hs.prepend(h);}
   sub.innerHTML='';const b=D.createElement('b');b.textContent=who;sub.append(b,D.createTextNode(text));sub.dataset.has=who+': '+text;sub.dataset.w=warn?'1':'';
   wn.style.display='none';
   if(warn){later(()=>{wn.textContent=warn;wn.className='wn';wn.style.display='block';try{H&&H.play&&want&&H.play('warn');}catch(e){}},Math.min(2200,300+text.length*45));}
-  let moved=false;const go=()=>{if(moved)return;moved=true;wave.classList.remove('on');later(next,warn?1500:600);};
+  const token=++attempt;
+  let moved=false,started=false;
+  const fail=(message)=>{if(!alive||token!==attempt||moved)return;moved=true;attempt++;wave.classList.remove('on');stt.textContent='음성 재생 대기';nt.style.display='block';nt.textContent=message;retry.hidden=false;i--;currentUtterance=null;try{synth&&synth.cancel();}catch(e){}};
+  const go=()=>{if(!alive||token!==attempt||moved)return;moved=true;currentUtterance=null;wave.classList.remove('on');later(()=>next(),warn?1500:600);};
   const guess=1600+text.length*190;
   if(speak){
-   try{const u=new SW.SpeechSynthesisUtterance(text);u.lang='ko-KR';const vv=pickVoice(who)||voice;if(vv)u.voice=vv;const p=pitch[who]||[1,1];const male=vv&&MALE.test(vv.name);u.pitch=(male&&(data.gender||{})[who]==='m')?1:p[0];u.rate=p[1];u.volume=Math.min(1,(H&&H.volume)||.8);
-    u.onstart=()=>wave.classList.add('on');u.onend=go;u.onerror=go;synth.speak(u);later(go,guess+4000);}catch(e){later(go,guess);}
+   try{const u=new SW.SpeechSynthesisUtterance(text);currentUtterance=u;u.lang='ko-KR';const vv=pickVoice(who)||voice;if(vv)u.voice=vv;const p=pitch[who]||[1,1];const male=vv&&MALE.test(vv.name);u.pitch=(male&&(data.gender||{})[who]==='m')?1:p[0];u.rate=p[1];u.volume=Math.min(1,(H&&H.volume)||.8);
+    u.onstart=()=>{if(alive&&token===attempt){started=true;wave.classList.add('on');}};u.onend=go;
+    u.onerror=()=>fail('목소리를 재생하지 못했어요. 아래 다시 듣기를 직접 눌러 주세요.');
+    synth.speak(u);
+    later(()=>{if(!started)fail('음성이 시작되지 않았어요. 아래 다시 듣기를 직접 눌러 주세요.');},3500);
+    later(()=>fail('음성 재생이 멈췄어요. 다시 듣기를 누르면 이 대사부터 재생해요.'),Math.max(20000,guess+12000));
+   }catch(e){fail('이 브라우저에서 음성을 시작하지 못했어요. 다시 듣기를 눌러 주세요.');}
   }else{wave.classList.add('on');later(go,guess);}
  };
- const begin=()=>{voice=pickVoice('');speak=!!(want&&synth&&voice);
-  if(!speak)nt.textContent=!want?'🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)':'이 기기에는 한국어 목소리가 없어서 자막으로만 보여 줘요.';
+ retry.onclick=()=>{if(!alive)return;voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);if(!speak){nt.style.display='block';nt.textContent=!soundOn()?'사이드바에서 효과음을 켜고 음량을 올린 뒤 다시 눌러 주세요.':'한국어 목소리를 불러오지 못했어요. 잠시 후 다시 눌러 주세요.';return;}retry.hidden=true;nt.style.display='none';stt.textContent=data.status||'통화 중';next(true);};
+
+ const begin=()=>{voice=pickVoice('');speak=!!(soundOn()&&synth&&voice);
+  stt.textContent=data.status||'통화 중';t0=Date.now();q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');
+  if(soundOn()&&!speak){nt.style.display='block';nt.textContent='한국어 목소리를 준비하지 못했어요. 잠시 후 다시 듣기를 눌러 주세요.';retry.hidden=false;sub.textContent='음성을 준비하고 있어요.';return;}
+  if(!speak)nt.textContent='🔇 효과음이 꺼져 있어서 자막으로만 보여 줘요. (사이드바 🔊 효과음)';
   else{nt.textContent='';nt.style.display='none';}
-  stt.textContent=data.status||'통화 중';t0=Date.now();q('.av').style.background=data.safe?'#166534':(data.danger?'#7f1d1d':'#334155');next();};
- const start=()=>{if(data.ring===false){begin();return;}ring();stt.textContent='연결 중…';later(begin,2400);};
- // 목소리 목록은 늦게 불러와질 수 있어서 잠깐 기다려요.
- try{if(synth&&!synth.getVoices().length){let done=false;const ok=()=>{if(!done){done=true;start();}};synth.onvoiceschanged=ok;later(ok,900);}else start();}catch(e){start();}
+  next();};
+ // iPad에서도 사용자 터치와 같은 호출 안에서 음성을 시작합니다.
+ // 연결음·목소리 목록 타이머 뒤로 음성 시작을 미루지 않습니다.
+ begin();
+
 })
 '''
 
@@ -87,7 +102,7 @@ button:active{transform:translateY(1px);box-shadow:0 1px 0 __SHADOW__}
 const data=__DATA__;const play=__CALLJS__;
 document.getElementById('b').onclick=()=>{let D=document,H=null;try{D=parent.document;H=parent.__jamkkanSound||null;}catch(e){}
  const go=()=>play(D,window,H,data);
- try{if(H&&H.want&&(!H.ctx||H.ctx.state!=='running')&&H.activate){H.activate().then(go).catch(go);}else go();}catch(e){go();}};
+ go(); /* 음성을 터치 이벤트 안에서 바로 시작해요. */};
 </script></html>'''
 
 _TONES = {
