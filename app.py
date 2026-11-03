@@ -18,6 +18,9 @@ st.set_page_config(
 )
 
 
+from welcome_intro import show_intro_if_needed
+show_intro_if_needed()
+
 from login_resume import bootstrap as restore_login
 restore_login()
 
@@ -789,6 +792,10 @@ navigation = st.navigation(
 # 사이드바
 # ─────────────────────────────────────
 
+# 소개 화면의 긴급 안내는 로그인 없이 기존 피해 대처 페이지로 연결해요.
+if st.session_state.pop("welcome_intro_help_pending_v1", False):
+    st.switch_page(page_by_number["07"])
+
 if st.session_state.pop("guest_go_home", False):
     st.switch_page(home)
 
@@ -1282,4 +1289,5 @@ st.markdown(
     """),
     unsafe_allow_html=True,
 )
+
 
