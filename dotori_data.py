@@ -720,13 +720,13 @@ def show_login_forms(prefix):
         [class*="st-key-login_choices_"] [data-testid="stColumn"]{width:100%!important;flex:1 1 auto!important;}}
         </style>""",unsafe_allow_html=True)
         first, second, third = st.columns(3)
-        if first.button("🪪 새 시민증 만들기",key=f"choose_new_{prefix}",width="stretch",type="primary" if mode=="new" else "secondary"):
+        if first.button("🪪 새 시민증 만들기",key=f"choose_new_{prefix}",width="stretch",type="secondary"):
             st.session_state[mode_key]="new"
             st.rerun()
-        if second.button("🔑 다시 들어오기",key=f"choose_back_{prefix}",width="stretch",type="primary" if mode=="back" else "secondary"):
+        if second.button("🔑 다시 들어오기",key=f"choose_back_{prefix}",width="stretch",type="secondary"):
             st.session_state[mode_key]="back"
             st.rerun()
-        if third.button("👀 로그인 없이 둘러보기",key=f"choose_guest_{prefix}",width="stretch"):
+        if third.button("👀 로그인 없이 둘러보기",key=f"choose_guest_{prefix}",width="stretch",type="primary"):
             st.session_state["guest"]=True
             # 홈으로 보내지 않고 보던 페이지에 그대로 있어요(시민증 페이지에서 눌렀으면 보던 페이지로 돌아가요).
             if prefix=="page":
@@ -780,3 +780,4 @@ def show_login_forms(prefix):
                     st.error("여러 번 틀려서 잠시 막혔어요. 조금 뒤에 다시 시도해 주세요.")
                 else:
                     st.error(explain(exc))
+

@@ -916,7 +916,7 @@ def show_result(answers):
     if plays:
         top = sorted(((data.get(f"t_{c}", 0), c) for c in TYPE_NAMES), reverse=True)[:3]
         dd.show_others([
-            f"지금까지 <b>{plays}명</b>이 테스트했고, 나와 같은 <b>{code}</b> 유형은 <b>{dd.pct(data.get(f't_{code}', 0), plays)}%</b>예요.",
+            f"지금까지 테스트가 <b>{plays}회</b> 완료됐고, 나와 같은 <b>{code}</b> 유형은 <b>{dd.pct(data.get(f't_{code}', 0), plays)}%</b>예요.",
             "많이 나온 유형 TOP 3 · " + " · ".join(f"{c} {escape(TYPE_NAMES[c])} {dd.pct(n, plays)}%" for n, c in top if n),
         ])
 
@@ -1046,3 +1046,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+

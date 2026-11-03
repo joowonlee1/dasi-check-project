@@ -1060,9 +1060,9 @@ def show_welcome_gate():
           border-radius:24px;padding:18px 16px 12px;margin:0 0 10px;}
         .gate b {display:block;font-size:1.7rem;font-weight:900;color:#20483F;margin:4px 0;}
         .gate span {color:#52616B;font-weight:600;word-break:keep-all;}
-        .st-key-gate_guest button {background:#FFFFFF !important;border:2px solid #20483F !important;border-radius:14px !important;
-          color:#20483F !important;min-height:52px;box-shadow:0 3px 10px rgba(32,72,63,.12);}
-        .st-key-gate_guest button p {font-size:1.12rem !important;font-weight:800 !important;}
+        .st-key-choose_guest_gate button {background:#0F766E !important;border:2px solid #0F766E !important;border-radius:14px !important;
+          color:#FFFFFF !important;min-height:52px;box-shadow:0 3px 10px rgba(32,72,63,.12);}
+        .st-key-choose_guest_gate button p {font-size:1.12rem !important;font-weight:800 !important;}
         </style>""",
         unsafe_allow_html=True,
     )
@@ -1076,7 +1076,8 @@ def show_welcome_gate():
         photo = '<div style="font-size:56px;">🐿️</div>'
     st.markdown(
         f'<div class="gate">{photo}<b>✋ 잠깐! 도토리시에 오신 걸 환영해요</b>'
-        '<span>시민증을 만들면 게임 기록이 명예의 전당에 남고, 다음에도 이어서 할 수 있어요.</span></div>',
+        '<span>가상 전화와 문자에서 멈추고, 확인하고, 판단하는 연습을 해요.<br>'
+        '처음이라면 로그인 없이 둘러보세요. 시민증은 기록을 남기고 싶을 때 만들면 돼요.</span></div>',
         unsafe_allow_html=True,
     )
     from admin_tools import show_admin_box
@@ -1281,3 +1282,4 @@ st.markdown(
     """),
     unsafe_allow_html=True,
 )
+

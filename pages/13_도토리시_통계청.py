@@ -85,6 +85,8 @@ def empty():
     st.info("아직 모인 기록이 없어요. 이 게임을 끝까지 하면 첫 기록이 생겨요!")
 
 
+st.caption("게임별 통계는 활동 기록의 집계예요. 같은 사람의 반복 참여가 포함될 수 있으며, 실제 피해 확률이나 학습 효과를 나타내지 않아요.")
+
 tab_stats, tab_hall, tab_how = st.tabs(["📊 게임별 통계", "🏆 명예의 전당", "🔒 어떻게 모으나요?"])
 
 with tab_stats:
@@ -99,7 +101,7 @@ with tab_stats:
         else:
             st.metric("도전 횟수", f"{plays}번")
             bar([(name, dd.pct(data.get(f"end_{k}", 0), plays)) for k, name in ENDINGS], "결말", "비율(%)")
-            st.caption("‘송금 완료’ 비율이 높다면, 가족이 속고 있을 때 끼어드는 연습이 더 필요하다는 뜻이에요.")
+            st.caption("이 게임에서 나온 결말의 비율이에요. 실제 피해 확률을 뜻하지 않아요. 놓친 확인 행동을 해설에서 살펴보세요.")
 
     elif game == "escape":
         plays = data.get("plays", 0)
@@ -127,14 +129,14 @@ with tab_stats:
             for i, name in enumerate(FAKENEWS_STAGES):
                 cols[i].metric(name, f"{data.get(f's{i}_plays', 0)}판")
             bar(rows, "단계", "평균 지킨 주민(%)")
-            st.caption("단계가 올라갈수록 평균이 떨어진다면, 수법이 교묘해질수록 막기 어렵다는 뜻이에요.")
+            st.caption("단계별 평균 게임 결과예요. 난이도와 참여 기록이 달라, 이 차이만으로 실제 사기 대응 능력을 판단할 수는 없어요.")
 
     elif game == "coping":
         plays = data.get("plays", 0)
         if not plays:
             empty()
         else:
-            st.metric("테스트한 사람", f"{plays}명")
+            st.metric("테스트 완료 횟수", f"{plays}회")
             top = sorted(((c, dd.pct(data.get(f"t_{c}", 0), plays)) for c in CODES), key=lambda x: -x[1])
             bar([t for t in top if t[1]], "유형", "비율(%)")
             st.caption("유형 이름과 뜻은 ‘대처유형 테스트’의 16가지 유형 탭에서 볼 수 있어요.")
@@ -281,3 +283,4 @@ with tab_how:
         "- 명예의 전당에는 **시민증 닉네임과 점수만** 올라가요. 닉네임은 누구나 볼 수 있으니 실제 이름을 넣을지는 알고 정해 주세요.\n"
         "- 데이터베이스 규칙으로 ‘숫자를 늘리기만’ 할 수 있게 막고, 남의 명예의 전당 기록은 고칠 수 없게 했어요."
     )
+
