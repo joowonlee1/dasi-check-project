@@ -673,7 +673,7 @@ intro();
 
 from pathlib import Path
 
-# 게임과 별개인 선택 체험: 사진/문장은 브라우저 밖으로 보내지 않습니다.
+# 선택 체험: AI 평가 버튼에 동의한 경우에만 사진·문장을 Gemini로 전송합니다.
 _camera_lab = Path(__file__).resolve().parents[1] / "news_camera_lab.html"
 if _camera_lab.is_file():
     import base64
@@ -690,11 +690,17 @@ else:
 import scene_ui
 page = bridge(HTML, "06").replace("__SCENEIMG__", scene_ui.data_url("scene_plaza")).replace("__DATA__", json.dumps({"stages": STAGES}, ensure_ascii=False).replace("<", "\\u003c"))
 spread_component = create_river_component(page)
-value = spread_component(key="jamkkan_spread_v1", default=None, stats=dd.stats("fakenews"))
+value = spread_component(key="jamkkan_spread_v1", default=None, stats=dd.stats("fakenews"),
+                         photo_review=st.session_state.get("news_photo_review_response"))
 
 # 결과를 익명 통계(+1)에 더하고, 시민증이 있으면 명예의 전당에 저장해요.
 event = dd.take_event(value)
-if event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
+if event and event.get("type") == "photo_grade":
+    from photo_review import review_photo
+    with st.spinner("사진과 설명을 AI가 비교하고 있어요…"):
+        st.session_state["news_photo_review_response"] = review_photo(event)
+    st.rerun()
+elif event and event.get("type") == "stage" and event.get("stage") in (0, 1, 2, 3, 4):
     s, stars, pct = int(event["stage"]), int(event.get("stars", 1)), max(0, min(100, int(event.get("pct", 0))))
     dd.record("fakenews", {f"s{s}_plays": 1, f"s{s}_pctsum": pct, f"s{s}_star3": 1 if stars == 3 else 0})
     dd.stamp("06")
@@ -715,3 +721,4 @@ with st.expander("🧠 이 게임 속 알고리즘 (정보 과목 연계)"):
         "- **연결 수(차수 중심성)**: 친구가 많은 사람일수록 막았을 때 효과가 커요. 결과 화면에서 TOP 3를 보여 줘요.\n"
         "- **전략**: 카드가 적어서 ‘퍼지는 길목(연결을 끊는 사람)’을 찾아야 해요."
     )
+

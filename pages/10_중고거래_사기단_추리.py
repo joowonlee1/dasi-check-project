@@ -407,56 +407,53 @@ function aiBox(){
 
 // ───── 🤖 AI 탐정: 피싱 방탈출의 ‘나의 폰’처럼 화면 오른쪽 아래에 떠 있는 버튼 + 열리는 대화창 ─────
 // 같은 보라색 상자 디자인을 그대로 쓰고, 어느 탭에서든 열 수 있어요. 게임이 끝나거나 다른 페이지로 가면 사라져요.
+const marketToken = Date.now()+'-'+Math.random().toString(36).slice(2);
+let marketPath='';try{marketPath=parent.location.pathname;}catch(e){}
+const removeMarket = () => {try{for(const id of ['jk-ai-launch','jk-ai-panel','jk-ai-pocket']){
+ const node=parent.document.getElementById(id);if(node?.dataset.owner===marketToken)node.remove();}}catch(e){}};
+try{parent.document.__jkMarketOwner=marketToken;parent.__jkAiOpen=false;}catch(e){}
+const marketTimer=setInterval(()=>{try{if(parent.location.pathname!==marketPath||parent.document.__jkMarketOwner!==marketToken){removeMarket();clearInterval(marketTimer);}}catch(e){clearInterval(marketTimer);}},500);
+window.addEventListener('pagehide',()=>{clearInterval(marketTimer);removeMarket();});
 function aiFloat(){
-  let P, D; try { P = window.parent; D = P.document; } catch (e) { return; }
-  const remove = () => { ['jk-ai-launch','jk-ai-panel','jk-ai-pocket'].forEach(id => { const el = D.getElementById(id); if (el) el.remove(); }); };
-  // 결과 화면에서도 도우미를 다시 열 수 있어요.
-  if (!D.getElementById('jk-ai-style')) {
-    const st = D.createElement('style'); st.id = 'jk-ai-style';
-    st.textContent = `#jk-ai-launch{position:fixed;right:22px;bottom:64px;z-index:999990;background:#F5F3FF;color:#3730A3;border:3px solid #8B5CF6;border-radius:22px;padding:18px 26px;min-height:76px;font:900 22px Pretendard Variable,Pretendard,system-ui,sans-serif;box-shadow:0 6px 18px #4C1D9555;cursor:pointer}
-#jk-ai-launch{padding-left:112px}#jk-ai-launch:not(.pocket):not(.wait)::after{content:'👆 물어보기';display:inline-block;margin-left:12px;background:#7C3AED;color:#fff;border-radius:999px;padding:4px 12px;font-size:16px;font-weight:900;box-shadow:0 2px 0 #5B21B6}#jk-ai-launch::before{content:'';position:absolute;left:10px;bottom:4px;width:96px;height:106px;background:url(__AIBTNIMG__) no-repeat center bottom/contain;pointer-events:none}#jk-ai-launch.wait{animation:jkai 1s ease-in-out infinite}@keyframes jkai{50%{transform:translateY(-4px)}}
-#jk-ai-panel{position:fixed;right:22px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#C4B5FD,#8B5CF6);border-radius:28px;padding:8px;box-shadow:0 18px 44px #4C1D9555;font-family:Pretendard Variable,Pretendard,system-ui,sans-serif}
-#jk-ai-panel .in{background:#F5F3FF;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
-#jk-ai-panel .hd{background:#6D28D9;color:#fff;padding:12px 16px;font-weight:900;display:flex;align-items:center;gap:8px}
-#jk-ai-panel .hd button{margin-left:auto;background:#fff2;color:#fff;border:0;border-radius:10px;padding:6px 10px;font:800 14px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
-#jk-ai-panel .bd{padding:12px 14px;overflow:auto;min-height:120px}
-#jk-ai-panel .tip{font-size:.88rem;color:#4C1D95;line-height:1.55;margin-bottom:8px;word-break:keep-all}
-#jk-ai-panel .q{background:#E9D5FF;border-radius:14px 14px 4px 14px;padding:8px 12px;margin:8px 0 4px auto;max-width:85%;word-break:keep-all}
-#jk-ai-panel .a{background:#fff;border-radius:14px 14px 14px 4px;padding:8px 12px;margin:4px auto 8px 0;max-width:90%;box-shadow:0 1px 3px #0002;word-break:keep-all;line-height:1.6}
-#jk-ai-panel .ft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #DDD6FE;background:#fff}
-#jk-ai-panel .ft input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:2px solid #C4B5FD;border-radius:12px;outline:none}#jk-ai-panel .ft input:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px #DDD6FE}
-#jk-ai-panel .ft button{background:#20483F;color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 15px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
-#jk-ai-panel .ft button:disabled{opacity:.5;cursor:default}
-@media(max-width:600px){#jk-ai-launch{right:12px;bottom:56px;font-size:19px;min-height:60px;padding:12px 18px 12px 78px}#jk-ai-launch::before{width:64px;height:72px;left:8px}#jk-ai-panel{right:12px;bottom:12px}}`;
-    D.head.appendChild(st);
-  }
-  if (!P.__jkAiCleanup) {  // 다른 페이지로 가면 버튼과 창을 지워요
-    const path = P.location.pathname;
-    P.__jkAiCleanup = P.setInterval(() => { if (P.location.pathname !== path) { remove(); P.clearInterval(P.__jkAiCleanup); P.__jkAiCleanup = null; } }, 800);
-    window.addEventListener('pagehide', remove);
-  }
-  const can = !AI.wait;
-  { const old = D.getElementById('dotori-helper'); if (old) old.remove(); }  // 남아 있던 깡지 도우미와 겹치지 않게
-  let launch = D.getElementById('jk-ai-launch');
-  if (!launch) { launch = D.createElement('button'); launch.id = 'jk-ai-launch'; D.body.appendChild(launch); }
-  launch.textContent = AI.wait ? '🤖 AI 탐정이 생각하는 중…' : '🤖 AI 탐정';
-  launch.classList.toggle('wait', AI.wait);
-  launch.classList.toggle('pocket', !!P.__jkAiPocket);
-  if(P.__jkAiPocket){launch.textContent='🤖';launch.title='깡지 도우미 꺼내기';}else{launch.title='깡지 도우미';}
-  let pocket=D.getElementById('jk-ai-pocket');
-  if(!pocket){pocket=D.createElement('button');pocket.id='jk-ai-pocket';D.body.appendChild(pocket);}
-  pocket.textContent='🎒 넣기 ⌄';pocket.title='주머니에 넣기';pocket.style.cssText='position:fixed;z-index:999991;display:flex;align-items:center;height:30px;line-height:1;white-space:nowrap;background:#7C3AED;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 12px;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px #0003';
-  pocket.hidden=!!P.__jkAiPocket||!!P.__jkAiOpen;
-  pocket.onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
-  // ‘넣기’ 버튼을 AI 탐정 상자 오른쪽 위 모서리에 걸쳐 둬요(깡지 도우미·나의 폰과 같은 모양).
-  const placePocket=()=>{try{const r=launch.getBoundingClientRect();pocket.style.top=(r.top-16)+'px';pocket.style.right=(P.innerWidth-r.right+14)+'px';}catch(e){}};placePocket();setTimeout(placePocket,100);if(!P.__jkPocketRs){P.__jkPocketRs=1;P.addEventListener('resize',()=>{const l=D.getElementById('jk-ai-launch'),k=D.getElementById('jk-ai-pocket');if(l&&k){const r=l.getBoundingClientRect();k.style.top=(r.top-17)+'px';k.style.right=(P.innerWidth-r.right+14)+'px';}});}
-  {const o=D.getElementById('jk-pocket-style');if(o)o.remove();}if(!D.getElementById('jk-pocket-style')){const st=D.createElement('style');st.id='jk-pocket-style';st.textContent='#jk-ai-launch.pocket{right:0!important;bottom:150px!important;width:96px!important;height:96px!important;min-height:96px!important;padding:0!important;border-right:0!important;border-radius:22px 0 0 22px!important;font-size:0!important}#jk-ai-launch.pocket::before{left:50%!important;bottom:6px!important;transform:translateX(-50%);width:76px!important;height:80px!important}';D.head.appendChild(st);}
-
-  launch.onclick = () => { P.__jkAiPocket=false; P.__jkAiOpen = true; aiFloat(); };
+  let P,D;try{P=parent;D=P.document;}catch(e){return;}
+  if(D.__jkMarketOwner!==marketToken||P.location.pathname!==marketPath){removeMarket();return;}
+  D.__dotoriHelperOwner=null;
+  D.querySelectorAll('#dotori-helper').forEach(node=>node.remove());
+  D.getElementById('jk-ai-pocket')?.remove();D.getElementById('jk-pocket-style')?.remove();
+  let style=D.getElementById('jk-ai-style');if(!style){style=D.createElement('style');style.id='jk-ai-style';D.head.appendChild(style);}
+  style.textContent=`
+  #jk-ai-launch {position:fixed;right:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:999990;
+    display:flex;align-items:center;justify-content:center;width:88px!important;height:88px!important;min-height:88px!important;
+    padding:6px!important;border:3px solid #8B5CF6!important;border-radius:50%!important;box-sizing:border-box;
+    background:#F5F3FF!important;box-shadow:0 6px 18px #4C1D9533;cursor:pointer;}
+  #jk-ai-launch img {width:70px;height:70px;object-fit:contain;pointer-events:none;}
+  #jk-ai-launch::before,#jk-ai-launch::after {content:none!important;}
+  #jk-ai-launch:focus-visible {outline:3px solid #C4B5FD;outline-offset:4px;}
+  #jk-ai-panel {position:fixed;right:12px;bottom:96px;z-index:999995;width:min(440px,calc(100vw - 24px));max-height:72vh;display:flex;flex-direction:column;background:#8B5CF6;border-radius:24px;padding:7px;box-shadow:0 18px 44px #4C1D9544;font-family:Pretendard,system-ui,sans-serif;}
+  #jk-ai-panel .in {background:#F5F3FF;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+  #jk-ai-panel .hd {background:#6D28D9;color:#fff;padding:12px;font-weight:900;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  #jk-ai-panel .hd button {margin-left:auto;background:#FFFFFF22;color:#fff;border:0;border-radius:10px;padding:6px 10px;cursor:pointer;}
+  #jk-ai-panel .bd {padding:12px;overflow:auto;min-height:120px;}
+  #jk-ai-panel .tip {font-size:.88rem;color:#4C1D95;line-height:1.6;}
+  #jk-ai-panel .q,#jk-ai-panel .a {border-radius:12px;padding:10px 12px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;}
+  #jk-ai-panel .q {background:#E9D5FF;}#jk-ai-panel .a {background:#fff;line-height:1.6;}
+  #jk-ai-panel .ft {display:flex;gap:8px;padding:12px;border-top:1px solid #DDD6FE;}
+  #jk-ai-panel .ft input {flex:1;min-width:0;font:inherit;padding:10px;border:2px solid #C4B5FD;border-radius:12px;}
+  #jk-ai-panel .ft button {background:#6D28D9;color:#fff;border:0;border-radius:12px;padding:0 14px;font-weight:800;cursor:pointer;}
+  #jk-ai-panel .ft button:disabled {opacity:.5;}
+  @media(max-width:600px){#jk-ai-panel {bottom:12px;}}
+  `;
+  let launch=D.getElementById('jk-ai-launch');
+  if(!launch){launch=D.createElement('button');launch.id='jk-ai-launch';D.body.appendChild(launch);}
+  launch.dataset.owner=marketToken;launch.type='button';launch.title=AI.wait?'깡지가 답변을 준비하고 있어요':'깡지 도우미 열기';
+  launch.setAttribute('aria-label','깡지 도우미 열기');
+  launch.innerHTML='<img src="__AIBTNIMG__" alt="깡지 도우미">';
+  launch.onclick=()=>{P.__jkAiOpen=true;aiFloat();};
+  const can=!AI.wait;
   let panel = D.getElementById('jk-ai-panel');
   if (!P.__jkAiOpen) { if (panel) panel.remove(); launch.style.display = ''; return; }
   launch.style.display = 'none';
-  if (!panel) { panel = D.createElement('div'); panel.id = 'jk-ai-panel'; D.body.appendChild(panel); }
+  if (!panel) { panel = D.createElement('div'); panel.id = 'jk-ai-panel'; panel.dataset.owner=marketToken; D.body.appendChild(panel); }
   const qa = AI.answers.map(x => `<div class="q">🙋 ${esc(x.q)}</div><div class="a">🤖 ${esc(x.a)}</div>`).join('');
   panel.innerHTML = `<div class="in"><div class="hd">🤖 AI 탐정<button type="button" data-pocket>🎒 넣기</button><button type="button" data-x>닫기 ✕</button></div>
    <div class="bd"><div class="tip">정해진 힌트 대신, <b>내가 진짜 궁금한 것</b>을 물어보세요. 예: “운동화왕은 왜 전화가 아니에요?”, “다음에 어떤 단서를 쓰면 좋을까요?” AI는 정답을 바로 알려 주지 않고 생각할 방향을 알려 줘요. 이름·전화번호 같은 개인정보는 적지 마세요.</div>
@@ -467,7 +464,7 @@ function aiFloat(){
   input.oninput = () => { G.aiDraft = input.value; };
   input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); send.click(); } };
   send.onclick = () => { G.aiDraft = input.value; ask(); };
-  panel.querySelector('[data-pocket]').onclick=()=>{P.__jkAiPocket=true;P.__jkAiOpen=false;aiFloat();};
+  panel.querySelector('[data-pocket]').onclick=()=>{P.__jkAiOpen=false;aiFloat();};
   panel.querySelector('[data-x]').onclick = () => { P.__jkAiOpen = false; aiFloat(); };
   const bd = panel.querySelector('.bd'); bd.scrollTop = bd.scrollHeight;
   if (can) input.focus({preventScroll: true});
@@ -695,3 +692,4 @@ dd.show_hall_note(st.session_state.get("memo_hall"))
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
     st.markdown("- 같은 익명 판매자 이름표로 자료를 연결하고, 같은 거래의 시간 순서와 조건 변경을 비교해요.\n- 연결한 단서를 추리 표의 제약 조건으로 바꿔 가능한 조합을 줄여요.\n- AI 힌트는 현재 확보한 단서와 표를 바탕으로 비교할 지점을 안내해요.")
+

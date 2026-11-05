@@ -24,7 +24,7 @@ GUIDES = {
  "13": ("통계청", "게임별 통계와 명예의 전당을 살펴봐요. 저장·갱신 상태는 화면의 안내를 확인해요."),
  "14": ("가짜 안내서 감별소", "① 안내서 조사에서 도구로 기록을 모으고, ② 판단하기에서 판단·이유·증거·행동을 제출해요. 판단 화면에서도 안내서와 기록을 다시 펼칠 수 있어요."),
 }
-PHOTO_GUIDES = {'photo-source': ('같은 사진, 다른 이야기 · 사진 준비', '카메라로 한 장을 촬영하거나 깡지 예시를 선택해요. 사진을 준비한 뒤 범위와 제목을 바꿔 봐요.'), 'photo-edit': ('같은 사진, 다른 이야기 · 편집', '원본에서 보이는 상황을 적고, 확대·가로·세로 위치로 범위를 바꿔요. 다른 인상을 주는 제목을 적은 뒤 근거 확인으로 가요.'), 'photo-check': ('같은 사진, 다른 이야기 · 근거 확인', '깡지 예시 원본과 잘린 사진을 비교해요. 직접 보이는 행동과 사진만으로 알 수 없는 이유·마음을 구분한 뒤, 내가 만든 편집본에서 고칠 부분을 선택해요.'), 'photo-repair': ('같은 사진, 다른 이야기 · 고쳐 쓰기', '선택한 문제에 맞게 사진 범위를 넓히거나 제목을 실제로 고쳐요. 빠진 맥락과 고친 점을 적고 원본 비교 확인란을 체크해요. 화면의 안내가 남으면 그 조건을 확인해요.'), 'photo-done': ('같은 사진, 다른 이야기 · 전후 비교', '수정 전과 후의 사진·제목을 비교해요. 공유 전에는 원본 전체와 촬영 날짜·장소, 제목의 근거를 확인해요. 다시 고치거나 게임 안내로 돌아갈 수 있어요.')}
+PHOTO_GUIDES = {'photo-source': ('같은 사진, 다른 이야기 · 사진 준비', '카메라로 한 장을 촬영하거나 깡지 예시를 선택해요. 사진을 준비한 뒤 범위와 제목을 바꿔 봐요.'), 'photo-edit': ('같은 사진, 다른 이야기 · 편집', '원본에서 보이는 상황을 적고, 확대·가로·세로 위치로 범위를 바꿔요. 다른 인상을 주는 제목을 적은 뒤 근거 확인으로 가요.'), 'photo-check': ('같은 사진, 다른 이야기 · 근거 확인', '현재 선택한 원본과 게시물을 나란히 비교해요. 깡지 예시를 고른 경우에만 사실·추측 문제를 풀어요. 범위·제목을 고치거나 유지할 판단을 선택해요. 막히면 고칠 부분을 못 찾겠어요 버튼으로 비교 요령을 봐요.'), 'photo-repair': ('같은 사진, 다른 이야기 · 수정·AI 평가', '사진 범위와 제목을 필요한 만큼 고치고 찾은 문제와 수정 이유를 적어요. AI 전송 동의 후 평가 버튼을 누르면 사진과 설명을 Gemini로 보내 평가해요. 오류나 보완 안내는 해당 항목 옆에 나와요. 연결 실패는 통과로 처리하지 않아요.'), 'photo-done': ('같은 사진, 다른 이야기 · 비교 리포트', '수정 전후 사진·제목, 내가 찾은 문제와 고친 방법, AI 피드백을 함께 확인해요. AI는 사진과 설명의 근거를 평가하며 실제 사건의 진위를 인증하지 않아요. 다시 고쳐 보기로 돌아갈 수 있어요.')}
 GUIDES.update(PHOTO_GUIDES)
 MAX_QUESTIONS = 5
 
@@ -95,7 +95,7 @@ def show_helper(page="home"):
     if page == "10":
         # 다른 페이지에서 남아 있던 깡지 도우미를 지워요(AI 탐정과 깡지가 두 개 보이던 문제).
         import streamlit.components.v1 as components
-        components.html("<script>try{const D=parent.document;D.getElementById('dotori-helper')?.remove();}catch(e){}</script>", height=0)
+        components.html("<script>try{const D=parent.document;D.__dotoriHelperOwner=null;D.querySelectorAll('#dotori-helper').forEach(n=>n.remove());}catch(e){}</script>", height=0)
         return
     page = page if page in GUIDES else "home"
     all_states = st.session_state.setdefault("dotori_helper_v1", {})
@@ -126,3 +126,4 @@ def show_helper(page="home"):
     state["used"] += int(charged)
     state["answers"] = (state["answers"] + [{"q": question, "a": reply, "activity": activity if active_page in PHOTO_GUIDES else ""}])[-20:]
     st.rerun(scope="fragment")
+

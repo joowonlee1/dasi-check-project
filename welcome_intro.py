@@ -10,18 +10,20 @@ HELP = "welcome_intro_help_pending_v1"
 
 
 def _enter(mode):
-    st.session_state[SEEN] = True
-    if mode == "help":
-        st.session_state[HELP] = True
-    elif mode == "guest":
-        st.session_state["guest"] = True
-        st.session_state["guest_go_home"] = True
-        # 비회원 선택 시 이전 로그인 정보를 자동 복원하지 않습니다.
-        # 저장된 토큰이나 기존 계정은 삭제하지 않습니다.
-        from login_resume import PREFIX
-        st.session_state[PREFIX + "ready"] = True
+    if mode in ("new", "back"):
+        st.session_state["welcome_form_mode"] = mode
+        st.session_state["login_mode_welcome"] = mode
+        st.session_state["welcome_auth_pending"] = True
     else:
-        st.session_state["login_mode_gate"] = mode
+        st.session_state[SEEN] = True
+        if mode == "help":
+            st.session_state[HELP] = True
+            st.session_state["welcome_help_access"] = True
+        elif mode == "guest":
+            st.session_state["guest"] = True
+            st.session_state["guest_go_home"] = True
+            from login_resume import PREFIX
+            st.session_state[PREFIX + "ready"] = True
     st.rerun()
 
 
@@ -112,50 +114,37 @@ def _cards(items):
 
 
 def show_intro_if_needed():
-    if (st.session_state.get(SEEN) or dd.citizen()
-            or st.session_state.get("guest") or st.session_state.get("admin_open")):
+    if dd.citizen() or st.session_state.get("admin_open"):
+        if st.session_state.pop("welcome_auth_pending", False):
+            st.session_state[SEEN] = True
+            st.session_state["guest_go_home"] = True
+        return
+    if st.session_state.get("guest") or st.session_state.get("welcome_help_access"):
         return
     st.markdown('<style>' + CSS + '</style>', unsafe_allow_html=True)
+    st.markdown("""<style>
+    .pi-avatar {flex:0 0 180px;}.pi-avatar .pi-large {width:176px;height:196px;object-fit:contain;display:block;margin:auto;}
+    .pi-find {display:flex;align-items:center;gap:14px;background:#F1EAFE;border:1px solid #DDD0F5;
+      border-radius:16px;padding:12px 16px;margin:12px 0;color:#5B21B6;line-height:1.7;}
+    .pi-find .pi-orbit {width:66px;height:66px;flex:0 0 66px;padding:5px;margin:0;}
+    .pi-find p {margin:0!important;}
+    .st-key-login_choices_welcome {display:none!important;}
+    [data-testid="stForm"] {border:1px solid #DDD0F5;border-radius:16px;background:#fff;padding:16px;}
+    @media(max-width:640px){.pi-avatar{flex:auto;}.pi-avatar .pi-large{width:144px;height:158px;}}
+    </style>""", unsafe_allow_html=True)
     if st.button("🚨 실제 피해가 의심되나요? 대처 안내 바로 보기", key="intro_help", width="stretch"):
         _enter("help")
+    avatar = _avatar()
+    large = avatar.replace('<img ', '<img class="pi-large" ', 1)
     st.markdown(
-        '<section class="pi-hero" aria-label="깡지 도우미의 앱 소개">'
-        f'<div class="pi-avatar"><div class="pi-orbit">{_avatar()}</div><small>너의 안내 도우미 · 깡지</small></div>'
-        '<div class="pi-speech"><div class="pi-eyebrow">🌰 도토리시에 온 걸 환영해!</div>'
-        '<h1>안녕! 나는 깡지야.</h1><p>수상한 연락이 와도 당황하지 않도록,<br>'
-        '<b>멈추고 · 확인하고 · 판단하는 연습</b>을 함께 해보자!</p></div></section>'
-        '<div class="pi-steps"><div class="pi-step"><span class="pi-icon">📱</span><strong>상황 체험</strong><span>수상한 연락에 대응하기</span></div>'
-        '<div class="pi-step"><span class="pi-icon">🔍</span><strong>단서 찾기</strong><span>문자와 URL 살펴보기</span></div>'
-        '<div class="pi-step"><span class="pi-icon">💬</span><strong>대화 연습</strong><span>거절하고 따로 확인하기</span></div></div>'
-        '<div class="pi-tip">🤖 들어간 뒤 도움이 필요하면 <b>오른쪽 아래 보라색 깡지 얼굴</b>을 눌러줘!</div>',
+        '<section class="pi-hero" aria-label="깡지의 짧은 앱 소개">'
+        f'<div class="pi-avatar">{large}</div><div class="pi-speech">'
+        '<h1>안녕! 나는 깡지야!</h1><p><b>잠깐!</b>은 수상한 전화와 문자에<br>'
+        '<b>멈추고 · 확인하고 · 판단하는 방법</b>을 연습하는 앱이야.</p></div></section>'
+        f'<div class="pi-find"><div class="pi-orbit">{avatar}</div><p>도움이 필요하면 '
+        '<b>오른쪽 아래의 이 깡지 얼굴</b>을 눌러줘.<br>사용법과 힌트를 알려줄게!</p></div>',
         unsafe_allow_html=True,
     )
-    activity, helper, settings = st.tabs(["🎮 시작·기록", "🤖 깡지 사용법", "🔊 소리·화면"])
-    with activity:
-        st.markdown(_cards([
-            ("🗺️ 어디부터 시작할까?", "지도나 <b>왼쪽 메뉴</b>에서 장소를 골라줘.<br>처음에는 <b>할머니 폰 지키기</b>를 추천해!"),
-            ("🎮 어떤 활동이 있을까?", "대화·추리·퍼즐로 대응을 연습해.<br>문자 필터, URL 확인, 개념·통계도 있어."),
-            ("🪪 시민증은 선택이야", "<b>닉네임 + 비밀 숫자 6자리</b>로 만들어.<br>다음에도 같은 정보로 로그인할 수 있어."),
-            ("🏅 기록과 도장을 모아봐", "시민증으로 게임 기록과 도장을 저장해.<br>통계·명예의 전당은 <b>도토리시 통계청</b>에서!"),
-        ]) + '<div class="pi-note">가입 없이도 체험할 수 있어. 비회원 도장·진행은 새로고침하거나 창을 닫으면 사라질 수 있어. '
-            '시민증도 게임 중간 화면을 모두 저장하는 건 아니야. 공개될 수 있는 닉네임에는 실제 이름·학교를 쓰지 마.</div>', unsafe_allow_html=True)
-    with helper:
-        st.markdown(_cards([
-            ("👆 얼굴을 누르면 열려", "<b>오른쪽 아래 보라색 원 안의 깡지</b>를 찾아줘.<br>휴대폰 모양 버튼과는 다른 버튼이야."),
-            ("💡 막히면 버튼으로 물어봐", "<b>사용법 · 이 화면 설명 · 힌트 줘</b><br>정답 대신 조작 방법과 살펴볼 단서를 안내해."),
-            ("💬 직접 질문해도 좋아", "“이 게임은 어떻게 시작해?”처럼 적고<br><b>물어보기</b>를 눌러줘."),
-            ("↔ 크기 조절·닫기", "<b>가− / 가+</b>로 대화창 크기를 조절해.<br><b>닫기 ✕ · 🎒 넣기</b>로 접고, 얼굴로 다시 열어."),
-        ]) + '<div class="pi-note">일부 활동은 전용 도우미를 사용해. AI 답변은 틀릴 수 있어. AI 질문을 보내면 질문과 현재 보이는 게임 글이 '
-            '외부 AI 서비스로 전송돼. 실제 개인정보·비밀번호·인증번호는 입력하지 마.</div>', unsafe_allow_html=True)
-    with settings:
-        st.markdown(_cards([
-            ("☰ 설정은 왼쪽 메뉴에!", "입장 후 <b>왼쪽 사이드바</b>에서 설정해.<br>안 보이면 <b>왼쪽 위 펼치기 화살표</b>를 눌러줘."),
-            ("🔊 효과음 켜기·끄기", "<b>🔊 효과음</b> 스위치로 켜거나 꺼.<br><b>🔔 소리 들어보기</b>로 소리를 확인해."),
-            ("🎚️ 음량은 슬라이더로", "<b>🎚️ 음량</b>을 왼쪽으로 밀면 작아지고<br>오른쪽으로 밀면 커져. <b>0은 무음</b>이야."),
-            ("🔠 글씨를 더 크게", "<b>🔠 큰 글씨로 보기</b>를 켜줘.<br>깡지 대화창 크기는 안쪽의 <b>가− / 가+</b>로!"),
-        ]) + '<div class="pi-note">설정이 안 보이면 사이드바 안을 아래로 스크롤해봐. 다른 활동은 왼쪽 메뉴에서 골라줘. '
-            '소리가 안 나면 기기 음소거·미디어 음량도 확인해. 통화·음성 재생은 효과음과 다를 수 있으니 해당 활동의 재생 안내를 확인해줘.</div>', unsafe_allow_html=True)
-    st.markdown('<div class="pi-tip">🌰 <b>처음이라면 비회원으로 가볍게 시작해봐!</b> 시민증은 기록을 남기고 싶을 때 만들면 돼.</div>', unsafe_allow_html=True)
     with st.container(key="intro_actions"):
         guest, new, back = st.columns(3)
         if guest.button("👀 로그인 없이 둘러보기", key="intro_guest", width="stretch"):
@@ -164,5 +153,12 @@ def show_intro_if_needed():
             _enter("new")
         if back.button("🔑 다시 들어오기", key="intro_back", width="stretch"):
             _enter("back")
-    st.caption("교육용 가상 상황이야. 실제 개인정보·인증번호는 입력하지 마. 실제 피해가 의심되면 맨 위 대처 안내를 먼저 확인해줘.")
+    if st.session_state.get("welcome_form_mode") in ("new", "back"):
+        # 기존 폼을 재사용하여 비밀 숫자 검증·인증·도장 병합 처리를 보존합니다.
+        st.caption("닉네임은 공개될 수 있어요. 실제 이름·학교와 다른 곳의 비밀번호는 쓰지 마세요.")
+        dd.show_login_forms("welcome")
+    else:
+        st.caption("가입 없이 시작할 수 있어. 시민증은 기록을 저장하고 싶을 때 만들면 돼.")
+    from admin_tools import show_admin_box
+    show_admin_box()
     st.stop()

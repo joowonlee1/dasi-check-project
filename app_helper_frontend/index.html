@@ -6,7 +6,12 @@ const SIZES=[{w:320,h:45,f:14},{w:380,h:55,f:15},{w:460,h:68,f:17},{w:560,h:78,f
 let size=(()=>{try{const v=parent.__dhSize;return v===undefined?2:+v}catch(e){return 2}})();
 let root,doc;try{doc=parent.document;}catch(e){doc=document;}
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function remove(){if(root)root.remove();}
+const owner = {};
+doc.__dotoriHelperOwner = owner;
+doc.__jkMarketOwner = null;
+['jk-ai-launch','jk-ai-panel','jk-ai-pocket'].forEach(id => doc.getElementById(id)?.remove());
+doc.querySelectorAll('#dotori-helper').forEach(node => node.remove());
+function remove(){disposeLayout();if(doc.__dotoriHelperOwner===owner&&root)root.remove();}
 function activity(){
  if(args.page!=='06')return '';
  for(const frame of doc.querySelectorAll('iframe')){try{const d=frame.contentDocument,lab=d?.getElementById('news-lab');if(lab&&lab.getClientRects().length){for(const stage of ['source','edit','check','repair','done']){const section=d.getElementById('nl-'+stage);if(section&&!section.hidden)return 'photo-'+stage;}}}catch(e){}}
@@ -27,7 +32,92 @@ function ask(q){
  pending=true;const visible=snapshot();render();
  send('streamlit:setComponentValue',{dataType:'json',value:{id:Date.now()+'-'+Math.random(),page:args.page,activity:activity(),question:q,visible}});
 }
+// 실제 버튼 영역을 기준으로 화면 안에 배치합니다.
+function dhOverlap(a,b,gap=0){return a.left<b.right+gap&&a.right>b.left-gap&&a.top<b.bottom+gap&&a.bottom>b.top-gap;}
+function dhLauncherPosition(view,obstacles){
+ const pad=12,gap=16,left=view.left+pad,right=view.left+view.width-pad,top=view.top+pad,bottom=view.top+view.height-pad;
+ const blocks=obstacles.filter(r=>r.width>0&&r.height>0&&r.right>view.left&&r.left<view.left+view.width&&r.bottom>view.top&&r.top<view.top+view.height);
+ for(const size of [88,72,64,48,44]){
+  if(size>view.width-2*pad||size>view.height-2*pad)continue;
+  const baseline=view.top+view.height-88-size;
+  const candidates=[{x:right-size,y:baseline},...blocks.map(r=>({x:right-size,y:r.top-gap-size})),
+   {x:left,y:baseline},...blocks.map(r=>({x:left,y:r.top-gap-size})),{x:right-size,y:top},{x:left,y:top}];
+  for(const c of candidates){
+   const r={left:c.x,top:c.y,right:c.x+size,bottom:c.y+size};
+   if(r.left>=left&&r.right<=right&&r.top>=top&&r.bottom<=bottom&&!blocks.some(b=>dhOverlap(r,b,gap)))return {...c,size,visible:true};
+  }
+ }
+ return {x:left,y:top,size:44,visible:false};
+}
+let layoutObserver=null,layoutFrame=null,boxObserver=null,observedRoot=null;
+const layoutWindow=doc.defaultView||parent;
+function dhVisible(node){
+ if(!node||node.hidden||!node.getClientRects?.().length)return false;
+ const s=layoutWindow.getComputedStyle(node);return s.display!=='none'&&s.visibility!=='hidden';
+}
+function dhSet(node,key,value){if(node.style.getPropertyValue(key)!==String(value))node.style.setProperty(key,String(value),'important');}
+function positionHelper(){
+ if(doc.__dotoriHelperOwner!==owner||!root?.isConnected||!root.getBoundingClientRect||!doc.documentElement)return;
+ if(layoutWindow.ResizeObserver&&observedRoot!==root){boxObserver?.disconnect();boxObserver=new layoutWindow.ResizeObserver(scheduleLayout);boxObserver.observe(root);observedRoot=root;}
+ const vv=layoutWindow.visualViewport;
+ const view={left:vv?.offsetLeft||0,top:vv?.offsetTop||0,width:vv?.width||layoutWindow.innerWidth,height:vv?.height||layoutWindow.innerHeight};
+ if(!view.width||!view.height)return;
+ const modal=['dotori-phone-cover','jk-call','jk-bigpop'].some(id=>dhVisible(doc.getElementById(id)));
+ doc.documentElement.toggleAttribute('data-dotori-helper-open',!!open);
+ if(modal){dhSet(root,'visibility','hidden');dhSet(root,'pointer-events','none');return;}
+ dhSet(root,'visibility','visible');dhSet(root,'pointer-events','auto');
+ let x,y;
+ if(open){
+  const panel=root.querySelector('.panel');if(!panel)return;
+  const safe=parseFloat(layoutWindow.getComputedStyle(root).getPropertyValue('--dh-safe-bottom'))||0;
+  const inset=Math.max(12,safe+8);
+  dhSet(panel,'box-sizing','border-box');dhSet(panel,'width',Math.max(120,Math.min(SIZES[size].w,view.width-24))+'px');
+  dhSet(panel,'max-height',Math.max(80,view.height-inset-12)+'px');
+  const bounds=root.getBoundingClientRect();x=view.left+view.width-12-bounds.width;y=view.top+view.height-inset-bounds.height;
+ }else{
+  const obstacles=[];
+  for(const id of ['dotori-phone-box','dotori-phone-launch','dotori-phone-pocket','dotori-phone-tab']){
+   const node=doc.getElementById(id);if(!dhVisible(node))continue;
+   const rect=node.getBoundingClientRect();let box={left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom,width:rect.width,height:rect.height};
+   // 본체 밖으로 나온 캐릭터 그림과 알림 애니메이션 여유도 포함합니다.
+   if(id==='dotori-phone-launch'){
+    const pseudo=layoutWindow.getComputedStyle(node,'::before'),w=parseFloat(pseudo.width)||0,h=parseFloat(pseudo.height)||0;
+    if(pseudo.content!=='none'&&w&&h){const l=rect.left+(parseFloat(pseudo.left)||0),b=rect.bottom-(parseFloat(pseudo.bottom)||0);
+     box.left=Math.min(box.left,l);box.right=Math.max(box.right,l+w);box.top=Math.min(box.top,b-h);box.bottom=Math.max(box.bottom,b);}
+   }
+   const extra=node.classList.contains('alarm')?24:4;
+   box={left:box.left-extra,top:box.top-extra,right:box.right+extra,bottom:box.bottom+extra};box.width=box.right-box.left;box.height=box.bottom-box.top;obstacles.push(box);
+  }
+  const p=dhLauncherPosition(view,obstacles);if(!p.visible){dhSet(root,'visibility','hidden');return;}x=p.x;y=p.y;
+  const launch=root.querySelector('.tab');if(launch){for(const key of ['width','height','min-height'])dhSet(launch,key,p.size+'px');
+   const img=launch.querySelector('img');if(img){dhSet(img,'width',Math.max(26,p.size-18)+'px');dhSet(img,'height',Math.max(26,p.size-18)+'px');}}
+ }
+ dhSet(root,'left',Math.max(view.left+12,x)+'px');dhSet(root,'top',Math.max(view.top+12,y)+'px');dhSet(root,'right','auto');dhSet(root,'bottom','auto');
+}
+function scheduleLayout(){
+ if(doc.__dotoriHelperOwner!==owner){disposeLayout();return;}
+ if(layoutFrame!==null)return;
+ if(layoutWindow.requestAnimationFrame)layoutFrame=layoutWindow.requestAnimationFrame(()=>{layoutFrame=null;positionHelper();});else positionHelper();
+}
+function disposeLayout(){
+ layoutObserver?.disconnect();layoutObserver=null;
+ boxObserver?.disconnect();boxObserver=null;observedRoot=null;
+ if(layoutFrame!==null)layoutWindow.cancelAnimationFrame?.(layoutFrame);layoutFrame=null;
+ layoutWindow.removeEventListener?.('resize',scheduleLayout);layoutWindow.visualViewport?.removeEventListener('resize',scheduleLayout);layoutWindow.visualViewport?.removeEventListener('scroll',scheduleLayout);
+ doc.removeEventListener?.('dotori:phone-layout',positionHelper);
+ if(doc.__dotoriHelperOwner===owner)doc.documentElement?.removeAttribute('data-dotori-helper-open');
+}
+function observeLayout(){
+ if(!doc.documentElement)return;
+ if(layoutWindow.MutationObserver){layoutObserver=new layoutWindow.MutationObserver(records=>{
+  if(records.some(r=>!root?.contains(r.target)&&r.target.id!=='dotori-helper-style'))scheduleLayout();
+ });layoutObserver.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden']});}
+ layoutWindow.addEventListener?.('resize',scheduleLayout);layoutWindow.visualViewport?.addEventListener('resize',scheduleLayout);layoutWindow.visualViewport?.addEventListener('scroll',scheduleLayout);
+ doc.addEventListener?.('dotori:phone-layout',positionHelper);
+}
+
 function render(){
+ if(doc.__dotoriHelperOwner!==owner)return;
  {const _o=doc.getElementById('dotori-helper-style');if(_o)_o.remove();}if(!doc.getElementById('dotori-helper-style')){
   const s=doc.createElement('style');s.id='dotori-helper-style';s.textContent=`
  #dotori-helper{position:fixed;right:20px;bottom:64px;z-index:999980;font:600 16px/1.6 Pretendard Variable,Pretendard,system-ui,sans-serif;color:#293747}
@@ -41,23 +131,31 @@ function render(){
  #dotori-helper form{display:flex;gap:6px;padding:10px 12px;border-top:1px solid #DDD6FE}#dotori-helper input{min-width:0;flex:1;font:inherit;border:2px solid #C4B5FD;border-radius:10px;padding:8px;color:#293747;background:#fff}
  #dotori-helper .note{font-size:13px;color:#475569}#dotori-helper button:focus-visible{outline:3px solid #F59E0B;outline-offset:2px}
  @media(max-width:600px){#dotori-helper{right:12px;bottom:56px}#dotori-helper .dh-box .launch{font-size:19px!important;min-height:60px;padding:12px 18px 12px 78px!important}#dotori-helper .dh-box .launch img{width:62px;height:72px}#dotori-helper .tab img{width:70px;height:70px}}
+
+ #dotori-helper {--dh-safe-bottom:env(safe-area-inset-bottom,0px);}
+ #dotori-helper .panel {box-sizing:border-box;overflow-y:auto;}
+ #dotori-helper .panel .head,#dotori-helper .panel .quick,#dotori-helper .panel form {flex-shrink:0;}
+ html[data-dotori-helper-open] #dotori-phone-box,
+ html[data-dotori-helper-open] #dotori-phone-tab {visibility:hidden!important;pointer-events:none!important;}
  `;doc.head.appendChild(s);
  }
  if(!root||!root.isConnected){doc.getElementById('dotori-helper')?.remove();root=doc.createElement('div');root.id='dotori-helper';doc.body.appendChild(root);}
- root.classList.toggle('pocketed',!open&&pocket);root.style.zIndex=open?'999995':'';const av=args.avatar?'<img alt="깡지" src="'+esc(args.avatar)+'">':'🤖';
- if(!open){root.innerHTML=pocket?`<button class="launch tab" aria-label="주머니에서 깡지 도우미 꺼내기" title="깡지 도우미 꺼내기">${av}</button>`:`<div class="dh-box"><button class="launch" aria-label="깡지 도우미 열기">${av}🤖 깡지 도우미</button><button class="dh-pocket" title="주머니에 넣기">🎒 넣기 ⌄</button></div>`;
- root.querySelector('.launch').onclick=()=>{open=true;pocket=false;render();};root.querySelector('.dh-pocket')?.addEventListener('click',()=>{pocket=true;render();});return;}
+ root.classList.toggle('pocketed',!open);root.style.zIndex=open?'999995':'';const av=args.avatar?'<img alt="깡지" src="'+esc(args.avatar)+'">':'🤖';
+ if(!open){pocket=true;root.innerHTML=`<button class="launch tab" aria-label="깡지 도우미 열기" title="깡지 도우미 열기">${av}</button>`;
+ root.querySelector('.launch').onclick=()=>{open=true;pocket=false;render();};positionHelper();return;}
  root.innerHTML=`<section class="panel" aria-label="깡지 도우미" style="width:min(${SIZES[size].w}px,calc(100vw - 24px));max-height:${SIZES[size].h}vh;font-size:${SIZES[size].f}px"><div class="head">🤖 깡지 도우미<span class="dh-size"><button data-smaller ${size===0?'disabled':''} aria-label="창 작게" title="창 작게">가−</button><span class="dh-lv">${SIZES.map((_,i)=>`<i class="${i<=size?'on':''}" data-lv="${i}" title="${i+1}단계"></i>`).join('')}</span><button data-bigger ${size===SIZES.length-1?'disabled':''} aria-label="창 크게" title="창 크게">가+</button></span><button data-pocket>🎒 넣기</button><button data-close>닫기 ✕</button></div><div class="body"><div class="note">${esc(activity()?'같은 사진, 다른 이야기':(args.title||'홈'))} 안내예요. 개인정보는 입력하지 마세요. AI 질문과 현재 보이는 게임 글은 답변을 위해 전송돼요.</div>${(args.answers||[]).filter(x=>(x.activity||'')===activity()).map(x=>`<div class="q">${esc(x.q)}</div><div class="a">${esc(x.a)}</div>`).join('')}${pending?'<p>답변을 준비하고 있어요…</p>':''}</div><div class="quick"><button>사용법</button><button>이 화면 설명</button><button>힌트 줘</button></div><form><input maxlength="300" placeholder="도움이 필요한 부분을 물어보세요" aria-label="깡지에게 질문" ${pending?'disabled':''}><button ${pending?'disabled':''}>물어보기</button></form></section>`;
  root.querySelector('[data-close]').onclick=()=>{open=false;pocket=true;render();};const rs=d=>{size=Math.max(0,Math.min(SIZES.length-1,size+d));try{parent.__dhSize=size}catch(e){}render();};root.querySelector('[data-smaller]').onclick=()=>rs(-1);root.querySelectorAll('[data-lv]').forEach(x=>x.onclick=()=>rs(+x.dataset.lv-size));root.querySelector('[data-bigger]').onclick=()=>rs(1);root.querySelector('[data-pocket]').onclick=()=>{open=false;pocket=true;render();};
  root.querySelectorAll('.quick button').forEach(b=>{b.disabled=pending;b.onclick=()=>ask(b.textContent);});
  root.querySelector('form').onsubmit=e=>{e.preventDefault();ask(root.querySelector('input').value);};
- const body=root.querySelector('.body');body.scrollTop=body.scrollHeight;
+ const body=root.querySelector('.body');body.scrollTop=body.scrollHeight;positionHelper();
 }
 window.addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='streamlit:render')return;const next=e.data.args||{};if(next.page!==args.page){open=false;pending=false;}if(next.revision!==args.revision||(next.answers||[]).length!==lastCount){pending=false;}lastCount=(next.answers||[]).length;args=next;render();});
-let lastActivity='';const activityTimer=setInterval(()=>{const next=activity();if(next!==lastActivity){lastActivity=next;if(open)render();}},600);
+let lastActivity='';const activityTimer=setInterval(()=>{if(doc.__dotoriHelperOwner!==owner){clearInterval(activityTimer);disposeLayout();return;}const next=activity();if(next!==lastActivity){lastActivity=next;if(open)render();}},600);
 window.addEventListener('pagehide',()=>{clearInterval(activityTimer);remove();});
 // 페이지를 옮겨도 이 칸이 그대로 쓰이면 도우미를 지우지 않아요(전에는 처음 페이지를 옮길 때 도우미가 사라졌어요). 칸이 없어질 때만 지워요.
+observeLayout();
 send('streamlit:componentReady',{apiVersion:1});send('streamlit:setFrameHeight',{height:0});
 </script></body></html>
+
 
 

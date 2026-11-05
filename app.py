@@ -18,11 +18,12 @@ st.set_page_config(
 )
 
 
-from welcome_intro import show_intro_if_needed
-show_intro_if_needed()
-
+# 새로고침에서는 기존 인증을 먼저 복원한 뒤 소개 화면 여부를 결정합니다.
 from login_resume import bootstrap as restore_login
 restore_login()
+
+from welcome_intro import show_intro_if_needed
+show_intro_if_needed()
 
 
 # ─────────────────────────────────────
@@ -1061,37 +1062,10 @@ if not dd.citizen() and not st.session_state.get("guest") and not st.session_sta
 show_helper(_helper_page)
 
 def show_welcome_gate():
-    st.markdown(
-        """<style>
-        .gate {text-align:center;background:linear-gradient(135deg,#FFFBE6,#EAF6F0);border:1.5px solid #E6DDB0;
-          border-radius:24px;padding:18px 16px 12px;margin:0 0 10px;}
-        .gate b {display:block;font-size:1.7rem;font-weight:900;color:#20483F;margin:4px 0;}
-        .gate span {color:#52616B;font-weight:600;word-break:keep-all;}
-        .st-key-choose_guest_gate button {background:#0F766E !important;border:2px solid #0F766E !important;border-radius:14px !important;
-          color:#FFFFFF !important;min-height:52px;box-shadow:0 3px 10px rgba(32,72,63,.12);}
-        .st-key-choose_guest_gate button p {font-size:1.12rem !important;font-weight:800 !important;}
-        </style>""",
-        unsafe_allow_html=True,
-    )
-    with st.container(key="emergency_link"):  # 홈의 빨간 긴급 안내 버튼과 같은 모양
-        st.page_link("pages/7_피해_대처_안내.py", label="실제 피해가 의심되나요? 로그인 없이 대처 안내 바로 보기", icon="🚨")
-    try:
-        photo = (f'<img src="data:image/png;base64,{id_photo("ggangji_cream.png")}" alt="깡지 증명사진" '
-                 'style="width:96px;height:85px;object-fit:cover;border:4px solid #fff;border-radius:6px;'
-                 'box-shadow:0 2px 8px rgba(0,0,0,.18);">')
-    except Exception:
-        photo = '<div style="font-size:56px;">🐿️</div>'
-    st.markdown(
-        f'<div class="gate">{photo}<b>✋ 잠깐! 도토리시에 오신 걸 환영해요</b>'
-        '<span>가상 전화와 문자에서 멈추고, 확인하고, 판단하는 연습을 해요.<br>'
-        '처음이라면 로그인 없이 둘러보세요. 시민증은 기록을 남기고 싶을 때 만들면 돼요.</span></div>',
-        unsafe_allow_html=True,
-    )
-    from admin_tools import show_admin_box
-    show_admin_box()
-    dd.show_login_forms("gate")
-    st.info("👀 **닉네임은 명예의 전당에서 다른 사람도 볼 수 있어요.** 실제 이름이나 학교를 넣으면 누구나 보게 되니 알고 정해 주세요. "
-            "비밀 숫자는 다른 곳에서 쓰는 비밀번호나 생일 말고 새로 정해 주세요.")
+    # 로그아웃 후나 비로그인 접근도 중복 환영 카드 없이 같은 첫 화면으로 안내합니다.
+    st.session_state.pop("welcome_help_access", None)
+    from welcome_intro import show_intro_if_needed
+    show_intro_if_needed()
 
 
 # 방탈출 게임이 진행 중(탈출 전·시간 안)이면 방탈출 페이지 어느 화면에서든 '나의 폰'을 남겨 두고, 아니면 없애요.
@@ -1128,12 +1102,7 @@ if len(history) >= 2:
 st.session_state.pop("login_return", None)
    
 
-# 방탈출(03)은 화면 오른쪽 아래에 '나의 폰'이 있어서, 깡지 도우미를 그 위 칸에 고정해 겹치지 않게 해요.
-# (나의 폰 상자와 주머니 탭은 맨 아래 칸, 깡지 도우미 상자와 탭은 그 위 칸)
-if current and current[0] == "03":
-    st.markdown("<style>#dotori-helper,#dotori-helper.pocketed{bottom:200px!important}"
-                "@media (max-width:600px){#dotori-helper,#dotori-helper.pocketed{bottom:176px!important}}</style>",
-                unsafe_allow_html=True)
+# 방탈출 폰과 깡지의 배치는 도우미 프런트엔드가 실제 영역을 측정해 조절합니다.
 
 if current:
     with intro(current[0], route=True):
@@ -1289,5 +1258,6 @@ st.markdown(
     """),
     unsafe_allow_html=True,
 )
+
 
 

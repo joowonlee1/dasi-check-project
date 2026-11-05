@@ -440,6 +440,8 @@ if event and event.get("type") == "clear" and event.get("stage") in (0, 1, 2):
     s, stars, hints = int(event["stage"]), int(event.get("stars", 0)), int(event.get("hints", 0))
     dd.record("nono", {f"s{s}_clear": 1, f"s{s}_nohint": 1 if hints == 0 else 0, f"s{s}_star3": 1 if stars == 3 else 0})
     dd.stamp("12")
+    if s == 2:
+        dd.achieve("qr_scan")  # 마지막 QR 조사의 결론·근거 제출 통과
     if hints == 0:
         dd.achieve("nono_nohint")  # 업적: 힌트 없이 복원
 elif event and event.get("type") == "final":
@@ -452,9 +454,7 @@ elif event and event.get("type") == "final":
     )
 dd.show_hall_note(st.session_state.get("nono_hall"))
 
-# 🔲 연습용 QR 퀴즈: QR 속 주소를 읽어 목적지만 보여 줘요(접속하지 않아요).
-from qr_scan_ui import show_qr_scanner
-show_qr_scanner()
+# QR 추가 연습은 제거했습니다. QR 탐정 업적은 마지막 QR 근거 판단 완료로 연결합니다.
 
 
 with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
@@ -463,3 +463,4 @@ with st.expander("🧠 이 페이지 속 알고리즘 (정보 과목 연계)"):
         "- **런 길이 부호화(RLE)**: 노노그램 단서는 같은 색이 이어지는 길이를 적는 압축 방식에서 나왔어요. 마지막 화면에서 그림마다 얼마나 줄어드는지 비교해요.\n"
         "- **제약 전파**: 가로줄에서 확정한 칸이 세로줄의 실마리가 되는 과정을 반복하는 방식이에요. 세 퍼즐 모두 이 방법만으로 끝까지 풀리고 답이 하나뿐인지 프로그램으로 확인했어요."
     )
+

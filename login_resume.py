@@ -3,6 +3,7 @@ import base64
 import hashlib
 import hmac
 import json
+import secrets
 import time
 import uuid
 from pathlib import Path
@@ -14,6 +15,12 @@ from cryptography.fernet import Fernet, InvalidToken
 PREFIX="_login_resume_"
 _component=components.declare_component("dotori_login_resume",path=str(Path(__file__).parent/"login_resume_frontend"))
 
+@st.cache_resource(show_spinner=False)
+def _runtime_seed():
+    """별도 서버 키가 없어도 같은 앱 프로세스의 새로고침은 유지합니다."""
+    return secrets.token_urlsafe(48)
+
+
 def _cipher():
     try:
         seed=str(st.secrets.get("login_persistence",{}).get("key",""))
@@ -22,7 +29,7 @@ def _cipher():
     except (KeyError,FileNotFoundError):
         seed=""
     if len(seed)<32:
-        raise ValueError("로그인 유지용 서버 키가 없습니다.")
+        seed = _runtime_seed()
     return Fernet(base64.urlsafe_b64encode(hashlib.sha256(("dotori-login-v1:"+seed).encode()).digest()))
 
 def _admin_version():
@@ -106,7 +113,12 @@ def restore(token):
         return False
 
 def bootstrap():
-    """app.py의 set_page_config 직후, 로그인 여부로 분기하기 전에 호출."""
+    """소개 화면/로그인 분기 전에 호출합니다. 비밀 숫자는 브라우저에 저장하지 않습니다."""
+    if not st.session_state.get(PREFIX+"ready"):
+        st.markdown("""<style>
+        [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarNav"], [data-testid="stExpandSidebarButton"] {display:none!important;}
+        </style>""", unsafe_allow_html=True)
     op=st.session_state.get(PREFIX+"op",{"id":"read","token":None})
     result=_component(operation=op,key="login_resume_bridge",default=None)
     if op["id"]!="read":
@@ -141,3 +153,4 @@ def bootstrap():
             st.session_state[PREFIX+"warning"]="이 브라우저에서는 로그인 유지 저장소를 사용할 수 없어요."
     warning=st.session_state.get(PREFIX+"warning")
     if warning:st.warning(warning)
+
