@@ -135,6 +135,10 @@ def show_intro_if_needed():
       border-radius:10px;padding:7px 14px;font-size:1.15rem;font-weight:800;line-height:1.4;flex-wrap:wrap;}
     .pi-find-arrow {font-size:1.5rem;line-height:1;}
     .pi-find p {margin:8px 0 0!important;color:#5B4675!important;font-size:1rem!important;}
+    .pi-settings {display:flex;flex-direction:column;gap:4px;margin:0 0 14px;padding:12px 16px;
+      background:#F5F0FF;border:1px solid #DDD0F5;border-radius:14px;color:#5B3B85;line-height:1.6;}
+    .pi-settings> b {font-size:.95rem;}.pi-settings span {font-size:.94rem;}
+    .pi-settings small {font-size:.82rem;color:#756487;}
     .st-key-login_choices_welcome {display:none!important;}
     [data-testid="stForm"] {border:1px solid #DDD0F5;border-radius:16px;background:#fff;padding:16px;}
     @media(max-width:640px){.pi-avatar{flex:auto;}.pi-avatar .pi-large{width:144px;height:158px;}}
@@ -151,7 +155,11 @@ def show_intro_if_needed():
         f'<aside class="pi-find" aria-label="깡지 도우미 위치 안내"><div class="pi-orbit">{avatar}</div>'
         '<div class="pi-find-copy"><h2>도움이 필요해? 깡지를 눌러봐!</h2>'
         '<div class="pi-find-location">화면 오른쪽 아래에 있어 <span class="pi-find-arrow" aria-hidden="true">↘</span></div>'
-        '<p>앱에 들어간 뒤, 막히면 사용법과 힌트를 물어봐!</p></div></aside>',
+        '<p>앱에 들어간 뒤, 막히면 사용법과 힌트를 물어봐!</p></div></aside>'
+        '<div class="pi-settings" aria-label="효과음과 글씨 크기 설정 안내">'
+        '<b>앱에 들어가면 왼쪽 사이드바에서 설정할 수 있어!</b>'
+        '<span>🔊 <b>효과음</b> 켜기·끄기와 <b>음량</b> 조절 · 🔠 <b>큰 글씨로 보기</b></span>'
+        '<small>메뉴가 안 보이면 왼쪽 위 펼치기 버튼을 눌러줘.</small></div>',
         unsafe_allow_html=True,
     )
     with st.container(key="intro_actions"):
@@ -171,4 +179,5 @@ def show_intro_if_needed():
     from admin_tools import show_admin_box
     show_admin_box()
     st.stop()
+
 
