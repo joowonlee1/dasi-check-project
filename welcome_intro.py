@@ -124,10 +124,17 @@ def show_intro_if_needed():
     st.markdown('<style>' + CSS + '</style>', unsafe_allow_html=True)
     st.markdown("""<style>
     .pi-avatar {flex:0 0 180px;}.pi-avatar .pi-large {width:176px;height:196px;object-fit:contain;display:block;margin:auto;}
-    .pi-find {display:flex;align-items:center;gap:14px;background:#F1EAFE;border:1px solid #DDD0F5;
-      border-radius:16px;padding:12px 16px;margin:12px 0;color:#5B21B6;line-height:1.7;}
-    .pi-find .pi-orbit {width:66px;height:66px;flex:0 0 66px;padding:5px;margin:0;}
-    .pi-find p {margin:0!important;}
+    .pi-find {display:flex;align-items:center;gap:20px;background:linear-gradient(120deg,#EDE2FF,#F7F2FF);
+      border:2px solid #A78BFA;border-radius:20px;padding:18px 22px;margin:14px 0 18px;
+      color:#4C1D95;line-height:1.6;box-shadow:0 6px 20px #7C3AED14;box-sizing:border-box;}
+    .pi-find .pi-orbit {width:92px;height:92px;flex:0 0 92px;padding:7px;margin:0;background:#fff;}
+    .pi-find-copy {min-width:0;}
+    .pi-find h2 {font-size:1.35rem!important;font-weight:800!important;color:#4C1D95!important;
+      line-height:1.4!important;margin:0 0 8px!important;padding:0!important;word-break:keep-all;}
+    .pi-find-location {display:inline-flex;align-items:center;gap:10px;background:#6D28D9;color:#fff!important;
+      border-radius:10px;padding:7px 14px;font-size:1.15rem;font-weight:800;line-height:1.4;flex-wrap:wrap;}
+    .pi-find-arrow {font-size:1.5rem;line-height:1;}
+    .pi-find p {margin:8px 0 0!important;color:#5B4675!important;font-size:1rem!important;}
     .st-key-login_choices_welcome {display:none!important;}
     [data-testid="stForm"] {border:1px solid #DDD0F5;border-radius:16px;background:#fff;padding:16px;}
     @media(max-width:640px){.pi-avatar{flex:auto;}.pi-avatar .pi-large{width:144px;height:158px;}}
@@ -141,8 +148,10 @@ def show_intro_if_needed():
         f'<div class="pi-avatar">{large}</div><div class="pi-speech">'
         '<h1>안녕! 나는 깡지야!</h1><p><b>잠깐!</b>은 수상한 전화와 문자에<br>'
         '<b>멈추고 · 확인하고 · 판단하는 방법</b>을 연습하는 앱이야.</p></div></section>'
-        f'<div class="pi-find"><div class="pi-orbit">{avatar}</div><p>도움이 필요하면 '
-        '<b>오른쪽 아래의 이 깡지 얼굴</b>을 눌러줘.<br>사용법과 힌트를 알려줄게!</p></div>',
+        f'<aside class="pi-find" aria-label="깡지 도우미 위치 안내"><div class="pi-orbit">{avatar}</div>'
+        '<div class="pi-find-copy"><h2>도움이 필요해? 깡지를 눌러봐!</h2>'
+        '<div class="pi-find-location">화면 오른쪽 아래에 있어 <span class="pi-find-arrow" aria-hidden="true">↘</span></div>'
+        '<p>앱에 들어간 뒤, 막히면 사용법과 힌트를 물어봐!</p></div></aside>',
         unsafe_allow_html=True,
     )
     with st.container(key="intro_actions"):
@@ -162,3 +171,4 @@ def show_intro_if_needed():
     from admin_tools import show_admin_box
     show_admin_box()
     st.stop()
+
