@@ -80,6 +80,49 @@ def _normalise(data):
     return result
 
 
+def _read_response(response):
+    """SDK의 구조화 응답을 우선 읽고, 텍스트 응답도 같은 기준으로 검증합니다."""
+    candidates = getattr(response, "candidates", None) or []
+    if candidates:
+        finish = str(getattr(candidates[0], "finish_reason", "") or "").upper()
+        if any(reason in finish for reason in ("MAX_TOKENS", "SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT")):
+            raise ValueError("response_incomplete")
+    parsed = getattr(response, "parsed", None)
+    if hasattr(parsed, "model_dump"):
+        parsed = parsed.model_dump()
+    if isinstance(parsed, dict):
+        return _normalise(parsed)
+    text = (getattr(response, "text", None) or "").strip()
+    # 일부 SDK/모델에서 붙이는 코드 블록만 제거합니다. 누락된 점수는 만들어 넣지 않습니다.
+    if text.startswith("```") and text.endswith("```"):
+        text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    return _normalise(json.loads(text))
+
+
+def _failure_reason(exc, stage):
+    """원문 예외에는 키·입력이 포함될 수 있어, 허용한 오류 코드만 화면에 전달합니다."""
+    code = getattr(exc, "code", None)
+    if not isinstance(code, int):
+        code = getattr(exc, "status_code", None)
+    if code in (401, 403):
+        return "AI 연결 권한을 확인하지 못했어요. 관리자가 GEMINI_API_KEY의 유효성과 API 사용 권한을 확인해야 해요. [AUTH]"
+    if code == 429:
+        return "AI 요청 한도에 도달했어요. 잠시 뒤 다시 시도하거나 관리자가 API 이용 한도·결제 설정을 확인해 주세요. [LIMIT]"
+    if code == 404:
+        return "사진 평가 모델을 사용할 수 없어요. 관리자가 PHOTO_REVIEW_MODEL 설정과 해당 모델의 사용 가능 여부를 확인해 주세요. [MODEL]"
+    if code == 400:
+        return "AI가 사진 평가 요청 형식을 처리하지 못했어요. 모델의 이미지·구조화 응답 지원을 확인해 주세요. [REQUEST]"
+    if isinstance(code, int) and code >= 500:
+        return "AI 서비스가 일시적으로 응답하지 못했어요. 입력은 그대로 있으니 잠시 뒤 다시 시도해 주세요. [SERVICE]"
+    if isinstance(exc, TimeoutError) or "timeout" in type(exc).__name__.lower():
+        return "AI 응답 시간이 초과됐어요. 입력은 그대로 있으니 다시 시도해 주세요. [TIMEOUT]"
+    if stage == "response":
+        return "AI 평가 답변이 불완전하거나 평가 형식과 맞지 않았어요. 통과 처리하지 않았으며, 입력은 그대로 있으니 다시 평가해 주세요. [FORMAT]"
+    if stage == "setup":
+        return "AI 연결 설정을 준비하지 못했어요. 관리자가 google-genai 설치 버전과 Secrets 설정을 확인해 주세요. [SETUP]"
+    return "AI 연결 중 오류가 발생했어요. 입력은 그대로 있으니 다시 시도해 주세요. [CONNECTION]"
+
+
 def review_photo(event):
     identity = str(event.get("id", ""))[:100]
     def failure(message):
@@ -100,9 +143,10 @@ def review_photo(event):
     if now - st.session_state.get("photo_review_last_request", 0) < 3:
         return failure("잠시 뒤 다시 평가해 주세요.")
     st.session_state["photo_review_last_request"] = now
+    stage = "setup"
     try:
         key = str(st.secrets.get("GEMINI_API_KEY", "")).strip()
-        model = str(st.secrets.get("PHOTO_REVIEW_MODEL", "gemini-flash-latest")).strip()
+        model = str(st.secrets.get("PHOTO_REVIEW_MODEL", "gemini-3.5-flash-lite")).strip() or "gemini-3.5-flash-lite"
         if not key:
             return failure("AI 평가 연결이 설정되지 않았어요. 앱 관리자가 GEMINI_API_KEY를 설정해야 해요.")
         from google import genai
@@ -111,14 +155,20 @@ def review_photo(event):
         for label, raw in zip(("원본 전체", "수정 전 사진", "수정 후 사진"), images):
             parts.extend([label, types.Part.from_bytes(data=raw, mime_type="image/jpeg")])
         parts.append(json.dumps(texts, ensure_ascii=False))
+        # response_schema는 구버전 SDK에서도 지원하는 구조화 출력 설정입니다.
+        config = types.GenerateContentConfig(
+            system_instruction=INSTRUCTION, response_mime_type="application/json",
+            response_schema=SCHEMA, temperature=0.1, max_output_tokens=8192,
+        )
+        stage = "request"
         with genai.Client(api_key=key, http_options=types.HttpOptions(timeout=45000)) as client:
             response = client.models.generate_content(
                 model=model, contents=parts,
-                config=types.GenerateContentConfig(system_instruction=INSTRUCTION, response_mime_type="application/json",
-                    response_json_schema=SCHEMA, temperature=0.1, max_output_tokens=2400),
+                config=config,
             )
-        result = _normalise(json.loads(response.text or ""))
+        stage = "response"
+        result = _read_response(response)
         return {"id": identity, "ok": True, **result}
-    except Exception:
-        # 오류 응답·키·사진·학생 입력을 화면이나 로그에 노출하지 않습니다.
-        return failure("AI 평가를 완료하지 못했어요. 입력은 그대로 있으니 잠시 뒤 다시 시도해 주세요. 모델 설정과 이용 한도도 확인해 주세요.")
+    except Exception as exc:
+        return failure(_failure_reason(exc, stage))
+
