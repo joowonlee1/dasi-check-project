@@ -1,5 +1,4 @@
 """안내서 3건의 주장과 별도 공식 확인 결과를 대조하는 교육용 가상 활동."""
-from play_ui import intro, bridge
 from notice_inquiry import DATA as INQUIRY
 import streamlit as st
 import dotori_data as dd
@@ -33,12 +32,12 @@ CASES = [
 ]
 ROUTES = ["안내서에 적힌 번호나 QR로 확인", "안내서와 별도로 찾은 공식 홈페이지·고객센터에서 확인"]
 VERDICTS = ["안내 내용 정상 확인","안내 내용 위조 확인","판단 보류"]
+# 새 감별 게임의 처음 상태(몇 번째 문, 모은 기록, 제출한 판정 등)를 만들어요.
 def fresh():
     return {"i":0,"checks":{},"answers":{},"recorded":False,"done":False,"attempts":{}}
 S=st.session_state.setdefault(KEY,fresh())
 if not S.get("entered", False):
     st.title("📬 가짜 안내서 감별소")
-    from mascot_ui import show_scene
     import scene_ui
     if scene_ui.ready("scene_hallway"):
         # 시작 화면: 문마다 붙은 안내서와 깡지
@@ -121,6 +120,7 @@ NV_CSS = """<style>
 .nv-rec b{display:block}.nv-rec small{font-weight:800;border-radius:999px;padding:1px 8px;margin-left:6px}
 </style>"""
 
+# 복도에서 누른 문(0~2번)으로 이동해요.
 def _go_door(k):
     S["i"] = k
 
@@ -215,6 +215,7 @@ def door_strip(i):
     if reach < len(CASES) - 1:
         st.caption("🔒 잠긴 문은 앞 안내서를 감별하면 열려요. 감별을 마친 문은 다시 눌러 볼 수 있어요.")
 
+# 문과 그 문에 붙은 안내서, 보이는 단서(참조번호·겉모습), 판정 도장을 그림으로 그려요.
 def door_scene(i, stamp=None, clues=False, say=None):
     case, look = CASES[i], PAPER[i]
     claim = _esc(case["claim"])
@@ -245,6 +246,7 @@ def door_scene(i, stamp=None, clues=False, say=None):
         + '</div>',
         unsafe_allow_html=True)
 
+# 확인 기록 보관함의 기록 하나를 카드로 보여 줘요. 공식 경로로 확인한 기록은 초록, 참고용은 회색이에요.
 def record_card(q, text):
     official = q in ("delivery", "procedure", "status")
     color, bg, tag = ("#16A34A", "#F0FDF4", "공식 경로로 확인") if official else ("#9CA3AF", "#F9FAFB", "참고만 · 진위 확인 아님")
@@ -278,6 +280,7 @@ TOOL_VIEW = {
     "surface": ("🔍 돋보기로 살펴보기", "detective", "겉모습은 단서일 뿐, 진짜·가짜를 정해 주지는 않아.", "lens"),
 }
 
+# 조사 도구를 눌렀을 때 결과 창을 보여 줘요. 안내서에 적힌 QR·번호(함정)를 쓰면 경고를 보여 줘요.
 @st.dialog("🧰 조사 결과", width="medium")
 def tool_popup(i, kind, q):
     if kind == "trap":
@@ -312,6 +315,7 @@ def tool_popup(i, kind, q):
     if st.button("확인했어요 ▶", type="primary", width="stretch", key=f"nv_popup_ok_{i}"):
         st.rerun()
 
+# 판정을 맞혔을 때 '감별 완료' 도장 창과 배울 점을 보여 줘요.
 @st.dialog("🔏 판정 도장 쾅!", width="medium")
 def stamp_popup(i):
     case = CASES[i]
@@ -330,6 +334,7 @@ def stamp_popup(i):
     if st.button("다음으로 ▶", type="primary", width="stretch", key=f"nv_stamp_ok_{i}"):
         st.rerun()
 
+# '이전 화면으로'를 누르면 감별소 입구(소개 화면)로 돌아가요.
 def _back_notice():
     S["entered"] = False
 
@@ -375,6 +380,7 @@ if not S["done"]:
                     '[class*="st-key-nv_tool_"] button p{font-size:1rem!important;font-weight:800!important;line-height:1.45!important}'
                     '.nv-group{font-weight:900;border-radius:10px;padding:6px 12px;margin:6px 0 6px}</style>', unsafe_allow_html=True)
     
+        # 조사 도구 하나를 사용해요: 결과를 기록 보관함에 넣고, 순서가 맞지 않거나 함정이면 안내를 띄워요.
         def use_tool(kind, q):
             # 판정에 쓰는 기록(checked)은 원래와 똑같은 규칙으로 쌓여요.
             if kind=="trap":

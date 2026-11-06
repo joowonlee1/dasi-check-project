@@ -1,3 +1,6 @@
+# 의심 URL 확인 (도토리역 앞 · 사이버 검문소)
+# 입력한 주소에 접속하지 않고 글자만 분석해서 진짜 주인(등록 도메인)과 확인할 점을 알려 줘요.
+
 import ipaddress
 import re
 import unicodedata
@@ -6,7 +9,7 @@ import tldextract
 from urllib.parse import urlsplit, unquote
 
 import streamlit as st
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import show_mascot
 import dotori_data as dd
 
 
@@ -58,7 +61,6 @@ BRANDS = [
     ("구글", ("google", "gmail"), ("구글",), {"google.com", "google.co.kr", "gmail.com"}),
 ]
 
-OFFICIAL_DOMAINS = set().union(*(official for _, _, _, official in BRANDS))
 
 # 피싱 주소가 믿음을 주려고 자주 넣는 단어입니다. 공식 사이트에도 쓰일 수 있어요.
 LURE_WORDS = (
@@ -71,6 +73,7 @@ EXTRACT = tldextract.TLDExtract(suffix_list_urls=(), cache_dir=None,
                               include_psl_private_domains=True)
 
 
+# 주소의 진짜 주인(등록 도메인, 예: example.co.kr)을 공개 접미사 목록으로 계산해요.
 def registered_domain(host):
     item = EXTRACT(host)
     return f"{item.domain}.{item.suffix}" if item.domain and item.suffix else None
@@ -336,6 +339,7 @@ MESSAGE_SIGNS = [
 ]
 
 
+# 문자 전체에서 링크처럼 보이는 부분을 찾아 꺼내요(문장 부호는 떼어 내요).
 def find_urls(text):
     urls = []
 
@@ -407,6 +411,7 @@ def analyze_message(text):
     return {"links": links, "signs": signs}
 
 
+# '주소를 부분별로 자세히 보기': 주소를 통신 방식·서버 이름·경로 등으로 나눠 표로 보여 줘요.
 def show_structure(result):
     # 전문 용어 대신 쉬운 말로 쓰고, 처음에는 접어 둬요. (궁금한 사람만 펼쳐 보기)
     with st.expander("🔎 주소를 부분별로 자세히 보기"):

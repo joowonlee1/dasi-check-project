@@ -1,4 +1,8 @@
-from play_ui import intro, bridge
+# 할머니 폰 지키기 (상수리동 · 할머니 댁)
+# 할머니 휴대전화에 진짜 연락 3개와 사기 연락 4개가 차례로 와요. 언제, 어떻게 끼어들지 골라
+# '사기범을 믿는 정도'를 20 이하로 낮추면 할머니가 스스로 멈춰요. 선택에 따라 4가지 결말이 나와요.
+
+from play_ui import intro
 import html
 import copy
 import random
@@ -325,6 +329,7 @@ def drumroll(frames):
     box.empty()
 
 
+# 결과가 나올 때 터지는 반짝이(이모지) 위치를 원 모양으로 배치해 HTML로 만들어요.
 def sparks(icons):
     out = []
     for i, icon in enumerate(icons):
@@ -334,6 +339,7 @@ def sparks(icons):
     return "".join(out)
 
 
+# 화면을 맨 위로 올려요.
 def scroll_top():
     components.html(
         "<script>const m = window.parent.document.querySelector('[data-testid=stMain]');"
@@ -342,10 +348,12 @@ def scroll_top():
     )
 
 
+# 글자를 HTML에 안전하게 넣을 수 있게 특수문자(<, > 등)를 바꿔요.
 def esc(text):
     return html.escape(str(text))
 
 
+# 게이지 값을 0~100 사이로 맞춰요.
 def clamp(value):
     return max(0, min(100, value))
 
@@ -354,6 +362,7 @@ def clamp(value):
 # 게임 상태
 # ─────────────────────────────────────
 
+# 새 게임의 처음 상태(게이지, 연락 순서, 기록 등)를 만들어요.
 def new_game(started=False):
     return {
         "started": started,
@@ -369,6 +378,7 @@ def new_game(started=False):
     }
 
 
+# '할머니 댁 들어가기'를 누르면 새 게임을 시작해요.
 def start_game():
     st.session_state[KEY] = new_game(started=True)
     dd.scroll_top()  # 아래쪽 버튼을 눌러 들어와도 첫 연락을 맨 위부터 보여 줘요.
@@ -391,10 +401,12 @@ def go_back():
     st.session_state[KEY] = previous
     dd.scroll_top()
 
+# '단서 살펴보기'를 눌렀다고 표시해요(단서를 보면 설득이 더 잘 통해요).
 def open_clues():
     st.session_state[KEY]["clue_open"] = True
 
 
+# 지금까지 온 연락 중 사기 연락이 몇 개였는지(= 송금까지 몇 단계 왔는지) 세요.
 def scam_stage(step):
     return sum(1 for event in EVENTS[: step + 1] if not event["real"])
 
@@ -419,6 +431,7 @@ def enter_event(game):
     game["pushed"] = step
 
 
+# 내가 고른 대응과 지금 상황(진짜 연락인지, 멈췄는지)에 맞는 할머니의 대답을 골라요.
 def grandma_reaction(key, game, stopped, real):
     if real:
         if key == "watch":
@@ -551,14 +564,17 @@ REAL_REPLY = {
 }
 
 
+# '직접 말하기'를 누르면 글 입력 상자를 열어요.
 def start_typing(key):
     st.session_state[KEY]["typing"] = key
 
 
+# 직접 말하기 입력 상자를 닫아요.
 def stop_typing():
     st.session_state[KEY].pop("typing", None)
 
 
+# 내가 고른 대응을 게임에 반영해요: 게이지를 계산하고, 할머니 반응과 기록을 남긴 뒤 다음 연락으로 넘어가요.
 def act(key, typed=None, quality=None, reply="", feedback="", real_fine=False):
     game = st.session_state[KEY]
     game.pop("typing", None)
@@ -671,6 +687,7 @@ def judged_right(record):
     return record["key"] != "watch"
 
 
+# 결말 화면의 '그날 오전의 기록'에서 연락 하나에 대한 내 판단이 맞았는지 설명하는 글을 만들어요.
 def judgment_text(record):
     event = EVENTS[record["step"]]
     key = record["key"]
@@ -693,6 +710,7 @@ def judgment_text(record):
     return "🟡 끼어들었지만 할머니는 아직 흔들리고 있었어요."
 
 
+# 기록을 보고 4가지 결말(든든한 손주 / 지켜 냈다 / 아슬아슬 / 송금 완료) 중 하나를 정해요.
 def decide_ending(game):
     log = game["log"]
     if game["result"] == "sent":
@@ -710,39 +728,11 @@ def decide_ending(game):
     return "good"
 
 
-def make_report(game, title):
-    log = game["log"]
-    right = sum(judged_right(r) for r in log)
-    lines = [
-        "잠깐! · 할머니 폰 지키기 결과",
-        "교육용 가상 상황의 결과이며, 수치는 실제 확률이 아닙니다.",
-        "",
-        f"결말: {title}",
-        f"판단이 맞은 연락: {right} / {len(log)}",
-        f"마지막 신뢰: {game['trust']}",
-        "",
-    ]
-    for record in log:
-        event = EVENTS[record["step"]]
-        lines.extend(
-            [
-                f"{event['time']} · {event['sender']} ({'진짜 연락' if event['real'] else '피싱 · ' + event['stage']})",
-                f"   단서 확인: {'했음' if record['checked'] else '하지 않음'}",
-                f"   내 행동: {record['said']}",
-                f"   할머니: {record['reaction']}",
-                f"   판단: {judgment_text(record)}",
-                f"   확인 방법: {event['route']}",
-                f"   가상 확인 결과: {event['result']}",
-                "",
-            ]
-        )
-    return "\n".join(lines)
-
-
 # ─────────────────────────────────────
 # 화면 조각
 # ─────────────────────────────────────
 
+# 할머니 휴대전화 화면(지금까지 온 연락 목록)을 HTML로 만들어요.
 def phone_html(step):
     items = []
     for index in range(step + 1):
@@ -788,11 +778,7 @@ def phone_html(step):
     )
 
 
-# 통화 목소리 연출: 수사관이 말하는 연락이면 '전화 받아서 듣기' 버튼이 생겨요(교육용 가상 대사).
-# 이 말이 나오면 경고를 띄워요. 왜 수상한지는 플레이어가 직접 판단하도록 이유는 적지 않아요.
-VOICE_WARN = ("가족에게도 알리시면 안", "체포영장", "안전계좌", "등록금’이라고 하세요", "10분 안에")
-
-
+# 전화 연락이면 '전화 받아서 듣기' 버튼으로 사기범 목소리를 들려줘요.
 def show_voice_call(event, step):
     said = []
     if event["kind"] == "call":
@@ -836,6 +822,7 @@ def clue_block(game, event):
         st.caption("단서를 보고 말하면 설득이 1.5배 더 잘 통해요. ‘수상한 점을 하나 짚어 준다’는 단서를 봐야 고를 수 있어요.")
 
 
+# 게이지 3개(사기범을 믿는 정도 / 할머니가 나를 믿는 정도 / 송금까지)를 그려요.
 def show_gauges(game):
     # 게이지 3개를 색깔 카드로 크게 보여 줘요(숫자는 크게, 막대는 굵게).
     stage = scam_stage(game["step"])
@@ -862,13 +849,14 @@ def show_gauges(game):
         "@keyframes gp-alarm{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}"
         "@media (max-width:640px){.gp-gs{grid-template-columns:1fr}}</style>"
         f'<div class="gp-gs">{html_cards}</div>'
-        + (f'<div style="margin-top:8px;background:#7C3AED;color:#fff;border-radius:14px;padding:10px 16px;text-align:center;'
+        + ('<div style="margin-top:8px;background:#7C3AED;color:#fff;border-radius:14px;padding:10px 16px;text-align:center;'
          'font-size:1.25rem;font-weight:900;animation:gp-alarm 1s ease-in-out infinite">🚨 지금이 송금 직전이에요! 이번에 꼭 멈추게 해요</div>' if danger else "")
         + f'<div style="font-size:.88rem;color:#64748B;margin-top:4px">😟가 {STOP_LINE} 이하가 되면 할머니가 스스로 멈춰요.</div>',
         unsafe_allow_html=True,
     )
 
 
+# 방금 고른 대응에 대한 짧은 피드백을 보여 줘요.
 def show_last_feedback(game):
     if not game["log"]:
         return
@@ -899,6 +887,7 @@ def show_last_feedback(game):
         st.info(f"💬 {last['lesson']}")
 
 
+# 게임 시작 전 소개 화면(규칙, 게이지 읽는 법, 시작 버튼)을 보여 줘요.
 def show_intro():
     show_hero(f"📱 가족 지키기 게임 · 연락 {len(EVENTS)}개", "할머니 휴대폰을 지켜라",
               "", tone="pink")
@@ -975,6 +964,7 @@ def reaction_popup(game):
         st.rerun()
 
 
+# 게임 진행 화면: 할머니 폰, 거실 장면, 단서, 게이지, 대응 버튼을 그려요.
 def show_play(game):
     if game.pop("show_reaction", False) and game["log"]:
         reaction_popup(game)
@@ -1110,6 +1100,7 @@ def show_typing_box(game, event, key):
             st.rerun()
 
 
+# 결말 화면: 결말 카드, '다른 친구들은?' 비교, 나의 기록, 그날 오전의 기록, 결과 카드를 보여 줘요.
 def show_ending(game):
     log = game["log"]
     ending = decide_ending(game)
@@ -1269,7 +1260,6 @@ def show_ending(game):
 
 with intro("01", suffix=""):
     st.title("✋ 잠깐! · 할머니 폰 지키기")
-    from mascot_ui import show_scene
     import scene_ui
     if scene_ui.ready("scene_grandma"):
         # 시작 화면: 소파의 할머니, 울리는 휴대폰, 차례로 도착하는 연락 알림

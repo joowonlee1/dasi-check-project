@@ -75,19 +75,7 @@ GUIDES = {
 }
 
 
-def checklist(selected):
-    lines = ["잠깐! 피해 대처 안내", f"대한민국 기준 / 자료 확인일 {CHECKED}", ""]
-    lines += ["긴급: 금전 피해는 112 또는 금융회사에 먼저 연락하세요.",
-              "악성앱이 의심되면 다른 안전한 전화로 연락하세요.", ""]
-    for name in GUIDES:
-        if name in selected:
-            lines.append(name)
-            lines.extend(f"{i}. {text}" for i, text in enumerate(GUIDES[name], 1))
-            lines.append("")
-    lines += [f"{title}: {url}" for title, url in SOURCES.items()]
-    return "\n".join(lines)
-
-
+# 피해 대처 안내 화면 전체(긴급 연락처, 상황 선택, 지금 할 일, 할 일 카드, 공식 출처)를 그려요.
 def main():
     st.title("🚨 피해가 의심될 때")
     dd.stamp("07", quiet=True)  # 실제 피해 안내 페이지라 알림 없이 조용히 찍어요.

@@ -3,9 +3,8 @@
 """
 from html import escape
 
-import pandas as pd
 import streamlit as st
-from mascot_ui import mascot_img, show_key_question, show_mascot
+from mascot_ui import mascot_img, show_key_question
 import dotori_data as dd
 
 GREEN = "#0F766E"
@@ -13,7 +12,6 @@ ENDINGS = [("best", "⭐ 든든한 손주"), ("good", "🟢 지켜 냈다"), ("c
 FAKENEWS_STAGES = ["1단계", "2단계", "3단계", "4단계", "5단계"]
 MAFIA_CASES = ["사건 1", "사건 2", "사건 3"]
 NONO_STAGES = ["📱 스마트폰", "🔒 자물쇠", "🔳 QR 코드"]
-NOTICE_DOORS = ["101호 (가짜)", "102호 (진짜)", "103호 (가짜)", "104호 (진짜)", "105호 (가짜)"]
 # 피싱 필터 문자(보낸 곳, 진짜 여부) — 피싱 필터 만들기 페이지의 문자 순서와 같아요.
 FILTER_MSGS = [
     [("도토리택배", "진짜"), ("010-48○○", "가짜"), ("도토리수학학원", "진짜"), ("070 국제택배", "가짜"), ("엄마", "진짜"), ("도토리고 가정통신문", "진짜")],
@@ -81,6 +79,7 @@ def bar(rows, label, value, unit="%"):
                 + "".join(html_rows) + note + "</div>", unsafe_allow_html=True)
 
 
+# 아직 기록이 하나도 없는 게임일 때 보여 줄 안내예요.
 def empty():
     st.info("아직 모인 기록이 없어요. 이 게임을 끝까지 하면 첫 기록이 생겨요!")
 

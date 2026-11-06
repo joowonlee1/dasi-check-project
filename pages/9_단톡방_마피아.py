@@ -2,7 +2,7 @@
 
 모든 인물·대화·링크는 교육용 가상 내용입니다. 실제 접속·송금·인증은 일어나지 않습니다.
 """
-from play_ui import intro, bridge
+from play_ui import intro
 import copy
 import time
 from html import escape
@@ -265,6 +265,7 @@ CSS = """
 
 # ───────── 상태 ─────────
 
+# 새 게임의 처음 상태(사건 번호, 참가자, 조사 기록, 점수 등)를 만들어요.
 def new_state(players=None):
     return {
         "phase": "setup",
@@ -279,14 +280,15 @@ def new_state(players=None):
     }
 
 
+# 게임 상태를 세션에서 꺼내요. 없으면 새로 만들어요.
 def state():
     if KEY not in st.session_state:
         st.session_state[KEY] = new_state()
     return st.session_state[KEY]
 
 
+# '수사 시작'을 누르면 입력한 참가자 이름으로 게임을 시작해요.
 def start_game():
-    s = state()
     count = st.session_state.get(KEY + "_count") or 1
     names = []
     for i in range(count):
@@ -299,12 +301,14 @@ def start_game():
     dd.scroll_top()  # 첫 사건을 맨 위(대화방)부터 보여 줘요.
 
 
+# 친구 한 명의 단서(프로필 / 1:1 질문 / 이전 대화)를 조사해요. 조사는 사건마다 3번까지예요.
 def investigate(friend, kind):
     s = state()
     if len(s["checks"]) < MAX_CHECKS and (friend, kind) not in s["checks"]:
         s["checks"].append((friend, kind))
 
 
+# 참가자 한 명의 투표를 기록하고, 모두 투표하면 정답을 공개해요.
 def cast_vote(player, pick_key):
     s = state()
     pick = st.session_state.get(pick_key)
@@ -316,6 +320,7 @@ def cast_vote(player, pick_key):
         finish_case()
 
 
+# 투표 결과로 정답 여부를 판단하고 점수(맞히면 100점 + 남은 조사 1번당 20점)를 더해요.
 def finish_case():
     s = state()
     case = CASES[s["case"]]
@@ -331,6 +336,7 @@ def finish_case():
     s["scroll"] = True
 
 
+# 다음 사건으로 넘어가요(이전 화면으로 돌아올 수 있게 지금 상태를 기록해 둬요).
 def next_case():
     s = state()
     # '이전 화면으로'를 누르면 이 사건의 결과 화면으로 돌아갈 수 있게 저장해 둬요.
@@ -342,6 +348,7 @@ def next_case():
     s["scroll"] = True
 
 
+# 게임을 처음부터 다시 시작해요.
 def restart():
     st.session_state[KEY] = new_state()
 
@@ -362,6 +369,7 @@ def go_back():
 
 # ───────── 화면 조각 ─────────
 
+# 친구 5명 소개 카드를 HTML로 만들어요.
 def friends_html():
     return '<div class="mf-friends">' + "".join(
         f'<div class="mf-friend" style="background:{color};animation-delay:{i * .08:.2f}s">'
@@ -370,6 +378,7 @@ def friends_html():
     ) + "</div>"
 
 
+# 단톡방 대화를 말풍선 모양 HTML로 만들어요.
 def chat_html(case):
     rows = []
     for i, (when, name, text) in enumerate(case["chat"]):
@@ -386,6 +395,7 @@ def chat_html(case):
     )
 
 
+# 수사 노트에 조사 결과 하나를 메모지 모양으로 만들어요.
 def note_html(case, friend, kind, index):
     emoji, color, _ = FRIENDS[friend]
     extra = f"<br><small>질문: “{escape(case['question'])}”</small>" if kind == "question" else ""
@@ -405,6 +415,7 @@ def scroll_top():
     )
 
 
+# 정답 공개 전에 '두구두구…' 연출을 잠깐 보여 줘요.
 def drumroll():
     box = st.empty()
     for icon, text in (("🥁", "두구두구…"), ("🔦", "계정을 추적하는 중…"), ("🕵️", "정체를 공개합니다!")):
@@ -413,6 +424,7 @@ def drumroll():
     box.empty()
 
 
+# 정답을 맞혔을 때 터지는 반짝이(이모지)를 원 모양으로 배치해 HTML로 만들어요.
 def sparks():
     icons = ["🔍", "✨", "⭐", "🎉", "💥", "✨", "🔍", "⭐", "🎉", "✨", "💫", "⭐"]
     out = []
@@ -425,6 +437,7 @@ def sparks():
 
 # ───────── 화면 ─────────
 
+# 게임 시작 전 화면: 친구 소개, 규칙, 인원 고르기, '수사 시작' 버튼.
 def show_setup():
     st.markdown(
         '<div class="mf-hero"><span>🕵️ 추리 게임 · 사건 3개</span>'
@@ -455,6 +468,7 @@ def show_setup():
     st.button("🔍 수사 시작", type="primary", width="stretch", on_click=start_game, key=KEY + "_start")
 
 
+# 수사 화면: 단톡방 대화, 조사하기, 수사 노트, 투표를 보여 줘요.
 def show_play():
     s = state()
     case = CASES[s["case"]]
@@ -526,6 +540,7 @@ def josa(name, with_final, without_final):
     return name + (with_final if has_final else without_final)
 
 
+# 정답 공개 화면: 마피아가 누구였는지, 결정적 단서와 함정, '다른 친구들은?'을 보여 줘요.
 def show_reveal():
     s = state()
     case = CASES[s["case"]]
@@ -575,6 +590,7 @@ def show_reveal():
     st.button(label, type="primary", width="stretch", on_click=next_case, key=f"{KEY}_next_{s['case']}")
 
 
+# 사건 3개를 모두 끝낸 뒤 최종 점수와 탐정 칭호를 보여 줘요.
 def show_final():
     s = state()
     if s.pop("fresh", False):

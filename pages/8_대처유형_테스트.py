@@ -1,5 +1,5 @@
 """12문항, 4개 축, 16가지 교육용 대처 유형. 답변은 저장하지 않고, 결과 유형만 이름 없이 숫자로 통계에 더합니다."""
-from play_ui import intro, bridge
+from play_ui import intro
 
 import base64
 
@@ -205,7 +205,6 @@ STRENGTHS = {
 
 # 파일이 있으면 그 그림을, 없으면 위의 엠블럼을 보여 줍니다.
 
-TYPE_IMAGE_DIR = Path(__file__).resolve().parents[1] / "assets" / "types"
 
 CSS = """
 
@@ -418,10 +417,12 @@ CSS = """
 
 """
 
+# 문항의 A/B 버튼이 각각 어느 쪽 글자(0 또는 1)에 해당하는지 정해요(문항에 따라 A/B 순서를 바꿔 둬요).
 def options(q):
 
     return (1, 0) if q[4] else (0, 1)
 
+# 12개 답을 4가지 기준별로 세어 4글자 유형 코드(예: SETB)를 만들어요.
 def score(answers):
 
     if len(answers) != 12 or any(type(a) is not int or a not in (0, 1) for a in answers):
@@ -442,10 +443,12 @@ def score(answers):
 
     return code, labels, counts
 
+# 지금까지 고른 12개 답을 세션에서 꺼내요(아직 안 고른 문항은 None).
 def get_answers():
 
     return [st.session_state.get(PREFIX + str(i)) for i in range(12)]
 
+# 테스트 관련 기록을 모두 지우고 처음 상태로 돌려요.
 def reset():
 
     for key in list(st.session_state):
@@ -454,6 +457,7 @@ def reset():
 
             del st.session_state[key]
 
+# '테스트 시작하기'를 누르면 1번 문항부터 시작해요.
 def start():
 
     st.session_state[PREFIX + "started"] = True
@@ -462,6 +466,7 @@ def start():
 
     dd.scroll_top()  # 첫 문항을 맨 위부터 보여 줘요.
 
+# '이전 화면으로'를 누르면 앞 문항으로 돌아가요.
 def back_step():
     # 바로 전 화면으로: 앞 문항으로 돌아가요(고른 답은 남아요). 첫 문항이면 처음 화면으로 가요.
     step = st.session_state.get(PREFIX + "step", 0)
@@ -471,6 +476,7 @@ def back_step():
     else:
         reset()
 
+# 답을 저장하고, 아직 안 푼 다음 문항으로 이동해요.
 def answer(i, value):
 
     st.session_state[PREFIX + str(i)] = value
@@ -489,10 +495,12 @@ def answer(i, value):
     if not later and not earlier and st.session_state.get(PREFIX + "review"):
         st.session_state[PREFIX + "step"] = i + 1
 
+# 진행 표시(1~12)를 누르면 그 문항으로 이동해요.
 def go_to(step):
 
     st.session_state[PREFIX + "step"] = step
 
+# '짠! 결과 열기'를 누르면 유형을 계산해 결과 화면으로 넘어가요.
 def reveal():
 
     answers = get_answers()
@@ -524,6 +532,7 @@ def _type_png(code):
     cell.save(buffer, format="PNG", optimize=True)
     return base64.b64encode(buffer.getvalue()).decode("ascii")
 
+# 유형별 깡지 그림을 SVG 안에 넣을 수 있게 만들어요. 그림이 없으면 빈 그림을 돌려줘요.
 def mascot_svg(code, x=0, y=0, size=160):
     data = _type_png(code)
     if not data:
@@ -533,12 +542,9 @@ def mascot_svg(code, x=0, y=0, size=160):
             f'<image width="384" height="256" href="data:image/png;base64,{data}"/></svg>')
 
 
-def type_image_uri(code):
-    return "data:image/svg+xml;base64," + base64.b64encode(mascot_svg(code).encode("utf-8")).decode("ascii")
-
-
 # ───────── 화면 ─────────
 
+# 테스트 시작 전 소개(16가지 유형, 코드 4글자의 뜻)를 보여 줘요.
 def show_intro():
 
     emojis = "".join(
@@ -602,6 +608,7 @@ def coping_guide_img(width=82):
             f'style="display:block;width:{int(width)}px;max-width:100%;height:auto;object-fit:contain;">')
 
 
+# 질문 하나와 A/B 답 버튼, 진행 표시를 보여 줘요.
 def show_question(i):
 
     q = QUESTIONS[i]
@@ -667,6 +674,7 @@ def show_question(i):
 
         right.button("결과 열기 ▶", on_click=go_to, args=(12,), width="stretch")
 
+# 12문항을 다 답했을 때 '짠! 결과 열기' 화면을 보여 줘요.
 def show_ready():
 
     st.progress(1.0, text="12 / 12 완료")
@@ -770,6 +778,7 @@ def show_gallery(mine=None):
 
         st.caption("테두리가 있는 카드가 나의 유형이에요. 어떤 유형이 더 낫거나 안전한 것은 아니에요.")
 
+# 결과 공개 전에 '두구두구…' 연출을 잠깐 보여 줘요.
 def drumroll():
 
     box = st.empty()
@@ -782,6 +791,7 @@ def drumroll():
 
     box.empty()
 
+# 결과 맨 위 카드(유형 이름, 코드, 깡지 그림, 특징 칩)를 HTML로 만들어요.
 def hero_html(code, labels):
 
     emoji, c1, c2, catch = TYPE_LOOK[code]
@@ -815,6 +825,7 @@ def hero_html(code, labels):
 
     )
 
+# 기준 하나(예: 반응 속도)에서 내가 어느 쪽으로 몇 개 골랐는지 점으로 보여 주는 HTML을 만들어요.
 def trait_html(index, letter, label, count):
 
     axis = AXES[index]
@@ -893,6 +904,7 @@ def result_card(code, labels):
 
     )
 
+# 결과 화면: 유형 카드, '다른 친구들은?', 서약의 벽·능력치·결과 카드·16가지 유형 탭을 보여 줘요.
 def show_result(answers):
 
     code, labels, counts = score(answers)
@@ -1012,6 +1024,7 @@ def show_result(answers):
 
     st.button("🔄 다시 테스트하기", on_click=reset, width="stretch")
 
+# 페이지 전체 흐름: 결과가 있으면 결과, 진행 중이면 질문, 아니면 소개를 보여 줘요.
 def main():
 
     st.markdown(CSS, unsafe_allow_html=True)

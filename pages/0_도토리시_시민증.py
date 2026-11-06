@@ -7,7 +7,6 @@ import streamlit as st
 from mascot_ui import id_photo, show_key_question, show_mascot
 import dotori_data as dd
 from card_ui import show_result_card
-from firebase_support import ConnectionProblem, explain
 
 
 st.title("🪪 도토리시 시민증")

@@ -1,4 +1,7 @@
-from play_ui import intro, bridge
+# 피싱 방탈출 (다람쥐동 · 민서네 집)
+# 같은 엄마 번호로 온 서로 다른 연락을 증거로 비교해 잠금 3개를 풀고, 실제 시간 30분 안에 탈출하는 게임이에요.
+
+from play_ui import intro
 import html
 import re
 import time
@@ -8,8 +11,8 @@ from mascot_ui import show_hero, show_mascot, mascot_img
 import dotori_data as dd
 from card_ui import show_result_card
 
-# 예전에는 방탈출만의 '탈출 랭킹'(익명 계정 + 닉네임 예약)을 따로 썼어요.
-# 지금은 시민증 하나로 도토리시 '명예의 전당'에 함께 기록해요. (예전 랭킹 기록은 통계청에서 그대로 볼 수 있어요.)
+# 방탈출 기록은 시민증 하나로 도토리시 '명예의 전당'에 남겨요.
+# 순위는 방탈출 안이 아니라 '도토리시 통계청 → 🏆 명예의 전당' 탭에서 봐요.
 
 # 모든 인물, 번호, 기록, 연락 결과는 교육용 가상 자료입니다.
 # 번호는 실제로 쓰이지 않도록 지어낸 가상 번호입니다.
@@ -326,15 +329,18 @@ st.markdown(
 )
 
 
+# 전화번호 같은 글자에서 숫자만 남겨요(하이픈이 섞여 있어도 비교할 수 있게).
 def digits(text):
     return re.sub(r"\D", "", text or "")
 
 
+# 게임 시계(09:00부터 흐른 분)를 '09:13' 같은 글자로 바꿔요.
 def clock_text(minutes):
     hour, minute = divmod(minutes, 60)
     return f"{9 + hour:02d}:{minute:02d}"
 
 
+# 행동 종류(조사·오답·힌트 등)에 정해진 만큼 게임 시계를 흘려보내요.
 def spend(kind):
     game["clock"] += COST[kind]
 
@@ -368,15 +374,18 @@ def fresh_game(ranked=False):
     }
 
 
+# 증거를 증거 보관함에 넣어요(이미 있으면 그대로 둬요).
 def save_evidence(evidence_id):
     if evidence_id not in game["evidence"]:
         game["evidence"].append(evidence_id)
 
 
+# 글자를 HTML에 안전하게 넣을 수 있게 특수문자(<, > 등)를 바꿔요.
 def esc(text):
     return html.escape(str(text))
 
 
+# 증거 내용을 휴대전화 화면 틀(상단 시계·배터리) 안에 넣어요.
 def phone_shell(inner):
     clock = clock_text(game["clock"]) if "escape_game" in st.session_state else "09:13"
     return (
@@ -387,6 +396,7 @@ def phone_shell(inner):
     )
 
 
+# 증거 종류(통화·문자·연락처·달력 등)에 맞는 모양으로 증거 화면 HTML을 만들어요.
 def evidence_html(item):
     kind = item["kind"]
 
@@ -513,10 +523,12 @@ def evidence_html(item):
     return f"<p>{esc(item.get('body', ''))}</p>"
 
 
+# 증거 하나를 화면에 그려요.
 def render_evidence(evidence_id):
     st.markdown(evidence_html(EVIDENCE[evidence_id]), unsafe_allow_html=True)
 
 
+# 증거 번호·제목과 내용, '보관함에 넣기' 버튼을 카드 하나로 보여 줘요.
 def evidence_card(evidence_id):
     with st.container(border=True):
         code, _, name = EVIDENCE[evidence_id]["title"].partition(" · ")
@@ -543,6 +555,7 @@ def evidence_card(evidence_id):
             collect_button(evidence_id)
 
 
+# '증거 보관함에 넣기' 버튼을 보여 줘요. 이미 넣은 증거면 '보관함에 있음'으로 보여 줘요.
 def collect_button(evidence_id, compact=False):
     if evidence_id in game["evidence"]:
         st.markdown('<div style="display:flex;align-items:center;justify-content:center;min-height:52px;margin:'
@@ -559,6 +572,7 @@ def collect_button(evidence_id, compact=False):
                 st.rerun()
 
 
+# '보관함에 넣기' 버튼의 색과 크기를 정하는 CSS를 넣어요.
 def collect_style():
     # 증거로 쓰려면 꼭 눌러야 하는 버튼이라, 부담스럽지 않은 연한 노란 버튼으로 크게 보여 줘요.
     st.markdown('<style>[class*="st-key-collectbox_"] button{background:#FFF4D6!important;color:#7C4A03!important;border:2px solid #E8B04B!important;'
@@ -568,16 +582,19 @@ def collect_style():
                 '[class*="st-key-collectbox_"] button{height:52px!important;margin:0!important}</style>', unsafe_allow_html=True)
 
 
+# 증거 번호로 증거 제목을 찾아요(보고서 선택지에 써요).
 def evidence_name(evidence_id):
     return EVIDENCE[evidence_id]["title"]
 
 
+# 답이 틀렸을 때: 오답 횟수를 늘리고 게임 시계를 +2분 한 뒤 안내를 보여 줘요.
 def wrong(message):
     game["mistakes"] += 1
     spend("wrong")
     st.warning(message + " (게임 시계 +2분)")
 
 
+# 지금 게임 시각까지 도착했어야 할 압박 문자 목록을 시간 순서로 모아요.
 def pressure_messages():
     shown = [item for item in PRESSURE if item[0] <= game["clock"]]
     if game["scam_dialed_at"] is not None:
@@ -586,6 +603,7 @@ def pressure_messages():
     return shown
 
 
+# 화면 위에 고정되는 시계·남은 시간·푼 잠금 수 표시줄을 그려요.
 def show_status_bar():
     st.markdown("<style>.lock-banner{padding:18px 20px!important;} .lock-banner .text{font-size:1.2rem!important;line-height:1.7!important;} .lock-banner .from{font-size:1rem!important;}</style>",unsafe_allow_html=True)
     # 위: 게임 속 시각과 남은 시간을 같은 크기 카드로 나란히 / 아래: 잠금화면 알림을 가로 전체로 보여 줘요.
@@ -612,6 +630,7 @@ def show_status_bar():
     tension(game["started"], seconds_left())  # 5분 이하: 빨간 테두리·심장 박동, 1분 이하: 더 빠르게
 
 
+# 잠금 단계별 힌트를 한 단계씩 보여 줘요(힌트 하나당 게임 시계 +3분).
 def hint_panel(stage):
     with st.expander("💡 막혔을 때 힌트 (힌트 하나당 게임 시계 +3분)"):
         show_mascot("hint", "필요할 때 한 단계씩 확인해요. 힌트 버튼을 누르면 사용 횟수가 늘어요.", width=90)
@@ -629,6 +648,7 @@ def hint_panel(stage):
             st.write(text)
 
 
+# 잠금을 풀었을 때 큰 창으로 축하와 설명을 보여 줘요.
 @st.dialog("🔓 잠금 해제!", width="medium")
 def feedback_popup(text):
     # 깡지를 크게 왼쪽에, 무엇이 열렸는지(제목)와 해설을 오른쪽 한 카드에 모아 빈 곳을 줄여요.
@@ -652,6 +672,7 @@ def feedback_popup(text):
         st.rerun()
 
 
+# '포기하고 결과 보기'를 눌렀을 때 정말 포기할지 묻는 창이에요.
 @st.dialog("🏳️ 정말 포기할까요?", width="medium")
 def giveup_popup():
     left, right = st.columns([1, 1.6], vertical_alignment="center")
@@ -671,6 +692,7 @@ def giveup_popup():
         st.rerun()
 
 
+# 보여 줄 피드백이 남아 있으면 한 번만 창으로 띄워요.
 def show_feedback():
     # 잠금을 풀면 결과를 화면 가운데 큰 창으로 보여 줘요. 한 번 보여 준 뒤에는 지워요.
     if game.get("feedback"):
@@ -679,6 +701,7 @@ def show_feedback():
         feedback_popup(text)
 
 
+# 잠금 1(서랍 4자리 번호): 통화 상대가 내 정보를 어떻게 알았는지 추리하는 화면이에요.
 def lock_one():
     st.subheader("🔒 잠금 1 · 통화 상대는 어떻게 알고 있었을까?")
     st.write(
@@ -727,6 +750,7 @@ def lock_one():
     hint_panel(1)
 
 
+# 잠금 2(8자리 시간 자물쇠): 사건을 실제로 일어난 순서로 놓고 시각을 이어 붙이는 화면이에요.
 def lock_two():
     st.subheader("🔒 잠금 2 · 뒤섞인 시간")
     st.write("서랍 안 확인 장치에는 8자리 시간 자물쇠가 걸려 있습니다.")
@@ -772,6 +796,7 @@ def lock_two():
     hint_panel(2)
 
 
+# 잠금 3(출입문 보고서): 결론·증거 3개·차단할 번호·할 행동을 모두 맞혀야 문이 열려요.
 def lock_three():
     st.subheader("🔒 잠금 3 · 출입문의 사건 보고서")
     st.write("출입문 화면에 사건 보고서 양식이 떠 있습니다. 모든 칸이 맞아야 문이 열립니다.")
@@ -874,6 +899,7 @@ def process_dial(raw):
         dd.achieve("verify_call")  # 업적: 원래 저장된 번호로 직접 확인
 
 
+# 보관함에 넣은 증거에 나온 전화번호를 모아 '나의 폰' 키패드 옆 버튼으로 보여 줘요.
 def collected_numbers():
     import re as _phone_re
     available = []
@@ -921,6 +947,7 @@ def show_dial_bridge():
         st.rerun()
 
 
+# '확인 장치 · 다이얼' 안내를 보여 주고 '나의 폰'의 전화 탭을 열어요.
 def show_dialer():
     st.subheader("📞 확인 장치 · 다이얼")
     st.caption("전화는 ‘📱 나의 폰’의 📞 전화 탭에서 걸어요. 한 번 걸 때마다 게임 시계가 흘러요.")
@@ -945,6 +972,7 @@ def show_dialer():
         )
 
 
+# 잠금 1을 풀면 열리는 서랍 속 자료를 보여 줘요.
 def show_drawer():
     if game["unlocked"] < 1:
         st.warning("서랍이 잠겨 있습니다. 4자리 번호 자물쇠가 달려 있어요. ‘잠금 해제’ 탭을 확인하세요.")
@@ -963,6 +991,7 @@ def show_drawer():
     show_dialer()
 
 
+# 방 그림에서 물건(장소)을 누르면 그곳으로 이동해요. 처음 가는 곳이면 게임 시계 +1분.
 def go_place(place):
     game["place"] = place
     if place not in game["visited"]:
@@ -1028,6 +1057,7 @@ def room_picture(places):
         go_place(places[picked])
 
 
+# 방 조사 화면: 민서네 거실 그림과 물건 버튼, 지금 조사 중인 곳의 증거를 보여 줘요.
 def show_room():
     st.info("📌 보고서에 사용할 자료라면 ‘증거 보관함에 넣기’를 눌러 주세요.")
     st.markdown(
@@ -1088,6 +1118,7 @@ def show_room():
             st.caption("⬆️ 다른 물건을 조사하려면 위의 방 그림에서 눌러요.")
 
 
+# 증거 보관함에 넣은 증거들을 보여 줘요.
 def show_inventory():
     if not game["evidence"]:
         st.info("아직 수집한 증거가 없습니다.")
@@ -1100,6 +1131,7 @@ def show_inventory():
     st.caption("모든 자료가 결정적 증거인 것은 아닙니다. 공개 범위·시각·확인 경로를 비교하세요.")
 
 
+# 기록을 보고 엔딩(트루·굿·노멀 등)의 제목과 이야기를 정해요.
 def ending():
     if game["scam_dialed_at"] is not None:
         return (
@@ -1139,6 +1171,7 @@ def save_record(escaped):
         game["rank_status"] = dd.save_hall("escape", fields, lambda old, new: dd.HALL_SORT["escape"](new) < dd.HALL_SORT["escape"](old))
 
 
+# 명예의 전당 저장 결과(저장됨 / 연습 모드라 저장 안 함 / 실패)를 안내해요.
 def show_hall_status():
     status = game.get("rank_status")
     if not game.get("rank_uid"):
@@ -1152,6 +1185,7 @@ def show_hall_status():
 
 def show_number_compare():
     """사칭 번호와 저장된 이모 번호를 나란히 놓고, 뒤바뀐 끝 두 자리를 색으로 짚어 줘요(성공·실패 엔딩 공통)."""
+    # 결과 화면의 '비슷한 번호 비교' 한 줄(끝 두 자리를 강조)을 HTML로 만들어요.
     def row(icon, label, number, color, bg):
         head, tail = number[:-2], number[-2:]
         return (f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:{bg};border-radius:12px;padding:10px 14px;margin:6px 0">'
@@ -1170,6 +1204,7 @@ def show_number_compare():
     )
 
 
+# 탈출 성공 화면: 엔딩, 걸린 시간, 힌트·오답 수, 비슷한 번호 비교, 결과 카드를 보여 줘요.
 def show_ending():
     seconds = max(0, int(game["finished"] - game["started"]))
     minutes, remaining = divmod(seconds, 60)
@@ -1244,10 +1279,12 @@ def show_ending():
     )
 
 
+# 30분 실제 타이머에서 남은 시간(초)을 계산해요.
 def seconds_left():
     return TIME_LIMIT_MINUTES * 60 - (time.time() - game["started"])
 
 
+# 잠금 3개를 다 풀기 전에 시간이 다 됐는지 확인해요.
 def is_timed_out():
     return game["unlocked"] < 3 and seconds_left() <= 0
 
@@ -1271,6 +1308,7 @@ def countdown():
     )
 
 
+# 시간 초과나 포기로 끝났을 때 결과 화면을 보여 주고 기록을 남겨요.
 def show_failure():
     save_record(False)
     if game.get("gave_up"):
@@ -1331,6 +1369,7 @@ MUST_KNOW = [
 ]
 
 
+# 방탈출 안내서(줄거리, 진행 방법, 시간 규칙, 꼭 알아야 할 7가지 등 6개 탭)를 보여 줘요.
 def show_game_guide():
     started = "escape_game" in st.session_state
     title = "📖 방탈출 안내서 · 규칙과 주의점 (게임 중에도 언제든 열 수 있어요) — 👆 눌러서 열기" if started else "📖 방탈출 안내서 · 시작 전에 꼭 읽어 주세요"
@@ -1352,7 +1391,7 @@ def show_game_guide():
                 "02 🕹️ 진행 방법",
                 "03 ⏱️ 시간 규칙",
                 "04 ⚠️ 꼭 알아야 할 7가지",
-                "05 🏁 엔딩·랭킹",
+                "05 🏁 엔딩·명예의 전당",
                 "06 ❓ 막힐 때",
             ]
         )
@@ -1473,14 +1512,6 @@ def show_game_guide():
                 st.markdown(f"**Q. {question}**  \n{answer}")
 
 
-def show_quick_rules():
-    """게임 중 화면 위에 접힌 상태로 두는 짧은 규칙 요약입니다."""
-    with st.expander("⚠️ 규칙 한눈에 보기"):
-        for head, _ in MUST_KNOW:
-            st.markdown(f"- {head.format(limit=TIME_LIMIT_MINUTES)}")
-        st.caption("자세한 설명은 ‘시작 안내·입장’의 📖 방탈출 안내서에 있어요.")
-
-
 def go_to(section):
     """다음 실행에서 방탈출 내부 메뉴를 변경합니다. 새 화면은 맨 위부터 보여 줘요."""
     st.session_state["room_next_section"] = section
@@ -1488,11 +1519,13 @@ def go_to(section):
     st.rerun()
 
 
+# 새 게임을 만들고 '게임 진행' 화면으로 이동해요. ranked=True면 명예의 전당에 기록해요.
 def start_game(ranked):
     fresh_game(ranked=ranked)
     go_to("🗝️ 게임 진행")
 
 
+# '시작 안내·입장' 화면: 안내서, 안내서 확인 체크, 연습 시작 / 시민증으로 기록 남기며 시작 버튼.
 def show_entry():
     st.warning("📂 읽기만 하면 증거로 사용할 수 없어요! 필요한 자료는 반드시 ‘증거 보관함에 넣기’를 눌러 주세요. 마지막 보고서에서는 보관함에 넣은 증거만 선택할 수 있어요.")
 
@@ -1574,12 +1607,12 @@ def show_entry():
         citizen = dd.citizen()
 
         if not citizen and st.session_state.get("admin_open"):
-            # 관리자 모드는 시민증이 아니라서 랭킹에 참여하지 않아요.
+            # 관리자 모드는 시민증이 아니라서 명예의 전당에 기록하지 않아요.
             st.info("🔑 관리자 모드는 연습 모드로만 플레이돼요. 명예의 전당 기록은 남지 않아요. 기록을 남기려면 시민증 닉네임으로 로그인해 주세요. 위의 ‘연습으로 시작’으로 플레이해 주세요.")
         elif not citizen:
             # 로그인은 시민증 한 곳에서만 해요. 방탈출 안에서 따로 닉네임을 만들지 않아요.
             st.info(
-                "랭킹에 참여하려면 먼저 시민증(닉네임)을 만들어 주세요. "
+                "명예의 전당에 기록을 남기려면 먼저 시민증(닉네임)을 만들어 주세요. "
                 "시민증이 없어도 위의 ‘연습으로 시작’은 할 수 있어요."
             )
             with st.container(key="room_citizen_link"):
@@ -1618,13 +1651,14 @@ def show_entry():
                     start_game(True)
 
 
+# '게임 진행' 화면: 시간 확인 후 방 조사 / 증거 보관함 / 잠금 해제 탭을 보여 줘요.
 def show_play():
     global game
 
     if "escape_game" not in st.session_state:
         st.info(
             "먼저 시작 안내·입장에서 "
-            "연습 또는 랭킹 참여를 선택해 주세요."
+            "‘연습으로 시작’ 또는 ‘시민증으로 기록 남기며 시작’을 선택해 주세요."
         )
 
         if st.button("시작 안내·입장으로 이동"):
@@ -1840,7 +1874,7 @@ section = st.radio(
     label_visibility="collapsed",
 )
 
-# 선택한 화면만 실행해 랭킹 조회 중 게임 저장이 실행되지 않게 합니다.
+# 고른 화면(시작 안내·입장 / 게임 진행)만 실행해서, 안내를 보는 동안 게임 저장 코드가 실행되지 않게 합니다.
 if section == "🚪 시작 안내·입장":
     show_entry()
     # 게임이 진행 중이면 시작 안내 화면에서도 '나의 폰'은 계속 떠 있어요(연락은 계속 오니까요).

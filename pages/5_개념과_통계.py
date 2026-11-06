@@ -1,7 +1,10 @@
+# 개념과 통계 (시청로 · 도토리 시립도서관)
+# 앱에 나오는 수법 16가지의 뜻과 경찰청 공식 통계(2025년)를 출처와 함께 보여 줘요.
+
 from html import escape
 
 import streamlit as st
-from mascot_ui import show_key_question, show_mascot
+from mascot_ui import show_key_question
 import dotori_data as dd
 
 
@@ -88,6 +91,7 @@ DETAILS = {
 }
 
 
+# 수법 개념들을 카드(뜻, 확인 방법, 자세히 보기, 만나는 게임) 모양 HTML로 만들어요.
 def concept_cards(rows):
     cards = "".join(
         f'<div class="cc"><div class="cc-top"><span class="cc-ic">{icon}</span><b>{escape(name)}</b></div>'

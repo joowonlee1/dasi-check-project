@@ -39,24 +39,19 @@ DATA = {
         "📞 전화로 연락한 판매자는 19만 원을 불렀다.",
         "🛡️ 앱 안전결제를 쓴 판매자는 문자로 연락하지 않았다.",
     ],
-    "cipher_clues": [
+    # 거래 기록 A·B·C 조사를 하나씩 마칠 때마다 열리는 단서(순서대로 A, B, C)
+    "record_clues": [
         "📜 외부 메신저로 옮기자고 한 판매자가 가짜 결제 링크를 보냈다.",
         "📜 선입금 이체를 요구한 판매자의 가격은 12만 원이다.",
         "📜 오픈채팅으로 연락한 판매자의 가격은 14만 원이다.",
     ],
-    # 조사 1: 4칸으로 가로로 쓴 문장을 세로로 읽어 만든 전치 암호
-    "memo1": {"cipher": "외저자자결를부로던가제보메옮판가링냈신기매짜크다", "answer": 4, "options": [2, 3, 4, 6, 8]},
-    # 조사 2: 숫자마다 3칸씩 앞으로 민 시저 암호 (120000 → 453333)
-    "memo2": {"before": "선입금 이체를 요구한 판매자의 가격: ", "cipher": "453333", "after": "원", "shift": 3},
-    # 조사 3: 2진수 01110 = 14
-    "memo3": {"before": "오픈채팅 판매자의 가격(만 원): ", "bits": "01110", "answer": 14},
     # 추리 표에서 막혔을 때 한 단계씩 보여 주는 힌트(정답 표를 바로 알려 주지 않음)
     "steps": [
         "먼저 ‘누가 무엇’이 바로 적힌 단서 4개를 표에 ⭕로 옮겨요: 동네이웃=앱 채팅, 새상품만=문자, 운동화왕=상품권, 급처분해요=9만 원.",
         "‘전화 = 19만 원’과 ‘신분증 사진 = 가장 비쌈(19만 원)’을 이어 보세요. 전화로 연락한 판매자와 신분증 사진을 요구한 판매자는 같은 사람이에요.",
-        "남은 연락 방식은 외부 메신저·전화·오픈채팅이고, 남은 사람은 한정판러·급처분해요·운동화왕이에요. 상품권을 요구한 운동화왕은 전화(신분증)도, 외부 메신저(가짜 링크, 조사 1)도 아니에요.",
-        "운동화왕이 오픈채팅이면 조사 3에 따라 가격이 정해져요. 급처분해요는 9만 원이라 19만 원인 전화가 될 수 없어요.",
-        "마지막으로 앱 안전결제와 선입금 이체 중 누가 무엇인지 정해요. ‘앱 안전결제 판매자는 문자로 연락하지 않았다’와 조사 2를 써 보세요.",
+        "남은 연락 방식은 외부 메신저·전화·오픈채팅이고, 남은 사람은 한정판러·급처분해요·운동화왕이에요. 상품권을 요구한 운동화왕은 전화(신분증)도, 외부 메신저(가짜 링크, 거래 A 단서)도 아니에요.",
+        "운동화왕이 오픈채팅이면 거래 C 단서에 따라 가격이 정해져요. 급처분해요는 9만 원이라 19만 원인 전화가 될 수 없어요.",
+        "마지막으로 앱 안전결제와 선입금 이체 중 누가 무엇인지 정해요. ‘앱 안전결제 판매자는 문자로 연락하지 않았다’와 거래 B 단서를 써 보세요.",
     ],
     "tactics": {
         "한정판러": "📞 전화로 친근하게 다가와 ‘본인 확인’이라며 신분증 사진을 요구했어요. 신분증 사진은 명의 도용에 쓰일 수 있어요. 가격도 정가(18만 원)보다 비쌌죠.",
@@ -139,11 +134,6 @@ main.wrap{max-width:980px;margin:auto;padding:6px 4px 14px}
 .digits span{width:42px;height:52px;border-radius:10px;background:#3B2F1E;color:#FFE9A8;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:1.6rem;font-weight:900;animation:flip .3s ease-out both}
 .stepper{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
 .stepper b{font-size:1.3rem;min-width:2ch;text-align:center}
-.lamps{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
-.lamp{width:58px;border-radius:12px;background:#F1EBDA;border:2px solid #E6D9A8;padding:6px 0;text-align:center;font-weight:900;cursor:pointer;transition:transform .15s}
-.lamp:hover{transform:translateY(-2px)}
-.lamp .v{font-size:.8rem;color:#7A6A3A}.lamp .bit{font-size:1.5rem;font-family:'Courier New',monospace}
-.lamp.on{background:#FFE08A;border-color:#E3A400;box-shadow:0 0 0 4px #FFE08A66;animation:boing .4s}
 .sum{font-weight:900;font-size:1.1rem}
 .hint{background:#EEF2FF;border:2px solid #A5B4FC;border-radius:12px;padding:8px 12px;margin:8px 0;font-weight:700;word-break:keep-all;animation:pop .35s ease-out both}
 .got{background:#E6F4EC;border:2px solid #0F766E;border-radius:12px;padding:10px 12px;font-weight:800;margin-top:8px;word-break:keep-all;animation:pop .5s ease-out both}
@@ -248,7 +238,7 @@ function marketPop(o, then){
 
 const KINDS = ['c', 'r', 'p'];
 const G = {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0,
-  k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, auto: true, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0};
+  grid: {}, used: {}, auto: true, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0};
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastMsg = '';
@@ -300,8 +290,6 @@ function goBack(){ const order = ['memo', 'grid', 'pick'], k = order.indexOf(G.t
 function toast(t, el){ const x = $('toast'); if (x) x.textContent = t; if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } }
 
 // ───── ① 거래 기록 조사 ─────
-function decodeColumns(ct, k){ const r = ct.length / k, cols = []; for (let i = 0; i < k; i++) cols.push(ct.slice(i * r, (i + 1) * r)); let out = ''; for (let i = 0; i < r; i++) for (let c = 0; c < k; c++) out += cols[c][i]; return {out, cols, r}; }
-function shiftBack(s, n){ return s.replace(/\d/g, d => String((+d - n + 100) % 10)); }
 
 function memoTab(){
  $('body').innerHTML='<div class="story" style="border:2.5px solid #F1DFA6;background:#FFFBEB;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px"><b style="font-size:1.1rem">🧭 거래 기록 3건을 풀어 단서를 얻자!</b><span style="font-weight:800">📄 자료 읽기 → 🎯 결론 → ✅ 근거 체크</span><span style="font-size:.92rem;font-weight:700;color:#7C2D12;background:#FFEDD5;border-radius:999px;padding:2px 10px">📄 읽을 수 있음 · 📖 읽음 · 🔒 앞 자료를 읽으면 열림 → 시간 순서대로 따라가요</span><span style="font-size:.9rem;color:#6B5A2E"><b style="border:2px solid #60A5FA;background:#DBEAFE;color:#1E40AF;padding:0 7px;border-radius:999px">🕵️ 익명 판매자 가</b> = 이름을 가린 판매자 (위 1~5와 달라요) · <b>같은 이름표 자료끼리</b> 이어요. 판매자 말만 있는 자료는 함정일 수 있어요.</span></div>'+[0,1,2].map(i=>iqHTML(i)).join('')+(cluesOpen()===3?`<button onclick="go('grid')">추리 표로 이동</button>`:'');
@@ -309,22 +297,6 @@ function memoTab(){
 function iqComplete(i){unlock(i);}
 function iqHintUsed(i){G.hints[i]=true;}
 function iqWrong(i){G.wrongMemo++;}
-function memoExample(){
-  return `<section class="ex"><h3>👀 먼저 예시로 볼까요? 암호 3가지 푸는 법</h3>
-  <div class="exrow">
-    <div class="exbox"><span class="extag">자리 바꾸기</span><br>
-      원래 문장 <b>가나다라마바</b>를 <b>3칸</b> 줄에 가로로 쓰면
-      <table class="mini"><tr><td>가</td><td>나</td><td>다</td></tr><tr><td>라</td><td>마</td><td>바</td></tr></table>
-      세로로 읽어 적은 암호는 <span class="code sm">가라나마다바</span>
-      <p>👉 거꾸로, 암호를 <b>3칸</b>에 세로로 채우고 <b>가로로 읽으면</b> 원래 문장!</p></div>
-    <div class="exbox"><span class="extag">숫자 밀기</span><br>
-      <span class="code sm">1234</span> 를 <b>2칸 앞으로</b> 밀면 <span class="code sm">3456</span>
-      <p>👉 암호 <b>3456</b>을 <b>2칸 되돌리면</b> 1234!<br>9 다음은 0으로 돌아가요 (8을 3칸 밀면 1).</p></div>
-    <div class="exbox"><span class="extag">2진수</span><br>
-      자리마다 <b>16 · 8 · 4 · 2 · 1</b><br><span class="code sm">00101</span>
-      <p>👉 1이 있는 자리만 더해요: <b>4 + 1 = 5</b></p></div>
-  </div></section>`;
-}
 function gridExample(){
   return `<section class="ex"><h3>👀 먼저 예시로 볼까요? 추리 표 채우는 법 (3명 × 색깔)</h3>
   <p style="margin:0 0 8px;word-break:keep-all">단서 ① <b>B는 파랑이다.</b> &nbsp; 단서 ② <b>A는 빨강이 아니다.</b></p>
@@ -354,27 +326,17 @@ function gridExample(){
     <li>한 줄에 <b>남은 칸이 하나</b>면 그게 ⭕예요.</li>
     <li>‘아니다’ 단서는 ❌로 표시해요.</li></ol></div></section>`;
 }
-function hint(i){ G.hints[i] = true; render(); }
-function lamp(i){ G.lamps[i] = G.lamps[i] ? 0 : 1; render(); }
 function unlock(i){ G.solved[i] = true; render();  // 조사 완료 소식은 도토리마켓 큰 창으로만 알려요(맨 아래 글자는 띄우지 않아요)
   const n = G.solved.filter(Boolean).length;
   marketPop({mascot:'sneaker', tag:'거래 기록 조사 완료', title:`🔓 단서 확보! (${n}/3)`,
     body: esc(IQ_CASES[i].lesson) + '<br><b>추리 표에 새 단서가 열렸어요.</b>',
     button: n === 3 ? '🧩 추리 표로 가기 ▶' : '다음 거래 기록 조사하기 ▶'}, n === 3 ? () => go('grid') : null); }
-function check1(){ if (G.k === D.memo1.answer) unlock(0); else { G.wrongMemo++; toast('아직 문장이 안 돼요. 다른 칸 수로 해 보세요.', $('m0')); } }
-function check2(){ if (G.shift === D.memo2.shift && Number(G.m2val) === Number(shiftBack(D.memo2.cipher,D.memo2.shift))) unlock(1); else { G.wrongMemo++; toast('되돌리는 칸 수와 직접 계산한 금액을 함께 확인하세요.', $('m1')); } }
-function check3(){
-  // 메모의 비트 위치를 옮기고 직접 계산한 값까지 맞아야 해독돼요.
-  const ok = parseInt(G.m3val, 10) === D.memo3.answer && G.lamps.join("") === D.memo3.bits;
-  if (ok) { G.lamps = D.memo3.bits.split('').map(Number); unlock(2); }
-  else { G.wrongMemo++; toast('값이 달라요. 1이 적힌 자리를 다시 찾고, 그 자리 값만 더해 보세요.', $('m2')); }
-}
 
 // ───── ② 추리 표 ─────
 function cellKey(kind, s, v){ return kind + '|' + s + '|' + v; }
 function gridTab(){
   const clueHtml = D.base.map((t, i) => clueBtn('b' + i, t, false, false))
-    .concat(D.cipher_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 거래 ${'ABC'[i]} 조사를 마치면 열려요`, !G.solved[i], true))).join('');
+    .concat(D.record_clues.map((t, i) => clueBtn('m' + i, G.solved[i] ? t : `🔒 거래 ${'ABC'[i]} 조사를 마치면 열려요`, !G.solved[i], true))).join('');
   $('body').innerHTML = `
   <div class="story"><b>판매자 한 명당 연락 방식·요구 사항·가격은 각각 하나씩이에요. 각 항목도 한 사람에게만 대응해요. 한 표의 각 행·열마다 ⭕는 하나예요.</b><br>👆 칸을 누를 때마다 <b>빈칸 → ❌ 아님 → ⭕ 맞음</b>으로 바뀌어요. 단서를 하나씩 읽고 표에 표시해 보세요. 다 쓴 단서는 눌러서 지워 두면 편해요.
   <label class="autochk"><input type="checkbox" ${G.auto ? 'checked' : ''} onchange="G.auto=this.checked"> ⭕를 표시하면 같은 줄·같은 칸의 나머지를 자동으로 ❌</label></div>
@@ -582,7 +544,7 @@ function final(){
     body:`앱 안에서 안전결제로 거래한 판매자만 진짜였어요. 나머지 4명은 외부 메신저·선입금·상품권·신분증 사진을 요구했죠.<br><b style="font-size:1.3rem">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</b>`,
     button:'판매자별 수법 보기 ▶'});
 }
-function restart(){ entered=false; iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, k: 2, shift: 0, lamps: [0, 0, 0, 0, 0], grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, m3val: '', m2val: '', aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
+function restart(){ entered=false; iqReset(); hasInteracted=false; fresh = true; Object.assign(G, {tab: 'memo', solved: [false, false, false], hints: [false, false, false], wrongMemo: 0, wrongPick: 0, grid: {}, used: {}, pick: null, gridChecked: false, done: false, bad: {}, stepHint: 0, aiDraft: ''}); sendResult({type: 'ai_reset'}); render(); }
 
 // ───── Streamlit 높이 맞추기 ─────
 let lastHeight = 0;
@@ -620,7 +582,7 @@ def ask_ai(question, snap):
     """AI(Gemini)에게 학생 질문을 보내 힌트를 받아요. 연결이 안 되면 준비해 둔 힌트를 대신 보여 줘요."""
     solved = list((snap or {}).get("solved") or [False] * 3)[:3]
     marks = [str(m)[:40] for m in (snap or {}).get("marks", [])][:15]
-    clues = DATA["base"] + [c for c, ok in zip(DATA["cipher_clues"], solved) if ok]
+    clues = DATA["base"] + [c for c, ok in zip(DATA["record_clues"], solved) if ok]
     secret = "; ".join(f"{name}: {' / '.join(vals)}" for name, vals in DATA["solution"].items())
     prompt = (
         "[퍼즐 단서 - 학생이 볼 수 있는 것]\n" + "\n".join(clues)
@@ -652,6 +614,7 @@ def ask_ai(question, snap):
 
 answers = st.session_state.setdefault(AI_KEY, [])
 from game_phone import _btn_img  # AI 탐정 버튼에 붙일 로봇 깡지 그림
+# static 폴더의 장면 그림을 data URL로 읽어 게임 HTML에 넣어요. 파일이 없으면 빈 문자열이에요.
 def _scene_url(name):
     import base64
     from pathlib import Path

@@ -1,11 +1,15 @@
-from play_ui import intro, bridge
+# AI 모의대화 (시청로 · 시민훈련센터 대화 연습실)
+# Gemini가 7가지 상황의 사칭범 역할을 맡고, 사용자는 글이나 말(음성)로 답하며 거절·확인을 연습해요.
+# 키가 없거나 AI 연결이 안 되면 미리 만든 '오프라인 대본 모드'로 연습할 수 있어요.
+
+from play_ui import intro
 import html
 import json
 import re
 import time
 
 import streamlit as st
-from mascot_ui import show_hero, show_key_question, show_mascot, show_tiles
+from mascot_ui import show_hero, show_mascot, show_tiles
 from card_ui import show_result_card
 import dotori_data as dd
 from google import genai
@@ -361,11 +365,13 @@ OFFLINE_PUSHBACK = {
 # 상황 선택과 상태 관리
 # ─────────────────────────────────────
 
+# 연습 상황 카드를 누르면 그 상황으로 바꾸고 대화를 처음부터 시작해요.
 def select_scenario(name):
     st.session_state[SCENARIO_KEY] = name
     reset_chat()
 
 
+# 연습할 상황 7가지를 카드 버튼으로 보여 줘요.
 def render_scenario_picker():
     selected = st.session_state.get(SCENARIO_KEY, "가족 사칭")
 
@@ -407,6 +413,7 @@ def render_scenario_picker():
     return selected
 
 
+# 고른 상황의 첫 인사로 대화를 처음부터 다시 시작해요.
 def reset_chat():
     scenario = st.session_state.get(
         SCENARIO_KEY,
@@ -429,10 +436,12 @@ def reset_chat():
     }
 
 
+# 대화 상태(메시지 목록, 끝났는지 등)를 세션에서 꺼내요.
 def get_state():
     return st.session_state[STATE_KEY]
 
 
+# Secrets에서 GEMINI_API_KEY를 읽어요. 없으면 빈 문자열이에요.
 def read_api_key():
     try:
         return str(
@@ -442,6 +451,7 @@ def read_api_key():
         return ""
 
 
+# Gemini API 클라이언트를 만들어요(제한 시간 설정 포함). 키가 없으면 missing_key 오류를 일으켜요.
 def new_client():
     key = read_api_key()
 
@@ -458,6 +468,7 @@ def new_client():
 # API 오류 안내
 # ─────────────────────────────────────
 
+# AI 연결 오류를 사용자가 이해할 수 있는 안내로 바꿔요(키는 화면에 보여 주지 않아요).
 def explain_error(error):
     if isinstance(error, RuntimeError):
         if str(error) == "missing_key":
@@ -548,6 +559,7 @@ def show_voice_reply(state, turns, offline):
         st.rerun()
 
 
+# 'AI 연결 확인'을 누르면 지금 쓰는 모델이 목록에 있는지, 짧은 답이 실제로 오는지 차례로 점검해요.
 def run_diagnosis():
     results = []
 
@@ -609,6 +621,7 @@ def split_reply(text):
     return text, ""
 
 
+# 지금까지의 대화를 Gemini에 보낼 형식으로 바꿔요. 코치 피드백은 다시 보내지 않아요.
 def build_contents(messages):
     contents = [
         types.Content(
@@ -636,6 +649,7 @@ def build_contents(messages):
     return contents
 
 
+# 사칭범 역할 지침과 대화를 보내고, AI 답변을 글자가 나오는 대로 화면에 이어서 보여 줘요.
 def stream_answer(messages, scenario):
     instruction = (
         ROLE_RULES
@@ -662,6 +676,7 @@ def stream_answer(messages, scenario):
                 yield chunk.text
 
 
+# 대화가 끝나면 AI에게 대응 리포트(잘한 점·흔들린 점·더 안전한 말)를 요청해요.
 def generate_report(messages):
     transcript = json.dumps(
         messages,
@@ -759,6 +774,7 @@ REAL_INFO_PATTERN = re.compile(r"\d(?:[\s-]*\d){3,}")
 SAFE_NUMBERS = {"1332", "1301", "1588"}  # 금융감독원·검찰 등 신고·상담 번호는 허용합니다.
 
 
+# 전화번호·인증번호처럼 보이는 숫자가 있는지 찾아요(1332 같은 신고 번호와 연도는 빼고).
 def looks_like_real_info(text):
     for match in REAL_INFO_PATTERN.finditer(text):
         digits = re.sub(r"\D", "", match.group())
@@ -775,16 +791,19 @@ COMPLY_WORDS = (
 )
 
 
+# '응', '알겠어' 처럼 상대 요구를 따르겠다는 답인지 확인해요.
 def is_compliance(text):
     compact = re.sub(r"\s+", "", text).lower()
     return compact in ("응", "ㅇㅇ", "네", "넹", "웅") or any(w in compact for w in COMPLY_WORDS)
 
 
+# '안 돼', '직접 확인할게' 처럼 거절하는 답인지 확인해요.
 def is_refusal(text):
     compact = re.sub(r"\s+", "", text)
     return any(word in compact for word in REFUSAL_WORDS)
 
 
+# 대화를 끝난 상태로 바꿔요(리포트를 볼 수 있게).
 def finish_chat():
     state["ended"] = True
     state["pending"] = None
@@ -858,6 +877,7 @@ def offline_reply(messages, user_text, scenario):
     return scripts[turns]
 
 
+# AI 없이(오프라인 대본 모드) 정해진 기준으로 대응 리포트를 만들어요.
 def offline_report(messages):
     count = sum(
         message["role"] == "user"
@@ -927,6 +947,7 @@ def drumroll(frames):
     box.empty()
 
 
+# 결과가 나올 때 터지는 반짝이(이모지) 위치를 원 모양으로 배치해 HTML로 만들어요.
 def sparks(icons):
     out = []
     for i, icon in enumerate(icons):
