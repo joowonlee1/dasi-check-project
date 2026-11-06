@@ -1,6 +1,5 @@
 """독립 소개 화면: 깡지 도우미 이미지·보라색 카드 안내. 게임과 인증은 유지합니다."""
 import base64
-from html import escape
 from pathlib import Path
 import streamlit as st
 import dotori_data as dd
@@ -9,6 +8,7 @@ SEEN = "welcome_intro_seen_v1"
 HELP = "welcome_intro_help_pending_v1"
 
 
+# 소개 화면에서 고른 버튼(둘러보기 / 새 시민증 / 다시 들어오기)에 맞게 다음 화면을 정해요.
 def _enter(mode):
     if mode in ("new", "back"):
         st.session_state["welcome_form_mode"] = mode
@@ -97,6 +97,7 @@ CSS = """
 """
 
 
+# 소개 화면에 쓸 깡지 도우미 그림을 <img> 태그로 만들어요.
 def _avatar():
     # 실제 깡지 도우미와 같은 헬멧 쓴 이미지. 시민증 사진의 자르기 함수를 사용하지 않습니다.
     try:
@@ -106,13 +107,7 @@ def _avatar():
         return '<span role="img" aria-label="깡지 도우미" style="font-size:56px">🤖</span>'
 
 
-def _cards(items):
-    return '<div class="pi-guide">' + ''.join(
-        f'<article><h3>{escape(title)}</h3><p>{body}</p></article>'
-        for title, body in items
-    ) + '</div>'
-
-
+# 아직 소개를 보지 않은 사람에게만 소개 화면을 보여 주고, 고를 때까지 나머지 화면을 멈춰요(st.stop).
 def show_intro_if_needed():
     if dd.citizen() or st.session_state.get("admin_open"):
         if st.session_state.pop("welcome_auth_pending", False):

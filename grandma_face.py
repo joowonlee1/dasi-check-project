@@ -59,6 +59,7 @@ FACES = {
 }
 
 
+# 할머니 얼굴 SVG의 눈썹 모양을 표정 종류에 맞게 골라요.
 def _brows(kind):
     shapes = {
         "soft": "M52 66 Q62 61 72 65 M108 65 Q118 61 128 66",
@@ -71,6 +72,7 @@ def _brows(kind):
     return f'<path d="{shapes[kind]}" stroke="#8B8B8B" stroke-width="4.5" stroke-linecap="round" fill="none"/>'
 
 
+# 할머니 얼굴 SVG의 눈 모양(웃는 눈·감은 눈·보통 눈 등)을 만들어요.
 def _eyes(kind):
     if kind == "happy":
         return '<path d="M55 86 Q63 77 71 86 M109 86 Q117 77 125 86" stroke="#2B2B2B" stroke-width="4" stroke-linecap="round" fill="none"/>'
@@ -87,6 +89,7 @@ def _eyes(kind):
     return '<circle cx="63" cy="84" r="5" fill="#2B2B2B"/><circle cx="117" cy="84" r="5" fill="#2B2B2B"/>'
 
 
+# 할머니 얼굴 SVG의 입 모양을 표정 종류에 맞게 골라요.
 def _mouth(kind):
     shapes = {
         "smile": '<path d="M76 118 Q90 132 104 118" stroke="#8C3B2E" stroke-width="4.5" stroke-linecap="round" fill="none"/>',
@@ -98,6 +101,7 @@ def _mouth(kind):
     return shapes[kind]
 
 
+# 눈물·땀방울 같은 추가 표현을 얼굴 SVG에 더해요.
 def _extras(items):
     out = []
     for item in items:

@@ -1,4 +1,8 @@
-from play_ui import intro, is_playing
+# 잠깐! — 앱의 시작 파일 (실행: streamlit run app.py)
+# 페이지 설정, 로그인 복원, 깡지 소개 화면, 사이드바(시민증·큰 글씨·효과음), 메뉴(st.navigation),
+# 홈 화면(도토리시 그림 지도와 활동 목록)을 담당해요. 각 기능 화면은 pages 폴더의 파일이 그려요.
+
+from play_ui import intro
 import time
 import html
 
@@ -488,7 +492,7 @@ FEATURES = [
         "🗝️",
         "pages/3_피싱_방탈출.py",
         "규칙 확인 → 입장 → 증거 수집 → 잠금 해제",
-        "증거를 비교해 사건을 해결하고 원하는 경우 랭킹에 참여해요.",
+        "증거를 비교해 사건을 해결하고, 원하면 명예의 전당에 기록을 남겨요.",
     ),
     (
         "04",
@@ -590,6 +594,7 @@ PLACES = {
 # 홈
 # ─────────────────────────────────────
 
+# 홈 화면: 긴급 안내 버튼, 소개, 도토리시 그림 지도, 다음 장소 추천, 활동 목록 탭을 그려요.
 def show_home():
     from admin_ui import tools_button
     tools_button("home")
@@ -1061,6 +1066,7 @@ if not dd.citizen() and not st.session_state.get("guest") and not st.session_sta
     _helper_page = "00"
 show_helper(_helper_page)
 
+# 처음 들어온 사람에게 깡지 소개 화면(둘러보기·시민증 만들기·다시 들어오기)을 보여 줘요.
 def show_welcome_gate():
     # 로그아웃 후나 비로그인 접근도 중복 환영 카드 없이 같은 첫 화면으로 안내합니다.
     st.session_state.pop("welcome_help_access", None)
@@ -1199,6 +1205,7 @@ def alert_css():
     import base64 as _b64
     from pathlib import Path as _P
 
+    # assets 폴더의 그림을 data URL(글자로 바꾼 그림)로 만들어요. 파일이 없으면 빈 문자열을 돌려줘요.
     def url(name):
         try:
             return "data:image/png;base64," + _b64.b64encode((_P(__file__).resolve().parent / "assets" / name).read_bytes()).decode("ascii")

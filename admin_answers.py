@@ -16,6 +16,7 @@ GUIDES = {
  "12": "■는 칠할 칸, □는 빈칸이에요. 그림 복원과 QR 안전성 판단은 별개예요.",
  "14": "1번 정상 확인: 실제 방문과 안내 내용이 일치. 2번 위조 확인: 실제 등기는 있지만 인증번호 요구를 기관이 부인. 3번 판단 보류: 전산 지연으로 조회 결과가 불충분.",
 }
+# 관리자 모드일 때만 각 게임의 정답·판정 기준을 화면에 보여 줘요.
 def show_answers():
     from admin_tools import OPEN
     if not st.session_state.get(OPEN):
@@ -38,6 +39,7 @@ def show_answers():
     _readable_answers(picked.name.split("_",1)[0], _page_values(picked))
 
 
+# 페이지 파일 이름(예: 3_피싱_방탈출.py)에서 번호를 떼고 화면용 제목으로 바꿔요.
 def _title(path):
     return path.stem.split("_",1)[1].replace("_"," ")
 
@@ -54,6 +56,7 @@ def _page_values(path):
 
 class _Sheet:
     """화면에 그리는 대신 글로 적는 '가짜 st'. 화면과 같은 정답 코드를 그대로 써서 내용이 어긋나지 않아요."""
+    # 아래 메서드들은 st.markdown·st.info 같은 Streamlit 함수와 이름을 똑같이 맞춰, 화면 대신 한 줄씩 글로 적어요.
     def __init__(self): self.lines=[]
     def __enter__(self): return self
     def __exit__(self,*args): self.lines.append("")
@@ -66,6 +69,7 @@ class _Sheet:
     def code(self,text,language=None): self.lines.extend(str(text).split("\n"))
     def container(self,**kwargs): return self
     def expander(self,label,**kwargs): self._add(label,"▸ "); return self
+    # 표의 각 줄을 '항목: 값' 한 줄 글로 바꿔 답안지에 적어요.
     def table(self,rows):
         for row in rows: self._add(" · ".join(f"{k}: {v}" for k,v in row.items()),"  - ")
 
@@ -176,6 +180,7 @@ def _readable_answers(number, values, st=st):
         st.caption("직접 촬영한 사진과 자유 문장의 사실 여부는 자동 채점하지 않습니다. 직접 촬영 모드도 깡지 근거 문제를 거치며, 결과는 사실 검증이 아닌 수정 전·후 비교 완료입니다.")
 
 
+# 거래·QR 조사 문제 하나의 정답 결론, 골라야 할 근거, 배울 점을 카드로 보여 줘요.
 def show_investigation_answer(case, st=st):
     with st.container(border=True):
         st.markdown("### "+case["title"])

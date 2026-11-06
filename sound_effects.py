@@ -30,10 +30,12 @@ def sound_volume():
         return DEFAULT_VOLUME / 100
 
 
+# 다음 화면 그리기 때 재생할 효과음을 예약해요.
 def queue_effect(kind="stamp"):
     st.session_state["_sound_event"] = {"id": uuid.uuid4().hex, "kind": kind}
 
 
+# 예약된 효과음이 있으면 브라우저에서 재생해요(효과음이 켜져 있을 때만).
 def flush_effect():
     event = st.session_state.pop("_sound_event", None)
     if event and sound_enabled():
@@ -51,6 +53,7 @@ def render_sound_controls():
     components.html(_engine(on, sound_volume()), height=0)
 
 
+# 브라우저의 Web Audio로 효과음을 만드는 스크립트에 켜짐 여부와 음량을 넣어요.
 def _engine(enabled, volume):
     config = json.dumps({"enabled": bool(enabled), "volume": round(float(volume), 3)})
     return _HTML.replace("__CONFIG__", config)

@@ -5,7 +5,6 @@
 - 대사는 모두 교육용 가상 대사예요.
 """
 import json
-import streamlit as st
 import streamlit.components.v1 as components
 
 # 통화 화면을 그리고 대사를 읽는 함수. (D: 화면을 그릴 문서, SW: 목소리를 낼 창, H: 효과음 엔진, data: 통화 내용)

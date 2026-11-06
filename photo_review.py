@@ -41,6 +41,7 @@ status ready는 모든 항목 1점 이상이고 합계 6점 이상일 때만 가
 summary, strength, next_step은 각 100자 이내, 항목 feedback은 150자 이내로 작성하라."""
 
 
+# 브라우저가 보낸 사진(base64 JPEG)이 올바른지 검사해요. JPEG가 아니거나 1280px보다 크면 받지 않아요(사진은 브라우저에서 미리 작게 줄여 보내요).
 def _image(value):
     if not isinstance(value, str) or not value.startswith("data:image/jpeg;base64,") or len(value) > 600_000:
         raise ValueError("사진을 다시 준비해 주세요.")
@@ -56,6 +57,7 @@ def _image(value):
         raise ValueError("사진을 읽지 못했어요. 다시 준비해 주세요.") from exc
 
 
+# AI 답변이 정해진 형식(상태 + 평가 항목 4개, 점수 0~2)인지 확인해요. 형식이 틀리면 받지 않아요.
 def _normalise(data):
     if not isinstance(data, dict) or data.get("status") not in ("ready", "revise", "uncertain"):
         raise ValueError("invalid_response")
@@ -123,8 +125,10 @@ def _failure_reason(exc, stage):
     return "AI 연결 중 오류가 발생했어요. 입력은 그대로 있으니 다시 시도해 주세요. [CONNECTION]"
 
 
+# 동의를 받은 경우에만 사진과 설명을 Gemini에 보내 학습용 피드백을 받아요. 실패해도 통과로 처리하지 않아요.
 def review_photo(event):
     identity = str(event.get("id", ""))[:100]
+    # 실패 안내 메시지를 화면으로 돌려보낼 형식으로 만들어요.
     def failure(message):
         return {"id": identity, "ok": False, "message": message}
     if event.get("consent") is not True:

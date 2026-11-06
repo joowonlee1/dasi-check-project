@@ -17,6 +17,7 @@ TRIES = "admin_tries"
 OPEN = "admin_open"
 
 
+# Secrets의 [admin] code(관리자 코드)를 읽어요. 없으면 빈 문자열이라 관리자 기능이 꺼져요.
 def _admin_code():
     try:
         return str(st.secrets["admin"]["code"]).strip()
@@ -47,6 +48,7 @@ def _token():
     return creds.token
 
 
+# Firebase 인증(Identity Toolkit) 관리 API를 서비스 계정 권한으로 호출해요(비밀 숫자 재설정·계정 삭제).
 def _tk(action, body):
     _, project = config()
     return request(f"https://identitytoolkit.googleapis.com/v1/projects/{project}/accounts:{action}",
@@ -59,6 +61,7 @@ def _uid_of(canonical):
     return found[0]["localId"] if found else None
 
 
+# Firestore 문서 하나를 지워요. 이미 없는 문서(404)는 오류로 보지 않아요.
 def _delete_doc(path):
     try:
         request("https://firestore.googleapis.com/v1/" + quote(path, safe="/"), "DELETE", token=_token())
@@ -67,6 +70,7 @@ def _delete_doc(path):
             raise
 
 
+# Firestore의 시민증 목록을 여러 쪽에 걸쳐 모두 읽어 와요(최대 10쪽).
 def _citizens():
     _, project = config()
     base = f"https://firestore.googleapis.com/v1/projects/{project}/databases/(default)/documents/citizens"
@@ -88,6 +92,7 @@ def _citizens():
     return rows
 
 
+# 관리자 작업이 실패한 원인(reason)에 맞는 안내 문구를 보여 줘요.
 def _problem(exc):
     if exc.reason == "NO_ADMIN_KEY":
         st.error("Secrets에 [firebase_admin](서비스 계정 키)이 없어서 이 기능을 쓸 수 없어요.")
@@ -123,6 +128,7 @@ def show_admin_box():
         _admin_tools()
 
 
+# 관리자 도구 탭 4개(비밀 숫자 재설정 / 시민 목록·삭제 / 명예의 전당 정리 / 게임 정답)를 그려요.
 def _admin_tools():
     if not st.session_state.get(OPEN):
         return

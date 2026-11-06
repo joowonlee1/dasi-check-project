@@ -15,7 +15,7 @@ from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 import streamlit as st
-from firebase_support import ConnectionProblem, config, explain, normalize_nickname, request
+from firebase_support import ConnectionProblem, config, normalize_nickname, request
 
 CITIZEN = "dotori_citizen"     # 시민증(로그인) 정보
 ANON = "dotori_anon"           # 로그인하지 않은 사람의 익명 계정(통계 저장용)
@@ -98,11 +98,13 @@ HALL_TEXT = {
 
 # ───────── 기본 주소 ─────────
 
+# 이 프로젝트의 Firestore 문서 경로 앞부분(projects/…/documents)을 만들어요.
 def _root():
     _, project = config()
     return f"projects/{project}/databases/(default)/documents"
 
 
+# Firestore REST API 주소를 만들어요. path를 주면 그 문서까지의 주소가 돼요.
 def _url(path=""):
     return "https://firestore.googleapis.com/v1/" + _root() + (("/" + path) if path else "")
 
@@ -120,6 +122,7 @@ def _public_get(url):
         raise ConnectionProblem() from None
 
 
+# Firestore가 돌려준 값({"integerValue": "3"} 같은 모양)에서 실제 값만 꺼내요.
 def _value(field):
     for kind in ("integerValue", "doubleValue", "stringValue", "booleanValue", "timestampValue"):
         if kind in field:
@@ -130,6 +133,7 @@ def _value(field):
 
 # ───────── 계정 ─────────
 
+# 시민증 없이 통계·기록을 저장할 때 쓸 이름 없는(익명) Firebase 계정을 새로 만들어요.
 def _sign_up():
     key, _ = config()
     result = request(
@@ -188,6 +192,7 @@ def _auth(action, email, secret):
             "expires": time.time() + int(result["expiresIn"])}
 
 
+# 비밀 숫자가 정확히 숫자 6자리인지 검사해요. 아니면 SECRET_INVALID 오류를 일으켜요.
 def _check_secret(secret):
     if not re.fullmatch(r"[0-9]{6}", secret or ""):
         raise ConnectionProblem(400, "SECRET_INVALID")
@@ -245,6 +250,7 @@ def login(nickname, secret):
     return name
 
 
+# 로그인한 시민증을 세션에 저장하고, 계정에 있던 도장과 이번 창에서 새로 받은 도장을 합쳐 저장해요(다른 시민이 로그인해 있으면 먼저 로그아웃해요).
 def _keep(account, name, canonical, saved=None):
     previous = citizen()
     if previous and previous.get("uid") != account["uid"]:
@@ -267,6 +273,7 @@ def _keep(account, name, canonical, saved=None):
     return name
 
 
+# 로그아웃해요. 아직 저장 못 한 도장이 있으면 먼저 저장을 시도하고, 실패하면 로그아웃을 막아요.
 def logout(discard=False):
     from admin_progress import active, sync, PENDING as ADMIN_PENDING
     if active() and st.session_state.get(ADMIN_PENDING) and not discard:
@@ -318,6 +325,7 @@ def _save_stamps():
     return True
 
 
+# 도장 저장이 밀려 있거나 실패했을 때 안내와 '다시 저장' 버튼을 보여 줘요.
 def show_stamp_sync_status():
     from admin_progress import active, status
     if active():
@@ -382,10 +390,12 @@ def once(event_id):
     return True
 
 
+# 이번 방문에서 내가 낸 결과를 시민증 페이지의 '이번 방문 기록'에 적어 둬요.
 def note_mine(game, text):
     st.session_state.setdefault(MY, []).append((game, text, datetime.now(KST).strftime("%H:%M")))
 
 
+# 장소 도장을 찍어요. 관리자 모드면 관리자 공용 도장판에 찍어요.
 def stamp(code, quiet=False):
     from admin_progress import active, award
     if active():return award(code,quiet)
@@ -460,6 +470,7 @@ def achieve(code):
     return True
 
 
+# 지금까지 받은 업적 배지 목록(세션에 저장된 것)을 돌려줘요.
 def badges():
     return st.session_state.get(BADGES, {})
 
@@ -563,6 +574,7 @@ def show_stamp_popup():
                 st.audio(_ding(min(volume / 60, 1.6)), format="audio/wav", autoplay=True)
 
 
+# 지금까지 받은 도장 목록을 돌려줘요. 관리자 모드면 관리자 공용 도장판을 돌려줘요.
 def stamps():
     from admin_progress import active, load
     if active():return load()
@@ -598,6 +610,7 @@ def record(game, counts):
         return False
 
 
+# Firestore의 게임별 통계 문서(stats/게임)를 읽어 숫자 항목만 사전으로 돌려줘요.
 @st.cache_data(ttl=REFRESH, show_spinner=False)
 def load_stats(project, game):
     doc = _public_get(f"https://firestore.googleapis.com/v1/projects/{project}/databases/(default)/documents/stats/{game}")
@@ -615,6 +628,7 @@ def stats(game):
         return {}
 
 
+# 비율(%)을 반올림해 계산해요. 전체가 0이면 0을 돌려줘요.
 def pct(part, whole):
     return round(part * 100 / whole) if whole else 0
 
@@ -646,6 +660,7 @@ def save_hall(game, fields, better):
         return "failed"
 
 
+# 명예의 전당(halloffame/게임/entries) 기록을 여러 쪽에 걸쳐 읽어 와요.
 @st.cache_data(ttl=REFRESH, show_spinner=False)
 def load_hall(project, game):
     base = f"https://firestore.googleapis.com/v1/projects/{project}/databases/(default)/documents/halloffame/{game}/entries"
@@ -665,6 +680,7 @@ def load_hall(project, game):
     return rows
 
 
+# 게임 하나의 명예의 전당 기록을 읽어요. 연결이 안 되면 빈 목록을 돌려줘요.
 def hall(game):
     try:
         _, project = config()

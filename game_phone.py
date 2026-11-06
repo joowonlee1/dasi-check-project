@@ -151,28 +151,6 @@ else{const nw=calls.filter(c=>!state.spoken.has(c.title));nw.forEach(c=>state.sp
 state.awaitDial=false;
 })();
 '''
-_COPY_JS = r'''
-const phones=__PHONES__;
-const root=document.getElementById('numbers');
-phones.forEach(phone=>{
- const row=document.createElement('div');row.className='number-row';
- const value=document.createElement('span');value.textContent=phone;value.tabIndex=0;
- const button=document.createElement('button');button.type='button';button.textContent='📋 복사';button.setAttribute('aria-label',phone+' 복사');
- button.onclick=async()=>{
-  let ok=false;
-  try{await navigator.clipboard.writeText(phone);ok=true;}catch(e){
-   const input=document.createElement('textarea');input.value=phone;document.body.appendChild(input);input.select();
-   try{ok=document.execCommand('copy');}catch(e){}input.remove();
-  }
-  // 다른 번호를 복사하면 앞서 복사한 버튼은 다시 '📋 복사'로 돌아가요.
-  root.querySelectorAll('.number-row button').forEach(other=>{if(other!==button)other.textContent='📋 복사';});
-  button.textContent=ok?'✓ 복사됨':'복사 실패';
-  row.querySelector('.status').textContent=ok?'':'번호를 길게 눌러 직접 복사해 주세요.';
- };
- const status=document.createElement('span');status.className='status';status.setAttribute('role','status');
- row.append(value,button,status);root.appendChild(row);
-});
-'''
 
 def _btn_img(name):
     """버튼에 붙일 깡지 그림(data URL). 그림이 없으면 빈 그림이라 글자만 보여요."""
@@ -184,6 +162,7 @@ def _btn_img(name):
         return "data:,"
 
 
+# 화면 구석에 '나의 폰'(문자함·전화 키패드)을 띄우고, 새 문자가 오면 알림음과 함께 보여 줘요.
 def show_phone(session, messages, sender, clock_text, pop=True, dial=None, pitch=None):
     # dial: '전화' 탭에 보여 줄 내용 {numbers, calls, note}. 없으면 문자만 보여요.
     # pitch: 통화 목소리 높이·빠르기 {누가: [높이, 빠르기]}
@@ -198,19 +177,8 @@ def show_phone(session, messages, sender, clock_text, pop=True, dial=None, pitch
         components.html("<script>const d=parent.document;const s=d.createElement('script');s.textContent="+script_json+";d.head.appendChild(s);s.remove();</script>"
                         f"<!-- {st.session_state['_phone_draw_n']} -->", height=0)
 
-def copy_numbers(numbers):
-    source=_COPY_JS.replace("__PHONES__",json.dumps(numbers,ensure_ascii=False).replace("<","\\u003c"))
-    if not numbers:
-        st.caption("번호가 있는 자료를 증거 보관함에 넣으면 여기에 표시돼요.")
-        return
-    components.html("""<!doctype html><html lang="ko"><meta charset="utf-8"><style>
-body{margin:0;font:16px Pretendard Variable,Pretendard,system-ui;color:#20483f}
-.number-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;padding:6px;background:#f2f6f3;border-radius:10px}
-.number-row>span:first-child{font-weight:700;user-select:all}
-button{min-height:44px;padding:8px 12px;background:#20483f;color:white;border:2px solid #20483f;border-radius:8px;font:700 15px Pretendard Variable,Pretendard,system-ui;cursor:pointer}
-.status{font-size:13px}
-</style><div id="numbers"></div><script>"""+source+"</script></html>",height=len(numbers)*78+12,scrolling=True)
 
+# 게임이 끝나거나 다른 페이지로 갈 때 '나의 폰'과 긴장 연출을 화면에서 지워요.
 def clear_phone():
     # 매번 내용이 달라야 브라우저가 다시 실행해요(같은 내용이면 이전 것을 재사용해서 지우기가 안 될 수 있어요).
     st.session_state["_phone_clear_n"] = st.session_state.get("_phone_clear_n", 0) + 1

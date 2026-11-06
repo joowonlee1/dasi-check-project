@@ -3,12 +3,15 @@ import streamlit as st
 from pathlib import Path
 import base64
 
+# 관리자증에 넣을 깡지 사진을 base64 글자로 읽어요(HTML에 바로 넣기 위해).
 def manager_photo():
     return base64.b64encode((Path(__file__).resolve().parent/'assets'/'ggangji_manager.png').read_bytes()).decode('ascii')
 
+# assets 폴더의 그림 파일을 base64 글자로 읽어요.
 def _asset(name):
     return base64.b64encode((Path(__file__).resolve().parent/'assets'/name).read_bytes()).decode('ascii')
 
+# 관리자로 들어왔을 때 사이드바에 관리자증 카드를 보여 줘요. compact=True면 작게 보여 줘요.
 def card(compact=False):
     if not st.session_state.get("admin_open"):
         return
@@ -54,6 +57,7 @@ def card(compact=False):
             '🌱 관리자 모드에서는 게임을 <b>연습 모드로만</b> 할 수 있어요. 명예의 전당 기록은 <b>시민증 닉네임</b>으로만 남아요.</div>')
     st.markdown(head + note, unsafe_allow_html=True)
 
+# 관리자일 때만 '관리 도구 열기/닫기' 버튼을 보여 줘요. prefix는 화면마다 버튼 이름이 겹치지 않게 해요.
 def tools_button(prefix):
     if not st.session_state.get("admin_open"):
         return

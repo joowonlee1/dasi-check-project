@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 import streamlit as st
 
+# 페이지 번호별로 지금 게임이 진행 중인지 확인해요(진행 중이면 위쪽 소개를 숨기려고).
 def is_playing(number):
     s = st.session_state
     if number == "01": return bool(s.get("grandma_v3", {}).get("started"))
@@ -17,6 +18,7 @@ def is_playing(number):
         return bool(game.get("entered", False))
     return False
 
+# with intro(...) 안에 쓴 소개 영역을 게임이 진행되는 동안에는 숨겨 주는 상자예요.
 @contextmanager
 def intro(number, route=False, suffix=""):
     key = ("route_" if route else "intro_") + number + suffix
@@ -29,6 +31,7 @@ def intro(number, route=False, suffix=""):
 BRIDGE_MASCOTS = {"06": ("trophy", "hooray", "news"), "10": ("sneaker", "hooray", "think"), "11": ("postman", "hooray", "think"), "12": ("puzzle", "hooray", "detective")}
 
 
+# 게임 화면(HTML) 안에서 쓸 깡지 그림들을 data URL로 미리 만들어 둬요.
 def _mascot_urls(number):
     import base64
     import io
@@ -49,6 +52,7 @@ def _mascot_urls(number):
     return json.dumps(out)
 
 
+# 게임 HTML에 공통 기능(진행 중 표시, 큰 결과 창, 깡지 그림)을 넣어 주는 스크립트를 덧붙여요.
 def bridge(html_text, number):
     # iframe 안의 시작/다시보기 동작이 서버 재실행 없이 바깥 안내도 접게 합니다.
     script = """

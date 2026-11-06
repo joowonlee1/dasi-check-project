@@ -62,11 +62,13 @@ CSS = """
 
 # ───────── 저장소 ─────────
 
+# 이 프로젝트의 Firestore 문서 주소 앞부분을 만들어요.
 def _documents_url():
     _, project = config()
     return f"https://firestore.googleapis.com/v1/projects/{project}/databases/(default)/documents"
 
 
+# 서약의 벽 문서(pledges/벽 이름)의 주소를 만들어요.
 def _wall_parent():
     return _documents_url() + f"/pledges/{WALL}"
 
@@ -93,7 +95,7 @@ def _read(url):
 @st.cache_data(ttl=REFRESH, show_spinner=False)
 def load_summary(project):
     """전체 참여자 수, 서약별 선택 수, 최근 서약 12개를 계산합니다.
-    방탈출 랭킹과 같은 '목록 읽기' 방식을 씁니다."""
+    명예의 전당(dotori_data.load_hall)과 같은 '목록 읽기' 방식을 씁니다."""
     base = _wall_parent() + "/entries"
     documents, page = [], None
     for _ in range(10):  # 최대 3,000개까지 읽습니다.
@@ -123,6 +125,7 @@ def load_summary(project):
     return len(documents), counts, notes[:12]
 
 
+# 서약을 남길 때 쓸 익명 Firebase 계정을 만들거나, 아직 유효한 계정을 다시 써요.
 def _anonymous_account():
     account = st.session_state.get(STATE + "user")
     if account and time.time() < account["expires"] - 60:
@@ -138,11 +141,13 @@ def _anonymous_account():
     return account
 
 
+# 내 서약 문서의 Firestore 경로(계정 uid로 만든 이름)를 만들어요.
 def _entry_name(uid):
     _, project = config()
     return f"projects/{project}/databases/(default)/documents/pledges/{WALL}/entries/" + quote(uid, safe="")
 
 
+# 고른 약속과 별명을 내 서약 문서로 저장해요(한 사람당 문서 하나).
 def save_pledge(nickname, picks):
     account = _anonymous_account()
     fields = {"nickname": {"stringValue": nickname}}
@@ -156,6 +161,7 @@ def save_pledge(nickname, picks):
     return account["uid"]
 
 
+# 방금 남긴 내 서약을 지워요(다시 고쳐 쓰고 싶을 때).
 def delete_pledge():
     account = st.session_state.get(STATE + "user")
     if not account:
@@ -166,6 +172,7 @@ def delete_pledge():
 
 # ───────── 화면 ─────────
 
+# 별명이 비어 있으면 '익명'으로, 형식(한글·영문·숫자·밑줄 2~12자)이 틀리면 오류로 처리해요.
 def clean_nickname(text):
     name = text.strip()
     if not name:
@@ -175,6 +182,7 @@ def clean_nickname(text):
     return name
 
 
+# 서약 하나를 색깔 메모지 모양 HTML로 만들어요. 내 서약은 주황 테두리로 표시해요.
 def note_html(note, index, mine=False):
     color = NOTE_COLORS[index % len(NOTE_COLORS)]
     tilt = (-3, 2, -1, 3, -2, 1)[index % 6]
@@ -217,11 +225,13 @@ def show_board():
         st.caption("아직 서약이 없어요. 첫 번째 서약을 남겨 보세요!")
 
 
+# 서약 현황판만 일정 시간마다 새로 그리는 부분이에요(st.fragment).
 @st.fragment(run_every=REFRESH)
 def board_fragment():
     show_board()
 
 
+# 서약의 벽 전체(제목, 입력 상자, 현황판)를 그려요.
 def show_pledge_wall():
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(
@@ -235,6 +245,7 @@ def show_pledge_wall():
     board_fragment()
 
 
+# 약속 고르기와 별명 입력, '서약 남기기' 버튼 상자를 그려요. 이미 남겼으면 내 서약을 보여 줘요.
 def show_form():
 
     saved = st.session_state.get(STATE + "saved")

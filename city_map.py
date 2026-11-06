@@ -61,6 +61,7 @@ _RIVER = [((-10, 300), (110, 270), (160, 330), (250, 300)), ((250, 300), (340, 2
           ((470, 288), (560, 324), (600, 332), (690, 288)), ((690, 288), (780, 244), (770, 262), (810, 276))]
 
 
+# 강을 이루는 베지어 곡선을 잘게 나눠 점 목록으로 만들어요(나무가 강 위에 놓이지 않게 거리 계산에 써요).
 @lru_cache(maxsize=1)
 def _river_pts():
     pts = []
@@ -78,6 +79,7 @@ def _river_y(x):
     return min(_river_pts(), key=lambda p: abs(p[0] - x))[1]
 
 
+# 점 (x, y)와 선분 a-b 사이의 가장 가까운 거리를 계산해요.
 def _seg_dist(x, y, a, b):
     (x1, y1), (x2, y2) = a, b
     dx, dy = x2 - x1, y2 - y1
@@ -112,6 +114,7 @@ def _house(x, y, w=30, h=24, wall="#FFF5DD", roof="#B97855"):
             f'<rect x="{x + w - 10}" y="{y + 6}" width="6" height="6" fill="#BFE3F5"/>')
 
 
+# x 위치에서 강을 건너는 나무다리 SVG를 만들어요.
 def _bridge(x):
     y = _river_y(x)
     planks = "".join(f'<path d="M{x - 17} {y + k:.0f}H{x + 17}" stroke="#A97B42" stroke-width="2"/>' for k in range(-24, 28, 8))
@@ -119,6 +122,7 @@ def _bridge(x):
             f'{planks}<path d="M{x - 17} {y - 30:.0f}V{y + 30:.0f}M{x + 17} {y - 30:.0f}V{y + 30:.0f}" stroke="#6B4423" stroke-width="4"/>')
 
 
+# 나무 SVG를 만들어요. kind 0은 소나무, 그 밖은 둥근 나무예요.
 def _tree(x, y, r, kind):
     shadow = f'<ellipse cx="{x:.0f}" cy="{y + r:.0f}" rx="{r * 1.1:.0f}" ry="{r * .4:.0f}" fill="#2F4A2E" opacity=".25"/>'
     if kind == 0:  # 소나무
@@ -133,6 +137,7 @@ def _tree(x, y, r, kind):
     return out
 
 
+# 섬·강·도로·건물·나무를 모두 그린 도토리시 지도 SVG를 만들어요(그림 지도 파일이 없을 때 쓰는 예비 지도).
 @lru_cache(maxsize=1)
 def _svg():
     island = ("M 95,112 C 70,62 200,42 330,52 C 450,32 600,36 700,82 C 772,112 778,200 762,282 "
@@ -170,7 +175,6 @@ def _svg():
         f'<circle cx="{x}" cy="{_river_y(x) + s * 26 - 13:.0f}" r="2.4" fill="#8A5A2B"/>'
         for x, s in ((70, -1), (210, 1), (380, -1), (560, 1), (650, -1), (400, 1), (120, 1)))
     road_d = "".join(f"M{a[0]} {a[1]}L{b[0]} {b[1]}" for a, b in _ROADS)
-    sleepers = "".join(f'<path d="M727 {y}h16" stroke="#8A5A2B" stroke-width="3"/>' for y in range(96, 262, 9))
     lot_lines = "".join(f'<path d="M{x} 490v14M{x} 522v14" stroke="#fff" stroke-width="2"/>' for x in range(402, 500, 14))
     cars = "".join(f'<rect x="{x}" y="{y}" width="10" height="13" rx="3" fill="{c}"/>'
                    for x, y, c in ((392, 491, "#E5484D"), (420, 491, "#3E7BD6"), (476, 523, "#F2B134"), (448, 523, "#4FA37C")))
@@ -191,10 +195,6 @@ def _svg():
                '<path d="M686 108L708 92L730 108Z" fill="#3E7BD6" stroke="#27579F" stroke-width="2" stroke-linejoin="round"/>'
                '<circle cx="708" cy="120" r="6" fill="#fff" stroke="#6B4423" stroke-width="1.5"/><path d="M708 116v4h3" stroke="#6B4423" fill="none"/>'
                '<rect x="702" y="138" width="12" height="22" fill="#8A5A2B"/>')
-    train = ('<rect x="730" y="194" width="14" height="22" rx="4" fill="#E5484D" stroke="#8C2A2E" stroke-width="1.5"/>'
-             '<rect x="730" y="218" width="14" height="20" rx="3" fill="#F2B134" stroke="#9A6B12" stroke-width="1.5"/>'
-             '<rect x="730" y="240" width="14" height="20" rx="3" fill="#F2B134" stroke="#9A6B12" stroke-width="1.5"/>'
-             '<rect x="733" y="198" width="8" height="6" fill="#BFE3F5"/>')
     plaza = ('<ellipse cx="360" cy="414" rx="70" ry="42" fill="#F0E3B8" stroke="#E2C98A" stroke-width="4"/>'
              '<ellipse cx="360" cy="414" rx="58" ry="33" fill="none" stroke="#E2C98A" stroke-width="2" stroke-dasharray="5 6"/>'
              '<circle cx="360" cy="414" r="15" fill="#B9E3F5" stroke="#8ECDEB" stroke-width="4"/>'
@@ -238,11 +238,13 @@ def _svg():
     )
 
 
+# 지도 SVG를 <img>에 넣을 수 있게 base64 글자로 바꿔요.
 @lru_cache(maxsize=1)
 def _svg_b64():
     return base64.b64encode(_svg().encode("utf-8")).decode("ascii")
 
 
+# SVG 지도 위에 장소 버튼(핀)을 겹쳐 놓기 위한 CSS를 돌려줘요.
 def city_map_css():
     return (
         "<style>"
@@ -304,6 +306,7 @@ ART_SHORT = {"01": "할머니 댁", "09": "3반 단톡방", "10": "중고마켓"
              "07": "시민안전센터", "11": "우체국 필터실", "13": "통계청"}
 
 
+# 그림 지도 파일(static/dotori_map.jpg)이 있는지 확인해요.
 def art_map_ready():
     from pathlib import Path
     return (Path(__file__).resolve().parent / "static" / "dotori_map.jpg").exists()

@@ -6,7 +6,6 @@
 import html
 from pathlib import Path
 
-import streamlit as st
 
 _CSS = (
     "<style>.sb{position:relative;border-radius:20px;overflow:hidden;border:3px solid #E2C98A;container-type:inline-size;"
@@ -24,6 +23,7 @@ _CSS = (
 )
 
 
+# 장면 그림 파일(static/이름.jpg)이 있는지 확인해요.
 def ready(name):
     return (Path(__file__).resolve().parent / "static" / f"{name}.jpg").exists()
 
@@ -43,6 +43,7 @@ def board(name, place, inner, ratio, status="", pos="center", cls=""):
 MARKET_X = [12.4, 33.8, 51.6, 69.4, 87.6]
 
 
+# 중고마켓 장면: 판매자 천막, 검거 테이프, 진짜 판매자 표시를 그림 위에 겹쳐 그려요.
 def market(sellers, emoji, real, finished):
     css = ("<style>.mk-tag{transform:translate(-50%,0);top:4%;background:#FFFDF5;border:.25cqw solid #8A5A2B;border-radius:1cqw;padding:.3cqw .9cqw;"
            "font-weight:900;font-size:1.55cqw;color:#5B3A12;white-space:nowrap;box-shadow:0 .3cqw 0 rgba(0,0,0,.15)}"
@@ -68,30 +69,6 @@ def market(sellers, emoji, real, finished):
 
 
 # ───── 큐싱 노노그램: 정산기의 찢긴 QR 스티커 ─────
-_QR = ["1111111", "1000001", "1011101", "1011101", "1011101", "1000001", "1111111"]
-
-
-def kiosk(cleared, final):
-    n = len(cleared)
-    cells = []
-    for r, row in enumerate(_QR):
-        for c, v in enumerate(row):
-            piece = (c * 3) // 7  # 세로 3조각
-            shown = piece in cleared or final
-            color = "#111827" if v == "1" else "#FFFFFF"
-            cells.append(f'<i style="background:{color if shown else "transparent"}"></i>')
-    css = ("<style>.kq{left:31%;top:46.4%;transform:translate(-50%,-50%) rotate(-8deg);width:11%;aspect-ratio:1;background:#FFFDF5;border:.3cqw solid #D6C7A1;"
-           "padding:.6cqw;display:grid;grid-template-columns:repeat(7,1fr);gap:0;box-shadow:0 .4cqw .8cqw rgba(0,0,0,.35);clip-path:polygon(0 0,100% 0,100% 82%,84% 100%,0 100%)}"
-           ".kq i{display:block;aspect-ratio:1}"
-           ".kq.empty{background:repeating-linear-gradient(45deg,#FFFDF5 0 .6cqw,#F1E7CC .6cqw 1.2cqw)}"
-           ".kq-warn{left:31%;top:77%;transform:translate(-50%,0);background:#DC2626;color:#fff;border-radius:999px;padding:.3cqw 1.2cqw;font-weight:900;font-size:1.5cqw;white-space:nowrap;animation:sb-bob 1.6s ease-in-out infinite}"
-           ".kq-pieces{left:31%;top:12%;transform:translate(-50%,0);background:rgba(255,253,240,.95);border:.25cqw solid #8A5A2B;border-radius:999px;padding:.3cqw 1cqw;font-weight:900;font-size:1.45cqw;color:#5B3A12;white-space:nowrap}</style>")
-    inner = (f'<span class="kq{" empty" if not n and not final else ""}">' + "".join(cells) + "</span>"
-             + f'<span class="kq-pieces">🧩 복원한 조각 {3 if final else n}/3</span>'
-             + ('<span class="kq-warn">⚠️ 출처를 모르는 QR</span>' if (n or final) else ""))
-    status = ("🔍 그림은 복원했어요!<small>이제 누가 붙였는지·어디로 가는지 조사해요</small>" if final or n == 3
-              else "🧩 찢긴 QR 스티커 발견<small>노노그램을 풀어 조각을 복원해요</small>")
-    return css + board("scene_kiosk", "중앙동 · 도토리 공영주차장", inner, "481/250", status, "center 45%")
 
 
 # ───── 피싱 필터 만들기: 우체국 컨베이어 ─────

@@ -21,6 +21,7 @@ def _runtime_seed():
     return secrets.token_urlsafe(48)
 
 
+# 로그인 유지 토큰을 암호화할 Fernet 열쇠를 만들어요. Secrets의 키가 없으면 앱이 켜져 있는 동안만 쓰는 임시 키를 써요.
 def _cipher():
     try:
         seed=str(st.secrets.get("login_persistence",{}).get("key",""))
@@ -32,12 +33,14 @@ def _cipher():
         seed = _runtime_seed()
     return Fernet(base64.urlsafe_b64encode(hashlib.sha256(("dotori-login-v1:"+seed).encode()).digest()))
 
+# 관리자 코드의 해시값을 만들어요. 코드가 바뀌면 예전 관리자 로그인 토큰을 쓸 수 없게 돼요.
 def _admin_version():
     from admin_tools import _admin_code
     code=_admin_code()
     if not code:raise ValueError("관리자 인증이 비활성화됐습니다.")
     return hashlib.sha256(code.encode()).hexdigest()
 
+# 브라우저에 저장하거나 지울 토큰을 다음 화면 그리기 때 보낼 수 있게 예약해요.
 def queue(token):
     st.session_state[PREFIX+"op"]={"id":uuid.uuid4().hex,"token":token}
 
@@ -59,6 +62,7 @@ def remember():
     except (ValueError,KeyError):
         st.session_state[PREFIX+"warning"]="로그인은 됐지만 유지 설정이 없어 새로고침하면 다시 로그인해야 해요. firebase_admin 또는 login_persistence.key 설정을 확인하세요."
 
+# 브라우저에 저장된 로그인 유지 토큰을 지우도록 예약해요(로그아웃할 때).
 def clear():
     # logout()의 세션 정리 뒤 호출해야 이전 브라우저 값이 복원되지 않습니다.
     st.session_state[PREFIX+"ready"]=True
